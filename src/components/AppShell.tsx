@@ -157,7 +157,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <CharacterSwitcher />
             <button
               onClick={handleSignOut}
-              title={email ? `Sair de ${email}` : "Sair"}
+              title={activeCharacter ? `Sair (${activeCharacter.name})` : "Sair"}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
