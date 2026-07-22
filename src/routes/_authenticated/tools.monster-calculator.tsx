@@ -137,33 +137,68 @@ function MonsterCalculatorPage() {
             ))}
           </select>
         </div>
-        <div>
+        <div ref={suggestRef} className="relative">
           <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Monstro</label>
-          <input
-            list="monster-options"
-            value={monster}
-            onChange={(e) => setMonster(e.target.value)}
-            placeholder="Ex: Dragon Lord"
-            className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
-          />
-          <datalist id="monster-options">
-            {monsterOptions.map((m) => (
-              <option key={m} value={m} />
-            ))}
-          </datalist>
-          {monsterOptions.length > 0 && !monster && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {monsterOptions.slice(0, 6).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMonster(m)}
-                  className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          )}
+          {(() => {
+            const q = monster.trim().toLowerCase();
+            const filtered = q
+              ? monsterOptions.filter((m) => m.toLowerCase().includes(q)).slice(0, 8)
+              : monsterOptions.slice(0, 8);
+            const open = showSuggest && filtered.length > 0;
+            return (
+              <>
+                <input
+                  value={monster}
+                  onChange={(e) => {
+                    setMonster(e.target.value);
+                    setShowSuggest(true);
+                    setHighlight(0);
+                  }}
+                  onFocus={() => setShowSuggest(true)}
+                  onKeyDown={(e) => {
+                    if (!open) return;
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setHighlight((h) => (h + 1) % filtered.length);
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setHighlight((h) => (h - 1 + filtered.length) % filtered.length);
+                    } else if (e.key === "Enter") {
+                      e.preventDefault();
+                      setMonster(filtered[highlight]);
+                      setShowSuggest(false);
+                    } else if (e.key === "Escape") {
+                      setShowSuggest(false);
+                    }
+                  }}
+                  placeholder="Ex: Dragon Lord"
+                  autoComplete="off"
+                  className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
+                />
+                {open && (
+                  <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-popover shadow-lg">
+                    {filtered.map((m, i) => (
+                      <li
+                        key={m}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setMonster(m);
+                          setShowSuggest(false);
+                        }}
+                        onMouseEnter={() => setHighlight(i)}
+                        className={
+                          "cursor-pointer px-3 py-2 text-sm " +
+                          (i === highlight ? "bg-accent text-foreground" : "text-muted-foreground")
+                        }
+                      >
+                        {m}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            );
+          })()}
         </div>
         <div>
           <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
