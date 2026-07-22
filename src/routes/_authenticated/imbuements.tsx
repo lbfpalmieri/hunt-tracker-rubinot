@@ -108,16 +108,18 @@ function ImbuementsPage() {
   const totalPreview = IMB_TIER_COST[tier] + goldNum;
 
   const handleAdd = async () => {
+    if (!typeId) return;
     setBusy(true);
     try {
       await addImbuement({
         characterId: active.id,
         tier,
         goldTokenCost: goldNum,
-        label: label.trim() || null,
+        label: typeId,
       });
       setGold("");
-      setLabel("");
+      setTypeId("");
+      setPickerQuery("");
     } finally {
       setBusy(false);
     }
