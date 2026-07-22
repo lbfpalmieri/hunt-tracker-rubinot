@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
+import { InfoHint } from "@/components/InfoHint";
 import { useAppStore, useHydrated } from "@/lib/store";
-import { aggregateImbuements } from "@/lib/imbuements";
+import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import {
   Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
