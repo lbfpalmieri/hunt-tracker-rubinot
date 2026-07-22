@@ -6,8 +6,9 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateImbuements } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import {
-  Coins, Zap, Timer, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
+  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
+
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
