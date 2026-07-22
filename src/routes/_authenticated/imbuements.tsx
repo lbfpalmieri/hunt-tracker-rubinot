@@ -19,6 +19,14 @@ import {
   getImbuementType,
   type ImbuementCategory,
 } from "@/lib/imbuement-types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/imbuements")({
   head: () => ({
@@ -143,22 +151,34 @@ function ImbuementsPage() {
     }
   };
 
-  const handleRenew = async (imbId: string, currentGold: number) => {
-    const same = window.confirm(
-      `O preço do Gold Token continua o mesmo (${currentGold.toLocaleString("pt-BR")})?\n\nOK = manter · Cancelar = informar novo valor.`,
-    );
-    let newGold = currentGold;
-    if (!same) {
-      const input = window.prompt("Novo valor gasto com Gold Token:", String(currentGold));
-      if (input === null) return;
-      const parsed = Number(input.replace(/[.,\s]/g, "")) || 0;
-      newGold = Math.max(0, parsed);
-    }
+  const [renewTarget, setRenewTarget] = useState<{ id: string; currentGold: number; label: string } | null>(null);
+  const [renewGold, setRenewGold] = useState<string>("");
+  const [renewBusy, setRenewBusy] = useState(false);
+
+  const openRenew = (imbId: string, currentGold: number, label: string) => {
+    setRenewTarget({ id: imbId, currentGold, label });
+    setRenewGold(String(currentGold));
+  };
+
+  const closeRenew = () => {
+    if (renewBusy) return;
+    setRenewTarget(null);
+    setRenewGold("");
+  };
+
+  const confirmRenew = async () => {
+    if (!renewTarget) return;
+    const parsed = Math.max(0, Number((renewGold || "0").replace(/[.,\s]/g, "")) || 0);
+    setRenewBusy(true);
     try {
-      await renewImbuement(imbId, newGold);
+      await renewImbuement(renewTarget.id, parsed);
       toast.success("Imbuement renovado", { description: "Recarregado para 20h de hunt." });
+      setRenewTarget(null);
+      setRenewGold("");
     } catch (e) {
       toast.error("Falha ao renovar", { description: (e as Error).message });
+    } finally {
+      setRenewBusy(false);
     }
   };
 
@@ -422,7 +442,11 @@ function ImbuementsPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         <button
-                          onClick={() => handleRenew(r.imb.id, r.imb.goldTokenCost)}
+                          onClick={() => {
+                            const t = getImbuementType(r.imb.label);
+                            const label = `${IMB_TIER_LABEL[r.imb.tier]} · ${t ? t.name : r.imb.label || "Imbuement"}`;
+                            openRenew(r.imb.id, r.imb.goldTokenCost, label);
+                          }}
                           className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-1 text-[11px] font-semibold text-rubi-gold hover:bg-rubi-gold/20"
                           title="Renovar imbuement (recarrega para 20h)"
                         >
@@ -463,6 +487,53 @@ function ImbuementsPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!renewTarget} onOpenChange={(o) => { if (!o) closeRenew(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Renovar imbuement</DialogTitle>
+            <DialogDescription>
+              {renewTarget?.label} · recarrega para {IMB_DURATION_HOURS}h de hunt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Gasto com Gold Token
+            </label>
+            <input
+              autoFocus
+              inputMode="numeric"
+              value={renewGold}
+              onChange={(e) => setRenewGold(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") confirmRenew(); }}
+              placeholder="Ex: 320000"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Valor anterior: {renewTarget ? fmtGold(renewTarget.currentGold) : "—"}. Ajuste se o preço mudou.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={closeRenew}
+              disabled={renewBusy}
+              className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmRenew}
+              disabled={renewBusy}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-gold px-4 py-2 text-sm font-semibold text-background hover:opacity-90 disabled:opacity-60"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {renewBusy ? "Renovando..." : "Renovar"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
