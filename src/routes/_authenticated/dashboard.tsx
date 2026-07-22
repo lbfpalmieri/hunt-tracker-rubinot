@@ -108,12 +108,21 @@ function Dashboard() {
             </p>
           )}
         </div>
-        <Link
-          to="/import"
-          className="inline-flex items-center gap-2 self-start rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90 sm:self-auto"
-        >
-          <Upload className="h-4 w-4" /> Nova sessão
-        </Link>
+        <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+          <Link
+            to="/import"
+            className="inline-flex items-center gap-2 rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90"
+          >
+            <Upload className="h-4 w-4" /> Nova sessão
+          </Link>
+          <Link
+            to="/imbuements"
+            className="inline-flex items-center gap-2 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-2.5 text-sm font-semibold text-rubi-gold hover:bg-rubi-gold/20"
+          >
+            <Sparkles className="h-4 w-4" /> Adicionar imbuement
+          </Link>
+        </div>
+
       </div>
 
       {!hydrated ? (
