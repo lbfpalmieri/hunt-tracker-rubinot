@@ -7,11 +7,13 @@ import {
   Trash2,
   UserCircle2,
   Star,
-  Upload,
   X,
   ImageIcon,
+  Clipboard,
+  ClipboardPaste,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 
 export const Route = createFileRoute("/_authenticated/characters")({
   head: () => ({
@@ -83,6 +85,9 @@ function CharactersPage() {
   const [outfitUrl, setOutfitUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "new" for the form, character id for existing rows, null = no target
+  const [pasteTarget, setPasteTarget] = useState<string | null>("new");
+  const [pasteFlash, setPasteFlash] = useState<string | null>(null);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,17 +111,50 @@ function CharactersPage() {
     }
   };
 
-  const handleOutfitFile = async (file: File | null) => {
-    if (!file) return;
-    setError(null);
-    try {
-      const raw = await fileToDataUrl(file);
-      const compressed = await compressImage(raw, 512, 0.9);
-      setOutfitUrl(compressed);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar imagem");
-    }
+  const processImageBlob = async (blob: Blob): Promise<string> => {
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Falha ao ler imagem"));
+      reader.readAsDataURL(blob);
+    });
+    return compressImage(dataUrl, 512, 0.9);
   };
+
+  useEffect(() => {
+    const onPaste = async (e: ClipboardEvent) => {
+      if (!pasteTarget) return;
+      // Ignore paste inside text inputs so you can still paste names
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (!file) continue;
+          e.preventDefault();
+          setError(null);
+          try {
+            const compressed = await processImageBlob(file);
+            if (pasteTarget === "new") {
+              setOutfitUrl(compressed);
+            } else {
+              await updateCharacter(pasteTarget, { outfitUrl: compressed });
+            }
+            setPasteFlash(pasteTarget);
+            setTimeout(() => setPasteFlash(null), 1200);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Falha ao colar imagem");
+          }
+          return;
+        }
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [pasteTarget, updateCharacter]);
+
 
   if (!hydrated) {
     return (
@@ -179,7 +217,15 @@ function CharactersPage() {
 
           <div>
             <span className="text-xs font-medium text-muted-foreground">Outfit (opcional)</span>
-            <div className="mt-1 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPasteTarget("new")}
+              className={`mt-1 flex w-full items-center gap-3 rounded-lg border-2 border-dashed p-3 text-left transition ${
+                pasteTarget === "new"
+                  ? "border-rubi-blue bg-rubi-blue/5"
+                  : "border-border hover:border-rubi-blue/50"
+              } ${pasteFlash === "new" ? "border-rubi-gold bg-rubi-gold/10" : ""}`}
+            >
               <div className="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-lg border border-border bg-input">
                 {outfitUrl ? (
                   <img src={outfitUrl} alt="Outfit" className="h-full w-full object-cover" />
@@ -188,28 +234,32 @@ function CharactersPage() {
                 )}
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent">
-                  <Upload className="h-3.5 w-3.5" />
-                  {outfitUrl ? "Trocar imagem" : "Enviar imagem"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleOutfitFile(e.target.files?.[0] ?? null)}
-                  />
-                </label>
-                {outfitUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setOutfitUrl(null)}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-rubi-danger/40 px-3 py-1.5 text-xs text-rubi-danger hover:bg-rubi-danger/10"
-                  >
-                    <X className="h-3.5 w-3.5" /> Remover
-                  </button>
-                )}
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <ClipboardPaste className="h-3.5 w-3.5 text-rubi-blue" />
+                  {outfitUrl ? "Cole outra imagem para trocar" : "Cole uma imagem (Ctrl+V)"}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {pasteTarget === "new"
+                    ? "Pronto — copie um print e pressione Ctrl+V."
+                    : "Clique para focar aqui e depois cole."}
+                </div>
               </div>
-            </div>
+              {outfitUrl && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOutfitUrl(null);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-rubi-danger/40 px-2 py-1 text-[11px] text-rubi-danger hover:bg-rubi-danger/10"
+                >
+                  <X className="h-3 w-3" /> Remover
+                </span>
+              )}
+            </button>
           </div>
+
 
           <button
             type="submit"
@@ -273,22 +323,20 @@ function CharactersPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <label className="cursor-pointer rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-                        <Upload className="h-4 w-4" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            const raw = await fileToDataUrl(file);
-                            const compressed = await compressImage(raw, 512, 0.9);
-                            await updateCharacter(c.id, { outfitUrl: compressed });
-                          }}
-                          aria-label="Trocar outfit"
-                        />
-                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setPasteTarget(c.id)}
+                        title="Selecionar e colar (Ctrl+V) uma imagem para este personagem"
+                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-medium transition ${
+                          pasteTarget === c.id
+                            ? "border-rubi-blue bg-rubi-blue/10 text-rubi-blue"
+                            : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                        } ${pasteFlash === c.id ? "border-rubi-gold bg-rubi-gold/10 text-rubi-gold" : ""}`}
+                      >
+                        <Clipboard className="h-3.5 w-3.5" />
+                        {pasteTarget === c.id ? "Cole (Ctrl+V)" : "Colar outfit"}
+                      </button>
+
                       {!isActive && (
                         <button
                           onClick={() => setActive(c.id)}
