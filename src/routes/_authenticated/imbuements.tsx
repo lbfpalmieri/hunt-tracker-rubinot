@@ -10,8 +10,14 @@ import {
   aggregateImbuements,
 } from "@/lib/imbuements";
 import { fmtGold, fmtDate } from "@/lib/format";
-import { Sparkles, Plus, Trash2, Coins, Timer } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  IMBUEMENT_TYPES,
+  CATEGORY_LABEL,
+  getImbuementType,
+  type ImbuementCategory,
+} from "@/lib/imbuement-types";
 
 export const Route = createFileRoute("/_authenticated/imbuements")({
   head: () => ({
