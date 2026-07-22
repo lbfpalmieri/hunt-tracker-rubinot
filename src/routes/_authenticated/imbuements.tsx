@@ -46,7 +46,7 @@ function ImbuementsPage() {
 
   const [tier, setTier] = useState<ImbuementTier>("powerful");
   const [gold, setGold] = useState<string>("");
-  const [label, setLabel] = useState<string>("");
+  const [busyRemove, setBusyRemove] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [typeId, setTypeId] = useState<string>("");
