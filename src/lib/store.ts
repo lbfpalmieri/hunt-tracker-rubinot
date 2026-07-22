@@ -274,7 +274,42 @@ export const useAppStore = create<State>()((set, get) => ({
     if (error) throw error;
     set((s) => ({ sessions: s.sessions.filter((se) => se.id !== id) }));
   },
+
+  addImbuement: async (input) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) throw new Error("Not signed in");
+    const { data, error } = await db
+      .from("imbuements")
+      .insert({
+        user_id: uid,
+        character_id: input.characterId,
+        tier: input.tier,
+        gold_token_cost: input.goldTokenCost,
+        label: input.label,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const created: Imbuement = {
+      id: data.id,
+      characterId: data.character_id,
+      tier: data.tier as ImbuementTier,
+      goldTokenCost: Number(data.gold_token_cost ?? 0),
+      label: data.label ?? null,
+      createdAt: data.created_at,
+    };
+    set((s) => ({ imbuements: [created, ...s.imbuements] }));
+    return created;
+  },
+
+  removeImbuement: async (id) => {
+    const { error } = await db.from("imbuements").delete().eq("id", id);
+    if (error) throw error;
+    set((s) => ({ imbuements: s.imbuements.filter((i) => i.id !== id) }));
+  },
 }));
+
 
 export function useHydrated() {
   return useAppStore((s) => s.loaded);
