@@ -191,17 +191,81 @@ function ImbuementsPage() {
             />
           </label>
 
-          <label className="mb-4 block">
+          <div className="mb-4 block" ref={pickerRef}>
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Rótulo (opcional)
+              Imbuement
             </span>
-            <input
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Ex: Sword Skill, Life Leech..."
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
-            />
-          </label>
+            <button
+              type="button"
+              onClick={() => setPickerOpen((v) => !v)}
+              className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none hover:border-rubi-blue"
+            >
+              {selectedType ? (
+                <span className="flex items-center gap-2">
+                  <img src={selectedType.icon} alt="" className="h-6 w-6" />
+                  <span className="text-left">
+                    <span className="block font-medium">{selectedType.name}</span>
+                    <span className="block text-[10px] text-muted-foreground">
+                      {selectedType.description}
+                    </span>
+                  </span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Selecione um imbuement...</span>
+              )}
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </button>
+            {pickerOpen && (
+              <div className="relative">
+                <div className="absolute left-0 right-0 top-1 z-20 max-h-80 overflow-auto rounded-lg border border-border bg-popover p-2 shadow-xl">
+                  <input
+                    autoFocus
+                    value={pickerQuery}
+                    onChange={(e) => setPickerQuery(e.target.value)}
+                    placeholder="Buscar (ex: sword, fire, life...)"
+                    className="mb-2 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-rubi-blue"
+                  />
+                  {(Object.keys(grouped) as ImbuementCategory[]).map((cat) => {
+                    const items = grouped[cat];
+                    if (items.length === 0) return null;
+                    return (
+                      <div key={cat} className="mb-2 last:mb-0">
+                        <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+                          {CATEGORY_LABEL[cat]}
+                        </div>
+                        <ul>
+                          {items.map((t) => (
+                            <li key={t.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTypeId(t.id);
+                                  setPickerOpen(false);
+                                  setPickerQuery("");
+                                }}
+                                className={
+                                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-accent " +
+                                  (t.id === typeId ? "bg-accent" : "")
+                                }
+                              >
+                                <img src={t.icon} alt="" className="h-6 w-6 shrink-0" />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block font-medium">{t.name}</span>
+                                  <span className="block text-[10px] text-muted-foreground">
+                                    {t.description}
+                                  </span>
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="mb-4 rounded-lg border border-border bg-accent/30 p-3 text-xs">
             <div className="flex justify-between">
