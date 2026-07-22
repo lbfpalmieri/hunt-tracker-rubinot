@@ -19,6 +19,14 @@ import {
   getImbuementType,
   type ImbuementCategory,
 } from "@/lib/imbuement-types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/imbuements")({
   head: () => ({
