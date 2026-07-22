@@ -196,6 +196,25 @@ function ImbuementsPage() {
             />
           </label>
 
+          <label className="mb-3 block">
+            <span className="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span>Horas restantes</span>
+              <span className="text-[10px] normal-case tracking-normal text-muted-foreground/70">
+                máx {IMB_DURATION_HOURS}h
+              </span>
+            </span>
+            <input
+              inputMode="decimal"
+              value={hoursRemaining}
+              onChange={(e) => setHoursRemaining(e.target.value)}
+              placeholder="20"
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
+            />
+            <span className="mt-1 block text-[10px] text-muted-foreground">
+              Se o imbuement já foi feito antes, informe quanto tempo ainda resta no jogo.
+            </span>
+          </label>
+
           <div className="mb-4 block" ref={pickerRef}>
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Imbuement
