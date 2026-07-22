@@ -151,22 +151,34 @@ function ImbuementsPage() {
     }
   };
 
-  const handleRenew = async (imbId: string, currentGold: number) => {
-    const same = window.confirm(
-      `O preço do Gold Token continua o mesmo (${currentGold.toLocaleString("pt-BR")})?\n\nOK = manter · Cancelar = informar novo valor.`,
-    );
-    let newGold = currentGold;
-    if (!same) {
-      const input = window.prompt("Novo valor gasto com Gold Token:", String(currentGold));
-      if (input === null) return;
-      const parsed = Number(input.replace(/[.,\s]/g, "")) || 0;
-      newGold = Math.max(0, parsed);
-    }
+  const [renewTarget, setRenewTarget] = useState<{ id: string; currentGold: number; label: string } | null>(null);
+  const [renewGold, setRenewGold] = useState<string>("");
+  const [renewBusy, setRenewBusy] = useState(false);
+
+  const openRenew = (imbId: string, currentGold: number, label: string) => {
+    setRenewTarget({ id: imbId, currentGold, label });
+    setRenewGold(String(currentGold));
+  };
+
+  const closeRenew = () => {
+    if (renewBusy) return;
+    setRenewTarget(null);
+    setRenewGold("");
+  };
+
+  const confirmRenew = async () => {
+    if (!renewTarget) return;
+    const parsed = Math.max(0, Number((renewGold || "0").replace(/[.,\s]/g, "")) || 0);
+    setRenewBusy(true);
     try {
-      await renewImbuement(imbId, newGold);
+      await renewImbuement(renewTarget.id, parsed);
       toast.success("Imbuement renovado", { description: "Recarregado para 20h de hunt." });
+      setRenewTarget(null);
+      setRenewGold("");
     } catch (e) {
       toast.error("Falha ao renovar", { description: (e as Error).message });
+    } finally {
+      setRenewBusy(false);
     }
   };
 
