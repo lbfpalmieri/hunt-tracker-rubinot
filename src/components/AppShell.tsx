@@ -202,7 +202,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="text-xs">
-            {email ? <>Conectado como <b className="text-foreground">{email}</b></> : "Feito para a comunidade RubinOT"}
+            {activeCharacter ? <>Conectado como <b className="text-foreground">{activeCharacter.name}</b></> : "Feito para a comunidade RubinOT"}
           </div>
         </div>
       </footer>
