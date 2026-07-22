@@ -288,7 +288,7 @@ function ImbuementsPage() {
 
           <button
             onClick={handleAdd}
-            disabled={busy}
+            disabled={busy || !typeId}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90 disabled:opacity-60"
           >
             <Plus className="h-4 w-4" />
