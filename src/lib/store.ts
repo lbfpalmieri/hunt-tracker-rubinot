@@ -71,8 +71,10 @@ export const useAppStore = create<State>()((set, get) => ({
         name: c.name,
         vocation: c.vocation,
         world: c.world,
+        outfitUrl: c.outfit_url ?? null,
         createdAt: c.created_at,
       }));
+
       const sessions: HuntSession[] = (sessRes.data ?? []).map((s: any) => ({
         id: s.id,
         characterId: s.character_id,
