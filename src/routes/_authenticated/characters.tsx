@@ -323,22 +323,20 @@ function CharactersPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <label className="cursor-pointer rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-                        <Upload className="h-4 w-4" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            const raw = await fileToDataUrl(file);
-                            const compressed = await compressImage(raw, 512, 0.9);
-                            await updateCharacter(c.id, { outfitUrl: compressed });
-                          }}
-                          aria-label="Trocar outfit"
-                        />
-                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setPasteTarget(c.id)}
+                        title="Selecionar e colar (Ctrl+V) uma imagem para este personagem"
+                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-medium transition ${
+                          pasteTarget === c.id
+                            ? "border-rubi-blue bg-rubi-blue/10 text-rubi-blue"
+                            : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                        } ${pasteFlash === c.id ? "border-rubi-gold bg-rubi-gold/10 text-rubi-gold" : ""}`}
+                      >
+                        <Clipboard className="h-3.5 w-3.5" />
+                        {pasteTarget === c.id ? "Cole (Ctrl+V)" : "Colar outfit"}
+                      </button>
+
                       {!isActive && (
                         <button
                           onClick={() => setActive(c.id)}
