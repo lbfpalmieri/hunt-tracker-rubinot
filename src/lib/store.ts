@@ -32,10 +32,12 @@ interface State {
   reset: () => void;
   loadAll: () => Promise<void>;
   addCharacter: (c: Omit<Character, "id" | "createdAt">) => Promise<Character>;
+  updateCharacter: (id: string, patch: Partial<Omit<Character, "id" | "createdAt">>) => Promise<void>;
   removeCharacter: (id: string) => Promise<void>;
   addSession: (s: Omit<HuntSession, "id" | "createdAt">) => Promise<HuntSession>;
   removeSession: (id: string) => Promise<void>;
 }
+
 
 // Data API types aren't generated yet; cast to a loose client here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
