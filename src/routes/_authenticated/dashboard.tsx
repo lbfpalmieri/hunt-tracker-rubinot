@@ -193,6 +193,11 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-blue">
               <Zap className="h-3.5 w-3.5" /> Experiência
+              <InfoHint title="Experiência" description="Como XP/h e XP total são calculadas.">
+                <p><strong>XP total ganha:</strong> <code>Σ xpGain</code> de cada sessão (é o <em>XP Gain</em> que aparece no Hunting Analyser — já com bônus).</p>
+                <p><strong>XP / hora (média):</strong> <code>XP total ganha ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p>Usamos apenas o <em>XP Gain</em>, não o Raw XP — Raw XP não considera bônus (stamina, XP boost, event) e é volátil quando você para de matar.</p>
+              </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <StatCard label="XP / hora (média)" value={fmtNum(agg.xph)} icon={Zap} accent="blue" />
