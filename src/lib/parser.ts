@@ -123,15 +123,22 @@ export function parseDamage(text: string): DamageData {
 export function parseMiscellaneous(text: string): MiscData {
   const session = durationToSec(text.match(/Session:\s*([\d:h\s]+)/)?.[1] ?? "");
 
-  const parseBlock = (header: string): Record<string, number> => {
-    const block = text.match(new RegExp(`${header}[^:]*:\\s*([\\s\\S]*?)(?:\\n\\s*\\n|\\n[A-Z][^\\n]*:|$)`));
+  // Explicit stop headers — each Misc block stops at the next known header
+  // (or a blank line, or end of text). Prevents e.g. Imbuement bullets
+  // bleeding into Charm when Charm section is empty.
+  const HEADERS = ["Charm Data", "Imbuement Data", "Item Upgrade"] as const;
+
+  const parseBlock = (header: (typeof HEADERS)[number]): Record<string, number> => {
+    const others = HEADERS.filter((h) => h !== header).map((h) => h.replace(/\s+/g, "\\s+"));
+    const stop = `(?:\\n\\s*\\n|\\n\\s*(?:${others.join("|")})\\b|$)`;
+    const re = new RegExp(`${header.replace(/\s+/g, "\\s+")}[^\\n:]*:\\s*([\\s\\S]*?)${stop}`, "i");
+    const block = text.match(re);
     const out: Record<string, number> = {};
     if (!block) return out;
     for (const line of block[1].split("\n")) {
-      const m = line.trim().match(/^-\s*(.+?):\s*([\d.,]+)\s*([km]?)$/i);
+      const m = line.trim().match(/^-?\s*(.+?):\s*([\d.,]+)\s*([km]?)$/i);
       if (m) {
         let v = Number(m[2].replace(/[.,]/g, (c) => (c === "," ? "." : "")));
-        // Fallback: if multiple dots, treat as thousand sep
         if (Number.isNaN(v)) v = toNum(m[2]);
         const suffix = m[3].toLowerCase();
         if (suffix === "k") v *= 1000;
