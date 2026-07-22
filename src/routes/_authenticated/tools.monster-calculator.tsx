@@ -28,6 +28,17 @@ function MonsterCalculatorPage() {
   const [charId, setCharId] = useState<string>("");
   const [monster, setMonster] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(400);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const suggestRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!suggestRef.current?.contains(e.target as Node)) setShowSuggest(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
 
   const effectiveCharId = charId || activeId || characters[0]?.id || "";
 
