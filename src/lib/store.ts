@@ -7,8 +7,10 @@ export interface Character {
   name: string;
   vocation: string;
   world: string;
+  outfitUrl: string | null;
   createdAt: string;
 }
+
 
 export interface HuntSession {
   id: string;
@@ -30,10 +32,12 @@ interface State {
   reset: () => void;
   loadAll: () => Promise<void>;
   addCharacter: (c: Omit<Character, "id" | "createdAt">) => Promise<Character>;
+  updateCharacter: (id: string, patch: Partial<Omit<Character, "id" | "createdAt">>) => Promise<void>;
   removeCharacter: (id: string) => Promise<void>;
   addSession: (s: Omit<HuntSession, "id" | "createdAt">) => Promise<HuntSession>;
   removeSession: (id: string) => Promise<void>;
 }
+
 
 // Data API types aren't generated yet; cast to a loose client here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,8 +71,10 @@ export const useAppStore = create<State>()((set, get) => ({
         name: c.name,
         vocation: c.vocation,
         world: c.world,
+        outfitUrl: c.outfit_url ?? null,
         createdAt: c.created_at,
       }));
+
       const sessions: HuntSession[] = (sessRes.data ?? []).map((s: any) => ({
         id: s.id,
         characterId: s.character_id,
@@ -101,7 +107,13 @@ export const useAppStore = create<State>()((set, get) => ({
     if (!uid) throw new Error("Not signed in");
     const { data, error } = await db
       .from("characters")
-      .insert({ user_id: uid, name: c.name, vocation: c.vocation, world: c.world })
+      .insert({
+        user_id: uid,
+        name: c.name,
+        vocation: c.vocation,
+        world: c.world,
+        outfit_url: c.outfitUrl,
+      })
       .select()
       .single();
     if (error) throw error;
@@ -110,6 +122,7 @@ export const useAppStore = create<State>()((set, get) => ({
       name: data.name,
       vocation: data.vocation,
       world: data.world,
+      outfitUrl: data.outfit_url ?? null,
       createdAt: data.created_at,
     };
     set((s) => ({
@@ -117,6 +130,19 @@ export const useAppStore = create<State>()((set, get) => ({
       activeCharacterId: s.activeCharacterId ?? created.id,
     }));
     return created;
+  },
+
+  updateCharacter: async (id, patch) => {
+    const dbPatch: Record<string, unknown> = {};
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.vocation !== undefined) dbPatch.vocation = patch.vocation;
+    if (patch.world !== undefined) dbPatch.world = patch.world;
+    if (patch.outfitUrl !== undefined) dbPatch.outfit_url = patch.outfitUrl;
+    const { error } = await db.from("characters").update(dbPatch).eq("id", id);
+    if (error) throw error;
+    set((s) => ({
+      characters: s.characters.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }));
   },
 
   removeCharacter: async (id) => {
@@ -128,6 +154,8 @@ export const useAppStore = create<State>()((set, get) => ({
       activeCharacterId: s.activeCharacterId === id ? null : s.activeCharacterId,
     }));
   },
+
+
 
   addSession: async (input) => {
     const { data: userData } = await supabase.auth.getUser();
