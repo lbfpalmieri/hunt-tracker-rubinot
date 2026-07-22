@@ -173,14 +173,33 @@ function ImportPage() {
               </select>
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">Nome da hunt / spot</span>
-              <input
-                value={huntName}
-                onChange={(e) => setHuntName(e.target.value)}
-                placeholder="Ex: Rhindeers Norte"
-                className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm placeholder:text-muted-foreground/60"
-              />
+              <span className="text-xs font-medium text-muted-foreground">Hunt / spot</span>
+              {charHunts.length > 0 && (
+                <select
+                  value={isNewHunt ? "__new__" : huntId}
+                  onChange={(e) => setHuntId(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
+                >
+                  <option value="">Selecione uma hunt salva…</option>
+                  {charHunts.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.name}
+                    </option>
+                  ))}
+                  <option value="__new__">+ Nova hunt…</option>
+                </select>
+              )}
+              {isNewHunt && (
+                <input
+                  value={newHuntName}
+                  onChange={(e) => setNewHuntName(e.target.value)}
+                  placeholder="Ex: Rhindeers Norte"
+                  className="mt-2 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm placeholder:text-muted-foreground/60"
+                  autoFocus={charHunts.length > 0}
+                />
+              )}
             </label>
+
 
             <button
               onClick={handleSave}
