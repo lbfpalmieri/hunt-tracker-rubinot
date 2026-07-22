@@ -118,6 +118,21 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Import inside effect so SSR doesn't touch the browser client.
+    import("../integrations/supabase/client").then(({ supabase }) => {
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        router.invalidate();
+      });
+      // Save unsubscribe on window so hot-reload doesn't stack listeners.
+      (window as unknown as { __rubinotAuthSub?: { unsubscribe: () => void } }).__rubinotAuthSub?.unsubscribe();
+      (window as unknown as { __rubinotAuthSub?: { unsubscribe: () => void } }).__rubinotAuthSub =
+        data.subscription;
+    });
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>
