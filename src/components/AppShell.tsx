@@ -8,6 +8,7 @@ import {
   LogOut,
   MoreHorizontal,
   Calculator,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/rubinot-logo.png.asset.json";
@@ -25,9 +26,11 @@ const nav = [
 ] as const;
 
 const moreNav = [
+  { to: "/imbuements", label: "Imbuements", icon: Sparkles },
   { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });

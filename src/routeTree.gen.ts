@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
@@ -42,6 +43,11 @@ const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
 const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   id: '/import',
   path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImbuementsRoute = AuthenticatedImbuementsRouteImport.update({
+  id: '/imbuements',
+  path: '/imbuements',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/_authenticated/about': typeof AuthenticatedAboutRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/characters'
     | '/dashboard'
+    | '/imbuements'
     | '/import'
     | '/sessions'
     | '/sessions/$id'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/characters'
     | '/dashboard'
+    | '/imbuements'
     | '/import'
     | '/sessions'
     | '/sessions/$id'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/_authenticated/about'
     | '/_authenticated/characters'
     | '/_authenticated/dashboard'
+    | '/_authenticated/imbuements'
     | '/_authenticated/import'
     | '/_authenticated/sessions'
     | '/_authenticated/sessions/$id'
@@ -184,6 +196,13 @@ declare module '@tanstack/react-router' {
       path: '/import'
       fullPath: '/import'
       preLoaderRoute: typeof AuthenticatedImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/imbuements': {
+      id: '/_authenticated/imbuements'
+      path: '/imbuements'
+      fullPath: '/imbuements'
+      preLoaderRoute: typeof AuthenticatedImbuementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -241,6 +260,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAboutRoute: typeof AuthenticatedAboutRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
@@ -250,6 +270,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAboutRoute: AuthenticatedAboutRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedToolsMonsterCalculatorRoute:
