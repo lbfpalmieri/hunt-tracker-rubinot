@@ -1,7 +1,5 @@
-import type { Imbuement } from "./store";
-import type { HuntSession } from "./store";
+import type { HuntSession, Imbuement, ImbuementTier } from "./store";
 
-export type ImbuementTier = "basic" | "intricate" | "powerful";
 
 export const IMB_TIER_COST: Record<ImbuementTier, number> = {
   basic: 7500,
