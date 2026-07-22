@@ -25,15 +25,26 @@ function ImportPage() {
   const navigate = useNavigate();
   const characters = useAppStore((s) => s.characters);
   const activeId = useAppStore((s) => s.activeCharacterId);
+  const hunts = useAppStore((s) => s.hunts);
   const addSession = useAppStore((s) => s.addSession);
+  const addHunt = useAppStore((s) => s.addHunt);
 
   const [huntingText, setHuntingText] = useState("");
   const [damageText, setDamageText] = useState("");
   const [miscText, setMiscText] = useState("");
-  const [huntName, setHuntName] = useState("");
+  const [huntId, setHuntId] = useState<string>("");
+  const [newHuntName, setNewHuntName] = useState("");
   const [charId, setCharId] = useState<string>("");
 
   const effectiveCharId = charId || activeId || characters[0]?.id || "";
+  const charHunts = useMemo(
+    () => hunts.filter((h) => h.characterId === effectiveCharId),
+    [hunts, effectiveCharId],
+  );
+  const isNewHunt = huntId === "__new__" || (!huntId && charHunts.length === 0);
+  const selectedHuntName = isNewHunt
+    ? newHuntName.trim()
+    : charHunts.find((h) => h.id === huntId)?.name ?? "";
 
   const parsed = useMemo(() => {
     try {
