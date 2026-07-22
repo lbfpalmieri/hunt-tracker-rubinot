@@ -171,6 +171,7 @@ export const useAppStore = create<State>()((set, get) => ({
     set((s) => ({
       characters: s.characters.filter((c) => c.id !== id),
       sessions: s.sessions.filter((se) => se.characterId !== id),
+      hunts: s.hunts.filter((h) => h.characterId !== id),
       activeCharacterId: s.activeCharacterId === id ? null : s.activeCharacterId,
     }));
   },
