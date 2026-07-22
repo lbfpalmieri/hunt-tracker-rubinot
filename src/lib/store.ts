@@ -56,6 +56,7 @@ const db = supabase as any;
 export const useAppStore = create<State>()((set, get) => ({
   characters: [],
   sessions: [],
+  hunts: [],
   activeCharacterId: null,
   loaded: false,
   loading: false,
@@ -63,18 +64,20 @@ export const useAppStore = create<State>()((set, get) => ({
   setActive: (id) => set({ activeCharacterId: id }),
 
   reset: () =>
-    set({ characters: [], sessions: [], activeCharacterId: null, loaded: false, loading: false }),
+    set({ characters: [], sessions: [], hunts: [], activeCharacterId: null, loaded: false, loading: false }),
 
   loadAll: async () => {
     if (get().loading) return;
     set({ loading: true });
     try {
-      const [charRes, sessRes] = await Promise.all([
+      const [charRes, sessRes, huntRes] = await Promise.all([
         db.from("characters").select("*").order("created_at", { ascending: true }),
         db.from("hunt_sessions").select("*").order("created_at", { ascending: false }),
+        db.from("hunts").select("*").order("created_at", { ascending: true }),
       ]);
       if (charRes.error) throw charRes.error;
       if (sessRes.error) throw sessRes.error;
+      if (huntRes.error) throw huntRes.error;
 
       const characters: Character[] = (charRes.data ?? []).map((c: any) => ({
         id: c.id,
@@ -94,10 +97,17 @@ export const useAppStore = create<State>()((set, get) => ({
         damage: (s.damage ?? null) as DamageData | null,
         misc: (s.misc ?? null) as MiscData | null,
       }));
+      const hunts: Hunt[] = (huntRes.data ?? []).map((h: any) => ({
+        id: h.id,
+        characterId: h.character_id,
+        name: h.name,
+        createdAt: h.created_at,
+      }));
       const prevActive = get().activeCharacterId;
       set({
         characters,
         sessions,
+        hunts,
         loaded: true,
         loading: false,
         activeCharacterId:
