@@ -14,7 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      characters: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+          vocation: string
+          world: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+          vocation: string
+          world: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+          vocation?: string
+          world?: string
+        }
+        Relationships: []
+      }
+      hunt_sessions: {
+        Row: {
+          character_id: string
+          created_at: string
+          damage: Json | null
+          hunt_name: string
+          hunting: Json
+          id: string
+          misc: Json | null
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          damage?: Json | null
+          hunt_name: string
+          hunting: Json
+          id?: string
+          misc?: Json | null
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          damage?: Json | null
+          hunt_name?: string
+          hunting?: Json
+          id?: string
+          misc?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hunt_sessions_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
