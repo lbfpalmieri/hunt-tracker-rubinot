@@ -487,6 +487,53 @@ function ImbuementsPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!renewTarget} onOpenChange={(o) => { if (!o) closeRenew(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Renovar imbuement</DialogTitle>
+            <DialogDescription>
+              {renewTarget?.label} · recarrega para {IMB_DURATION_HOURS}h de hunt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Gasto com Gold Token
+            </label>
+            <input
+              autoFocus
+              inputMode="numeric"
+              value={renewGold}
+              onChange={(e) => setRenewGold(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") confirmRenew(); }}
+              placeholder="Ex: 320000"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Valor anterior: {renewTarget ? fmtGold(renewTarget.currentGold) : "—"}. Ajuste se o preço mudou.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={closeRenew}
+              disabled={renewBusy}
+              className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmRenew}
+              disabled={renewBusy}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-gold px-4 py-2 text-sm font-semibold text-background hover:opacity-90 disabled:opacity-60"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {renewBusy ? "Renovando..." : "Renovar"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
