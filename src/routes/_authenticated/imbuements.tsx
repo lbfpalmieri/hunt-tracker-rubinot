@@ -9,7 +9,7 @@ import {
   IMB_DURATION_HOURS,
   aggregateImbuements,
 } from "@/lib/imbuements";
-import { fmtGold, fmtDate } from "@/lib/format";
+import { fmtGold, fmtDate, fmtHoursMin } from "@/lib/format";
 import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
