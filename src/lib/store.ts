@@ -7,8 +7,10 @@ export interface Character {
   name: string;
   vocation: string;
   world: string;
+  outfitUrl: string | null;
   createdAt: string;
 }
+
 
 export interface HuntSession {
   id: string;
