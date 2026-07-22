@@ -118,7 +118,7 @@ function ImbuementsPage() {
 
   const goldNum = Number((gold || "0").replace(/[.,\s]/g, "")) || 0;
   const totalPreview = IMB_TIER_COST[tier] + goldNum;
-  const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, Number((hoursRemaining || "0").replace(",", ".")) || 0));
+  const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, parseHoursInput(hoursRemaining)));
   const remainingCostPreview = (totalPreview / IMB_DURATION_HOURS) * hoursNum;
 
   const handleAdd = async () => {
