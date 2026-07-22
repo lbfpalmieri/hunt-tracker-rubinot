@@ -15,6 +15,15 @@ export const fmtDuration = (sec: number): string => {
   return `${h}h ${m.toString().padStart(2, "0")}m`;
 };
 
+export const fmtHoursMin = (hours: number): string => {
+  const totalMin = Math.max(0, Math.round(hours * 60));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h === 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h${m.toString().padStart(2, "0")}`;
+};
+
 export const fmtDate = (iso: string): string => {
   try {
     return new Intl.DateTimeFormat("pt-BR", {
