@@ -72,6 +72,7 @@ export const useAppStore = create<State>()((set, get) => ({
   characters: [],
   sessions: [],
   hunts: [],
+  imbuements: [],
   activeCharacterId: null,
   loaded: false,
   loading: false,
@@ -79,20 +80,22 @@ export const useAppStore = create<State>()((set, get) => ({
   setActive: (id) => set({ activeCharacterId: id }),
 
   reset: () =>
-    set({ characters: [], sessions: [], hunts: [], activeCharacterId: null, loaded: false, loading: false }),
+    set({ characters: [], sessions: [], hunts: [], imbuements: [], activeCharacterId: null, loaded: false, loading: false }),
 
   loadAll: async () => {
     if (get().loading) return;
     set({ loading: true });
     try {
-      const [charRes, sessRes, huntRes] = await Promise.all([
+      const [charRes, sessRes, huntRes, imbRes] = await Promise.all([
         db.from("characters").select("*").order("created_at", { ascending: true }),
         db.from("hunt_sessions").select("*").order("created_at", { ascending: false }),
         db.from("hunts").select("*").order("created_at", { ascending: true }),
+        db.from("imbuements").select("*").order("created_at", { ascending: false }),
       ]);
       if (charRes.error) throw charRes.error;
       if (sessRes.error) throw sessRes.error;
       if (huntRes.error) throw huntRes.error;
+      if (imbRes.error) throw imbRes.error;
 
       const characters: Character[] = (charRes.data ?? []).map((c: any) => ({
         id: c.id,
@@ -118,11 +121,20 @@ export const useAppStore = create<State>()((set, get) => ({
         name: h.name,
         createdAt: h.created_at,
       }));
+      const imbuements: Imbuement[] = (imbRes.data ?? []).map((i: any) => ({
+        id: i.id,
+        characterId: i.character_id,
+        tier: i.tier as ImbuementTier,
+        goldTokenCost: Number(i.gold_token_cost ?? 0),
+        label: i.label ?? null,
+        createdAt: i.created_at,
+      }));
       const prevActive = get().activeCharacterId;
       set({
         characters,
         sessions,
         hunts,
+        imbuements,
         loaded: true,
         loading: false,
         activeCharacterId:
@@ -135,6 +147,7 @@ export const useAppStore = create<State>()((set, get) => ({
       throw e;
     }
   },
+
 
   addCharacter: async (c) => {
     const { data: userData } = await supabase.auth.getUser();
