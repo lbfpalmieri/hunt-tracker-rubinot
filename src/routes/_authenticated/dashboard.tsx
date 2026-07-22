@@ -149,45 +149,114 @@ function Dashboard() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="XP / hora (média)" value={fmtNum(agg.xph)} icon={Zap} accent="blue" />
-            <StatCard label="Lucro / hora (média)" value={fmtGold(agg.gph)} hint="gold médio por hora" icon={Coins} accent="gold" />
-            <StatCard label="Tempo total" value={fmtDuration(agg.totalTime)} hint={`${mySessions.length} sessões`} icon={Timer} accent="muted" />
-            <StatCard label="Balance acumulado" value={fmtGold(agg.balance)} hint={agg.bestHunt ? `Top spot: ${agg.bestHunt.name}` : ""} icon={Trophy} accent={agg.balance >= 0 ? "success" : "danger"} />
+          {/* Hero: Balance em destaque */}
+          <div className="card-surface relative overflow-hidden p-6 sm:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-rubi-gold/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-rubi-blue/10 blur-3xl" />
+            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
+                  Balance acumulado
+                </div>
+                <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (agg.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
+                  {fmtGold(agg.balance)}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {agg.bestHunt ? <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></> : "sem hunts comparáveis ainda"}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 sm:min-w-[280px]">
+                <div>
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tempo</div>
+                  <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(agg.totalTime)}</div>
+                  <div className="text-[11px] text-muted-foreground">{mySessions.length} sessões</div>
+                </div>
+                {imbAgg && imbAgg.rows.some((r) => r.active) && (
+                  <div>
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Líquido</div>
+                    <div className={"mt-1 font-display text-lg font-semibold " + (netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
+                      {fmtGold(netBalance)}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">após imbuements</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* XP */}
+          <div className="mt-6">
+            <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-blue">
+              <Zap className="h-3.5 w-3.5" /> Experiência
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <StatCard label="XP / hora (média)" value={fmtNum(agg.xph)} icon={Zap} accent="blue" />
+              <StatCard
+                label="XP total ganha"
+                value={fmtNum(mySessions.reduce((a, s) => a + s.hunting.xpGain, 0))}
+                hint={`em ${fmtDuration(agg.totalTime)}`}
+                icon={TrendingUp}
+                accent="blue"
+              />
+            </div>
+          </div>
+
+          {/* Gold */}
+          <div className="mt-6">
+            <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-gold">
+              <Coins className="h-3.5 w-3.5" /> Ouro
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <StatCard label="Lucro / hora (média)" value={fmtGold(agg.gph)} hint="gold bruto por hora" icon={Coins} accent="gold" />
+              <StatCard
+                label="Balance bruto"
+                value={fmtGold(agg.balance)}
+                hint="antes dos imbuements"
+                icon={Wallet}
+                accent={agg.balance >= 0 ? "success" : "danger"}
+              />
+            </div>
           </div>
 
           {imbAgg && imbAgg.rows.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                label="Custo imbuement/h"
-                value={fmtGold(imbAgg.activeCostPerHour)}
-                hint={`${imbAgg.rows.filter((r) => r.active).length} ativo(s) · 20h cada`}
-                icon={Sparkles}
-                accent="gold"
-              />
-              <StatCard
-                label="Gasto com imbuements"
-                value={fmtGold(imbAgg.totalSpent)}
-                hint={`${imbAgg.rows.length} registrados`}
-                icon={Coins}
-                accent="muted"
-              />
-              <StatCard
-                label="Lucro líquido"
-                value={fmtGold(netBalance)}
-                hint="Balance − imbuements consumidos"
-                icon={Wallet}
-                accent={netBalance >= 0 ? "success" : "danger"}
-              />
-              <StatCard
-                label="Lucro líquido / h"
-                value={fmtGold(netGph)}
-                hint={netGph >= 0 ? "imbuement se paga" : "imbuement custa mais que rende"}
-                icon={TrendingUp}
-                accent={netGph >= 0 ? "success" : "danger"}
-              />
+            <div className="mt-6">
+              <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-gold">
+                <Sparkles className="h-3.5 w-3.5" /> Imbuements
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  label="Custo / hora"
+                  value={fmtGold(imbAgg.activeCostPerHour)}
+                  hint={`${imbAgg.rows.filter((r) => r.active).length} ativo(s)`}
+                  icon={Sparkles}
+                  accent="gold"
+                />
+                <StatCard
+                  label="Consumido"
+                  value={fmtGold(imbAgg.totalSpent)}
+                  hint={imbAgg.totalSpent === 0 ? "nenhuma hunt após registro" : "amortizado nas hunts"}
+                  icon={Coins}
+                  accent="muted"
+                />
+                <StatCard
+                  label="Lucro líquido"
+                  value={fmtGold(netBalance)}
+                  hint="balance − imbuements consumidos"
+                  icon={Wallet}
+                  accent={netBalance >= 0 ? "success" : "danger"}
+                />
+                <StatCard
+                  label="Projeção líquida / h"
+                  value={fmtGold(agg.gph - imbAgg.activeCostPerHour)}
+                  hint={agg.gph - imbAgg.activeCostPerHour >= 0 ? "imbuement se paga" : "custa mais que rende"}
+                  icon={TrendingUp}
+                  accent={agg.gph - imbAgg.activeCostPerHour >= 0 ? "success" : "danger"}
+                />
+              </div>
             </div>
           )}
+
 
 
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
