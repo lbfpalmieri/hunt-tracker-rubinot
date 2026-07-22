@@ -1,12 +1,15 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Upload, ScrollText, UserCircle2, Info } from "lucide-react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { LayoutDashboard, Upload, ScrollText, UserCircle2, Info, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
 import logo from "@/assets/rubinot-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";
+import { supabase } from "@/integrations/supabase/client";
+import { useAppStore } from "@/lib/store";
 import type { ReactNode } from "react";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/import", label: "Importar", icon: Upload },
   { to: "/sessions", label: "Sessões", icon: ScrollText },
   { to: "/characters", label: "Personagens", icon: UserCircle2 },
@@ -15,12 +18,25 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const reset = useAppStore((s) => s.reset);
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    reset();
+    navigate({ to: "/auth", replace: true });
+  };
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-3">
             <img src={logo.url} alt="RubinOT" className="h-9 w-auto" />
             <span className="hidden text-xs font-medium uppercase tracking-widest text-muted-foreground sm:inline">
               Hunt Tracker
@@ -29,7 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav className="ml-4 hidden items-center gap-1 md:flex">
             {nav.map((n) => {
-              const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+              const active = pathname === n.to || pathname.startsWith(n.to + "/");
               const Icon = n.icon;
               return (
                 <Link
@@ -49,15 +65,23 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             <CharacterSwitcher />
+            <button
+              onClick={handleSignOut}
+              title={email ? `Sair de ${email}` : "Sair"}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
           </div>
         </div>
 
         {/* Mobile nav */}
         <nav className="flex items-center gap-1 overflow-x-auto border-t border-border/60 px-4 py-2 md:hidden">
           {nav.map((n) => {
-            const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+            const active = pathname === n.to || pathname.startsWith(n.to + "/");
             const Icon = n.icon;
             return (
               <Link
@@ -90,7 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="text-xs">
-            Feito para a comunidade RubinOT · Dados salvos apenas no seu navegador
+            {email ? <>Conectado como <b className="text-foreground">{email}</b></> : "Feito para a comunidade RubinOT"}
           </div>
         </div>
       </footer>
