@@ -57,7 +57,7 @@ function ImportPage() {
     }
   }, [huntingText, damageText, miscText]);
 
-  const canSave = Boolean(parsed.hunting && effectiveCharId && huntName.trim());
+  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName);
 
   const handleAutoSplit = () => {
     const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
@@ -74,9 +74,12 @@ function ImportPage() {
     setSaving(true);
     setSaveError(null);
     try {
+      if (isNewHunt) {
+        await addHunt(effectiveCharId, selectedHuntName);
+      }
       const created = await addSession({
         characterId: effectiveCharId,
-        huntName: huntName.trim(),
+        huntName: selectedHuntName,
         hunting: parsed.hunting,
         damage: parsed.damage,
         misc: parsed.misc,
@@ -87,6 +90,7 @@ function ImportPage() {
       setSaving(false);
     }
   };
+
 
   if (!hydrated) {
     return (
