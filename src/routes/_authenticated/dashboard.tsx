@@ -3,14 +3,16 @@ import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { aggregateImbuements } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import {
-  Coins, Zap, Timer, Trophy, Swords, TrendingUp, Upload, ScrollText,
+  Coins, Zap, Timer, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import { useMemo } from "react";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
