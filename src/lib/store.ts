@@ -175,6 +175,39 @@ export const useAppStore = create<State>()((set, get) => ({
     }));
   },
 
+  addHunt: async (characterId, name) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) throw new Error("Not signed in");
+    const trimmed = name.trim();
+    const existing = get().hunts.find(
+      (h) => h.characterId === characterId && h.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) return existing;
+    const { data, error } = await db
+      .from("hunts")
+      .insert({ user_id: uid, character_id: characterId, name: trimmed })
+      .select()
+      .single();
+    if (error) throw error;
+    const created: Hunt = {
+      id: data.id,
+      characterId: data.character_id,
+      name: data.name,
+      createdAt: data.created_at,
+    };
+    set((s) => ({ hunts: [...s.hunts, created] }));
+    return created;
+  },
+
+  removeHunt: async (id) => {
+    const { error } = await db.from("hunts").delete().eq("id", id);
+    if (error) throw error;
+    set((s) => ({ hunts: s.hunts.filter((h) => h.id !== id) }));
+  },
+
+
+
 
 
   addSession: async (input) => {
