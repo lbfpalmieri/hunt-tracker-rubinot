@@ -10,8 +10,9 @@ import {
   aggregateImbuements,
 } from "@/lib/imbuements";
 import { fmtGold, fmtDate } from "@/lib/format";
-import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown } from "lucide-react";
+import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   IMBUEMENT_TYPES,
   CATEGORY_LABEL,
@@ -51,6 +52,7 @@ function ImbuementsPage() {
   const sessions = useAppStore((s) => s.sessions);
   const imbuements = useAppStore((s) => s.imbuements);
   const addImbuement = useAppStore((s) => s.addImbuement);
+  const renewImbuement = useAppStore((s) => s.renewImbuement);
   const removeImbuement = useAppStore((s) => s.removeImbuement);
 
   const active = characters.find((c) => c.id === activeId) ?? null;
