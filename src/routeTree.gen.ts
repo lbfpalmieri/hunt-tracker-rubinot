@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 
@@ -47,6 +48,11 @@ const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   path: '/import',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
   id: '/characters',
   path: '/characters',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/characters': typeof AuthenticatedCharactersRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/characters': typeof AuthenticatedCharactersRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/characters'
+    | '/dashboard'
     | '/import'
     | '/sessions'
     | '/sessions/$id'
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/characters'
+    | '/dashboard'
     | '/import'
     | '/sessions'
     | '/sessions/$id'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/_authenticated/characters'
+    | '/_authenticated/dashboard'
     | '/_authenticated/import'
     | '/_authenticated/sessions'
     | '/_authenticated/sessions/$id'
@@ -169,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/characters': {
       id: '/_authenticated/characters'
       path: '/characters'
@@ -201,12 +220,14 @@ const AuthenticatedSessionsRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
 }
