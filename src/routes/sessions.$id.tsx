@@ -184,7 +184,7 @@ function SessionDetail() {
                         borderRadius: 12,
                         fontSize: 12,
                       }}
-                      formatter={(v: number) => fmtNum(v)}
+                      formatter={(v) => fmtNum(Number(v))}
                     />
                   </PieChart>
                 </ResponsiveContainer>

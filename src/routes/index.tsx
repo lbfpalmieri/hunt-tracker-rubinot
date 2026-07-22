@@ -193,7 +193,7 @@ function Dashboard() {
                         borderRadius: 12,
                         fontSize: 12,
                       }}
-                      formatter={(v: number) => fmtGold(v)}
+                      formatter={(v) => fmtGold(Number(v))}
                     />
                     <Area
                       yAxisId="l"
