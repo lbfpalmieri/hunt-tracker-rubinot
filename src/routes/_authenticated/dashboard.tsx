@@ -287,7 +287,15 @@ function Dashboard() {
                   <h2 className="text-base font-semibold">Evolução por sessão</h2>
                   <p className="text-xs text-muted-foreground">XP/h e Lucro/h nas últimas hunts</p>
                 </div>
-                <TrendingUp className="h-4 w-4 text-rubi-blue" />
+                <div className="flex items-center gap-1">
+                  <InfoHint title="Evolução por sessão" description="O que cada eixo representa.">
+                    <p>Cada ponto no eixo X é uma sessão importada, da mais antiga (1) para a mais recente.</p>
+                    <p><strong>XP/h (azul, eixo esquerdo):</strong> <code>xpGain ÷ (duração em horas)</code> daquela sessão isolada — o mesmo valor exibido no Hunting Analyser.</p>
+                    <p><strong>Lucro/h (dourado, eixo direito):</strong> <code>balance ÷ (duração em horas)</code> daquela sessão isolada.</p>
+                    <p>Não é média acumulada — é o desempenho hunt a hunt, útil para ver tendências.</p>
+                  </InfoHint>
+                  <TrendingUp className="h-4 w-4 text-rubi-blue" />
+                </div>
               </div>
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
