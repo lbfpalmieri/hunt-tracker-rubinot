@@ -34,6 +34,17 @@ export const Route = createFileRoute("/_authenticated/imbuements")({
 
 const TIERS: ImbuementTier[] = ["basic", "intricate", "powerful"];
 
+function parseHoursInput(value: string): number {
+  const cleaned = value.trim().replace(",", ".");
+  if (cleaned.includes(":")) {
+    const [h, m] = cleaned.split(":");
+    const hours = Math.max(0, Number(h || "0") || 0);
+    const minutes = Math.max(0, Math.min(59, Number(m || "0") || 0));
+    return hours + minutes / 60;
+  }
+  return Math.max(0, Number(cleaned) || 0);
+}
+
 function ImbuementsPage() {
   const characters = useAppStore((s) => s.characters);
   const activeId = useAppStore((s) => s.activeCharacterId);
