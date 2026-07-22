@@ -3,14 +3,16 @@ import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { aggregateImbuements } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import {
-  Coins, Zap, Timer, Trophy, Swords, TrendingUp, Upload, ScrollText,
+  Coins, Zap, Timer, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import { useMemo } from "react";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -29,7 +31,9 @@ function Dashboard() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
   const sessions = useAppStore((s) => s.sessions);
+  const imbuements = useAppStore((s) => s.imbuements);
   const activeId = useAppStore((s) => s.activeCharacterId);
+
 
   const active = characters.find((c) => c.id === activeId) ?? null;
   const mySessions = useMemo(
@@ -62,6 +66,17 @@ function Dashboard() {
     return { xph, gph, totalTime, balance: totalBal, bestHunt };
   }, [mySessions]);
 
+  const imbAgg = useMemo(
+    () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
+    [imbuements, sessions, active],
+  );
+  const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0);
+  const netGph =
+    agg.totalTime > 0
+      ? netBalance / (agg.totalTime / 3600)
+      : 0;
+
+
   const chartData = useMemo(
     () =>
       [...mySessions].reverse().map((s, i) => ({
@@ -93,12 +108,21 @@ function Dashboard() {
             </p>
           )}
         </div>
-        <Link
-          to="/import"
-          className="inline-flex items-center gap-2 self-start rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90 sm:self-auto"
-        >
-          <Upload className="h-4 w-4" /> Nova sessão
-        </Link>
+        <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+          <Link
+            to="/import"
+            className="inline-flex items-center gap-2 rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90"
+          >
+            <Upload className="h-4 w-4" /> Nova sessão
+          </Link>
+          <Link
+            to="/imbuements"
+            className="inline-flex items-center gap-2 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-2.5 text-sm font-semibold text-rubi-gold hover:bg-rubi-gold/20"
+          >
+            <Sparkles className="h-4 w-4" /> Adicionar imbuement
+          </Link>
+        </div>
+
       </div>
 
       {!hydrated ? (
@@ -131,6 +155,40 @@ function Dashboard() {
             <StatCard label="Tempo total" value={fmtDuration(agg.totalTime)} hint={`${mySessions.length} sessões`} icon={Timer} accent="muted" />
             <StatCard label="Balance acumulado" value={fmtGold(agg.balance)} hint={agg.bestHunt ? `Top spot: ${agg.bestHunt.name}` : ""} icon={Trophy} accent={agg.balance >= 0 ? "success" : "danger"} />
           </div>
+
+          {imbAgg && imbAgg.rows.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard
+                label="Custo imbuement/h"
+                value={fmtGold(imbAgg.activeCostPerHour)}
+                hint={`${imbAgg.rows.filter((r) => r.active).length} ativo(s) · 20h cada`}
+                icon={Sparkles}
+                accent="gold"
+              />
+              <StatCard
+                label="Gasto com imbuements"
+                value={fmtGold(imbAgg.totalSpent)}
+                hint={`${imbAgg.rows.length} registrados`}
+                icon={Coins}
+                accent="muted"
+              />
+              <StatCard
+                label="Lucro líquido"
+                value={fmtGold(netBalance)}
+                hint="Balance − imbuements consumidos"
+                icon={Wallet}
+                accent={netBalance >= 0 ? "success" : "danger"}
+              />
+              <StatCard
+                label="Lucro líquido / h"
+                value={fmtGold(netGph)}
+                hint={netGph >= 0 ? "imbuement se paga" : "imbuement custa mais que rende"}
+                icon={TrendingUp}
+                accent={netGph >= 0 ? "success" : "danger"}
+              />
+            </div>
+          )}
+
 
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="card-surface p-5 lg:col-span-2">

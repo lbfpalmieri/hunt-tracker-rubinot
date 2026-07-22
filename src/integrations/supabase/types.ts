@@ -117,6 +117,44 @@ export type Database = {
           },
         ]
       }
+      imbuements: {
+        Row: {
+          character_id: string
+          created_at: string
+          gold_token_cost: number
+          id: string
+          label: string | null
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          gold_token_cost?: number
+          id?: string
+          label?: string | null
+          tier: string
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          gold_token_cost?: number
+          id?: string
+          label?: string | null
+          tier?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imbuements_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
