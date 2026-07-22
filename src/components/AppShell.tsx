@@ -16,6 +16,7 @@ import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/lib/store";
+import { useLowImbuements, useLowImbuementToasts } from "@/lib/use-low-imbuements";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -36,9 +37,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const reset = useAppStore((s) => s.reset);
+  const activeCharacterId = useAppStore((s) => s.activeCharacterId);
   const [email, setEmail] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
+
+  const lowImbuements = useLowImbuements(activeCharacterId);
+  useLowImbuementToasts(lowImbuements);
+  const lowCount = lowImbuements.length;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
@@ -101,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <button
                 onClick={() => setMoreOpen((v) => !v)}
                 className={
-                  "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
+                  "relative inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
                   (moreActive
                     ? "bg-rubi-blue-soft text-rubi-blue"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground")
@@ -109,12 +115,21 @@ export function AppShell({ children }: { children: ReactNode }) {
               >
                 <MoreHorizontal className="h-4 w-4" />
                 Mais
+                {lowCount > 0 && (
+                  <span
+                    title={`${lowCount} imbuement(s) prestes a expirar`}
+                    className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rubi-gold px-1 text-[10px] font-bold text-background shadow-glow-blue animate-pulse"
+                  >
+                    {lowCount}
+                  </span>
+                )}
               </button>
               {moreOpen && (
                 <div className="absolute left-0 top-full z-40 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-popover shadow-xl">
                   {moreNav.map((n) => {
                     const active = pathname === n.to || pathname.startsWith(n.to + "/");
                     const Icon = n.icon;
+                    const isImb = n.to === "/imbuements";
                     return (
                       <Link
                         key={n.to}
@@ -127,7 +142,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                         }
                       >
                         <Icon className="h-4 w-4" />
-                        {n.label}
+                        <span className="flex-1">{n.label}</span>
+                        {isImb && lowCount > 0 && (
+                          <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-[10px] font-bold text-background">
+                            {lowCount}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
