@@ -321,27 +321,39 @@ function ImbuementsPage() {
                     className="rounded-lg border border-border bg-surface/60 p-3"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={
-                              "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider " +
-                              (r.imb.tier === "powerful"
-                                ? "bg-rubi-gold/20 text-rubi-gold"
-                                : r.imb.tier === "intricate"
-                                  ? "bg-rubi-blue-soft text-rubi-blue"
-                                  : "bg-accent text-muted-foreground")
-                            }
-                          >
-                            {IMB_TIER_LABEL[r.imb.tier]}
-                          </span>
-                          {r.imb.label && (
-                            <span className="text-sm font-medium">{r.imb.label}</span>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {fmtDate(r.imb.createdAt)}
-                          </span>
-                        </div>
+                      <div className="flex min-w-0 items-start gap-3">
+                        {(() => {
+                          const t = getImbuementType(r.imb.label);
+                          return t ? (
+                            <img src={t.icon} alt="" className="mt-0.5 h-8 w-8 shrink-0" />
+                          ) : null;
+                        })()}
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={
+                                "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider " +
+                                (r.imb.tier === "powerful"
+                                  ? "bg-rubi-gold/20 text-rubi-gold"
+                                  : r.imb.tier === "intricate"
+                                    ? "bg-rubi-blue-soft text-rubi-blue"
+                                    : "bg-accent text-muted-foreground")
+                              }
+                            >
+                              {IMB_TIER_LABEL[r.imb.tier]}
+                            </span>
+                            {(() => {
+                              const t = getImbuementType(r.imb.label);
+                              return (
+                                <span className="text-sm font-medium">
+                                  {t ? t.name : r.imb.label || "—"}
+                                </span>
+                              );
+                            })()}
+                            <span className="text-xs text-muted-foreground">
+                              {fmtDate(r.imb.createdAt)}
+                            </span>
+                          </div>
                         <div className="mt-1 text-xs text-muted-foreground">
                           Total {fmtGold(r.totalCost)} · {fmtGold(r.costPerHour)}/h · Gold Token {fmtGold(r.imb.goldTokenCost)}
                         </div>
