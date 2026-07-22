@@ -1,0 +1,1 @@
+ALTER TABLE public.imbuements ADD COLUMN IF NOT EXISTS hours_remaining numeric NOT NULL DEFAULT 20;

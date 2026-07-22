@@ -31,11 +31,14 @@ export function computeImbuement(
 ): ImbuementBreakdown {
   const totalCost = IMB_TIER_COST[imb.tier] + (imb.goldTokenCost || 0);
   const costPerHour = totalCost / IMB_DURATION_HOURS;
+  // "hoursRemaining" registered at creation = how much life the imbuement still had.
+  // The actual cost the user still needs to amortize is proportional to that remaining life.
+  const budgetHours = Math.max(0, Math.min(IMB_DURATION_HOURS, imb.hoursRemaining));
   const hoursAfter = sessions
     .filter((s) => s.characterId === imb.characterId && s.createdAt >= imb.createdAt)
     .reduce((a, s) => a + s.hunting.durationSec / 3600, 0);
-  const hoursConsumed = Math.min(hoursAfter, IMB_DURATION_HOURS);
-  const hoursRemaining = Math.max(0, IMB_DURATION_HOURS - hoursConsumed);
+  const hoursConsumed = Math.min(hoursAfter, budgetHours);
+  const hoursRemaining = Math.max(0, budgetHours - hoursConsumed);
   const amountSpent = costPerHour * hoursConsumed;
   return {
     imb,

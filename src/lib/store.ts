@@ -37,6 +37,7 @@ export interface Imbuement {
   tier: ImbuementTier;
   goldTokenCost: number;
   label: string | null;
+  hoursRemaining: number;
   createdAt: string;
 }
 
@@ -127,6 +128,7 @@ export const useAppStore = create<State>()((set, get) => ({
         tier: i.tier as ImbuementTier,
         goldTokenCost: Number(i.gold_token_cost ?? 0),
         label: i.label ?? null,
+        hoursRemaining: Number(i.hours_remaining ?? 20),
         createdAt: i.created_at,
       }));
       const prevActive = get().activeCharacterId;
@@ -287,6 +289,7 @@ export const useAppStore = create<State>()((set, get) => ({
         tier: input.tier,
         gold_token_cost: input.goldTokenCost,
         label: input.label,
+        hours_remaining: input.hoursRemaining,
       })
       .select()
       .single();
@@ -297,6 +300,7 @@ export const useAppStore = create<State>()((set, get) => ({
       tier: data.tier as ImbuementTier,
       goldTokenCost: Number(data.gold_token_cost ?? 0),
       label: data.label ?? null,
+      hoursRemaining: Number(data.hours_remaining ?? 20),
       createdAt: data.created_at,
     };
     set((s) => ({ imbuements: [created, ...s.imbuements] }));

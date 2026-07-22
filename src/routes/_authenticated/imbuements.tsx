@@ -46,7 +46,8 @@ function ImbuementsPage() {
 
   const [tier, setTier] = useState<ImbuementTier>("powerful");
   const [gold, setGold] = useState<string>("");
-  
+  const [hoursRemaining, setHoursRemaining] = useState<string>("20");
+
   const [busy, setBusy] = useState(false);
 
   const [typeId, setTypeId] = useState<string>("");
@@ -106,6 +107,8 @@ function ImbuementsPage() {
 
   const goldNum = Number((gold || "0").replace(/[.,\s]/g, "")) || 0;
   const totalPreview = IMB_TIER_COST[tier] + goldNum;
+  const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, Number((hoursRemaining || "0").replace(",", ".")) || 0));
+  const remainingCostPreview = (totalPreview / IMB_DURATION_HOURS) * hoursNum;
 
   const handleAdd = async () => {
     if (!typeId) return;
@@ -116,10 +119,12 @@ function ImbuementsPage() {
         tier,
         goldTokenCost: goldNum,
         label: typeId,
+        hoursRemaining: hoursNum,
       });
       setGold("");
       setTypeId("");
       setPickerQuery("");
+      setHoursRemaining("20");
     } finally {
       setBusy(false);
     }
@@ -189,6 +194,25 @@ function ImbuementsPage() {
               placeholder="Ex: 320000"
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
             />
+          </label>
+
+          <label className="mb-3 block">
+            <span className="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span>Horas restantes</span>
+              <span className="text-[10px] normal-case tracking-normal text-muted-foreground/70">
+                máx {IMB_DURATION_HOURS}h
+              </span>
+            </span>
+            <input
+              inputMode="decimal"
+              value={hoursRemaining}
+              onChange={(e) => setHoursRemaining(e.target.value)}
+              placeholder="20"
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
+            />
+            <span className="mt-1 block text-[10px] text-muted-foreground">
+              Se o imbuement já foi feito antes, informe quanto tempo ainda resta no jogo.
+            </span>
           </label>
 
           <div className="mb-4 block" ref={pickerRef}>
@@ -284,6 +308,10 @@ function ImbuementsPage() {
               <span className="text-muted-foreground">Custo / hora</span>
               <span>{fmtGold(totalPreview / IMB_DURATION_HOURS)}</span>
             </div>
+            <div className="mt-1 flex justify-between">
+              <span className="text-muted-foreground">A amortizar em {hoursNum}h</span>
+              <span>{fmtGold(remainingCostPreview)}</span>
+            </div>
           </div>
 
           <button
@@ -314,7 +342,8 @@ function ImbuementsPage() {
           ) : (
             <ul className="space-y-2">
               {agg.rows.map((r) => {
-                const pct = Math.min(100, (r.hoursConsumed / IMB_DURATION_HOURS) * 100);
+                const budget = Math.max(0.0001, Math.min(IMB_DURATION_HOURS, r.imb.hoursRemaining));
+                const pct = Math.min(100, (r.hoursConsumed / budget) * 100);
                 return (
                   <li
                     key={r.imb.id}
@@ -372,7 +401,7 @@ function ImbuementsPage() {
                       <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Timer className="h-3 w-3" />
-                          {r.hoursConsumed.toFixed(1)}h / {IMB_DURATION_HOURS}h
+                          {r.hoursConsumed.toFixed(1)}h / {budget.toFixed(budget % 1 === 0 ? 0 : 1)}h
                         </span>
                         <span>Gasto: {fmtGold(r.amountSpent)}</span>
                       </div>
