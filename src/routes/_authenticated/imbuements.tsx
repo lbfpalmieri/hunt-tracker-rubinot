@@ -420,21 +420,23 @@ function ImbuementsPage() {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleRenew(r.imb.id, r.imb.goldTokenCost)}
-                        className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-1 text-[11px] font-semibold text-rubi-gold hover:bg-rubi-gold/20"
-                        title="Renovar imbuement (recarrega para 20h)"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                        Renovar
-                      </button>
-                      <button
-                        onClick={() => removeImbuement(r.imb.id)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
-                        title="Remover"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          onClick={() => handleRenew(r.imb.id, r.imb.goldTokenCost)}
+                          className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-1 text-[11px] font-semibold text-rubi-gold hover:bg-rubi-gold/20"
+                          title="Renovar imbuement (recarrega para 20h)"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Renovar
+                        </button>
+                        <button
+                          onClick={() => removeImbuement(r.imb.id)}
+                          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+                          title="Remover"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="mt-3">
