@@ -38,17 +38,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const reset = useAppStore((s) => s.reset);
   const activeCharacterId = useAppStore((s) => s.activeCharacterId);
-  const [email, setEmail] = useState<string | null>(null);
+  const characters = useAppStore((s) => s.characters);
+  const activeCharacter = characters.find((c) => c.id === activeCharacterId) ?? null;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
 
   const lowImbuements = useLowImbuements(activeCharacterId);
   useLowImbuementToasts(lowImbuements);
   const lowCount = lowImbuements.length;
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
-  }, []);
 
   useEffect(() => {
     if (!moreOpen) return;
