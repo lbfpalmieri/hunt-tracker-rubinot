@@ -354,8 +354,9 @@ function ImbuementsPage() {
                               {fmtDate(r.imb.createdAt)}
                             </span>
                           </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Total {fmtGold(r.totalCost)} · {fmtGold(r.costPerHour)}/h · Gold Token {fmtGold(r.imb.goldTokenCost)}
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            Total {fmtGold(r.totalCost)} · {fmtGold(r.costPerHour)}/h · Gold Token {fmtGold(r.imb.goldTokenCost)}
+                          </div>
                         </div>
                       </div>
                       <button
