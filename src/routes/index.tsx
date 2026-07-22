@@ -14,10 +14,10 @@ export const Route = createFileRoute("/")({
         content:
           "Ferramenta para acompanhar XP/h, lucro/h, monstros e evolução dos seus personagens no RubinOT. Login com Google, dados salvos na nuvem.",
       },
-      { property: "og:title", content: "RubinOT Hunt Tracker" },
+      { property: "og:title", content: "RubinOT Hunt Tracker — Monitore suas hunts" },
       {
         property: "og:description",
-        content: "Monitore suas hunts, lucro e evolução no RubinOT.",
+        content: "Ferramenta para acompanhar XP/h, lucro/h, monstros e evolução dos seus personagens no RubinOT. Login com Google, dados salvos na nuvem.",
       },
       { property: "og:type", content: "website" },
     ],
