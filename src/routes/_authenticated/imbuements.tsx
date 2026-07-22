@@ -443,7 +443,7 @@ function ImbuementsPage() {
                       <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Timer className="h-3 w-3" />
-                          {r.hoursConsumed.toFixed(1)}h / {budget.toFixed(budget % 1 === 0 ? 0 : 1)}h
+                          {fmtHoursMin(r.hoursConsumed)} / {fmtHoursMin(budget)}
                         </span>
                         <span>Gasto: {fmtGold(r.amountSpent)}</span>
                       </div>
