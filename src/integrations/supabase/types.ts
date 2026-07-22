@@ -122,6 +122,7 @@ export type Database = {
           character_id: string
           created_at: string
           gold_token_cost: number
+          hours_remaining: number
           id: string
           label: string | null
           tier: string
@@ -131,6 +132,7 @@ export type Database = {
           character_id: string
           created_at?: string
           gold_token_cost?: number
+          hours_remaining?: number
           id?: string
           label?: string | null
           tier: string
@@ -140,6 +142,7 @@ export type Database = {
           character_id?: string
           created_at?: string
           gold_token_cost?: number
+          hours_remaining?: number
           id?: string
           label?: string | null
           tier?: string
