@@ -70,12 +70,9 @@ export const useAppStore = create<State>()(
       storage: createJSONStorage(() =>
         typeof window !== "undefined"
           ? window.localStorage
-          : ({
-              getItem: () => null,
-              setItem: () => {},
-              removeItem: () => {},
-            } as Storage),
+          : (undefined as unknown as Storage),
       ),
+      skipHydration: true,
     },
   ),
 );
