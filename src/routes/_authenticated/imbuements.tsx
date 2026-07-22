@@ -46,7 +46,8 @@ function ImbuementsPage() {
 
   const [tier, setTier] = useState<ImbuementTier>("powerful");
   const [gold, setGold] = useState<string>("");
-  
+  const [hoursRemaining, setHoursRemaining] = useState<string>("20");
+
   const [busy, setBusy] = useState(false);
 
   const [typeId, setTypeId] = useState<string>("");
@@ -106,6 +107,8 @@ function ImbuementsPage() {
 
   const goldNum = Number((gold || "0").replace(/[.,\s]/g, "")) || 0;
   const totalPreview = IMB_TIER_COST[tier] + goldNum;
+  const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, Number((hoursRemaining || "0").replace(",", ".")) || 0));
+  const remainingCostPreview = (totalPreview / IMB_DURATION_HOURS) * hoursNum;
 
   const handleAdd = async () => {
     if (!typeId) return;
@@ -116,10 +119,12 @@ function ImbuementsPage() {
         tier,
         goldTokenCost: goldNum,
         label: typeId,
+        hoursRemaining: hoursNum,
       });
       setGold("");
       setTypeId("");
       setPickerQuery("");
+      setHoursRemaining("20");
     } finally {
       setBusy(false);
     }
