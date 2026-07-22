@@ -342,7 +342,8 @@ function ImbuementsPage() {
           ) : (
             <ul className="space-y-2">
               {agg.rows.map((r) => {
-                const pct = Math.min(100, (r.hoursConsumed / IMB_DURATION_HOURS) * 100);
+                const budget = Math.max(0.0001, Math.min(IMB_DURATION_HOURS, r.imb.hoursRemaining));
+                const pct = Math.min(100, (r.hoursConsumed / budget) * 100);
                 return (
                   <li
                     key={r.imb.id}
@@ -400,7 +401,7 @@ function ImbuementsPage() {
                       <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Timer className="h-3 w-3" />
-                          {r.hoursConsumed.toFixed(1)}h / {IMB_DURATION_HOURS}h
+                          {r.hoursConsumed.toFixed(1)}h / {budget.toFixed(budget % 1 === 0 ? 0 : 1)}h
                         </span>
                         <span>Gasto: {fmtGold(r.amountSpent)}</span>
                       </div>
