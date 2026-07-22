@@ -442,7 +442,11 @@ function ImbuementsPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         <button
-                          onClick={() => handleRenew(r.imb.id, r.imb.goldTokenCost)}
+                          onClick={() => {
+                            const t = getImbuementType(r.imb.label);
+                            const label = `${IMB_TIER_LABEL[r.imb.tier]} · ${t ? t.name : r.imb.label || "Imbuement"}`;
+                            openRenew(r.imb.id, r.imb.goldTokenCost, label);
+                          }}
                           className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-1 text-[11px] font-semibold text-rubi-gold hover:bg-rubi-gold/20"
                           title="Renovar imbuement (recarrega para 20h)"
                         >
