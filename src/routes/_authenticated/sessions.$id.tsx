@@ -98,9 +98,9 @@ function SessionDetail() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />
         <StatCard
-          label="XP/h"
-          value={fmtNum(h.xpPerHour)}
-          hint={`XP ganha: ${fmtNum(h.xpGain)}`}
+          label="XP ganha"
+          value={fmtNum(h.xpGain)}
+          hint={`Raw XP ganha: ${fmtNum(h.rawXp)}`}
           icon={Zap}
           accent="blue"
         />
