@@ -22,9 +22,17 @@ export interface HuntSession {
   misc: MiscData | null;
 }
 
+export interface Hunt {
+  id: string;
+  characterId: string;
+  name: string;
+  createdAt: string;
+}
+
 interface State {
   characters: Character[];
   sessions: HuntSession[];
+  hunts: Hunt[];
   activeCharacterId: string | null;
   loaded: boolean;
   loading: boolean;
@@ -34,6 +42,8 @@ interface State {
   addCharacter: (c: Omit<Character, "id" | "createdAt">) => Promise<Character>;
   updateCharacter: (id: string, patch: Partial<Omit<Character, "id" | "createdAt">>) => Promise<void>;
   removeCharacter: (id: string) => Promise<void>;
+  addHunt: (characterId: string, name: string) => Promise<Hunt>;
+  removeHunt: (id: string) => Promise<void>;
   addSession: (s: Omit<HuntSession, "id" | "createdAt">) => Promise<HuntSession>;
   removeSession: (id: string) => Promise<void>;
 }
