@@ -31,7 +31,9 @@ function Dashboard() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
   const sessions = useAppStore((s) => s.sessions);
+  const imbuements = useAppStore((s) => s.imbuements);
   const activeId = useAppStore((s) => s.activeCharacterId);
+
 
   const active = characters.find((c) => c.id === activeId) ?? null;
   const mySessions = useMemo(
