@@ -215,6 +215,11 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-gold">
               <Coins className="h-3.5 w-3.5" /> Ouro
+              <InfoHint title="Ouro" description="Lucro bruto e balance acumulado.">
+                <p><strong>Balance bruto:</strong> <code>Σ (loot − supplies)</code> de cada sessão. Não desconta imbuements.</p>
+                <p><strong>Lucro / hora (média):</strong> <code>Balance bruto ÷ horas totais</code>. Média ponderada pelo tempo — igual a rodar todas as suas hunts como uma só e dividir pelo tempo real.</p>
+                <p>Pode ficar negativo se você gastou mais em supplies do que fez em loot.</p>
+              </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <StatCard label="Lucro / hora (média)" value={fmtGold(agg.gph)} hint="gold bruto por hora" icon={Coins} accent="gold" />
