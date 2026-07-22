@@ -11,7 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
 } from "recharts";
 
-export const Route = createFileRoute("/sessions/$id")({
+export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: ({ params }) => ({
     meta: [
       { title: `Sessão ${params.id.slice(0, 6)} — RubinOT Hunt Tracker` },
@@ -83,9 +83,9 @@ function SessionDetail() {
           </p>
         </div>
         <button
-          onClick={() => {
+          onClick={async () => {
             if (confirm("Excluir esta sessão?")) {
-              removeSession(session.id);
+              await removeSession(session.id);
               navigate({ to: "/sessions" });
             }
           }}

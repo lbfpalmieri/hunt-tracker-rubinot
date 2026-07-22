@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDate } from "@/lib/format";
-import { Plus, Trash2, UserCircle2, Star, Download, Upload as UploadIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { Plus, Trash2, UserCircle2, Star } from "lucide-react";
+import { useState } from "react";
 
-export const Route = createFileRoute("/characters")({
+export const Route = createFileRoute("/_authenticated/characters")({
   head: () => ({
     meta: [
       { title: "Personagens — RubinOT Hunt Tracker" },
@@ -28,49 +28,27 @@ function CharactersPage() {
   const addCharacter = useAppStore((s) => s.addCharacter);
   const removeCharacter = useAppStore((s) => s.removeCharacter);
   const setActive = useAppStore((s) => s.setActive);
-  const importData = useAppStore((s) => s.importData);
 
   const [name, setName] = useState("");
   const [vocation, setVocation] = useState(VOCATIONS[0]);
   const [world, setWorld] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !world.trim()) return;
-    addCharacter({ name: name.trim(), vocation, world: world.trim() });
-    setName("");
-    setWorld("");
-  };
-
-  const handleExport = () => {
-    const blob = new Blob(
-      [JSON.stringify({ characters, sessions }, null, 2)],
-      { type: "application/json" },
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rubinot-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    setSaving(true);
+    setError(null);
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      if (Array.isArray(data.characters) && Array.isArray(data.sessions)) {
-        if (confirm("Isso substituirá todos os dados atuais. Continuar?")) {
-          importData(data);
-        }
-      } else alert("Arquivo inválido.");
-    } catch {
-      alert("Erro ao ler o arquivo.");
+      await addCharacter({ name: name.trim(), vocation, world: world.trim() });
+      setName("");
+      setWorld("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
     }
-    if (fileRef.current) fileRef.current.value = "";
   };
 
   if (!hydrated) {
@@ -130,10 +108,16 @@ function CharactersPage() {
           </label>
           <button
             type="submit"
-            className="w-full rounded-lg bg-rubi-blue px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90"
+            disabled={saving}
+            className="w-full rounded-lg bg-rubi-blue px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90 disabled:opacity-50"
           >
-            Adicionar
+            {saving ? "Salvando..." : "Adicionar"}
           </button>
+          {error && (
+            <p className="rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
+              {error}
+            </p>
+          )}
         </form>
 
         <div className="lg:col-span-2">
@@ -147,10 +131,7 @@ function CharactersPage() {
                 const count = sessions.filter((s) => s.characterId === c.id).length;
                 const isActive = c.id === activeId;
                 return (
-                  <li
-                    key={c.id}
-                    className="card-surface flex items-center justify-between gap-3 p-4"
-                  >
+                  <li key={c.id} className="card-surface flex items-center justify-between gap-3 p-4">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-rubi-blue-soft text-rubi-blue">
                         <UserCircle2 className="h-6 w-6" />
@@ -179,8 +160,8 @@ function CharactersPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => {
-                          if (confirm(`Excluir ${c.name} e todas as suas sessões?`)) removeCharacter(c.id);
+                        onClick={async () => {
+                          if (confirm(`Excluir ${c.name} e todas as suas sessões?`)) await removeCharacter(c.id);
                         }}
                         className="rounded-lg border border-rubi-danger/40 p-1.5 text-rubi-danger hover:bg-rubi-danger/10"
                         aria-label="Excluir"
@@ -193,27 +174,6 @@ function CharactersPage() {
               })}
             </ul>
           )}
-        </div>
-      </div>
-
-      <div className="mt-8 card-surface flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">Backup dos dados</h3>
-          <p className="text-xs text-muted-foreground">
-            Baixe um JSON com todos os personagens e sessões, ou restaure de um backup anterior.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium hover:bg-accent"
-          >
-            <Download className="h-4 w-4" /> Exportar
-          </button>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium hover:bg-accent">
-            <UploadIcon className="h-4 w-4" /> Importar
-            <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={handleImport} />
-          </label>
         </div>
       </div>
     </AppShell>

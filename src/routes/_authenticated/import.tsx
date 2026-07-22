@@ -7,7 +7,7 @@ import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { Upload, Wand2, Save, UserCircle2, Sparkles } from "lucide-react";
 
-export const Route = createFileRoute("/import")({
+export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({
     meta: [
       { title: "Importar sessão — RubinOT Hunt Tracker" },
@@ -56,16 +56,25 @@ function ImportPage() {
     if (parts.misc) setMiscText(parts.misc);
   };
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const handleSave = async () => {
     if (!canSave || !parsed.hunting) return;
-    const created = addSession({
-      characterId: effectiveCharId,
-      huntName: huntName.trim(),
-      hunting: parsed.hunting,
-      damage: parsed.damage,
-      misc: parsed.misc,
-    });
-    navigate({ to: "/sessions/$id", params: { id: created.id } });
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const created = await addSession({
+        characterId: effectiveCharId,
+        huntName: huntName.trim(),
+        hunting: parsed.hunting,
+        damage: parsed.damage,
+        misc: parsed.misc,
+      });
+      navigate({ to: "/sessions/$id", params: { id: created.id } });
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : String(e));
+      setSaving(false);
+    }
   };
 
   if (!hydrated) {
