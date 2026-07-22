@@ -85,6 +85,9 @@ function CharactersPage() {
   const [outfitUrl, setOutfitUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "new" for the form, character id for existing rows, null = no target
+  const [pasteTarget, setPasteTarget] = useState<string | null>("new");
+  const [pasteFlash, setPasteFlash] = useState<string | null>(null);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,17 +111,50 @@ function CharactersPage() {
     }
   };
 
-  const handleOutfitFile = async (file: File | null) => {
-    if (!file) return;
-    setError(null);
-    try {
-      const raw = await fileToDataUrl(file);
-      const compressed = await compressImage(raw, 512, 0.9);
-      setOutfitUrl(compressed);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar imagem");
-    }
+  const processImageBlob = async (blob: Blob): Promise<string> => {
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Falha ao ler imagem"));
+      reader.readAsDataURL(blob);
+    });
+    return compressImage(dataUrl, 512, 0.9);
   };
+
+  useEffect(() => {
+    const onPaste = async (e: ClipboardEvent) => {
+      if (!pasteTarget) return;
+      // Ignore paste inside text inputs so you can still paste names
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (!file) continue;
+          e.preventDefault();
+          setError(null);
+          try {
+            const compressed = await processImageBlob(file);
+            if (pasteTarget === "new") {
+              setOutfitUrl(compressed);
+            } else {
+              await updateCharacter(pasteTarget, { outfitUrl: compressed });
+            }
+            setPasteFlash(pasteTarget);
+            setTimeout(() => setPasteFlash(null), 1200);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Falha ao colar imagem");
+          }
+          return;
+        }
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [pasteTarget, updateCharacter]);
+
 
   if (!hydrated) {
     return (
