@@ -1,6 +1,15 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Upload, ScrollText, UserCircle2, Info, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  LayoutDashboard,
+  Swords,
+  ScrollText,
+  UserCircle2,
+  Info,
+  LogOut,
+  MoreHorizontal,
+  Calculator,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/rubinot-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";
@@ -10,9 +19,13 @@ import type { ReactNode } from "react";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/import", label: "Importar", icon: Upload },
+  { to: "/import", label: "Nova sessão", icon: Swords },
   { to: "/sessions", label: "Sessões", icon: ScrollText },
   { to: "/characters", label: "Personagens", icon: UserCircle2 },
+] as const;
+
+const moreNav = [
+  { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
 
