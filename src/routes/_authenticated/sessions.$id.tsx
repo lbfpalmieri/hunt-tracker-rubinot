@@ -100,7 +100,7 @@ function SessionDetail() {
         <StatCard
           label="XP/h"
           value={fmtNum(h.xpPerHour)}
-          hint={`Raw: ${fmtNum(h.rawXpPerHour)}/h`}
+          hint={`XP ganha: ${fmtNum(h.xpGain)}`}
           icon={Zap}
           accent="blue"
         />
