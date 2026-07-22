@@ -6,7 +6,7 @@ import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
 import { ScrollText, Search, Filter, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
-export const Route = createFileRoute("/sessions")({
+export const Route = createFileRoute("/_authenticated/sessions")({
   head: () => ({
     meta: [
       { title: "Sessões — RubinOT Hunt Tracker" },

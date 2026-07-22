@@ -4,7 +4,7 @@ import logo from "@/assets/rubinot-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { Youtube, Instagram, Heart } from "lucide-react";
 
-export const Route = createFileRoute("/about")({
+export const Route = createFileRoute("/_authenticated/about")({
   head: () => ({
     meta: [
       { title: "Sobre — RubinOT Hunt Tracker" },

@@ -7,7 +7,7 @@ import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { Upload, Wand2, Save, UserCircle2, Sparkles } from "lucide-react";
 
-export const Route = createFileRoute("/import")({
+export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({
     meta: [
       { title: "Importar sessão — RubinOT Hunt Tracker" },
@@ -56,16 +56,25 @@ function ImportPage() {
     if (parts.misc) setMiscText(parts.misc);
   };
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const handleSave = async () => {
     if (!canSave || !parsed.hunting) return;
-    const created = addSession({
-      characterId: effectiveCharId,
-      huntName: huntName.trim(),
-      hunting: parsed.hunting,
-      damage: parsed.damage,
-      misc: parsed.misc,
-    });
-    navigate({ to: "/sessions/$id", params: { id: created.id } });
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const created = await addSession({
+        characterId: effectiveCharId,
+        huntName: huntName.trim(),
+        hunting: parsed.hunting,
+        damage: parsed.damage,
+        misc: parsed.misc,
+      });
+      navigate({ to: "/sessions/$id", params: { id: created.id } });
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : String(e));
+      setSaving(false);
+    }
   };
 
   if (!hydrated) {
@@ -160,11 +169,16 @@ function ImportPage() {
 
             <button
               onClick={handleSave}
-              disabled={!canSave}
+              disabled={!canSave || saving}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rubi-gold px-4 py-2.5 text-sm font-semibold text-background shadow-glow-gold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
             >
-              <Save className="h-4 w-4" /> Salvar sessão
+              <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar sessão"}
             </button>
+            {saveError && (
+              <p className="mt-2 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
+                {saveError}
+              </p>
+            )}
             {!canSave && (
               <p className="mt-2 text-xs text-muted-foreground">
                 {!parsed.hunting
