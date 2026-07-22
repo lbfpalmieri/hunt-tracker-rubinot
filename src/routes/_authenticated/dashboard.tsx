@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
+import { InfoHint } from "@/components/InfoHint";
 import { useAppStore, useHydrated } from "@/lib/store";
-import { aggregateImbuements } from "@/lib/imbuements";
+import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import {
   Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
@@ -156,6 +157,11 @@ function Dashboard() {
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                   <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
                   Balance acumulado
+                  <InfoHint title="Balance acumulado" description="Soma bruta do saldo de todas as sessões deste personagem.">
+                    <p><strong>Fórmula:</strong> <code>Σ (loot − supplies)</code> de cada sessão importada, exatamente como o Balance do Hunting Analyser do jogo.</p>
+                    <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements — isso aparece separado como <em>Lucro líquido</em>.</p>
+                    <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>.</p>
+                  </InfoHint>
                 </div>
                 <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (agg.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
                   {fmtGold(agg.balance)}
@@ -187,6 +193,11 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-blue">
               <Zap className="h-3.5 w-3.5" /> Experiência
+              <InfoHint title="Experiência" description="Como XP/h e XP total são calculadas.">
+                <p><strong>XP total ganha:</strong> <code>Σ xpGain</code> de cada sessão (é o <em>XP Gain</em> que aparece no Hunting Analyser — já com bônus).</p>
+                <p><strong>XP / hora (média):</strong> <code>XP total ganha ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p>Usamos apenas o <em>XP Gain</em>, não o Raw XP — Raw XP não considera bônus (stamina, XP boost, event) e é volátil quando você para de matar.</p>
+              </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <StatCard label="XP / hora (média)" value={fmtNum(agg.xph)} icon={Zap} accent="blue" />
@@ -204,6 +215,11 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-gold">
               <Coins className="h-3.5 w-3.5" /> Ouro
+              <InfoHint title="Ouro" description="Lucro bruto e balance acumulado.">
+                <p><strong>Balance bruto:</strong> <code>Σ (loot − supplies)</code> de cada sessão. Não desconta imbuements.</p>
+                <p><strong>Lucro / hora (média):</strong> <code>Balance bruto ÷ horas totais</code>. Média ponderada pelo tempo — igual a rodar todas as suas hunts como uma só e dividir pelo tempo real.</p>
+                <p>Pode ficar negativo se você gastou mais em supplies do que fez em loot.</p>
+              </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <StatCard label="Lucro / hora (média)" value={fmtGold(agg.gph)} hint="gold bruto por hora" icon={Coins} accent="gold" />
@@ -221,6 +237,13 @@ function Dashboard() {
             <div className="mt-6">
               <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-gold">
                 <Sparkles className="h-3.5 w-3.5" /> Imbuements
+                <InfoHint title="Imbuements" description="Como o custo dos imbuements é diluído nas hunts.">
+                  <p>Todo imbuement dura <strong>{IMB_DURATION_HOURS}h</strong> de caça no jogo. O custo total é <code>preço do tier + Gold Token</code>.</p>
+                  <p><strong>Custo / hora (ativo):</strong> <code>Σ (custo total ÷ {IMB_DURATION_HOURS}h)</code> de cada imbuement ainda ativo. É quanto você "queima" de gold por hora enquanto está com os imbuements ligados.</p>
+                  <p><strong>Consumido:</strong> para cada imbuement, somamos as horas caçadas <em>depois</em> do registro (até o limite das horas restantes informadas) e multiplicamos por <code>custo/hora</code>. Sessões anteriores ao registro não amortizam nada — por isso pode aparecer 0.</p>
+                  <p><strong>Lucro líquido:</strong> <code>Balance bruto − Consumido</code>.</p>
+                  <p><strong>Projeção líquida / h:</strong> <code>Lucro/h médio − Custo/h ativo</code>. Se ficar positivo, o imbuement se paga; negativo, custa mais do que rende.</p>
+                </InfoHint>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
@@ -264,7 +287,15 @@ function Dashboard() {
                   <h2 className="text-base font-semibold">Evolução por sessão</h2>
                   <p className="text-xs text-muted-foreground">XP/h e Lucro/h nas últimas hunts</p>
                 </div>
-                <TrendingUp className="h-4 w-4 text-rubi-blue" />
+                <div className="flex items-center gap-1">
+                  <InfoHint title="Evolução por sessão" description="O que cada eixo representa.">
+                    <p>Cada ponto no eixo X é uma sessão importada, da mais antiga (1) para a mais recente.</p>
+                    <p><strong>XP/h (azul, eixo esquerdo):</strong> <code>xpGain ÷ (duração em horas)</code> daquela sessão isolada — o mesmo valor exibido no Hunting Analyser.</p>
+                    <p><strong>Lucro/h (dourado, eixo direito):</strong> <code>balance ÷ (duração em horas)</code> daquela sessão isolada.</p>
+                    <p>Não é média acumulada — é o desempenho hunt a hunt, útil para ver tendências.</p>
+                  </InfoHint>
+                  <TrendingUp className="h-4 w-4 text-rubi-blue" />
+                </div>
               </div>
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
