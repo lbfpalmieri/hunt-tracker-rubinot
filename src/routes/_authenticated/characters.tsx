@@ -7,11 +7,13 @@ import {
   Trash2,
   UserCircle2,
   Star,
-  Upload,
   X,
   ImageIcon,
+  Clipboard,
+  ClipboardPaste,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 
 export const Route = createFileRoute("/_authenticated/characters")({
   head: () => ({
