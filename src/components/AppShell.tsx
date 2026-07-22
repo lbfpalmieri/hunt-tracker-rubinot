@@ -38,17 +38,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const reset = useAppStore((s) => s.reset);
   const activeCharacterId = useAppStore((s) => s.activeCharacterId);
-  const [email, setEmail] = useState<string | null>(null);
+  const characters = useAppStore((s) => s.characters);
+  const activeCharacter = characters.find((c) => c.id === activeCharacterId) ?? null;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
 
   const lowImbuements = useLowImbuements(activeCharacterId);
   useLowImbuementToasts(lowImbuements);
   const lowCount = lowImbuements.length;
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
-  }, []);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -160,7 +157,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <CharacterSwitcher />
             <button
               onClick={handleSignOut}
-              title={email ? `Sair de ${email}` : "Sair"}
+              title={activeCharacter ? `Sair (${activeCharacter.name})` : "Sair"}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
@@ -205,7 +202,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="text-xs">
-            {email ? <>Conectado como <b className="text-foreground">{email}</b></> : "Feito para a comunidade RubinOT"}
+            {activeCharacter ? <>Conectado como <b className="text-foreground">{activeCharacter.name}</b></> : "Feito para a comunidade RubinOT"}
           </div>
         </div>
       </footer>
