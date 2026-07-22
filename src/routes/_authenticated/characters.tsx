@@ -217,7 +217,15 @@ function CharactersPage() {
 
           <div>
             <span className="text-xs font-medium text-muted-foreground">Outfit (opcional)</span>
-            <div className="mt-1 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPasteTarget("new")}
+              className={`mt-1 flex w-full items-center gap-3 rounded-lg border-2 border-dashed p-3 text-left transition ${
+                pasteTarget === "new"
+                  ? "border-rubi-blue bg-rubi-blue/5"
+                  : "border-border hover:border-rubi-blue/50"
+              } ${pasteFlash === "new" ? "border-rubi-gold bg-rubi-gold/10" : ""}`}
+            >
               <div className="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-lg border border-border bg-input">
                 {outfitUrl ? (
                   <img src={outfitUrl} alt="Outfit" className="h-full w-full object-cover" />
@@ -226,28 +234,32 @@ function CharactersPage() {
                 )}
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent">
-                  <Upload className="h-3.5 w-3.5" />
-                  {outfitUrl ? "Trocar imagem" : "Enviar imagem"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleOutfitFile(e.target.files?.[0] ?? null)}
-                  />
-                </label>
-                {outfitUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setOutfitUrl(null)}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-rubi-danger/40 px-3 py-1.5 text-xs text-rubi-danger hover:bg-rubi-danger/10"
-                  >
-                    <X className="h-3.5 w-3.5" /> Remover
-                  </button>
-                )}
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <ClipboardPaste className="h-3.5 w-3.5 text-rubi-blue" />
+                  {outfitUrl ? "Cole outra imagem para trocar" : "Cole uma imagem (Ctrl+V)"}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {pasteTarget === "new"
+                    ? "Pronto — copie um print e pressione Ctrl+V."
+                    : "Clique para focar aqui e depois cole."}
+                </div>
               </div>
-            </div>
+              {outfitUrl && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOutfitUrl(null);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-rubi-danger/40 px-2 py-1 text-[11px] text-rubi-danger hover:bg-rubi-danger/10"
+                >
+                  <X className="h-3 w-3" /> Remover
+                </span>
+              )}
+            </button>
           </div>
+
 
           <button
             type="submit"
