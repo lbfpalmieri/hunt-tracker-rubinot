@@ -107,7 +107,13 @@ export const useAppStore = create<State>()((set, get) => ({
     if (!uid) throw new Error("Not signed in");
     const { data, error } = await db
       .from("characters")
-      .insert({ user_id: uid, name: c.name, vocation: c.vocation, world: c.world })
+      .insert({
+        user_id: uid,
+        name: c.name,
+        vocation: c.vocation,
+        world: c.world,
+        outfit_url: c.outfitUrl,
+      })
       .select()
       .single();
     if (error) throw error;
@@ -116,6 +122,7 @@ export const useAppStore = create<State>()((set, get) => ({
       name: data.name,
       vocation: data.vocation,
       world: data.world,
+      outfitUrl: data.outfit_url ?? null,
       createdAt: data.created_at,
     };
     set((s) => ({
@@ -123,6 +130,19 @@ export const useAppStore = create<State>()((set, get) => ({
       activeCharacterId: s.activeCharacterId ?? created.id,
     }));
     return created;
+  },
+
+  updateCharacter: async (id, patch) => {
+    const dbPatch: Record<string, unknown> = {};
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.vocation !== undefined) dbPatch.vocation = patch.vocation;
+    if (patch.world !== undefined) dbPatch.world = patch.world;
+    if (patch.outfitUrl !== undefined) dbPatch.outfit_url = patch.outfitUrl;
+    const { error } = await db.from("characters").update(dbPatch).eq("id", id);
+    if (error) throw error;
+    set((s) => ({
+      characters: s.characters.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }));
   },
 
   removeCharacter: async (id) => {
@@ -134,6 +154,8 @@ export const useAppStore = create<State>()((set, get) => ({
       activeCharacterId: s.activeCharacterId === id ? null : s.activeCharacterId,
     }));
   },
+
+
 
   addSession: async (input) => {
     const { data: userData } = await supabase.auth.getUser();
