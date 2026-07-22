@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtNum, fmtDuration } from "@/lib/format";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Calculator, Swords, Target, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/tools/monster-calculator")({
