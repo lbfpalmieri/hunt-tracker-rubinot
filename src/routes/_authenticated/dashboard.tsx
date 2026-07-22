@@ -157,6 +157,11 @@ function Dashboard() {
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                   <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
                   Balance acumulado
+                  <InfoHint title="Balance acumulado" description="Soma bruta do saldo de todas as sessões deste personagem.">
+                    <p><strong>Fórmula:</strong> <code>Σ (loot − supplies)</code> de cada sessão importada, exatamente como o Balance do Hunting Analyser do jogo.</p>
+                    <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements — isso aparece separado como <em>Lucro líquido</em>.</p>
+                    <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>.</p>
+                  </InfoHint>
                 </div>
                 <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (agg.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
                   {fmtGold(agg.balance)}
