@@ -17,6 +17,7 @@ import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
+import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -58,6 +59,12 @@ const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedToolsMonsterCalculatorRoute =
+  AuthenticatedToolsMonsterCalculatorRouteImport.update({
+    id: '/tools/monster-calculator',
+    path: '/tools/monster-calculator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -73,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +91,7 @@ export interface FileRoutesByTo {
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +104,7 @@ export interface FileRoutesById {
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/sessions'
     | '/sessions/$id'
+    | '/tools/monster-calculator'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/sessions'
     | '/sessions/$id'
+    | '/tools/monster-calculator'
   id:
     | '__root__'
     | '/'
@@ -128,6 +140,7 @@ export interface FileRouteTypes {
     | '/_authenticated/import'
     | '/_authenticated/sessions'
     | '/_authenticated/sessions/$id'
+    | '/_authenticated/tools/monster-calculator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAboutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tools/monster-calculator': {
+      id: '/_authenticated/tools/monster-calculator'
+      path: '/tools/monster-calculator'
+      fullPath: '/tools/monster-calculator'
+      preLoaderRoute: typeof AuthenticatedToolsMonsterCalculatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sessions/$id': {
       id: '/_authenticated/sessions/$id'
       path: '/$id'
@@ -223,6 +243,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
+  AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -231,6 +252,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
+  AuthenticatedToolsMonsterCalculatorRoute:
+    AuthenticatedToolsMonsterCalculatorRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
