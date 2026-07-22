@@ -10,8 +10,9 @@ import {
   aggregateImbuements,
 } from "@/lib/imbuements";
 import { fmtGold, fmtDate } from "@/lib/format";
-import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown } from "lucide-react";
+import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   IMBUEMENT_TYPES,
   CATEGORY_LABEL,
@@ -51,6 +52,7 @@ function ImbuementsPage() {
   const sessions = useAppStore((s) => s.sessions);
   const imbuements = useAppStore((s) => s.imbuements);
   const addImbuement = useAppStore((s) => s.addImbuement);
+  const renewImbuement = useAppStore((s) => s.renewImbuement);
   const removeImbuement = useAppStore((s) => s.removeImbuement);
 
   const active = characters.find((c) => c.id === activeId) ?? null;
@@ -138,6 +140,25 @@ function ImbuementsPage() {
       setHoursRemaining("20");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleRenew = async (imbId: string, currentGold: number) => {
+    const same = window.confirm(
+      `O preço do Gold Token continua o mesmo (${currentGold.toLocaleString("pt-BR")})?\n\nOK = manter · Cancelar = informar novo valor.`,
+    );
+    let newGold = currentGold;
+    if (!same) {
+      const input = window.prompt("Novo valor gasto com Gold Token:", String(currentGold));
+      if (input === null) return;
+      const parsed = Number(input.replace(/[.,\s]/g, "")) || 0;
+      newGold = Math.max(0, parsed);
+    }
+    try {
+      await renewImbuement(imbId, newGold);
+      toast.success("Imbuement renovado", { description: "Recarregado para 20h de hunt." });
+    } catch (e) {
+      toast.error("Falha ao renovar", { description: (e as Error).message });
     }
   };
 
@@ -399,13 +420,23 @@ function ImbuementsPage() {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => removeImbuement(r.imb.id)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
-                        title="Remover"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          onClick={() => handleRenew(r.imb.id, r.imb.goldTokenCost)}
+                          className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-1 text-[11px] font-semibold text-rubi-gold hover:bg-rubi-gold/20"
+                          title="Renovar imbuement (recarrega para 20h)"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Renovar
+                        </button>
+                        <button
+                          onClick={() => removeImbuement(r.imb.id)}
+                          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+                          title="Remover"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="mt-3">
