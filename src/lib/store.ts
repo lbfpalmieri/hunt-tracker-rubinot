@@ -29,10 +29,22 @@ export interface Hunt {
   createdAt: string;
 }
 
+export type ImbuementTier = "basic" | "intricate" | "powerful";
+
+export interface Imbuement {
+  id: string;
+  characterId: string;
+  tier: ImbuementTier;
+  goldTokenCost: number;
+  label: string | null;
+  createdAt: string;
+}
+
 interface State {
   characters: Character[];
   sessions: HuntSession[];
   hunts: Hunt[];
+  imbuements: Imbuement[];
   activeCharacterId: string | null;
   loaded: boolean;
   loading: boolean;
@@ -46,7 +58,10 @@ interface State {
   removeHunt: (id: string) => Promise<void>;
   addSession: (s: Omit<HuntSession, "id" | "createdAt">) => Promise<HuntSession>;
   removeSession: (id: string) => Promise<void>;
+  addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
+  removeImbuement: (id: string) => Promise<void>;
 }
+
 
 
 // Data API types aren't generated yet; cast to a loose client here.
