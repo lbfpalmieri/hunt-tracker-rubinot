@@ -49,6 +49,42 @@ function ImbuementsPage() {
   const [label, setLabel] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
+  const [typeId, setTypeId] = useState<string>("");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const selectedType = getImbuementType(typeId);
+
+  const grouped = useMemo(() => {
+    const q = pickerQuery.trim().toLowerCase();
+    const filtered = q
+      ? IMBUEMENT_TYPES.filter(
+          (t) =>
+            t.name.toLowerCase().includes(q) ||
+            t.description.toLowerCase().includes(q),
+        )
+      : IMBUEMENT_TYPES;
+    const byCat: Record<ImbuementCategory, typeof IMBUEMENT_TYPES> = {
+      skill: [],
+      elemental_damage: [],
+      elemental_protection: [],
+      support: [],
+    };
+    for (const t of filtered) byCat[t.category].push(t);
+    return byCat;
+  }, [pickerQuery]);
+
   const agg = useMemo(() => {
     if (!active) return null;
     return aggregateImbuements(imbuements, sessions, active.id);
