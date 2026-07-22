@@ -60,6 +60,7 @@ interface State {
   addSession: (s: Omit<HuntSession, "id" | "createdAt">) => Promise<HuntSession>;
   removeSession: (id: string) => Promise<void>;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
+  renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
   removeImbuement: (id: string) => Promise<void>;
 }
 
@@ -305,6 +306,18 @@ export const useAppStore = create<State>()((set, get) => ({
     };
     set((s) => ({ imbuements: [created, ...s.imbuements] }));
     return created;
+  },
+
+  renewImbuement: async (id, goldTokenCost) => {
+    const current = get().imbuements.find((i) => i.id === id);
+    if (!current) throw new Error("Imbuement not found");
+    return await get().addImbuement({
+      characterId: current.characterId,
+      tier: current.tier,
+      goldTokenCost: goldTokenCost ?? current.goldTokenCost,
+      label: current.label,
+      hoursRemaining: 20,
+    });
   },
 
   removeImbuement: async (id) => {
