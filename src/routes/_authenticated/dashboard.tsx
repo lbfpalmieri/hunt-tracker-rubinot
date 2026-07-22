@@ -66,6 +66,17 @@ function Dashboard() {
     return { xph, gph, totalTime, balance: totalBal, bestHunt };
   }, [mySessions]);
 
+  const imbAgg = useMemo(
+    () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
+    [imbuements, sessions, active],
+  );
+  const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0);
+  const netGph =
+    agg.totalTime > 0
+      ? netBalance / (agg.totalTime / 3600)
+      : 0;
+
+
   const chartData = useMemo(
     () =>
       [...mySessions].reverse().map((s, i) => ({
