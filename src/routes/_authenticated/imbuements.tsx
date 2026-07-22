@@ -34,6 +34,17 @@ export const Route = createFileRoute("/_authenticated/imbuements")({
 
 const TIERS: ImbuementTier[] = ["basic", "intricate", "powerful"];
 
+function parseHoursInput(value: string): number {
+  const cleaned = value.trim().replace(",", ".");
+  if (cleaned.includes(":")) {
+    const [h, m] = cleaned.split(":");
+    const hours = Math.max(0, Number(h || "0") || 0);
+    const minutes = Math.max(0, Math.min(59, Number(m || "0") || 0));
+    return hours + minutes / 60;
+  }
+  return Math.max(0, Number(cleaned) || 0);
+}
+
 function ImbuementsPage() {
   const characters = useAppStore((s) => s.characters);
   const activeId = useAppStore((s) => s.activeCharacterId);
@@ -107,7 +118,7 @@ function ImbuementsPage() {
 
   const goldNum = Number((gold || "0").replace(/[.,\s]/g, "")) || 0;
   const totalPreview = IMB_TIER_COST[tier] + goldNum;
-  const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, Number((hoursRemaining || "0").replace(",", ".")) || 0));
+  const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, parseHoursInput(hoursRemaining)));
   const remainingCostPreview = (totalPreview / IMB_DURATION_HOURS) * hoursNum;
 
   const handleAdd = async () => {
@@ -204,14 +215,14 @@ function ImbuementsPage() {
               </span>
             </span>
             <input
-              inputMode="decimal"
+              inputMode="text"
               value={hoursRemaining}
               onChange={(e) => setHoursRemaining(e.target.value)}
-              placeholder="20"
+              placeholder="Ex: 12:30 ou 12.5"
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
             />
             <span className="mt-1 block text-[10px] text-muted-foreground">
-              Se o imbuement já foi feito antes, informe quanto tempo ainda resta no jogo.
+              Pode digitar no formato <strong>HH:MM</strong> (ex: 12:30) ou em horas decimais (ex: 12,5).
             </span>
           </label>
 
