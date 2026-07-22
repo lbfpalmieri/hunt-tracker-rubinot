@@ -123,39 +123,82 @@ export function parseDamage(text: string): DamageData {
 export function parseMiscellaneous(text: string): MiscData {
   const session = durationToSec(text.match(/Session:\s*([\d:h\s]+)/)?.[1] ?? "");
 
-  // Explicit stop headers — each Misc block stops at the next known header
-  // (or a blank line, or end of text). Prevents e.g. Imbuement bullets
-  // bleeding into Charm when Charm section is empty.
-  const HEADERS = ["Charm Data", "Imbuement Data", "Item Upgrade"] as const;
+  type MiscKey = "charm" | "imbuement" | "itemUpgrade";
 
-  const parseBlock = (header: (typeof HEADERS)[number]): Record<string, number> => {
-    const others = HEADERS.filter((h) => h !== header).map((h) => h.replace(/\s+/g, "\\s+"));
-    // Stop as soon as we hit another known header (with or without a leading newline),
-    // a blank line, or end of text. Using a lookahead so the header itself is not consumed.
-    const stop = `(?=\\n\\s*\\n|\\s*(?:${others.join("|")})\\b|$)`;
-    const re = new RegExp(`${header.replace(/\s+/g, "\\s+")}[^\\n:]*:[ \\t]*\\n?([\\s\\S]*?)${stop}`, "i");
-    const block = text.match(re);
-    const out: Record<string, number> = {};
-    if (!block) return out;
-    for (const line of block[1].split("\n")) {
-      const m = line.trim().match(/^-?\s*(.+?):\s*([\d.,]+)\s*([km]?)$/i);
-      if (m) {
-        let v = Number(m[2].replace(/[.,]/g, (c) => (c === "," ? "." : "")));
-        if (Number.isNaN(v)) v = toNum(m[2]);
-        const suffix = m[3].toLowerCase();
-        if (suffix === "k") v *= 1000;
-        if (suffix === "m") v *= 1_000_000;
-        out[m[1].trim()] = v;
-      }
-    }
-    return out;
+  const out: Record<MiscKey, Record<string, number>> = {
+    charm: {},
+    imbuement: {},
+    itemUpgrade: {},
   };
+
+  const getHeader = (line: string): MiscKey | null => {
+    const cleaned = line
+      .replace(/^[-•]+\s*/, "")
+      .replace(/:$/, "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+    if (cleaned === "charm" || cleaned === "charm data") return "charm";
+    if (cleaned === "imbuement" || cleaned === "imbuement data") return "imbuement";
+    if (cleaned === "item upgrade") return "itemUpgrade";
+    return null;
+  };
+
+  const parseValue = (raw: string): number => {
+    const value = raw.trim().match(/^([\d.,]+)\s*([km]?)$/i);
+    if (!value) return 0;
+
+    const [, numberText, suffixRaw] = value;
+    const suffix = suffixRaw.toLowerCase();
+    let parsed: number;
+
+    if (suffix) {
+      parsed = Number(numberText.replace(/,/g, "."));
+    } else {
+      parsed = toNum(numberText);
+    }
+
+    if (!Number.isFinite(parsed)) return 0;
+    if (suffix === "k") parsed *= 1000;
+    if (suffix === "m") parsed *= 1_000_000;
+    return parsed;
+  };
+
+  const parseEntry = (line: string): { name: string; value: number } | null => {
+    const cleaned = line.replace(/^[-•]+\s*/, "").trim();
+    if (!cleaned || /^no data yet$/i.test(cleaned)) return null;
+
+    const colon = cleaned.match(/^(.+?):\s*([\d.,]+\s*[km]?)$/i);
+    const spaced = cleaned.match(/^(.+?)\s+([\d.,]+\s*[km]?)$/i);
+    const match = colon ?? spaced;
+    if (!match) return null;
+
+    return { name: match[1].trim(), value: parseValue(match[2]) };
+  };
+
+  let current: MiscKey | null = null;
+  for (const rawLine of text.replace(/\r\n/g, "\n").split("\n")) {
+    const line = rawLine.trim();
+    if (!line || /^Session:/i.test(line)) continue;
+
+    const header = getHeader(line);
+    if (header) {
+      current = header;
+      continue;
+    }
+
+    if (!current) continue;
+
+    const entry = parseEntry(line);
+    if (entry) out[current][entry.name] = entry.value;
+  }
 
   return {
     sessionSec: session,
-    charm: parseBlock("Charm Data"),
-    imbuement: parseBlock("Imbuement Data"),
-    itemUpgrade: parseBlock("Item Upgrade"),
+    charm: out.charm,
+    imbuement: out.imbuement,
+    itemUpgrade: out.itemUpgrade,
   };
 }
 
@@ -165,8 +208,9 @@ export function splitCombinedInput(text: string): {
   misc: string;
 } {
   // Heuristic split — users can paste all three blocks separated by blank lines or headers.
-  const hunting = /Session data:[\s\S]*?(?=(?:\n\s*Received Damage|\n\s*Charm Data|$))/.exec(text)?.[0] ?? "";
-  const damage = /Received Damage[\s\S]*?(?=(?:\n\s*Charm Data|\n\s*Session:|$))/.exec(text)?.[0] ?? "";
-  const misc = /(?:^|\n)(?:- )?Session:[\s\S]*?Charm Data:[\s\S]*$/.exec(text)?.[0] ?? "";
+  const miscStart = String.raw`\n\s*(?:Charm(?:\s+Data)?|Imbuement(?:\s+Data)?|Item Upgrade)\s*:?`;
+  const hunting = new RegExp(String.raw`Session data:[\s\S]*?(?=(?:\n\s*Received Damage|${miscStart}|$))`).exec(text)?.[0] ?? "";
+  const damage = new RegExp(String.raw`Received Damage[\s\S]*?(?=(?:${miscStart}|\n\s*Session:|$))`).exec(text)?.[0] ?? "";
+  const misc = new RegExp(String.raw`(?:^|\n)(?:-\s*)?Session:[\s\S]*?(?:Charm(?:\s+Data)?|Imbuement(?:\s+Data)?|Item Upgrade)\s*:?[\s\S]*$`, "i").exec(text)?.[0] ?? "";
   return { hunting: hunting.trim(), damage: damage.trim(), misc: misc.trim() };
 }
