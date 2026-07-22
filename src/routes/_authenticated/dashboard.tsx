@@ -237,6 +237,13 @@ function Dashboard() {
             <div className="mt-6">
               <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-gold">
                 <Sparkles className="h-3.5 w-3.5" /> Imbuements
+                <InfoHint title="Imbuements" description="Como o custo dos imbuements é diluído nas hunts.">
+                  <p>Todo imbuement dura <strong>{IMB_DURATION_HOURS}h</strong> de caça no jogo. O custo total é <code>preço do tier + Gold Token</code>.</p>
+                  <p><strong>Custo / hora (ativo):</strong> <code>Σ (custo total ÷ {IMB_DURATION_HOURS}h)</code> de cada imbuement ainda ativo. É quanto você "queima" de gold por hora enquanto está com os imbuements ligados.</p>
+                  <p><strong>Consumido:</strong> para cada imbuement, somamos as horas caçadas <em>depois</em> do registro (até o limite das horas restantes informadas) e multiplicamos por <code>custo/hora</code>. Sessões anteriores ao registro não amortizam nada — por isso pode aparecer 0.</p>
+                  <p><strong>Lucro líquido:</strong> <code>Balance bruto − Consumido</code>.</p>
+                  <p><strong>Projeção líquida / h:</strong> <code>Lucro/h médio − Custo/h ativo</code>. Se ficar positivo, o imbuement se paga; negativo, custa mais do que rende.</p>
+                </InfoHint>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
