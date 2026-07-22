@@ -156,6 +156,40 @@ function Dashboard() {
             <StatCard label="Balance acumulado" value={fmtGold(agg.balance)} hint={agg.bestHunt ? `Top spot: ${agg.bestHunt.name}` : ""} icon={Trophy} accent={agg.balance >= 0 ? "success" : "danger"} />
           </div>
 
+          {imbAgg && imbAgg.rows.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard
+                label="Custo imbuement/h"
+                value={fmtGold(imbAgg.activeCostPerHour)}
+                hint={`${imbAgg.rows.filter((r) => r.active).length} ativo(s) · 20h cada`}
+                icon={Sparkles}
+                accent="gold"
+              />
+              <StatCard
+                label="Gasto com imbuements"
+                value={fmtGold(imbAgg.totalSpent)}
+                hint={`${imbAgg.rows.length} registrados`}
+                icon={Coins}
+                accent="muted"
+              />
+              <StatCard
+                label="Lucro líquido"
+                value={fmtGold(netBalance)}
+                hint="Balance − imbuements consumidos"
+                icon={Wallet}
+                accent={netBalance >= 0 ? "success" : "danger"}
+              />
+              <StatCard
+                label="Lucro líquido / h"
+                value={fmtGold(netGph)}
+                hint={netGph >= 0 ? "imbuement se paga" : "imbuement custa mais que rende"}
+                icon={TrendingUp}
+                accent={netGph >= 0 ? "success" : "danger"}
+              />
+            </div>
+          )}
+
+
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="card-surface p-5 lg:col-span-2">
               <div className="mb-4 flex items-center justify-between">
