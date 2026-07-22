@@ -77,10 +77,13 @@ export const useAppStore = create<State>()(
   ),
 );
 
-// SSR-safe hydration hook
+// SSR-safe hydration hook — persist middleware skips auto-hydration.
 import { useEffect, useState } from "react";
 export function useHydrated() {
   const [h, setH] = useState(false);
-  useEffect(() => setH(true), []);
+  useEffect(() => {
+    void useAppStore.persist.rehydrate();
+    setH(true);
+  }, []);
   return h;
 }
