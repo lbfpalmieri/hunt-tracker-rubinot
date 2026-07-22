@@ -235,29 +235,52 @@ function SessionDetail() {
       {/* Misc */}
       {session.misc && (
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <MiscBlock title="Charm Data" data={session.misc.charm} />
-          <MiscBlock title="Imbuement Data" data={session.misc.imbuement} />
-          <MiscBlock title="Item Upgrade" data={session.misc.itemUpgrade} />
+          <MiscBlock
+            title="Charm Data"
+            data={session.misc.charm}
+            emptyLabel="Nenhum charm utilizado nesta hunt."
+          />
+          <MiscBlock
+            title="Imbuement Data"
+            data={session.misc.imbuement}
+            emptyLabel="Nenhum imbuement contribuiu nesta hunt."
+          />
+          <MiscBlock
+            title="Item Upgrade"
+            data={session.misc.itemUpgrade}
+            emptyLabel="Nenhum item upgrade ativo nesta hunt."
+          />
         </div>
       )}
     </AppShell>
   );
 }
 
-function MiscBlock({ title, data }: { title: string; data: Record<string, number> }) {
+function MiscBlock({
+  title,
+  data,
+  emptyLabel,
+}: {
+  title: string;
+  data: Record<string, number>;
+  emptyLabel: string;
+}) {
   const entries = Object.entries(data);
-  if (entries.length === 0) return null;
   return (
     <div className="card-surface p-5">
       <h3 className="mb-3 text-sm font-semibold">{title}</h3>
-      <dl className="space-y-2 text-sm">
-        {entries.map(([k, v]) => (
-          <div key={k} className="flex items-center justify-between">
-            <dt className="text-muted-foreground">{k}</dt>
-            <dd className="font-mono font-semibold">{fmtNum(v)}</dd>
-          </div>
-        ))}
-      </dl>
+      {entries.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+      ) : (
+        <dl className="space-y-2 text-sm">
+          {entries.map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between">
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="font-mono font-semibold">{fmtNum(v)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </div>
   );
 }
