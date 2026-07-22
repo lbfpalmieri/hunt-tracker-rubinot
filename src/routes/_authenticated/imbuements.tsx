@@ -215,14 +215,14 @@ function ImbuementsPage() {
               </span>
             </span>
             <input
-              inputMode="decimal"
+              inputMode="text"
               value={hoursRemaining}
               onChange={(e) => setHoursRemaining(e.target.value)}
-              placeholder="20"
+              placeholder="Ex: 12:30 ou 12.5"
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
             />
             <span className="mt-1 block text-[10px] text-muted-foreground">
-              Se o imbuement já foi feito antes, informe quanto tempo ainda resta no jogo.
+              Pode digitar no formato <strong>HH:MM</strong> (ex: 12:30) ou em horas decimais (ex: 12,5).
             </span>
           </label>
 
