@@ -341,7 +341,7 @@ function ImbuementsPage() {
               <span>{fmtGold(totalPreview / IMB_DURATION_HOURS)}</span>
             </div>
             <div className="mt-1 flex justify-between">
-              <span className="text-muted-foreground">A amortizar em {hoursNum}h</span>
+              <span className="text-muted-foreground">A amortizar em {fmtHoursMin(hoursNum)}</span>
               <span>{fmtGold(remainingCostPreview)}</span>
             </div>
           </div>
