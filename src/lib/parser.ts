@@ -130,8 +130,10 @@ export function parseMiscellaneous(text: string): MiscData {
 
   const parseBlock = (header: (typeof HEADERS)[number]): Record<string, number> => {
     const others = HEADERS.filter((h) => h !== header).map((h) => h.replace(/\s+/g, "\\s+"));
-    const stop = `(?:\\n\\s*\\n|\\n\\s*(?:${others.join("|")})\\b|$)`;
-    const re = new RegExp(`${header.replace(/\s+/g, "\\s+")}[^\\n:]*:\\s*([\\s\\S]*?)${stop}`, "i");
+    // Stop as soon as we hit another known header (with or without a leading newline),
+    // a blank line, or end of text. Using a lookahead so the header itself is not consumed.
+    const stop = `(?=\\n\\s*\\n|\\s*(?:${others.join("|")})\\b|$)`;
+    const re = new RegExp(`${header.replace(/\s+/g, "\\s+")}[^\\n:]*:[ \\t]*\\n?([\\s\\S]*?)${stop}`, "i");
     const block = text.match(re);
     const out: Record<string, number> = {};
     if (!block) return out;
