@@ -93,12 +93,22 @@ export const useAppStore = create<State>()((set, get) => ({
     if (get().loading) return;
     set({ loading: true });
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Not signed in");
       const [charRes, sessRes, huntRes, imbRes] = await Promise.all([
         db.from("characters").select("*").order("created_at", { ascending: true }),
-        db.from("hunt_sessions").select("*").order("created_at", { ascending: false }),
+        // The public community policy also exposes other users' public sessions,
+        // so scope the personal history explicitly to the signed-in user.
+        db
+          .from("hunt_sessions")
+          .select("*")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false }),
         db.from("hunts").select("*").order("created_at", { ascending: true }),
         db.from("imbuements").select("*").order("created_at", { ascending: false }),
       ]);
+
       if (charRes.error) throw charRes.error;
       if (sessRes.error) throw sessRes.error;
       if (huntRes.error) throw huntRes.error;
