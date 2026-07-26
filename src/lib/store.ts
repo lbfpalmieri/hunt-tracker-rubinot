@@ -20,7 +20,10 @@ export interface HuntSession {
   hunting: HuntingData;
   damage: DamageData | null;
   misc: MiscData | null;
+  gearUrl: string | null;
+  isPublic: boolean;
 }
+
 
 export interface Hunt {
   id: string;
