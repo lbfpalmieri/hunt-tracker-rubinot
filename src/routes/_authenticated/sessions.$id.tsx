@@ -185,31 +185,9 @@ function SessionDetail() {
                 <b className="text-foreground">{fmtNum(session.damage.maxDps)}</b>
               </p>
               <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={session.damage.damageTypes}
-                      dataKey="value"
-                      nameKey="type"
-                      innerRadius={40}
-                      outerRadius={70}
-                      paddingAngle={2}
-                    >
-                      {session.damage.damageTypes.map((_, i) => (
-                        <Cell key={i} fill={TYPE_COLORS[i % TYPE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: "var(--popover)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 12,
-                        fontSize: 12,
-                      }}
-                      formatter={(v) => fmtNum(Number(v))}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />}>
+                  <DamagePie data={session.damage.damageTypes} colors={TYPE_COLORS} />
+                </Suspense>
               </div>
               <ul className="mt-2 space-y-1 text-xs">
                 {session.damage.damageTypes.map((t, i) => (
