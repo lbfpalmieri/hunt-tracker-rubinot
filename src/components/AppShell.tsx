@@ -13,7 +13,7 @@ import {
 
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import logo from "@/assets/rubinot-logo.png.asset.json";
+import logo from "@/assets/dragon-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <img src={logo.url} alt="RubinOT" className="h-9 w-auto" />
+            <img src={logo.url} alt="Hunt Tracker" className="h-9 w-9 object-contain" />
             <span className="hidden text-xs font-medium uppercase tracking-widest text-muted-foreground sm:inline">
               Hunt Tracker
             </span>

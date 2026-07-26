@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/rubinot-logo.png.asset.json";
+import logo from "@/assets/dragon-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { Zap, Coins, ScrollText, ArrowRight } from "lucide-react";
 
@@ -54,7 +54,7 @@ function Landing() {
       <header className="border-b border-border/60">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-6">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo.url} alt="RubinOT" className="h-9 w-auto" />
+            <img src={logo.url} alt="Hunt Tracker" className="h-9 w-9 object-contain" />
             <span className="hidden text-xs font-medium uppercase tracking-widest text-muted-foreground sm:inline">
               Hunt Tracker
             </span>
