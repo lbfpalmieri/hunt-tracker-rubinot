@@ -4,7 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { BountyBadge } from "@/components/BountyBadge";
-import { getCommunitySessions, getCommunityMonsters } from "@/lib/community.functions";
+import {
+  getCommunitySessions,
+  getCommunityMonsters,
+  getCommunityStats,
+} from "@/lib/community.functions";
 import { useAppStore } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
@@ -113,6 +117,15 @@ function CommunityPage() {
     queryFn: () => fetchMonsters(),
     staleTime: 10 * 60 * 1000,
   });
+
+  const fetchStats = useServerFn(getCommunityStats);
+  const { data: stats } = useQuery({
+    queryKey: ["community-stats"],
+    queryFn: () => fetchStats(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+
 
 
   const sessions = data?.sessions ?? [];
@@ -282,16 +295,35 @@ function CommunityPage() {
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Comunidade</div>
-        <h1 className="mt-1 flex items-center gap-2 font-display text-3xl font-bold">
-          <Globe2 className="h-7 w-7 text-rubi-blue" /> Hunts da comunidade
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Todas as sessões compartilhadas pelos jogadores. Filtre por vocação, hunt ou monstro para
-          descobrir novos spots.
-        </p>
+      {/* Hero */}
+      <div className="relative mb-6 overflow-hidden rounded-2xl border border-rubi-blue/30 p-6 sm:p-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_70%_120%_at_10%_0%,var(--rubi-blue-soft),transparent),radial-gradient(ellipse_60%_120%_at_100%_100%,var(--rubi-gold-soft),transparent)]"
+        />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="min-w-0">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-rubi-gold">
+              <Globe2 className="h-3 w-3" /> Comunidade RubinOT
+            </span>
+            <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+              Descubra as <span className="text-gradient-brand">melhores hunts</span> do servidor
+            </h1>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+              Dados reais compartilhados por jogadores: Raw XP/h, lucro/h e kills/h de cada spot.
+              Filtre pela sua vocação e compare antes de escolher onde caçar.
+            </p>
+          </div>
+
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:w-auto lg:grid-cols-2">
+            <HeroStat icon={Layers} label="Sessões" value={fmtNum(stats?.sessions ?? 0)} tone="blue" />
+            <HeroStat icon={Users} label="Jogadores" value={fmtNum(stats?.players ?? 0)} tone="gold" />
+            <HeroStat icon={Skull} label="Monstros" value={fmtNum(stats?.kills ?? 0)} tone="danger" />
+            <HeroStat icon={Zap} label="Horas de hunt" value={fmtNum(stats?.hours ?? 0)} tone="success" />
+          </dl>
+        </div>
       </div>
+
 
       {/* Filters */}
       <div className="card-surface mb-6 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -629,6 +661,35 @@ function CommunityPage() {
       </Dialog>
     </AppShell>
 
+  );
+}
+
+function HeroStat({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: typeof Globe2;
+  label: string;
+  value: string;
+  tone: "blue" | "gold" | "success" | "danger";
+}) {
+  const color =
+    tone === "blue"
+      ? "text-rubi-blue"
+      : tone === "gold"
+        ? "text-rubi-gold"
+        : tone === "success"
+          ? "text-rubi-success"
+          : "text-rubi-danger";
+  return (
+    <div className="rounded-xl border border-border/70 bg-background/50 px-4 py-3 backdrop-blur-sm">
+      <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <Icon className={"h-3.5 w-3.5 " + color} /> {label}
+      </dt>
+      <dd className={"mt-1 font-display text-2xl font-bold tabular-nums " + color}>{value}</dd>
+    </div>
   );
 }
 
