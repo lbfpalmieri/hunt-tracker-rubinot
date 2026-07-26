@@ -23,6 +23,7 @@ export interface HuntSession {
   misc: MiscData | null;
   gearUrl: string | null;
   isPublic: boolean;
+  bounty: BountyInfo | null;
 }
 
 
