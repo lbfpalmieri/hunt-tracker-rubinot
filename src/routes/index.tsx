@@ -52,13 +52,11 @@ function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logo.url} alt="Hunt Tracker" className="h-9 w-9 object-contain" />
-            <span className="hidden text-xs font-medium uppercase tracking-widest text-muted-foreground sm:inline">
-              Hunt Tracker
-            </span>
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
+          <Link to="/" className="flex items-center">
+            <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-14 w-auto object-contain sm:h-16" />
           </Link>
+
           <div className="ml-auto flex items-center gap-2">
             <Link
               to="/about"
