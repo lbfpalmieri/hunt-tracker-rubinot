@@ -35,6 +35,8 @@ function SessionDetail() {
   const sessions = useAppStore((s) => s.sessions);
   const characters = useAppStore((s) => s.characters);
   const removeSession = useAppStore((s) => s.removeSession);
+  const updateSession = useAppStore((s) => s.updateSession);
+
 
   const session = sessions.find((s) => s.id === id);
   const char = session ? characters.find((c) => c.id === session.characterId) : null;
