@@ -32,10 +32,10 @@ export function CharacterSwitcher() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium hover:bg-accent"
+        className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-medium hover:bg-accent sm:gap-2 sm:px-3"
       >
-        <UserCircle2 className="h-4 w-4 text-rubi-blue" />
-        <span className="max-w-[140px] truncate">{active?.name ?? "Selecionar"}</span>
+        <UserCircle2 className="h-4 w-4 shrink-0 text-rubi-blue" />
+        <span className="max-w-[92px] truncate sm:max-w-[140px]">{active?.name ?? "Selecionar"}</span>
         <ChevronDown className="h-3.5 w-3.5 opacity-60" />
       </button>
 
