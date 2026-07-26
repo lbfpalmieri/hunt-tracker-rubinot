@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import logo from "@/assets/dragon-logo.png.asset.json";
+import logo from "@/assets/hunt-tracker-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { Youtube, Instagram, Heart } from "lucide-react";
 
@@ -21,7 +21,7 @@ function About() {
   return (
     <AppShell>
       <div className="mx-auto max-w-2xl text-center">
-        <img src={logo.url} alt="Hunt Tracker" className="mx-auto h-24 w-24 object-contain" />
+        <img src={logo.url} alt="RubinOT Hunt Tracker" className="mx-auto h-40 w-auto object-contain" />
         <h1 className="mt-6 font-display text-4xl font-bold">
           <span className="text-gradient-brand">RubinOT</span> Hunt Tracker
         </h1>
