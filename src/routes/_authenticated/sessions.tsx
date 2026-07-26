@@ -49,7 +49,8 @@ function SessionsList() {
       if (sort === "recent") return b.createdAt.localeCompare(a.createdAt);
       const dur = (s: typeof a) => s.hunting.durationSec / 3600 || 1;
       if (sort === "gph") return b.hunting.balance / dur(b) - a.hunting.balance / dur(a);
-      if (sort === "xph") return (b.hunting.rawXp || b.hunting.xpGain) / dur(b) - (a.hunting.rawXp || a.hunting.xpGain) / dur(a);
+      if (sort === "xph")
+        return (huntRawXp(b) ?? 0) / dur(b) - (huntRawXp(a) ?? 0) / dur(a);
       return b.hunting.durationSec - a.hunting.durationSec;
     });
     return list;
