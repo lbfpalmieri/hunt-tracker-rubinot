@@ -135,6 +135,7 @@ export const useAppStore = create<State>()((set, get) => ({
         misc: (s.misc ?? null) as MiscData | null,
         gearUrl: s.gear_url ?? null,
         isPublic: s.is_public ?? true,
+        bounty: rowBounty(s),
       }));
 
       const hunts: Hunt[] = (huntRes.data ?? []).map((h: any) => ({
