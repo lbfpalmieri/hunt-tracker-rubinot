@@ -380,10 +380,107 @@ function CommunityPage() {
               : "Nenhuma sessão compartilhada encontrada com esses filtros."}
           </p>
         </div>
+      ) : view === "calc" ? (
+        !monster.trim() ? (
+          <div className="card-surface flex flex-col items-center gap-2 p-10 text-center">
+            <Calculator className="h-8 w-8 text-muted-foreground" />
+            <p className="font-semibold">Escolha um monstro</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Use o filtro <strong className="text-foreground">Monstro</strong> acima para ver quantos
+              a comunidade mata por hora em cada hunt e quanto tempo levaria para fechar a task.
+            </p>
+          </div>
+        ) : calcRows.length === 0 ? (
+          <div className="card-surface flex flex-col items-center gap-2 p-10 text-center">
+            <Skull className="h-8 w-8 text-muted-foreground" />
+            <p className="font-semibold">Sem dados da comunidade para {monster}</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Ninguém compartilhou sessões com esse monstro{vocation ? ` como ${vocation}` : ""} ainda.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="card-surface p-5">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                Melhor hunt da comunidade para {quantity}x {monster}
+              </div>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="font-display text-2xl font-bold">{calcRows[0].huntName}</span>
+                <span className="rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
+                  {calcRows[0].vocation}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Média da comunidade:{" "}
+                <strong className="font-mono text-rubi-gold">
+                  {fmtNum(Math.round(calcRows[0].perHour))}
+                </strong>{" "}
+                {monster}/h · tempo estimado{" "}
+                <strong className="font-mono text-rubi-blue">
+                  {fmtDuration(Math.round(calcRows[0].estSec))}
+                </strong>{" "}
+                · no ritmo do melhor jogador:{" "}
+                <strong className="font-mono text-rubi-success">
+                  {fmtDuration(Math.round(calcRows[0].bestSec))}
+                </strong>
+              </p>
+            </div>
+
+            <div className="card-surface overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <th className="px-4 py-3">Hunt</th>
+                    <th className="px-4 py-3 text-right">Sessões</th>
+                    <th className="px-4 py-3 text-right">Jogadores</th>
+                    <th className="px-4 py-3 text-right">Média /h</th>
+                    <th className="px-4 py-3 text-right">Melhor /h</th>
+                    <th className="px-4 py-3 text-right">Tempo p/ {fmtNum(quantity)}</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {calcRows.map((r) => (
+                    <tr key={r.key} className="border-b border-border/50 last:border-0">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{r.huntName}</div>
+                        <div className="text-xs text-muted-foreground">{r.vocation}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">{r.sessionCount}</td>
+                      <td className="px-4 py-3 text-right font-mono">{r.playerCount}</td>
+                      <td className="px-4 py-3 text-right font-mono text-rubi-gold">
+                        {fmtNum(Math.round(r.perHour))}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-rubi-success">
+                        {fmtNum(Math.round(r.bestPerHour))}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-rubi-blue">
+                        {fmtDuration(Math.round(r.estSec))}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => setOpenHunt(r.key)}
+                          className="text-xs font-medium text-rubi-blue hover:underline"
+                        >
+                          Ver sessões
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
       ) : view === "hunts" ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {hunts.map((h) => (
-            <div key={h.key} className="card-surface p-5">
+            <button
+              key={h.key}
+              type="button"
+              onClick={() => setOpenHunt(h.key)}
+              className="card-surface p-5 text-left transition-colors hover:border-rubi-blue/50"
+            >
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
                 <span className="flex-none rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
@@ -398,10 +495,14 @@ function CommunityPage() {
                 <Metric label="Lucro/h" value={fmtGold(h.goldPerHour)} tone={h.goldPerHour >= 0 ? "success" : "danger"} />
                 <Metric label="Kills/h" value={fmtNum(Math.round(h.killsPerHour))} tone="gold" />
               </dl>
-            </div>
+              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-rubi-blue">
+                Ver histórico de sessões <ChevronRight className="h-3.5 w-3.5" />
+              </div>
+            </button>
           ))}
         </div>
       ) : (
+
         <div className="space-y-2">
           {sortedSessions.map((s) => {
             const kills = s.kills.reduce((a, k) => a + k.count, 0);
