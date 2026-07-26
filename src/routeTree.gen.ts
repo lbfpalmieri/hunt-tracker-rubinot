@@ -21,6 +21,7 @@ import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
+import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -83,6 +84,12 @@ const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedSessionsRoute,
 } as any)
+const AuthenticatedCommunityIdRoute =
+  AuthenticatedCommunityIdRouteImport.update({
+    id: '/community/$id',
+    path: '/community/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/community/': typeof AuthenticatedCommunityIndexRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/community': typeof AuthenticatedCommunityIndexRoute
@@ -121,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/imbuements'
     | '/import'
     | '/sessions'
+    | '/community/$id'
     | '/sessions/$id'
     | '/tools/monster-calculator'
     | '/community/'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/imbuements'
     | '/import'
     | '/sessions'
+    | '/community/$id'
     | '/sessions/$id'
     | '/tools/monster-calculator'
     | '/community'
@@ -163,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/imbuements'
     | '/_authenticated/import'
     | '/_authenticated/sessions'
+    | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/tools/monster-calculator'
     | '/_authenticated/community/'
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
       parentRoute: typeof AuthenticatedSessionsRoute
     }
+    '/_authenticated/community/$id': {
+      id: '/_authenticated/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof AuthenticatedCommunityIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -283,6 +303,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
+  AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
   AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
 }
@@ -294,6 +315,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
+  AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
   AuthenticatedToolsMonsterCalculatorRoute:
     AuthenticatedToolsMonsterCalculatorRoute,
   AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,
