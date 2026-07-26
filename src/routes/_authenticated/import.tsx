@@ -6,6 +6,8 @@ import { parseHunting, parseDamage, parseMiscellaneous, splitCombinedInput } fro
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { Upload, Wand2, Save, UserCircle2, Sparkles } from "lucide-react";
+import { PasteImageBox } from "@/components/PasteImage";
+
 
 export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({
