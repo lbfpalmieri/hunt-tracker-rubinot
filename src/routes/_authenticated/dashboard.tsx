@@ -319,7 +319,7 @@ function Dashboard() {
                     <YAxis yAxisId="l" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(v: number) => fmtGold(v)} />
                     <YAxis yAxisId="r" orientation="right" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(v: number) => fmtGold(v)} />
                     <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }} formatter={(v) => fmtGold(Number(v))} />
-                    <Area yAxisId="l" type="monotone" dataKey="XP/h" stroke="var(--rubi-blue)" strokeWidth={2} fill="url(#gXp)" />
+                    <Area yAxisId="l" type="monotone" dataKey="Raw XP/h" stroke="var(--rubi-blue)" strokeWidth={2} fill="url(#gXp)" />
                     <Area yAxisId="r" type="monotone" dataKey="Lucro/h" stroke="var(--rubi-gold)" strokeWidth={2} fill="url(#gGold)" />
                   </AreaChart>
                 </ResponsiveContainer>
