@@ -200,6 +200,33 @@ function ImportPage() {
               )}
             </label>
 
+            <div className="mt-4">
+              <span className="text-xs font-medium text-muted-foreground">
+                Equipamento (opcional)
+              </span>
+              <PasteImageBox
+                value={gearUrl}
+                onChange={(v) => setGearUrl(v)}
+                label="Tire um print do equipamento e cole aqui (Ctrl+V)"
+                className="mt-1"
+              />
+            </div>
+
+            <label className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[var(--rubi-blue)]"
+              />
+              <span>
+                Compartilhar esta sessão na <b className="text-foreground">Comunidade</b> (personagem,
+                vocação, hunt e equipamento ficam visíveis para outros jogadores).
+              </span>
+            </label>
+
+
+
 
             <button
               onClick={handleSave}
