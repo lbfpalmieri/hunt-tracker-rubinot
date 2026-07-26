@@ -77,7 +77,7 @@ function ImportPage() {
     }
   }, [huntingText, damageText, miscText]);
 
-  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName);
+  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady);
 
   const handleAutoSplit = () => {
     const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
