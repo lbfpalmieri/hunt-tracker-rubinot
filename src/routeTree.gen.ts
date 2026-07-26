@@ -16,9 +16,9 @@ import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
+import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 
@@ -56,11 +56,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
-  id: '/community',
-  path: '/community',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
   id: '/characters',
   path: '/characters',
@@ -71,6 +66,12 @@ const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCommunityIndexRoute =
+  AuthenticatedCommunityIndexRouteImport.update({
+    id: '/community/',
+    path: '/community/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedToolsMonsterCalculatorRoute =
   AuthenticatedToolsMonsterCalculatorRouteImport.update({
     id: '/tools/monster-calculator',
@@ -88,26 +89,26 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
-  '/community': typeof AuthenticatedCommunityRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
+  '/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
-  '/community': typeof AuthenticatedCommunityRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
+  '/community': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,13 +117,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/about': typeof AuthenticatedAboutRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
-  '/_authenticated/community': typeof AuthenticatedCommunityRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
+  '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,26 +132,26 @@ export interface FileRouteTypes {
     | '/auth'
     | '/about'
     | '/characters'
-    | '/community'
     | '/dashboard'
     | '/imbuements'
     | '/import'
     | '/sessions'
     | '/sessions/$id'
     | '/tools/monster-calculator'
+    | '/community/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/about'
     | '/characters'
-    | '/community'
     | '/dashboard'
     | '/imbuements'
     | '/import'
     | '/sessions'
     | '/sessions/$id'
     | '/tools/monster-calculator'
+    | '/community'
   id:
     | '__root__'
     | '/'
@@ -158,13 +159,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/about'
     | '/_authenticated/characters'
-    | '/_authenticated/community'
     | '/_authenticated/dashboard'
     | '/_authenticated/imbuements'
     | '/_authenticated/import'
     | '/_authenticated/sessions'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/tools/monster-calculator'
+    | '/_authenticated/community/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -224,13 +225,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/community': {
-      id: '/_authenticated/community'
-      path: '/community'
-      fullPath: '/community'
-      preLoaderRoute: typeof AuthenticatedCommunityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/characters': {
       id: '/_authenticated/characters'
       path: '/characters'
@@ -243,6 +237,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AuthenticatedAboutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/community/': {
+      id: '/_authenticated/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tools/monster-calculator': {
@@ -278,24 +279,24 @@ const AuthenticatedSessionsRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAboutRoute: typeof AuthenticatedAboutRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
-  AuthenticatedCommunityRoute: typeof AuthenticatedCommunityRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
+  AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAboutRoute: AuthenticatedAboutRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
-  AuthenticatedCommunityRoute: AuthenticatedCommunityRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedToolsMonsterCalculatorRoute:
     AuthenticatedToolsMonsterCalculatorRoute,
+  AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
