@@ -130,12 +130,14 @@ function CommunityPage() {
           count: 0,
           hours: 0,
           xp: 0,
+          rawXp: 0,
           balance: 0,
           kills: 0,
         };
       cur.count += 1;
       cur.hours += s.durationSec / 3600;
       cur.xp += s.xpGain;
+      cur.rawXp += s.rawXp || s.xpGain;
       cur.balance += s.balance;
       cur.kills += s.kills.reduce((a, k) => a + k.count, 0);
       map.set(key, cur);
@@ -143,17 +145,19 @@ function CommunityPage() {
     const list = [...map.values()].map((h) => ({
       ...h,
       xpPerHour: h.hours > 0 ? h.xp / h.hours : 0,
+      rawXpPerHour: h.hours > 0 ? h.rawXp / h.hours : 0,
       goldPerHour: h.hours > 0 ? h.balance / h.hours : 0,
       killsPerHour: h.hours > 0 ? h.kills / h.hours : 0,
     }));
     list.sort((a, b) => {
-      if (sort === "xph") return b.xpPerHour - a.xpPerHour;
+      if (sort === "xph") return b.rawXpPerHour - a.rawXpPerHour;
       if (sort === "gph") return b.goldPerHour - a.goldPerHour;
       if (sort === "killsh") return b.killsPerHour - a.killsPerHour;
       return b.count - a.count;
     });
     return list;
   }, [sessions, sort]);
+
 
   const sortedSessions = useMemo(() => {
     const list = sessions.slice();
