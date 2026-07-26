@@ -195,22 +195,23 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-blue">
               <Zap className="h-3.5 w-3.5" /> Experiência
-              <InfoHint title="Experiência" description="Como XP/h e XP total são calculadas.">
-                <p><strong>XP total ganha:</strong> <code>Σ xpGain</code> de cada sessão (é o <em>XP Gain</em> que aparece no Hunting Analyser — já com bônus).</p>
-                <p><strong>XP / hora (média):</strong> <code>XP total ganha ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
-                <p>Usamos apenas o <em>XP Gain</em>, não o Raw XP — Raw XP não considera bônus (stamina, XP boost, event) e é volátil quando você para de matar.</p>
+              <InfoHint title="Experiência" description="Como a Raw XP/h e a Raw XP total são calculadas.">
+                <p><strong>Raw XP total:</strong> <code>Σ rawXp</code> de cada sessão (é o <em>Raw XP Gain</em> do Hunting Analyser — valor bruto, sem bônus de stamina/XP boost/evento).</p>
+                <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p>A <em>XP com bônus</em> (<code>XP Gain</code>) aparece como valor secundário — ela varia conforme os bônus ativos, por isso a Raw XP é a referência principal.</p>
               </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatCard label="XP / hora (média)" value={fmtNum(agg.xph)} icon={Zap} accent="blue" />
+              <StatCard label="Raw XP / hora (média)" value={fmtNum(agg.rawXph)} hint="valor bruto, sem bônus" icon={Zap} accent="blue" />
               <StatCard
-                label="XP total ganha"
-                value={fmtNum(mySessions.reduce((a, s) => a + s.hunting.xpGain, 0))}
-                hint={`em ${fmtDuration(agg.totalTime)}`}
+                label="Raw XP total"
+                value={fmtNum(agg.totalRawXp)}
+                hint={`em ${fmtDuration(agg.totalTime)} · ${fmtNum(agg.totalXp)} XP com bônus`}
                 icon={TrendingUp}
                 accent="blue"
               />
             </div>
+
           </div>
 
           {/* Gold */}
