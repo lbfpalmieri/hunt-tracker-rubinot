@@ -8,7 +8,7 @@ import { useAppStore } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import { Globe2, Search, Skull, Users, Zap, Coins, LayoutList, Layers } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/community")({
+export const Route = createFileRoute("/_authenticated/community/")({
   head: () => ({
     meta: [
       { title: "Comunidade — RubinOT Hunt Tracker" },

@@ -16,6 +16,7 @@ import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
@@ -55,6 +56,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
   id: '/characters',
   path: '/characters',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
+  '/community': typeof AuthenticatedCommunityRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
+  '/community': typeof AuthenticatedCommunityRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/about': typeof AuthenticatedAboutRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
+  '/_authenticated/community': typeof AuthenticatedCommunityRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/about'
     | '/characters'
+    | '/community'
     | '/dashboard'
     | '/imbuements'
     | '/import'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/about'
     | '/characters'
+    | '/community'
     | '/dashboard'
     | '/imbuements'
     | '/import'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/about'
     | '/_authenticated/characters'
+    | '/_authenticated/community'
     | '/_authenticated/dashboard'
     | '/_authenticated/imbuements'
     | '/_authenticated/import'
@@ -212,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/community': {
+      id: '/_authenticated/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof AuthenticatedCommunityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/characters': {
       id: '/_authenticated/characters'
       path: '/characters'
@@ -259,6 +278,7 @@ const AuthenticatedSessionsRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAboutRoute: typeof AuthenticatedAboutRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
+  AuthenticatedCommunityRoute: typeof AuthenticatedCommunityRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
@@ -269,6 +289,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAboutRoute: AuthenticatedAboutRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
+  AuthenticatedCommunityRoute: AuthenticatedCommunityRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
