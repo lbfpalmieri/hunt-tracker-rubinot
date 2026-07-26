@@ -160,7 +160,7 @@ function ImportPage() {
             onChange={setHuntingText}
           />
           <TextBlock
-            label="Damage Analyser (Received Damage)"
+            label="Input Analyser (Received Damage)"
             help="Opcional. Total, Max-DPS, Damage Types e Damage Sources."
             value={damageText}
             onChange={setDamageText}
@@ -388,7 +388,7 @@ function ImportPage() {
           <Upload className="mt-0.5 h-4 w-4 flex-none text-rubi-blue" />
           <div>
             No cliente do RubinOT abra <b>Analytics Selector → Hunt Analyser</b> e copie o texto.
-            Faça o mesmo para Damage Analyser e Miscellaneous.
+            Faça o mesmo para Input Analyser e Miscellaneous.
           </div>
         </div>
       )}
