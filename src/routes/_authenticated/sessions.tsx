@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
+import { huntRawXp } from "@/lib/bounty";
+import { BountyBadge } from "@/components/BountyBadge";
 import { ScrollText, Search, Filter, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
