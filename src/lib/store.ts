@@ -105,8 +105,8 @@ export const useAppStore = create<State>()((set, get) => ({
     if (get().loading) return;
     set({ loading: true });
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
+      const { data: userData } = await supabase.auth.getSession();
+      const uid = userData.session?.user?.id;
       if (!uid) throw new Error("Not signed in");
       const [charRes, sessRes, huntRes, imbRes] = await Promise.all([
         db.from("characters").select("*").order("created_at", { ascending: true }),
@@ -184,8 +184,8 @@ export const useAppStore = create<State>()((set, get) => ({
 
 
   addCharacter: async (c) => {
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
     if (!uid) throw new Error("Not signed in");
     const { data, error } = await db
       .from("characters")
@@ -239,8 +239,8 @@ export const useAppStore = create<State>()((set, get) => ({
   },
 
   addHunt: async (characterId, name) => {
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
     if (!uid) throw new Error("Not signed in");
     const trimmed = name.trim();
     const existing = get().hunts.find(
@@ -274,8 +274,8 @@ export const useAppStore = create<State>()((set, get) => ({
 
 
   addSession: async (input) => {
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
     if (!uid) throw new Error("Not signed in");
     let char = get().characters.find((c) => c.id === input.characterId);
     if (!char?.name || !char?.vocation) {
@@ -360,8 +360,8 @@ export const useAppStore = create<State>()((set, get) => ({
 
 
   addImbuement: async (input) => {
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
     if (!uid) throw new Error("Not signed in");
     const { data, error } = await db
       .from("imbuements")

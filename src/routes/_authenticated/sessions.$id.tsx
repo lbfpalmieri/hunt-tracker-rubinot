@@ -13,9 +13,11 @@ import {
 import { PasteImageBox } from "@/components/PasteImage";
 
 
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
-} from "recharts";
+import { lazy, Suspense } from "react";
+
+// Recharts é pesado: carrega depois do primeiro paint da sessão.
+const KillsChart = lazy(() => import("@/components/charts/KillsChart"));
+const DamagePie = lazy(() => import("@/components/charts/DamagePie"));
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: ({ params }) => ({
@@ -146,28 +148,9 @@ function SessionDetail() {
         <div className="card-surface p-5 lg:col-span-2">
           <h2 className="mb-4 text-base font-semibold">Monstros mortos</h2>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={killsData} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                <XAxis type="number" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={130}
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-                />
-                <Tooltip
-                  cursor={{ fill: "var(--rubi-blue-soft)" }}
-                  contentStyle={{
-                    background: "var(--popover)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
-                />
-                <Bar dataKey="count" fill="var(--rubi-blue)" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />}>
+              <KillsChart data={killsData} />
+            </Suspense>
           </div>
         </div>
 
@@ -183,31 +166,9 @@ function SessionDetail() {
                 <b className="text-foreground">{fmtNum(session.damage.maxDps)}</b>
               </p>
               <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={session.damage.damageTypes}
-                      dataKey="value"
-                      nameKey="type"
-                      innerRadius={40}
-                      outerRadius={70}
-                      paddingAngle={2}
-                    >
-                      {session.damage.damageTypes.map((_, i) => (
-                        <Cell key={i} fill={TYPE_COLORS[i % TYPE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: "var(--popover)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 12,
-                        fontSize: 12,
-                      }}
-                      formatter={(v) => fmtNum(Number(v))}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />}>
+                  <DamagePie data={session.damage.damageTypes} colors={TYPE_COLORS} />
+                </Suspense>
               </div>
               <ul className="mt-2 space-y-1 text-xs">
                 {session.damage.damageTypes.map((t, i) => (

@@ -86,23 +86,34 @@ function CommunityPage() {
   const fetchSessions = useServerFn(getCommunitySessions);
   const fetchMonsters = useServerFn(getCommunityMonsters);
 
+  // Debounce da busca por hunt: evita uma requisição por tecla digitada.
+  const [huntTerm, setHuntTerm] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setHuntTerm(huntQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [huntQuery]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["community", vocation, huntQuery, monster],
+    queryKey: ["community", vocation, huntTerm, monster],
     queryFn: () =>
       fetchSessions({
         data: {
           vocation: vocation || undefined,
-          hunt: huntQuery.trim() || undefined,
+          hunt: huntTerm || undefined,
           monster: monster.trim() || undefined,
         },
       }),
+    // Mantém a lista anterior visível enquanto o novo filtro carrega.
+    placeholderData: (prev) => prev,
+    staleTime: 60_000,
   });
 
   const { data: catalog } = useQuery({
     queryKey: ["community-monsters"],
     queryFn: () => fetchMonsters(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
+
 
   const sessions = data?.sessions ?? [];
 

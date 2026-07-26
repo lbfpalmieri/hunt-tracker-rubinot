@@ -6,9 +6,11 @@ import { useAppStore } from "@/lib/store";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    // getSession lê o token já em cache local — evita um round-trip de rede
+    // em toda navegação (getUser bate na API a cada clique).
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.user) throw redirect({ to: "/auth" });
+    return { user: data.session.user };
   },
   component: AuthLayout,
 });
