@@ -45,13 +45,14 @@ function Dashboard() {
 
   const agg = useMemo(() => {
     if (mySessions.length === 0) {
-      return { xph: 0, gph: 0, totalTime: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
+      return { rawXph: 0, totalRawXp: 0, totalXp: 0, gph: 0, totalTime: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
     }
     const totalTime = mySessions.reduce((a, s) => a + s.hunting.durationSec, 0);
     const totalXp = mySessions.reduce((a, s) => a + s.hunting.xpGain, 0);
+    const totalRawXp = mySessions.reduce((a, s) => a + (s.hunting.rawXp || s.hunting.xpGain), 0);
     const totalBal = mySessions.reduce((a, s) => a + s.hunting.balance, 0);
     const hoursTotal = totalTime / 3600 || 1;
-    const xph = totalXp / hoursTotal;
+    const rawXph = totalRawXp / hoursTotal;
     const gph = totalBal / hoursTotal;
     const bySpot = new Map<string, { time: number; bal: number }>();
     for (const s of mySessions) {
@@ -65,8 +66,9 @@ function Dashboard() {
       const g = v.bal / (v.time / 3600 || 1);
       if (!bestHunt || g > bestHunt.gph) bestHunt = { name, gph: g };
     }
-    return { xph, gph, totalTime, balance: totalBal, bestHunt };
+    return { rawXph, totalRawXp, totalXp, gph, totalTime, balance: totalBal, bestHunt };
   }, [mySessions]);
+
 
   const imbAgg = useMemo(
     () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
