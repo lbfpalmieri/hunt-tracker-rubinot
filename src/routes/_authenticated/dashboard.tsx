@@ -348,7 +348,7 @@ function Dashboard() {
                         <div className={"text-sm font-semibold " + (s.hunting.balance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
                           {fmtGold(s.hunting.balance)}
                         </div>
-                        <div className="text-xs text-muted-foreground">{fmtNum(s.hunting.xpPerHour)} xp/h</div>
+                        <div className="text-xs text-muted-foreground">{fmtNum((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1))} raw xp/h</div>
                       </div>
                     </Link>
                   </li>
