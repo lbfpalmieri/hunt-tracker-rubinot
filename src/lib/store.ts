@@ -62,8 +62,8 @@ interface State {
   removeCharacter: (id: string) => Promise<void>;
   addHunt: (characterId: string, name: string) => Promise<Hunt>;
   removeHunt: (id: string) => Promise<void>;
-  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic"> & { gearUrl?: string | null; isPublic?: boolean }) => Promise<HuntSession>;
-  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean }) => Promise<void>;
+  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null }) => Promise<HuntSession>;
+  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null }) => Promise<void>;
   removeSession: (id: string) => Promise<void>;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
