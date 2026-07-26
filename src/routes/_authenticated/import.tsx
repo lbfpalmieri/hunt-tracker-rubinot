@@ -35,6 +35,9 @@ function ImportPage() {
   const [huntId, setHuntId] = useState<string>("");
   const [newHuntName, setNewHuntName] = useState("");
   const [charId, setCharId] = useState<string>("");
+  const [gearUrl, setGearUrl] = useState<string | null>(null);
+  const [isPublic, setIsPublic] = useState(true);
+
 
   const effectiveCharId = charId || activeId || characters[0]?.id || "";
   const charHunts = useMemo(
