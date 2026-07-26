@@ -47,6 +47,13 @@ function ImportPage() {
   const [charId, setCharId] = useState<string>("");
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
+  const [hasBounty, setHasBounty] = useState(false);
+  const [bountyDifficulty, setBountyDifficulty] = useState<BountyDifficulty | "">("");
+  const [bountyTier, setBountyTier] = useState<BountyTier | "">("");
+  const [bountyXpText, setBountyXpText] = useState("");
+  const bountyXp = parseXpAmount(bountyXpText);
+  const bountyXpInvalid = bountyXpText.trim().length > 0 && bountyXp == null;
+  const bountyReady = !hasBounty || Boolean(bountyDifficulty && bountyTier && !bountyXpInvalid);
 
 
   const effectiveCharId = charId || activeId || characters[0]?.id || "";
