@@ -27,7 +27,7 @@ function About() {
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
           Uma ferramenta simples e direta para acompanhar suas hunts no RubinOT.
-          Cole os dados do jogo, veja sua evolução em XP/h, lucro/h e monstros por hora.
+          Cole os dados do jogo, veja sua evolução em Raw XP/h, lucro/h e monstros por hora.
         </p>
 
         <div className="card-surface mx-auto mt-8 flex flex-col items-center gap-4 p-6">

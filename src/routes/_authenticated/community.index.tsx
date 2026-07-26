@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/community/")({
       {
         name: "description",
         content:
-          "Veja hunts compartilhadas por outros jogadores do RubinOT: XP/h, lucro/h, monstros e equipamentos por vocação.",
+          "Veja hunts compartilhadas por outros jogadores do RubinOT: Raw XP/h, lucro/h, monstros e equipamentos por vocação.",
       },
       { property: "og:title", content: "Comunidade — hunts compartilhadas" },
       {

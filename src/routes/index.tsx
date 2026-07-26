@@ -12,12 +12,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Ferramenta para acompanhar XP/h, lucro/h, monstros e evolução dos seus personagens no RubinOT. Login com Google, dados salvos na nuvem.",
+          "Ferramenta para acompanhar Raw XP/h, lucro/h, monstros e evolução dos seus personagens no RubinOT. Login com Google, dados salvos na nuvem.",
       },
       { property: "og:title", content: "RubinOT Hunt Tracker — Monitore suas hunts" },
       {
         property: "og:description",
-        content: "Ferramenta para acompanhar XP/h, lucro/h, monstros e evolução dos seus personagens no RubinOT. Login com Google, dados salvos na nuvem.",
+        content: "Ferramenta para acompanhar Raw XP/h, lucro/h, monstros e evolução dos seus personagens no RubinOT. Login com Google, dados salvos na nuvem.",
       },
       { property: "og:type", content: "website" },
     ],
@@ -84,7 +84,7 @@ function Landing() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
             Cole os relatórios do RubinOT (Hunting Analyser, Damage e Miscellaneous) e veja
-            XP/h, lucro/h e a evolução dos seus chars ao longo do tempo. Salvo na nuvem —
+            Raw XP/h, lucro/h e a evolução dos seus chars ao longo do tempo. Salvo na nuvem —
             acesse de qualquer lugar.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -98,7 +98,7 @@ function Landing() {
         </div>
 
         <div className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Feature icon={Zap} title="XP/h por sessão" text="Acompanhe o rendimento em cada spot." tone="blue" />
+          <Feature icon={Zap} title="Raw XP/h por sessão" text="Acompanhe o rendimento em cada spot." tone="blue" />
           <Feature icon={Coins} title="Lucro/h real" text="Balance direto do relatório, sem cálculo manual." tone="gold" />
           <Feature icon={ScrollText} title="Histórico completo" text="Todas as hunts organizadas por personagem." tone="muted" />
         </div>

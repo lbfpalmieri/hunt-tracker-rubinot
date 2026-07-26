@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — RubinOT Hunt Tracker" },
-      { name: "description", content: "Acompanhe suas hunts no RubinOT: XP/h, lucro/h e evolução." },
+      { name: "description", content: "Acompanhe suas hunts no RubinOT: Raw Raw XP/h, lucro/h e evolução." },
       { property: "og:title", content: "Dashboard RubinOT Hunt Tracker" },
       { property: "og:description", content: "Métricas das suas hunts no RubinOT." },
       { property: "og:type", content: "website" },
