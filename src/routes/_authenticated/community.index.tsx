@@ -6,7 +6,26 @@ import { AppShell } from "@/components/AppShell";
 import { getCommunitySessions, getCommunityMonsters } from "@/lib/community.functions";
 import { useAppStore } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
-import { Globe2, Search, Skull, Users, Zap, Coins, LayoutList, Layers } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Globe2,
+  Search,
+  Skull,
+  Users,
+  Zap,
+  Coins,
+  LayoutList,
+  Layers,
+  Calculator,
+  Target,
+  ChevronRight,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/community/")({
   head: () => ({
@@ -49,7 +68,9 @@ function CommunityPage() {
   const [monster, setMonster] = useState("");
   const [monsterInput, setMonsterInput] = useState("");
   const [sort, setSort] = useState<Sort>("recent");
-  const [view, setView] = useState<"hunts" | "sessions">("hunts");
+  const [view, setView] = useState<"hunts" | "sessions" | "calc">("hunts");
+  const [quantity, setQuantity] = useState<number>(400);
+  const [openHunt, setOpenHunt] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
   // Pre-select the active character's vocation once.
@@ -149,6 +170,78 @@ function CommunityPage() {
     return list;
   }, [sessions, sort]);
 
+  /** Sessions of the hunt opened in the drill-down modal. */
+  const openHuntData = useMemo(() => {
+    if (!openHunt) return null;
+    const meta = hunts.find((h) => h.key === openHunt);
+    if (!meta) return null;
+    const list = sessions
+      .filter((s) => `${s.huntName.toLowerCase()}__${s.vocation}` === openHunt)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return { meta, list };
+  }, [openHunt, hunts, sessions]);
+
+  /** Community benchmark for the selected monster, grouped by hunt. */
+  const calcRows = useMemo(() => {
+    const needle = monster.trim().toLowerCase();
+    if (!needle) return [];
+    const map = new Map<
+      string,
+      {
+        huntName: string;
+        vocation: string;
+        sessionCount: number;
+        players: Set<string>;
+        totalSec: number;
+        totalKills: number;
+        bestPerHour: number;
+      }
+    >();
+    for (const s of sessions) {
+      const kills = s.kills
+        .filter((k) => k.name.toLowerCase() === needle)
+        .reduce((a, k) => a + k.count, 0);
+      if (kills <= 0 || s.durationSec <= 0) continue;
+      const key = `${s.huntName.toLowerCase()}__${s.vocation}`;
+      const cur =
+        map.get(key) ??
+        {
+          huntName: s.huntName,
+          vocation: s.vocation,
+          sessionCount: 0,
+          players: new Set<string>(),
+          totalSec: 0,
+          totalKills: 0,
+          bestPerHour: 0,
+        };
+      cur.sessionCount += 1;
+      cur.players.add(s.charName.toLowerCase());
+      cur.totalSec += s.durationSec;
+      cur.totalKills += kills;
+      cur.bestPerHour = Math.max(cur.bestPerHour, kills / (s.durationSec / 3600));
+      map.set(key, cur);
+    }
+    return [...map.values()]
+      .map((h) => {
+        const perHour = h.totalKills / (h.totalSec / 3600);
+        return {
+          key: `${h.huntName.toLowerCase()}__${h.vocation}`,
+          huntName: h.huntName,
+          vocation: h.vocation,
+          sessionCount: h.sessionCount,
+          playerCount: h.players.size,
+          totalKills: h.totalKills,
+          perHour,
+          bestPerHour: h.bestPerHour,
+          estSec: perHour > 0 ? (quantity / perHour) * 3600 : Infinity,
+          bestSec: h.bestPerHour > 0 ? (quantity / h.bestPerHour) * 3600 : Infinity,
+        };
+      })
+      .sort((a, b) => a.estSec - b.estSec);
+  }, [sessions, monster, quantity]);
+
+
+
   return (
     <AppShell>
       <div className="mb-6">
@@ -235,7 +328,41 @@ function CommunityPage() {
         >
           <LayoutList className="h-3.5 w-3.5" /> Sessões
         </button>
+        <button
+          onClick={() => setView("calc")}
+          className={
+            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            (view === "calc" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
+          }
+        >
+          <Calculator className="h-3.5 w-3.5" /> Calculadora
+        </button>
       </div>
+
+      {view === "calc" && (
+        <div className="card-surface mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+          <label className="block sm:w-56">
+            <span className="text-xs font-medium text-muted-foreground">Quantidade da task</span>
+            <div className="relative mt-1">
+              <Target className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 0))}
+                className="w-full rounded-lg border border-border bg-input pl-9 pr-3 py-2 text-sm font-mono"
+              />
+            </div>
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Escolha o <strong className="text-foreground">monstro</strong> no filtro acima. A média é
+            calculada com as sessões da comunidade (todas as horas somadas por hunt), então serve como
+            referência do que dá para alcançar — não como garantia. Use o filtro de vocação para
+            comparar só com quem joga igual a você.
+          </p>
+        </div>
+      )}
+
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -253,10 +380,107 @@ function CommunityPage() {
               : "Nenhuma sessão compartilhada encontrada com esses filtros."}
           </p>
         </div>
+      ) : view === "calc" ? (
+        !monster.trim() ? (
+          <div className="card-surface flex flex-col items-center gap-2 p-10 text-center">
+            <Calculator className="h-8 w-8 text-muted-foreground" />
+            <p className="font-semibold">Escolha um monstro</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Use o filtro <strong className="text-foreground">Monstro</strong> acima para ver quantos
+              a comunidade mata por hora em cada hunt e quanto tempo levaria para fechar a task.
+            </p>
+          </div>
+        ) : calcRows.length === 0 ? (
+          <div className="card-surface flex flex-col items-center gap-2 p-10 text-center">
+            <Skull className="h-8 w-8 text-muted-foreground" />
+            <p className="font-semibold">Sem dados da comunidade para {monster}</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Ninguém compartilhou sessões com esse monstro{vocation ? ` como ${vocation}` : ""} ainda.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="card-surface p-5">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                Melhor hunt da comunidade para {quantity}x {monster}
+              </div>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="font-display text-2xl font-bold">{calcRows[0].huntName}</span>
+                <span className="rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
+                  {calcRows[0].vocation}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Média da comunidade:{" "}
+                <strong className="font-mono text-rubi-gold">
+                  {fmtNum(Math.round(calcRows[0].perHour))}
+                </strong>{" "}
+                {monster}/h · tempo estimado{" "}
+                <strong className="font-mono text-rubi-blue">
+                  {fmtDuration(Math.round(calcRows[0].estSec))}
+                </strong>{" "}
+                · no ritmo do melhor jogador:{" "}
+                <strong className="font-mono text-rubi-success">
+                  {fmtDuration(Math.round(calcRows[0].bestSec))}
+                </strong>
+              </p>
+            </div>
+
+            <div className="card-surface overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <th className="px-4 py-3">Hunt</th>
+                    <th className="px-4 py-3 text-right">Sessões</th>
+                    <th className="px-4 py-3 text-right">Jogadores</th>
+                    <th className="px-4 py-3 text-right">Média /h</th>
+                    <th className="px-4 py-3 text-right">Melhor /h</th>
+                    <th className="px-4 py-3 text-right">Tempo p/ {fmtNum(quantity)}</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {calcRows.map((r) => (
+                    <tr key={r.key} className="border-b border-border/50 last:border-0">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{r.huntName}</div>
+                        <div className="text-xs text-muted-foreground">{r.vocation}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">{r.sessionCount}</td>
+                      <td className="px-4 py-3 text-right font-mono">{r.playerCount}</td>
+                      <td className="px-4 py-3 text-right font-mono text-rubi-gold">
+                        {fmtNum(Math.round(r.perHour))}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-rubi-success">
+                        {fmtNum(Math.round(r.bestPerHour))}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-rubi-blue">
+                        {fmtDuration(Math.round(r.estSec))}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => setOpenHunt(r.key)}
+                          className="text-xs font-medium text-rubi-blue hover:underline"
+                        >
+                          Ver sessões
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
       ) : view === "hunts" ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {hunts.map((h) => (
-            <div key={h.key} className="card-surface p-5">
+            <button
+              key={h.key}
+              type="button"
+              onClick={() => setOpenHunt(h.key)}
+              className="card-surface p-5 text-left transition-colors hover:border-rubi-blue/50"
+            >
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
                 <span className="flex-none rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
@@ -271,10 +495,14 @@ function CommunityPage() {
                 <Metric label="Lucro/h" value={fmtGold(h.goldPerHour)} tone={h.goldPerHour >= 0 ? "success" : "danger"} />
                 <Metric label="Kills/h" value={fmtNum(Math.round(h.killsPerHour))} tone="gold" />
               </dl>
-            </div>
+              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-rubi-blue">
+                Ver histórico de sessões <ChevronRight className="h-3.5 w-3.5" />
+              </div>
+            </button>
           ))}
         </div>
       ) : (
+
         <div className="space-y-2">
           {sortedSessions.map((s) => {
             const kills = s.kills.reduce((a, k) => a + k.count, 0);
@@ -307,7 +535,56 @@ function CommunityPage() {
           })}
         </div>
       )}
+
+      <Dialog open={!!openHunt} onOpenChange={(o) => { if (!o) setOpenHunt(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {openHuntData?.meta.huntName ?? "Hunt"}
+            </DialogTitle>
+            <DialogDescription>
+              {openHuntData
+                ? `${openHuntData.meta.vocation} · ${openHuntData.meta.count} sessão(ões) · média ${fmtNum(
+                    Math.round(openHuntData.meta.killsPerHour),
+                  )} kills/h`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            {(openHuntData?.list ?? []).map((s) => {
+              const kills = s.kills.reduce((a, k) => a + k.count, 0);
+              return (
+                <Link
+                  key={s.id}
+                  to="/community/$id"
+                  params={{ id: s.id }}
+                  onClick={() => setOpenHunt(null)}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:border-rubi-blue/50"
+                >
+                  <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-rubi-blue-soft font-display text-xs font-bold text-rubi-blue">
+                    {s.charName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">{s.charName}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {fmtDate(s.createdAt)} · {fmtDuration(s.durationSec)}
+                    </div>
+                  </div>
+                  <div className="grid flex-none grid-cols-3 gap-3 text-center">
+                    <Metric label="XP" value={fmtNum(s.xpGain)} tone="blue" />
+                    <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
+                    <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 flex-none text-muted-foreground" />
+                </Link>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
+
   );
 }
 
