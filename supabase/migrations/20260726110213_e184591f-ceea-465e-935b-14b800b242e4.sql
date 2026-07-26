@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.fill_session_character_info() FROM PUBLIC, anon, authenticated;
