@@ -535,7 +535,56 @@ function CommunityPage() {
           })}
         </div>
       )}
+
+      <Dialog open={!!openHunt} onOpenChange={(o) => { if (!o) setOpenHunt(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {openHuntData?.meta.huntName ?? "Hunt"}
+            </DialogTitle>
+            <DialogDescription>
+              {openHuntData
+                ? `${openHuntData.meta.vocation} · ${openHuntData.meta.count} sessão(ões) · média ${fmtNum(
+                    Math.round(openHuntData.meta.killsPerHour),
+                  )} kills/h`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            {(openHuntData?.list ?? []).map((s) => {
+              const kills = s.kills.reduce((a, k) => a + k.count, 0);
+              return (
+                <Link
+                  key={s.id}
+                  to="/community/$id"
+                  params={{ id: s.id }}
+                  onClick={() => setOpenHunt(null)}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:border-rubi-blue/50"
+                >
+                  <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-rubi-blue-soft font-display text-xs font-bold text-rubi-blue">
+                    {s.charName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">{s.charName}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {fmtDate(s.createdAt)} · {fmtDuration(s.durationSec)}
+                    </div>
+                  </div>
+                  <div className="grid flex-none grid-cols-3 gap-3 text-center">
+                    <Metric label="XP" value={fmtNum(s.xpGain)} tone="blue" />
+                    <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
+                    <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 flex-none text-muted-foreground" />
+                </Link>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
+
   );
 }
 
