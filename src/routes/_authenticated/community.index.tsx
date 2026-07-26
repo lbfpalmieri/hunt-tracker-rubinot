@@ -165,7 +165,7 @@ function CommunityPage() {
     const list = sessions.slice();
     const perHour = (v: number, sec: number) => (sec > 0 ? v / (sec / 3600) : 0);
     list.sort((a, b) => {
-      if (sort === "xph") return perHour(b.xpGain, b.durationSec) - perHour(a.xpGain, a.durationSec);
+      if (sort === "xph") return perHour(b.rawXp || b.xpGain, b.durationSec) - perHour(a.rawXp || a.xpGain, a.durationSec);
       if (sort === "gph") return perHour(b.balance, b.durationSec) - perHour(a.balance, a.durationSec);
       if (sort === "killsh") {
         const k = (s: typeof a) => perHour(s.kills.reduce((x, y) => x + y.count, 0), s.durationSec);
@@ -307,7 +307,7 @@ function CommunityPage() {
             className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
           >
             <option value="recent">Mais recentes</option>
-            <option value="xph">Maior XP/h</option>
+            <option value="xph">Maior Raw XP/h</option>
             <option value="gph">Maior lucro/h</option>
             <option value="killsh">Mais kills/h</option>
           </select>
