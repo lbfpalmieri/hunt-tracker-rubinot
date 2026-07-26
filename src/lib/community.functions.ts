@@ -4,9 +4,9 @@ import { z } from "zod";
 
 /** Columns that are safe to expose publicly. Never include user_id/character_id. */
 const LIST_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, hunting";
+  "id, created_at, hunt_name, char_name, char_vocation, hunting, bounty_difficulty, bounty_tier, bounty_xp";
 const DETAIL_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, gear_url, hunting, damage, misc";
+  "id, created_at, hunt_name, char_name, char_vocation, gear_url, hunting, damage, misc, bounty_difficulty, bounty_tier, bounty_xp";
 
 function publicClient() {
   const url = process.env.SUPABASE_URL!;
@@ -71,6 +71,13 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
         durationSec: Number(r.hunting?.durationSec ?? 0),
         xpGain: Number(r.hunting?.xpGain ?? 0),
         rawXp: Number(r.hunting?.rawXp ?? 0),
+        bounty: r.bounty_difficulty && r.bounty_tier
+          ? {
+              difficulty: String(r.bounty_difficulty),
+              tier: String(r.bounty_tier),
+              xp: r.bounty_xp == null ? null : Number(r.bounty_xp),
+            }
+          : null,
         balance: Number(r.hunting?.balance ?? 0),
         loot: Number(r.hunting?.loot ?? 0),
         supplies: Number(r.hunting?.supplies ?? 0),
@@ -126,6 +133,13 @@ export const getCommunitySession = createServerFn({ method: "GET" })
         hunting: r.hunting,
         damage: r.damage ?? null,
         misc: r.misc ?? null,
+        bounty: r.bounty_difficulty && r.bounty_tier
+          ? {
+              difficulty: String(r.bounty_difficulty),
+              tier: String(r.bounty_tier),
+              xp: r.bounty_xp == null ? null : Number(r.bounty_xp),
+            }
+          : null,
       },
     };
   });

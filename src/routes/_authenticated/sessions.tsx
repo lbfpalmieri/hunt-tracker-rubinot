@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
+import { huntRawXp } from "@/lib/bounty";
+import { BountyBadge } from "@/components/BountyBadge";
 import { ScrollText, Search, Filter, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -47,7 +49,8 @@ function SessionsList() {
       if (sort === "recent") return b.createdAt.localeCompare(a.createdAt);
       const dur = (s: typeof a) => s.hunting.durationSec / 3600 || 1;
       if (sort === "gph") return b.hunting.balance / dur(b) - a.hunting.balance / dur(a);
-      if (sort === "xph") return (b.hunting.rawXp || b.hunting.xpGain) / dur(b) - (a.hunting.rawXp || a.hunting.xpGain) / dur(a);
+      if (sort === "xph")
+        return (huntRawXp(b) ?? 0) / dur(b) - (huntRawXp(a) ?? 0) / dur(a);
       return b.hunting.durationSec - a.hunting.durationSec;
     });
     return list;
@@ -129,13 +132,25 @@ function SessionsList() {
                     className="card-surface flex flex-col gap-3 px-4 py-3 transition-colors hover:border-rubi-blue/60 sm:flex-row sm:items-center"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-display text-base font-semibold">{s.huntName}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-display text-base font-semibold">{s.huntName}</span>
+                        {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                      </div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
                         {charName(s.characterId)} · {fmtDate(s.createdAt)} · {fmtDuration(s.hunting.durationSec)}
                       </div>
                     </div>
                     <div className="grid flex-none grid-cols-3 gap-4 text-right text-sm sm:grid-cols-3">
-                      <MiniStat label="Raw XP/h" value={fmtNum((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1))} tone="blue" />
+                      <MiniStat
+                        label="Raw XP/h"
+                        value={
+                          huntRawXp(s) == null
+                            ? "—"
+                            : fmtNum((huntRawXp(s) as number) / (s.hunting.durationSec / 3600 || 1))
+                        }
+                        tone="blue"
+                      />
+
                       <MiniStat label="Lucro/h" value={fmtGold(gph)} tone={gph >= 0 ? "success" : "danger"} />
                       <MiniStat label="Balance" value={fmtGold(s.hunting.balance)} tone="gold" />
                     </div>

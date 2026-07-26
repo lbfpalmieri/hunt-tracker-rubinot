@@ -46,6 +46,9 @@ export type Database = {
       }
       hunt_sessions: {
         Row: {
+          bounty_difficulty: string | null
+          bounty_tier: string | null
+          bounty_xp: number | null
           char_name: string | null
           char_vocation: string | null
           character_id: string
@@ -60,6 +63,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bounty_difficulty?: string | null
+          bounty_tier?: string | null
+          bounty_xp?: number | null
           char_name?: string | null
           char_vocation?: string | null
           character_id: string
@@ -74,6 +80,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bounty_difficulty?: string | null
+          bounty_tier?: string | null
+          bounty_xp?: number | null
           char_name?: string | null
           char_vocation?: string | null
           character_id?: string

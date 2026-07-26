@@ -5,8 +5,16 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { parseHunting, parseDamage, parseMiscellaneous, splitCombinedInput } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { useMemo, useState } from "react";
-import { Upload, Wand2, Save, UserCircle2, Sparkles } from "lucide-react";
+import { Upload, Wand2, Save, UserCircle2, Sparkles, Trophy } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
+import {
+  BOUNTY_DIFFICULTIES,
+  BOUNTY_TIERS,
+  parseXpAmount,
+  type BountyDifficulty,
+  type BountyTier,
+} from "@/lib/bounty";
+
 
 
 export const Route = createFileRoute("/_authenticated/import")({
@@ -39,6 +47,13 @@ function ImportPage() {
   const [charId, setCharId] = useState<string>("");
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
+  const [hasBounty, setHasBounty] = useState(false);
+  const [bountyDifficulty, setBountyDifficulty] = useState<BountyDifficulty | "">("");
+  const [bountyTier, setBountyTier] = useState<BountyTier | "">("");
+  const [bountyXpText, setBountyXpText] = useState("");
+  const bountyXp = parseXpAmount(bountyXpText);
+  const bountyXpInvalid = bountyXpText.trim().length > 0 && bountyXp == null;
+  const bountyReady = !hasBounty || Boolean(bountyDifficulty && bountyTier && !bountyXpInvalid);
 
 
   const effectiveCharId = charId || activeId || characters[0]?.id || "";
@@ -62,7 +77,7 @@ function ImportPage() {
     }
   }, [huntingText, damageText, miscText]);
 
-  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName);
+  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady);
 
   const handleAutoSplit = () => {
     const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
@@ -90,6 +105,10 @@ function ImportPage() {
         misc: parsed.misc,
         gearUrl,
         isPublic,
+        bounty:
+          hasBounty && bountyDifficulty && bountyTier
+            ? { difficulty: bountyDifficulty, tier: bountyTier, xp: bountyXp }
+            : null,
       });
 
       navigate({ to: "/sessions/$id", params: { id: created.id } });
@@ -233,7 +252,89 @@ function ImportPage() {
               </span>
             </label>
 
+            <div className="mt-4 rounded-xl border border-rubi-gold/30 bg-rubi-gold/[0.04] p-3">
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={hasBounty}
+                  onChange={(e) => setHasBounty(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[var(--rubi-gold)]"
+                />
+                <span className="flex items-center gap-1.5">
+                  <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
+                  Esta sessão incluiu <b className="text-foreground">bônus de Bounty Task</b>
+                </span>
+              </label>
 
+              {hasBounty && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Dificuldade
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                      {BOUNTY_DIFFICULTIES.map((d) => (
+                        <button
+                          key={d.value}
+                          type="button"
+                          title={d.hint}
+                          onClick={() => setBountyDifficulty(d.value)}
+                          className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                            bountyDifficulty === d.value
+                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                              : "border-border/60 text-muted-foreground hover:border-rubi-gold/50"
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Tipo da task
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {BOUNTY_TIERS.map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => setBountyTier(t.value)}
+                          className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                            bountyTier === t.value
+                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                              : "border-border/60 text-muted-foreground hover:border-rubi-gold/50"
+                          }`}
+                        >
+                          {t.label}
+                          <span className="mt-0.5 block text-[10px] font-normal opacity-70">{t.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      XP de bônus (opcional)
+                    </label>
+                    <input
+                      value={bountyXpText}
+                      onChange={(e) => setBountyXpText(e.target.value)}
+                      placeholder="ex: 8kk ou 8000000"
+                      className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-rubi-gold"
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {bountyXpInvalid
+                        ? "Valor inválido — use 8kk, 8m ou 8000000."
+                        : bountyXp != null
+                          ? `Será descontado da Raw XP: ${fmtNum(bountyXp)}`
+                          : "Se você não souber o valor, deixe vazio: a sessão fica marcada como Bounty e não entra nas médias de Raw XP/h."}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
 
 
             <button
@@ -252,8 +353,11 @@ function ImportPage() {
               <p className="mt-2 text-xs text-muted-foreground">
                 {!parsed.hunting
                   ? "Cole o Hunting Analyser para continuar."
-                  : "Dê um nome à hunt."}
+                  : !selectedHuntName
+                    ? "Dê um nome à hunt."
+                    : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
+
             )}
           </div>
 

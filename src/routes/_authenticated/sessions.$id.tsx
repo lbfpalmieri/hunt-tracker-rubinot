@@ -4,10 +4,14 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
+import { huntRawXp, bountyLabel } from "@/lib/bounty";
+import { BountyBadge } from "@/components/BountyBadge";
+import { BountyEditor } from "@/components/BountyEditor";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
+
 
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
@@ -65,6 +69,7 @@ function SessionDetail() {
 
   const h = session.hunting;
   const gph = h.balance / (h.durationSec / 3600 || 1);
+  const netRawXp = huntRawXp(session);
   const totalKills = h.kills.reduce((a, k) => a + k.count, 0);
   const killsData = h.kills.slice().sort((a, b) => b.count - a.count).slice(0, 10);
 
@@ -80,7 +85,10 @@ function SessionDetail() {
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Sessão</div>
-          <h1 className="mt-1 font-display text-3xl font-bold">{session.huntName}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
+            {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {char?.name ?? "—"} · {fmtDate(session.createdAt)} ·{" "}
             {h.startedAt && h.endedAt ? `${h.startedAt} → ${h.endedAt}` : fmtDuration(h.durationSec)}
@@ -102,12 +110,19 @@ function SessionDetail() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />
         <StatCard
-          label="Raw XP ganha"
+          label={session.bounty ? "Raw XP ganha (com bounty)" : "Raw XP ganha"}
           value={fmtNum(h.rawXp || h.xpGain)}
-          hint={`XP com bônus: ${fmtNum(h.xpGain)}`}
-          icon={Zap}
-          accent="blue"
+          hint={
+            session.bounty
+              ? session.bounty.xp != null
+                ? `Raw XP de hunt: ${fmtNum(netRawXp ?? 0)} · Bônus Bounty (${bountyLabel(session.bounty)}): ${fmtNum(session.bounty.xp)}`
+                : `Inclui bônus de Bounty Task (${bountyLabel(session.bounty)}) — valor não informado`
+              : `XP com bônus: ${fmtNum(h.xpGain)}`
+          }
+          icon={session.bounty ? Trophy : Zap}
+          accent={session.bounty ? "gold" : "blue"}
         />
+
 
         <StatCard
           label="Lucro/h"
@@ -237,7 +252,23 @@ function SessionDetail() {
         )}
       </div>
 
+      {/* Bounty Task bonus */}
+      <div className="card-surface mt-6 border-rubi-gold/25 p-5">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold">
+          <Trophy className="h-4 w-4 text-rubi-gold" /> Bônus de Bounty Task
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          A XP de conclusão de uma Bounty Task entra junto na Raw XP do log. Marque aqui para que ela seja
+          descontada das médias de Raw XP/h.
+        </p>
+        <BountyEditor
+          value={session.bounty}
+          onSave={(next) => updateSession(session.id, { bounty: next })}
+        />
+      </div>
+
       {/* Gear + community sharing */}
+
       <div className="card-surface mt-6 p-5">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <h2 className="flex items-center gap-2 text-base font-semibold">

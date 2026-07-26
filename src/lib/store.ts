@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { HuntingData, DamageData, MiscData } from "./parser";
+import type { BountyInfo, BountyDifficulty, BountyTier } from "./bounty";
 
 export interface Character {
   id: string;
@@ -22,6 +23,7 @@ export interface HuntSession {
   misc: MiscData | null;
   gearUrl: string | null;
   isPublic: boolean;
+  bounty: BountyInfo | null;
 }
 
 
@@ -60,8 +62,8 @@ interface State {
   removeCharacter: (id: string) => Promise<void>;
   addHunt: (characterId: string, name: string) => Promise<Hunt>;
   removeHunt: (id: string) => Promise<void>;
-  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic"> & { gearUrl?: string | null; isPublic?: boolean }) => Promise<HuntSession>;
-  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean }) => Promise<void>;
+  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null }) => Promise<HuntSession>;
+  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null }) => Promise<void>;
   removeSession: (id: string) => Promise<void>;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
@@ -74,6 +76,16 @@ interface State {
 // Data API types aren't generated yet; cast to a loose client here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowBounty(row: any): BountyInfo | null {
+  if (!row?.bounty_difficulty || !row?.bounty_tier) return null;
+  return {
+    difficulty: row.bounty_difficulty as BountyDifficulty,
+    tier: row.bounty_tier as BountyTier,
+    xp: row.bounty_xp == null ? null : Number(row.bounty_xp),
+  };
+}
 
 export const useAppStore = create<State>()((set, get) => ({
   characters: [],
@@ -133,6 +145,7 @@ export const useAppStore = create<State>()((set, get) => ({
         misc: (s.misc ?? null) as MiscData | null,
         gearUrl: s.gear_url ?? null,
         isPublic: s.is_public ?? true,
+        bounty: rowBounty(s),
       }));
 
       const hunts: Hunt[] = (huntRes.data ?? []).map((h: any) => ({
@@ -298,6 +311,9 @@ export const useAppStore = create<State>()((set, get) => ({
         is_public: input.isPublic ?? true,
         char_name: char?.name ?? null,
         char_vocation: char?.vocation ?? null,
+        bounty_difficulty: input.bounty?.difficulty ?? null,
+        bounty_tier: input.bounty?.tier ?? null,
+        bounty_xp: input.bounty?.xp ?? null,
       })
       .select()
       .single();
@@ -312,6 +328,7 @@ export const useAppStore = create<State>()((set, get) => ({
       misc: (data.misc ?? null) as MiscData | null,
       gearUrl: data.gear_url ?? null,
       isPublic: data.is_public ?? true,
+      bounty: rowBounty(data),
     };
     set((s) => ({ sessions: [created, ...s.sessions] }));
     return created;
@@ -321,6 +338,11 @@ export const useAppStore = create<State>()((set, get) => ({
     const dbPatch: Record<string, unknown> = {};
     if (patch.gearUrl !== undefined) dbPatch.gear_url = patch.gearUrl;
     if (patch.isPublic !== undefined) dbPatch.is_public = patch.isPublic;
+    if (patch.bounty !== undefined) {
+      dbPatch.bounty_difficulty = patch.bounty?.difficulty ?? null;
+      dbPatch.bounty_tier = patch.bounty?.tier ?? null;
+      dbPatch.bounty_xp = patch.bounty?.xp ?? null;
+    }
     if (Object.keys(dbPatch).length === 0) return;
     const { error } = await db.from("hunt_sessions").update(dbPatch).eq("id", id);
     if (error) throw error;

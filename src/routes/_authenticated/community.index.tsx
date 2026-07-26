@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { BountyBadge } from "@/components/BountyBadge";
 import { getCommunitySessions, getCommunityMonsters } from "@/lib/community.functions";
 import { useAppStore } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
@@ -105,6 +106,19 @@ function CommunityPage() {
 
   const sessions = data?.sessions ?? [];
 
+  /**
+   * Raw XP attributable to the hunt: bounty completion bonus removed.
+   * Returns null when the session is flagged as bounty without a known amount,
+   * so it can be excluded from averages instead of inflating them.
+   */
+  type PublicSession = (typeof sessions)[number];
+  const netRaw = (s: PublicSession): number | null => {
+    const raw = s.rawXp || s.xpGain;
+    if (!s.bounty) return raw;
+    if (s.bounty.xp == null) return null;
+    return Math.max(0, raw - s.bounty.xp);
+  };
+
   const hunts = useMemo(() => {
     const map = new Map<
       string,
@@ -116,6 +130,7 @@ function CommunityPage() {
         hours: number;
         xp: number;
         rawXp: number;
+        rawHours: number;
 
         balance: number;
         kills: number;
@@ -133,13 +148,18 @@ function CommunityPage() {
           hours: 0,
           xp: 0,
           rawXp: 0,
+          rawHours: 0,
           balance: 0,
           kills: 0,
         };
       cur.count += 1;
       cur.hours += s.durationSec / 3600;
       cur.xp += s.xpGain;
-      cur.rawXp += s.rawXp || s.xpGain;
+      const net = netRaw(s);
+      if (net != null) {
+        cur.rawXp += net;
+        cur.rawHours += s.durationSec / 3600;
+      }
       cur.balance += s.balance;
       cur.kills += s.kills.reduce((a, k) => a + k.count, 0);
       map.set(key, cur);
@@ -147,7 +167,7 @@ function CommunityPage() {
     const list = [...map.values()].map((h) => ({
       ...h,
       xpPerHour: h.hours > 0 ? h.xp / h.hours : 0,
-      rawXpPerHour: h.hours > 0 ? h.rawXp / h.hours : 0,
+      rawXpPerHour: h.rawHours > 0 ? h.rawXp / h.rawHours : 0,
       goldPerHour: h.hours > 0 ? h.balance / h.hours : 0,
       killsPerHour: h.hours > 0 ? h.kills / h.hours : 0,
     }));
@@ -165,7 +185,8 @@ function CommunityPage() {
     const list = sessions.slice();
     const perHour = (v: number, sec: number) => (sec > 0 ? v / (sec / 3600) : 0);
     list.sort((a, b) => {
-      if (sort === "xph") return perHour(b.rawXp || b.xpGain, b.durationSec) - perHour(a.rawXp || a.xpGain, a.durationSec);
+      if (sort === "xph")
+        return perHour(netRaw(b) ?? 0, b.durationSec) - perHour(netRaw(a) ?? 0, a.durationSec);
       if (sort === "gph") return perHour(b.balance, b.durationSec) - perHour(a.balance, a.durationSec);
       if (sort === "killsh") {
         const k = (s: typeof a) => perHour(s.kills.reduce((x, y) => x + y.count, 0), s.durationSec);
@@ -524,7 +545,10 @@ function CommunityPage() {
                     {s.charName.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate font-semibold">{s.huntName}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-semibold">{s.huntName}</span>
+                      {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                    </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {s.charName} · {s.vocation} · {fmtDate(s.createdAt)}
                     </div>
@@ -532,7 +556,7 @@ function CommunityPage() {
                 </div>
                 <div className="grid grid-cols-4 gap-3 text-center text-xs sm:w-[420px]">
                   <Metric label="Duração" value={fmtDuration(s.durationSec)} tone="muted" />
-                  <Metric label="Raw XP" value={fmtNum(s.rawXp || s.xpGain)} tone="blue" />
+                  <Metric label="Raw XP" value={netRaw(s) == null ? "—" : fmtNum(netRaw(s) as number)} tone="blue" />
                   <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
                   <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
                 </div>
@@ -572,13 +596,16 @@ function CommunityPage() {
                     {s.charName.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{s.charName}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-semibold">{s.charName}</span>
+                      {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                    </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {fmtDate(s.createdAt)} · {fmtDuration(s.durationSec)}
                     </div>
                   </div>
                   <div className="grid flex-none grid-cols-3 gap-3 text-center">
-                    <Metric label="Raw XP" value={fmtNum(s.rawXp || s.xpGain)} tone="blue" />
+                    <Metric label="Raw XP" value={netRaw(s) == null ? "—" : fmtNum(netRaw(s) as number)} tone="blue" />
                     <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
                     <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
                   </div>

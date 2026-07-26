@@ -6,6 +6,7 @@ import { InfoHint } from "@/components/InfoHint";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
+import { huntRawXp } from "@/lib/bounty";
 import {
   Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
@@ -45,14 +46,19 @@ function Dashboard() {
 
   const agg = useMemo(() => {
     if (mySessions.length === 0) {
-      return { rawXph: 0, totalRawXp: 0, totalXp: 0, gph: 0, totalTime: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
+      return { rawXph: 0, totalRawXp: 0, totalXp: 0, gph: 0, totalTime: 0, xpTime: 0, excludedBounty: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
     }
     const totalTime = mySessions.reduce((a, s) => a + s.hunting.durationSec, 0);
     const totalXp = mySessions.reduce((a, s) => a + s.hunting.xpGain, 0);
-    const totalRawXp = mySessions.reduce((a, s) => a + (s.hunting.rawXp || s.hunting.xpGain), 0);
+    // Sessions flagged as bounty without a known bonus amount can't be normalized,
+    // so they stay out of the Raw XP figures instead of inflating them.
+    const xpSessions = mySessions.filter((s) => huntRawXp(s) != null);
+    const excludedBounty = mySessions.length - xpSessions.length;
+    const totalRawXp = xpSessions.reduce((a, s) => a + (huntRawXp(s) as number), 0);
+    const xpTime = xpSessions.reduce((a, s) => a + s.hunting.durationSec, 0);
     const totalBal = mySessions.reduce((a, s) => a + s.hunting.balance, 0);
     const hoursTotal = totalTime / 3600 || 1;
-    const rawXph = totalRawXp / hoursTotal;
+    const rawXph = totalRawXp / (xpTime / 3600 || 1);
     const gph = totalBal / hoursTotal;
     const bySpot = new Map<string, { time: number; bal: number }>();
     for (const s of mySessions) {
@@ -66,7 +72,7 @@ function Dashboard() {
       const g = v.bal / (v.time / 3600 || 1);
       if (!bestHunt || g > bestHunt.gph) bestHunt = { name, gph: g };
     }
-    return { rawXph, totalRawXp, totalXp, gph, totalTime, balance: totalBal, bestHunt };
+    return { rawXph, totalRawXp, totalXp, gph, totalTime, xpTime, excludedBounty, balance: totalBal, bestHunt };
   }, [mySessions]);
 
 
@@ -83,7 +89,7 @@ function Dashboard() {
       [...mySessions].reverse().map((s, i) => ({
         i: i + 1,
         name: s.huntName,
-        "Raw XP/h": Math.round((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1)),
+        "Raw XP/h": Math.round((huntRawXp(s) ?? 0) / (s.hunting.durationSec / 3600 || 1)),
         "Lucro/h": Math.round(s.hunting.balance / (s.hunting.durationSec / 3600 || 1)),
       })),
     [mySessions],
@@ -197,16 +203,27 @@ function Dashboard() {
               <Zap className="h-3.5 w-3.5" /> Experiência
               <InfoHint title="Experiência" description="Como a Raw XP/h e a Raw XP total são calculadas.">
                 <p><strong>Raw XP total:</strong> <code>Σ rawXp</code> de cada sessão (é o <em>Raw XP Gain</em> do Hunting Analyser — valor bruto, sem bônus de stamina/XP boost/evento).</p>
-                <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas caçadas consideradas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p><strong>Bounty Task:</strong> quando você marca uma sessão como tendo bônus de Bounty e informa a XP do bônus, ela é descontada da Raw XP. Se o valor não for informado, a sessão fica fora das médias de Raw XP.</p>
                 <p>A <em>XP com bônus</em> (<code>XP Gain</code>) aparece como valor secundário — ela varia conforme os bônus ativos, por isso a Raw XP é a referência principal.</p>
               </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatCard label="Raw XP / hora (média)" value={fmtNum(agg.rawXph)} hint="valor bruto, sem bônus" icon={Zap} accent="blue" />
+              <StatCard
+                label="Raw XP / hora (média)"
+                value={fmtNum(agg.rawXph)}
+                hint={
+                  agg.excludedBounty > 0
+                    ? `sem bônus · ${agg.excludedBounty} sessão(ões) de bounty fora da média`
+                    : "valor bruto, sem bônus"
+                }
+                icon={Zap}
+                accent="blue"
+              />
               <StatCard
                 label="Raw XP total"
                 value={fmtNum(agg.totalRawXp)}
-                hint={`em ${fmtDuration(agg.totalTime)} · ${fmtNum(agg.totalXp)} XP com bônus`}
+                hint={`em ${fmtDuration(agg.xpTime)} · ${fmtNum(agg.totalXp)} XP com bônus`}
                 icon={TrendingUp}
                 accent="blue"
               />
@@ -348,7 +365,11 @@ function Dashboard() {
                         <div className={"text-sm font-semibold " + (s.hunting.balance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
                           {fmtGold(s.hunting.balance)}
                         </div>
-                        <div className="text-xs text-muted-foreground">{fmtNum((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1))} raw xp/h</div>
+                        <div className="text-xs text-muted-foreground">
+                          {huntRawXp(s) == null
+                            ? "bounty · raw xp/h n/d"
+                            : `${fmtNum((huntRawXp(s) as number) / (s.hunting.durationSec / 3600 || 1))} raw xp/h`}
+                        </div>
                       </div>
                     </Link>
                   </li>
