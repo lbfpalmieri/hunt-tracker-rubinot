@@ -47,7 +47,7 @@ function SessionsList() {
       if (sort === "recent") return b.createdAt.localeCompare(a.createdAt);
       const dur = (s: typeof a) => s.hunting.durationSec / 3600 || 1;
       if (sort === "gph") return b.hunting.balance / dur(b) - a.hunting.balance / dur(a);
-      if (sort === "xph") return b.hunting.xpPerHour - a.hunting.xpPerHour;
+      if (sort === "xph") return (b.hunting.rawXp || b.hunting.xpGain) / dur(b) - (a.hunting.rawXp || a.hunting.xpGain) / dur(a);
       return b.hunting.durationSec - a.hunting.durationSec;
     });
     return list;
@@ -112,7 +112,7 @@ function SessionsList() {
               >
                 <option value="recent">Mais recentes</option>
                 <option value="gph">Melhor Lucro/h</option>
-                <option value="xph">Melhor XP/h</option>
+                <option value="xph">Melhor Raw XP/h</option>
                 <option value="duration">Maior duração</option>
               </select>
             </div>
@@ -135,7 +135,7 @@ function SessionsList() {
                       </div>
                     </div>
                     <div className="grid flex-none grid-cols-3 gap-4 text-right text-sm sm:grid-cols-3">
-                      <MiniStat label="XP/h" value={fmtNum(s.hunting.xpPerHour)} tone="blue" />
+                      <MiniStat label="Raw XP/h" value={fmtNum((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1))} tone="blue" />
                       <MiniStat label="Lucro/h" value={fmtGold(gph)} tone={gph >= 0 ? "success" : "danger"} />
                       <MiniStat label="Balance" value={fmtGold(s.hunting.balance)} tone="gold" />
                     </div>
