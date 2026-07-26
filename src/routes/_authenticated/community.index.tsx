@@ -328,7 +328,41 @@ function CommunityPage() {
         >
           <LayoutList className="h-3.5 w-3.5" /> Sessões
         </button>
+        <button
+          onClick={() => setView("calc")}
+          className={
+            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            (view === "calc" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
+          }
+        >
+          <Calculator className="h-3.5 w-3.5" /> Calculadora
+        </button>
       </div>
+
+      {view === "calc" && (
+        <div className="card-surface mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+          <label className="block sm:w-56">
+            <span className="text-xs font-medium text-muted-foreground">Quantidade da task</span>
+            <div className="relative mt-1">
+              <Target className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 0))}
+                className="w-full rounded-lg border border-border bg-input pl-9 pr-3 py-2 text-sm font-mono"
+              />
+            </div>
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Escolha o <strong className="text-foreground">monstro</strong> no filtro acima. A média é
+            calculada com as sessões da comunidade (todas as horas somadas por hunt), então serve como
+            referência do que dá para alcançar — não como garantia. Use o filtro de vocação para
+            comparar só com quem joga igual a você.
+          </p>
+        </div>
+      )}
+
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
