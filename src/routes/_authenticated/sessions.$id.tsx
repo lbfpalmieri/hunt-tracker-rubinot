@@ -69,6 +69,7 @@ function SessionDetail() {
 
   const h = session.hunting;
   const gph = h.balance / (h.durationSec / 3600 || 1);
+  const netRawXp = huntRawXp(session);
   const totalKills = h.kills.reduce((a, k) => a + k.count, 0);
   const killsData = h.kills.slice().sort((a, b) => b.count - a.count).slice(0, 10);
 
