@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/dragon-logo.png.asset.json";
+import logo from "@/assets/hunt-tracker-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
