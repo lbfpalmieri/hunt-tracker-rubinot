@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/hunt-tracker-logo.png.asset.json";
+import logo from "@/assets/dragon-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { Zap, Coins, ScrollText, ArrowRight } from "lucide-react";
 
