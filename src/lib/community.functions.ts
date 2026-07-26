@@ -143,3 +143,51 @@ export const getCommunitySession = createServerFn({ method: "GET" })
       },
     };
   });
+
+/** Aggregated public numbers used by the landing page and community hero. */
+export const getCommunityStats = createServerFn({ method: "GET" }).handler(async () => {
+  const supabase = publicClient();
+  const { count, error: countError } = await supabase
+    .from("hunt_sessions")
+    .select("id", { count: "exact", head: true })
+    .eq("is_public", true);
+
+  const { data, error } = await supabase
+    .from("hunt_sessions")
+    .select("hunt_name, char_name, char_vocation, hunting")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(1000);
+
+  if (error || countError) {
+    return { sessions: 0, players: 0, hunts: 0, kills: 0, hours: 0, rawXp: 0, gold: 0 };
+  }
+
+  const players = new Set<string>();
+  const hunts = new Set<string>();
+  let kills = 0;
+  let hours = 0;
+  let rawXp = 0;
+  let gold = 0;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const row of (data ?? []) as any[]) {
+    if (row.char_name) players.add(String(row.char_name).toLowerCase());
+    if (row.hunt_name) hunts.add(String(row.hunt_name).toLowerCase());
+    hours += Number(row.hunting?.durationSec ?? 0) / 3600;
+    rawXp += Number(row.hunting?.rawXp ?? row.hunting?.xpGain ?? 0);
+    gold += Number(row.hunting?.balance ?? 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const k of (row.hunting?.kills ?? []) as any[]) kills += Number(k.count) || 0;
+  }
+
+  return {
+    sessions: count ?? (data?.length ?? 0),
+    players: players.size,
+    hunts: hunts.size,
+    kills,
+    hours: Math.round(hours),
+    rawXp,
+    gold,
+  };
+});
