@@ -70,6 +70,9 @@ function ImbuementsPage() {
   const [hoursRemaining, setHoursRemaining] = useState<string>("20");
 
   const [busy, setBusy] = useState(false);
+  const [renewTarget, setRenewTarget] = useState<{ id: string; currentGold: number; label: string } | null>(null);
+  const [renewGold, setRenewGold] = useState<string>("");
+  const [renewBusy, setRenewBusy] = useState(false);
 
   const [typeId, setTypeId] = useState<string>("");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -151,9 +154,8 @@ function ImbuementsPage() {
     }
   };
 
-  const [renewTarget, setRenewTarget] = useState<{ id: string; currentGold: number; label: string } | null>(null);
-  const [renewGold, setRenewGold] = useState<string>("");
-  const [renewBusy, setRenewBusy] = useState(false);
+
+
 
   const openRenew = (imbId: string, currentGold: number, label: string) => {
     setRenewTarget({ id: imbId, currentGold, label });
