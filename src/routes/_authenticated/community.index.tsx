@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { BountyBadge } from "@/components/BountyBadge";
 import { getCommunitySessions, getCommunityMonsters } from "@/lib/community.functions";
 import { useAppStore } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
@@ -543,7 +544,10 @@ function CommunityPage() {
                     {s.charName.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate font-semibold">{s.huntName}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-semibold">{s.huntName}</span>
+                      {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                    </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {s.charName} · {s.vocation} · {fmtDate(s.createdAt)}
                     </div>
@@ -591,7 +595,10 @@ function CommunityPage() {
                     {s.charName.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{s.charName}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-semibold">{s.charName}</span>
+                      {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                    </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {fmtDate(s.createdAt)} · {fmtDuration(s.durationSec)}
                     </div>
