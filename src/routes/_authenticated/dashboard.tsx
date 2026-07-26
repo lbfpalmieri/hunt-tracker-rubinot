@@ -83,7 +83,7 @@ function Dashboard() {
       [...mySessions].reverse().map((s, i) => ({
         i: i + 1,
         name: s.huntName,
-        "XP/h": Math.round(s.hunting.xpPerHour),
+        "Raw XP/h": Math.round((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1)),
         "Lucro/h": Math.round(s.hunting.balance / (s.hunting.durationSec / 3600 || 1)),
       })),
     [mySessions],
