@@ -9,6 +9,8 @@ import {
   MoreHorizontal,
   Calculator,
   Sparkles,
+  Globe2,
+
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/rubinot-logo.png.asset.json";
