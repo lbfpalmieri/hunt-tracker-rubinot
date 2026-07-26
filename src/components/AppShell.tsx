@@ -76,9 +76,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2.5 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-2.5">
           <Link to="/dashboard" className="flex shrink-0 items-center">
-            <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-14 w-auto object-contain sm:h-16" />
+            <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-11 w-auto object-contain sm:h-16" />
           </Link>
 
 
@@ -156,22 +156,27 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             <CharacterSwitcher />
             <button
               onClick={handleSignOut}
               title={activeCharacter ? `Sair (${activeCharacter.name})` : "Sair"}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label="Sair"
+              className="hidden items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground md:inline-flex"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Mobile nav */}
-        <nav className="flex items-center gap-1 overflow-x-auto border-t border-border/60 px-4 py-2 md:hidden">
-          {[...nav, ...moreNav].map((n) => {
+      <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:py-8 md:pb-8">{children}</main>
+
+      {/* Mobile bottom tab bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+        <div className="grid grid-cols-5">
+          {nav.map((n) => {
             const active = pathname === n.to || pathname.startsWith(n.to + "/");
             const Icon = n.icon;
             return (
@@ -179,27 +184,79 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={n.to}
                 to={n.to}
                 className={
-                  "inline-flex flex-none items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium " +
-                  (active
-                    ? "bg-rubi-blue-soft text-rubi-blue"
-                    : "text-muted-foreground hover:text-foreground")
+                  "flex min-w-0 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight transition-colors " +
+                  (active ? "text-rubi-blue" : "text-muted-foreground")
                 }
               >
-                <Icon className="h-3.5 w-3.5" />
-                {n.label}
+                <Icon className={"h-5 w-5 " + (active ? "text-rubi-blue" : "")} />
+                <span className="w-full truncate px-0.5 text-center">{n.label}</span>
               </Link>
             );
           })}
-        </nav>
-      </header>
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={
+              "relative flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight " +
+              (moreActive ? "text-rubi-blue" : "text-muted-foreground")
+            }
+          >
+            <MoreHorizontal className="h-5 w-5" />
+            Mais
+            {lowCount > 0 && (
+              <span className="absolute right-3 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rubi-gold px-1 text-[10px] font-bold text-background animate-pulse">
+                {lowCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </nav>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">{children}</main>
+      {/* Mobile "Mais" sheet */}
+      {moreOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={() => setMoreOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl border-t border-border bg-popover pb-[env(safe-area-inset-bottom)]">
+            <div className="mx-auto my-3 h-1 w-10 rounded-full bg-muted" />
+            {moreNav.map((n) => {
+              const active = pathname === n.to || pathname.startsWith(n.to + "/");
+              const Icon = n.icon;
+              const isImb = n.to === "/imbuements";
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  onClick={() => setMoreOpen(false)}
+                  className={
+                    "flex items-center gap-3 px-5 py-3.5 text-sm " +
+                    (active ? "bg-rubi-blue-soft text-rubi-blue" : "text-foreground active:bg-accent")
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="flex-1">{n.label}</span>
+                  {isImb && lowCount > 0 && (
+                    <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-[10px] font-bold text-background">
+                      {lowCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 border-t border-border px-5 py-3.5 text-sm text-muted-foreground active:bg-accent"
+            >
+              <LogOut className="h-5 w-5" />
+              Sair
+            </button>
+          </div>
+        </div>
+      )}
 
-      <footer className="mt-16 border-t border-border/60">
+      <footer className="mt-12 border-t border-border/60 sm:mt-16">
         <div className="mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 text-center text-sm text-muted-foreground sm:grid-cols-3 sm:px-6 sm:text-left">
           <div className="flex items-center justify-center gap-3 sm:justify-start">
             <img src={avatar.url} alt="Canal" className="h-10 w-10 rounded-full ring-2 ring-rubi-gold/40" />
-            <div>
+            <div className="min-w-0">
               <div className="font-semibold text-foreground">@Ésobrerubinot</div>
               <div className="text-xs">Desenvolvido pelo canal É sobre RubinOT</div>
             </div>
