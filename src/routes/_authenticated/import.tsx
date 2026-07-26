@@ -353,8 +353,11 @@ function ImportPage() {
               <p className="mt-2 text-xs text-muted-foreground">
                 {!parsed.hunting
                   ? "Cole o Hunting Analyser para continuar."
-                  : "Dê um nome à hunt."}
+                  : !selectedHuntName
+                    ? "Dê um nome à hunt."
+                    : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
+
             )}
           </div>
 
