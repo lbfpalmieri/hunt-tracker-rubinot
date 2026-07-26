@@ -9,7 +9,7 @@ export function BountyBadge({
   className = "",
   showXp = false,
 }: {
-  bounty: Pick<BountyInfo, "difficulty" | "tier"> & { xp?: number | null };
+  bounty: { difficulty: string; tier: string; xp?: number | null };
   className?: string;
   showXp?: boolean;
 }) {
