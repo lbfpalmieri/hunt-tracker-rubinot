@@ -88,7 +88,10 @@ function ImportPage() {
         hunting: parsed.hunting,
         damage: parsed.damage,
         misc: parsed.misc,
+        gearUrl,
+        isPublic,
       });
+
       navigate({ to: "/sessions/$id", params: { id: created.id } });
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
