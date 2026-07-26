@@ -252,7 +252,23 @@ function SessionDetail() {
         )}
       </div>
 
+      {/* Bounty Task bonus */}
+      <div className="card-surface mt-6 border-rubi-gold/25 p-5">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold">
+          <Trophy className="h-4 w-4 text-rubi-gold" /> Bônus de Bounty Task
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          A XP de conclusão de uma Bounty Task entra junto na Raw XP do log. Marque aqui para que ela seja
+          descontada das médias de Raw XP/h.
+        </p>
+        <BountyEditor
+          value={session.bounty}
+          onSave={(next) => updateSession(session.id, { bounty: next })}
+        />
+      </div>
+
       {/* Gear + community sharing */}
+
       <div className="card-surface mt-6 p-5">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <h2 className="flex items-center gap-2 text-base font-semibold">
