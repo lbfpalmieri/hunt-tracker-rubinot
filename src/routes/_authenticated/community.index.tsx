@@ -497,7 +497,7 @@ function CommunityPage() {
                 {h.count} sessão(ões) · {fmtDuration(Math.round(h.hours * 3600))} registradas
               </p>
               <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <Metric label="XP/h" value={fmtNum(Math.round(h.xpPerHour))} tone="blue" />
+                <Metric label="Raw XP/h" value={fmtNum(Math.round(h.rawXpPerHour))} tone="blue" />
                 <Metric label="Lucro/h" value={fmtGold(h.goldPerHour)} tone={h.goldPerHour >= 0 ? "success" : "danger"} />
                 <Metric label="Kills/h" value={fmtNum(Math.round(h.killsPerHour))} tone="gold" />
               </dl>
@@ -532,7 +532,7 @@ function CommunityPage() {
                 </div>
                 <div className="grid grid-cols-4 gap-3 text-center text-xs sm:w-[420px]">
                   <Metric label="Duração" value={fmtDuration(s.durationSec)} tone="muted" />
-                  <Metric label="XP ganha" value={fmtNum(s.xpGain)} tone="blue" />
+                  <Metric label="Raw XP" value={fmtNum(s.rawXp || s.xpGain)} tone="blue" />
                   <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
                   <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
                 </div>
@@ -578,7 +578,7 @@ function CommunityPage() {
                     </div>
                   </div>
                   <div className="grid flex-none grid-cols-3 gap-3 text-center">
-                    <Metric label="XP" value={fmtNum(s.xpGain)} tone="blue" />
+                    <Metric label="Raw XP" value={fmtNum(s.rawXp || s.xpGain)} tone="blue" />
                     <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
                     <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
                   </div>
