@@ -1,6 +1,5 @@
 import { Trophy } from "lucide-react";
 import { bountyLabel } from "@/lib/bounty";
-import type { BountyInfo } from "@/lib/bounty";
 import { fmtNum } from "@/lib/format";
 
 /** Golden marker shown on sessions whose Raw XP includes a Bounty Task bonus. */
