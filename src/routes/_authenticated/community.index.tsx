@@ -115,6 +115,8 @@ function CommunityPage() {
         count: number;
         hours: number;
         xp: number;
+        rawXp: number;
+
         balance: number;
         kills: number;
       }
