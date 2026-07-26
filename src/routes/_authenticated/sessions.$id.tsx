@@ -109,12 +109,19 @@ function SessionDetail() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />
         <StatCard
-          label="Raw XP ganha"
+          label={session.bounty ? "Raw XP ganha (com bounty)" : "Raw XP ganha"}
           value={fmtNum(h.rawXp || h.xpGain)}
-          hint={`XP com bônus: ${fmtNum(h.xpGain)}`}
-          icon={Zap}
-          accent="blue"
+          hint={
+            session.bounty
+              ? session.bounty.xp != null
+                ? `Raw XP de hunt: ${fmtNum(netRawXp ?? 0)} · Bônus Bounty (${bountyLabel(session.bounty)}): ${fmtNum(session.bounty.xp)}`
+                : `Inclui bônus de Bounty Task (${bountyLabel(session.bounty)}) — valor não informado`
+              : `XP com bônus: ${fmtNum(h.xpGain)}`
+          }
+          icon={session.bounty ? Trophy : Zap}
+          accent={session.bounty ? "gold" : "blue"}
         />
+
 
         <StatCard
           label="Lucro/h"
