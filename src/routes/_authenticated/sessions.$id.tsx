@@ -148,28 +148,9 @@ function SessionDetail() {
         <div className="card-surface p-5 lg:col-span-2">
           <h2 className="mb-4 text-base font-semibold">Monstros mortos</h2>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={killsData} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                <XAxis type="number" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={130}
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-                />
-                <Tooltip
-                  cursor={{ fill: "var(--rubi-blue-soft)" }}
-                  contentStyle={{
-                    background: "var(--popover)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
-                />
-                <Bar dataKey="count" fill="var(--rubi-blue)" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />}>
+              <KillsChart data={killsData} />
+            </Suspense>
           </div>
         </div>
 
