@@ -252,7 +252,89 @@ function ImportPage() {
               </span>
             </label>
 
+            <div className="mt-4 rounded-xl border border-rubi-gold/30 bg-rubi-gold/[0.04] p-3">
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={hasBounty}
+                  onChange={(e) => setHasBounty(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[var(--rubi-gold)]"
+                />
+                <span className="flex items-center gap-1.5">
+                  <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
+                  Esta sessão incluiu <b className="text-foreground">bônus de Bounty Task</b>
+                </span>
+              </label>
 
+              {hasBounty && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Dificuldade
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                      {BOUNTY_DIFFICULTIES.map((d) => (
+                        <button
+                          key={d.value}
+                          type="button"
+                          title={d.hint}
+                          onClick={() => setBountyDifficulty(d.value)}
+                          className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                            bountyDifficulty === d.value
+                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                              : "border-border/60 text-muted-foreground hover:border-rubi-gold/50"
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Tipo da task
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {BOUNTY_TIERS.map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => setBountyTier(t.value)}
+                          className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                            bountyTier === t.value
+                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                              : "border-border/60 text-muted-foreground hover:border-rubi-gold/50"
+                          }`}
+                        >
+                          {t.label}
+                          <span className="mt-0.5 block text-[10px] font-normal opacity-70">{t.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      XP de bônus (opcional)
+                    </label>
+                    <input
+                      value={bountyXpText}
+                      onChange={(e) => setBountyXpText(e.target.value)}
+                      placeholder="ex: 8kk ou 8000000"
+                      className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-rubi-gold"
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {bountyXpInvalid
+                        ? "Valor inválido — use 8kk, 8m ou 8000000."
+                        : bountyXp != null
+                          ? `Será descontado da Raw XP: ${fmtNum(bountyXp)}`
+                          : "Se você não souber o valor, deixe vazio: a sessão fica marcada como Bounty e não entra nas médias de Raw XP/h."}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
 
 
             <button
