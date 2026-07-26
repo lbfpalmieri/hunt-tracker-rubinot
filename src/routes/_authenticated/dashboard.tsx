@@ -11,10 +11,10 @@ import {
   Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
 
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
-} from "recharts";
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
+
+// Recharts é pesado: carrega depois do primeiro paint do dashboard.
+const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
