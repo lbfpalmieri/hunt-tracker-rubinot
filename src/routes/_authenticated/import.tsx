@@ -6,6 +6,8 @@ import { parseHunting, parseDamage, parseMiscellaneous, splitCombinedInput } fro
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { Upload, Wand2, Save, UserCircle2, Sparkles } from "lucide-react";
+import { PasteImageBox } from "@/components/PasteImage";
+
 
 export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({
@@ -35,6 +37,9 @@ function ImportPage() {
   const [huntId, setHuntId] = useState<string>("");
   const [newHuntName, setNewHuntName] = useState("");
   const [charId, setCharId] = useState<string>("");
+  const [gearUrl, setGearUrl] = useState<string | null>(null);
+  const [isPublic, setIsPublic] = useState(true);
+
 
   const effectiveCharId = charId || activeId || characters[0]?.id || "";
   const charHunts = useMemo(
@@ -83,7 +88,10 @@ function ImportPage() {
         hunting: parsed.hunting,
         damage: parsed.damage,
         misc: parsed.misc,
+        gearUrl,
+        isPublic,
       });
+
       navigate({ to: "/sessions/$id", params: { id: created.id } });
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
@@ -199,6 +207,33 @@ function ImportPage() {
                 />
               )}
             </label>
+
+            <div className="mt-4">
+              <span className="text-xs font-medium text-muted-foreground">
+                Equipamento (opcional)
+              </span>
+              <PasteImageBox
+                value={gearUrl}
+                onChange={(v) => setGearUrl(v)}
+                label="Tire um print do equipamento e cole aqui (Ctrl+V)"
+                className="mt-1"
+              />
+            </div>
+
+            <label className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[var(--rubi-blue)]"
+              />
+              <span>
+                Compartilhar esta sessão na <b className="text-foreground">Comunidade</b> (personagem,
+                vocação, hunt e equipamento ficam visíveis para outros jogadores).
+              </span>
+            </label>
+
+
 
 
             <button

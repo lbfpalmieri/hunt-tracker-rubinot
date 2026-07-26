@@ -5,8 +5,10 @@ import { StatCard } from "@/components/StatCard";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2,
 } from "lucide-react";
+import { PasteImageBox } from "@/components/PasteImage";
+
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
 } from "recharts";
@@ -33,6 +35,8 @@ function SessionDetail() {
   const sessions = useAppStore((s) => s.sessions);
   const characters = useAppStore((s) => s.characters);
   const removeSession = useAppStore((s) => s.removeSession);
+  const updateSession = useAppStore((s) => s.updateSession);
+
 
   const session = sessions.find((s) => s.id === id);
   const char = session ? characters.find((c) => c.id === session.characterId) : null;
@@ -232,6 +236,35 @@ function SessionDetail() {
         )}
       </div>
 
+      {/* Gear + community sharing */}
+      <div className="card-surface mt-6 p-5">
+        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+          <h2 className="flex items-center gap-2 text-base font-semibold">
+            <Shield className="h-4 w-4 text-rubi-blue" /> Equipamento usado
+          </h2>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={session.isPublic}
+              onChange={(e) => updateSession(session.id, { isPublic: e.target.checked })}
+              className="h-4 w-4 accent-[var(--rubi-blue)]"
+            />
+            <Globe2 className="h-3.5 w-3.5" />
+            {session.isPublic ? "Compartilhada na Comunidade" : "Sessão privada"}
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Tire um print do seu equipamento no jogo e cole aqui com Ctrl+V. Ele aparece junto desta hunt
+          na Comunidade.
+        </p>
+        <PasteImageBox
+          value={session.gearUrl}
+          onChange={(v) => updateSession(session.id, { gearUrl: v })}
+          label="Cole o print do equipamento (Ctrl+V)"
+          className="mt-3 max-w-md"
+        />
+      </div>
+
       {/* Misc */}
       {session.misc && (
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -252,6 +285,7 @@ function SessionDetail() {
           />
         </div>
       )}
+
     </AppShell>
   );
 }

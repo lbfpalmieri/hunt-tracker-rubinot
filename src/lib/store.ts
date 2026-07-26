@@ -20,7 +20,10 @@ export interface HuntSession {
   hunting: HuntingData;
   damage: DamageData | null;
   misc: MiscData | null;
+  gearUrl: string | null;
+  isPublic: boolean;
 }
+
 
 export interface Hunt {
   id: string;
@@ -57,10 +60,12 @@ interface State {
   removeCharacter: (id: string) => Promise<void>;
   addHunt: (characterId: string, name: string) => Promise<Hunt>;
   removeHunt: (id: string) => Promise<void>;
-  addSession: (s: Omit<HuntSession, "id" | "createdAt">) => Promise<HuntSession>;
+  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic"> & { gearUrl?: string | null; isPublic?: boolean }) => Promise<HuntSession>;
+  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean }) => Promise<void>;
   removeSession: (id: string) => Promise<void>;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
+
   removeImbuement: (id: string) => Promise<void>;
 }
 
@@ -88,12 +93,22 @@ export const useAppStore = create<State>()((set, get) => ({
     if (get().loading) return;
     set({ loading: true });
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Not signed in");
       const [charRes, sessRes, huntRes, imbRes] = await Promise.all([
         db.from("characters").select("*").order("created_at", { ascending: true }),
-        db.from("hunt_sessions").select("*").order("created_at", { ascending: false }),
+        // The public community policy also exposes other users' public sessions,
+        // so scope the personal history explicitly to the signed-in user.
+        db
+          .from("hunt_sessions")
+          .select("*")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false }),
         db.from("hunts").select("*").order("created_at", { ascending: true }),
         db.from("imbuements").select("*").order("created_at", { ascending: false }),
       ]);
+
       if (charRes.error) throw charRes.error;
       if (sessRes.error) throw sessRes.error;
       if (huntRes.error) throw huntRes.error;
@@ -116,7 +131,10 @@ export const useAppStore = create<State>()((set, get) => ({
         hunting: s.hunting as HuntingData,
         damage: (s.damage ?? null) as DamageData | null,
         misc: (s.misc ?? null) as MiscData | null,
+        gearUrl: s.gear_url ?? null,
+        isPublic: s.is_public ?? true,
       }));
+
       const hunts: Hunt[] = (huntRes.data ?? []).map((h: any) => ({
         id: h.id,
         characterId: h.character_id,
@@ -246,6 +264,7 @@ export const useAppStore = create<State>()((set, get) => ({
     const { data: userData } = await supabase.auth.getUser();
     const uid = userData.user?.id;
     if (!uid) throw new Error("Not signed in");
+    const char = get().characters.find((c) => c.id === input.characterId);
     const { data, error } = await db
       .from("hunt_sessions")
       .insert({
@@ -255,6 +274,10 @@ export const useAppStore = create<State>()((set, get) => ({
         hunting: input.hunting,
         damage: input.damage,
         misc: input.misc,
+        gear_url: input.gearUrl ?? null,
+        is_public: input.isPublic ?? true,
+        char_name: char?.name ?? null,
+        char_vocation: char?.vocation ?? null,
       })
       .select()
       .single();
@@ -267,9 +290,23 @@ export const useAppStore = create<State>()((set, get) => ({
       hunting: data.hunting as HuntingData,
       damage: (data.damage ?? null) as DamageData | null,
       misc: (data.misc ?? null) as MiscData | null,
+      gearUrl: data.gear_url ?? null,
+      isPublic: data.is_public ?? true,
     };
     set((s) => ({ sessions: [created, ...s.sessions] }));
     return created;
+  },
+
+  updateSession: async (id, patch) => {
+    const dbPatch: Record<string, unknown> = {};
+    if (patch.gearUrl !== undefined) dbPatch.gear_url = patch.gearUrl;
+    if (patch.isPublic !== undefined) dbPatch.is_public = patch.isPublic;
+    if (Object.keys(dbPatch).length === 0) return;
+    const { error } = await db.from("hunt_sessions").update(dbPatch).eq("id", id);
+    if (error) throw error;
+    set((s) => ({
+      sessions: s.sessions.map((se) => (se.id === id ? { ...se, ...patch } : se)),
+    }));
   },
 
   removeSession: async (id) => {
@@ -277,6 +314,8 @@ export const useAppStore = create<State>()((set, get) => ({
     if (error) throw error;
     set((s) => ({ sessions: s.sessions.filter((se) => se.id !== id) }));
   },
+
+
 
   addImbuement: async (input) => {
     const { data: userData } = await supabase.auth.getUser();

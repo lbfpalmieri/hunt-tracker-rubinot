@@ -46,32 +46,44 @@ export type Database = {
       }
       hunt_sessions: {
         Row: {
+          char_name: string | null
+          char_vocation: string | null
           character_id: string
           created_at: string
           damage: Json | null
+          gear_url: string | null
           hunt_name: string
           hunting: Json
           id: string
+          is_public: boolean
           misc: Json | null
           user_id: string
         }
         Insert: {
+          char_name?: string | null
+          char_vocation?: string | null
           character_id: string
           created_at?: string
           damage?: Json | null
+          gear_url?: string | null
           hunt_name: string
           hunting: Json
           id?: string
+          is_public?: boolean
           misc?: Json | null
           user_id: string
         }
         Update: {
+          char_name?: string | null
+          char_vocation?: string | null
           character_id?: string
           created_at?: string
           damage?: Json | null
+          gear_url?: string | null
           hunt_name?: string
           hunting?: Json
           id?: string
+          is_public?: boolean
           misc?: Json | null
           user_id?: string
         }

@@ -9,6 +9,8 @@ import {
   MoreHorizontal,
   Calculator,
   Sparkles,
+  Globe2,
+
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/rubinot-logo.png.asset.json";
@@ -23,14 +25,16 @@ const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/import", label: "Nova sessão", icon: Swords },
   { to: "/sessions", label: "Sessões", icon: ScrollText },
-  { to: "/characters", label: "Personagens", icon: UserCircle2 },
+  { to: "/community", label: "Comunidade", icon: Globe2 },
 ] as const;
 
 const moreNav = [
   { to: "/imbuements", label: "Imbuements", icon: Sparkles },
   { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
+  { to: "/characters", label: "Personagens", icon: UserCircle2 },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
+
 
 
 export function AppShell({ children }: { children: ReactNode }) {

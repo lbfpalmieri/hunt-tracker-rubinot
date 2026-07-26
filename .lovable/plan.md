@@ -1,62 +1,68 @@
-# RubinOT Hunt Tracker — "É sobre RubinOT"
+## Objetivo
 
-App web para acompanhar evolução nas hunts do RubinOT: cola os 3 blocos de texto do jogo (Hunting Analyser, Damage/Input Analyser, Miscellaneous), o sistema faz o parse e salva a sessão vinculada a um personagem. Dashboard com métricas, histórico e comparativos.
+Criar uma aba **Comunidade** no menu principal (no lugar de "Personagens", que já existe no menu do usuário) onde todas as sessões de hunt salvas pelos usuários aparecem automaticamente, com filtro por vocação, hunt e monstro — e a possibilidade de anexar um print do equipamento usado.
 
-## Escopo (defaults escolhidos)
+## 1. Menu
 
-- **Sem login**: tudo salvo localmente no navegador (localStorage). Rápido, privado, funciona offline. Fácil migrar para nuvem depois.
-- **Personagens**: cadastro simples (nome, vocação, mundo) — sessões vinculadas ao personagem selecionado.
-- **Importação**: 3 textareas (Hunting, Damage, Miscellaneous) + opção de colar tudo junto que o parser separa por cabeçalhos. Nome da hunt/spot editável antes de salvar.
-- **Loot**: usa o Balance do próprio relatório (simples). Tabela de preços custom fica para v2.
+- Remover "Personagens" da barra superior (continua acessível em "Gerenciar personagens" no menu do avatar).
+- Adicionar **Comunidade** no lugar, com ícone de globo/usuários.
+- No mobile, mesma troca na barra inferior.
 
-## Estrutura de rotas
+## 2. O que é compartilhado (e o que não é)
 
-- `/` — Dashboard (cards de resumo do personagem ativo + gráfico de evolução + últimas sessões)
-- `/import` — Importar nova sessão (3 textareas, preview do parse, salvar)
-- `/sessions` — Histórico completo, filtros por personagem/spot, ordenação
-- `/sessions/$id` — Detalhe de uma sessão (loot, kills, dano por criatura, dano recebido)
-- `/characters` — Gerenciar personagens
-- `/about` — Sobre + créditos @Ésobrerubinot
+Compartilhamento é **automático** ao salvar uma sessão. Público:
 
-## Design
+- Nome da hunt, duração, XP ganha e Raw XP, loot, supplies, balance
+- Lista de monstros mortos (kills)
+- Charms / Imbuements / Item Upgrade da sessão (o bloco Misc)
+- Nome e vocação do personagem + outfit
+- Print do equipamento (quando existir)
 
-- **Tema dark** de fundo (quase preto azulado), cores fortes de destaque puxando da paleta do logo RubinOT: azul vibrante `#3AA9E8` e laranja/dourado `#F5A524` + acentos.
-- **Minimalista moderno**: tipografia Space Grotesk (títulos) + Inter (corpo), cards com bordas sutis, dados grandes e legíveis, micro-animações discretas (fade/slide).
-- Logo RubinOT no header, avatar do canal + handle `@Ésobrerubinot` no footer.
-- Ícones lucide-react. Gráficos com Recharts (área/linha para XP/h e lucro/h ao longo do tempo).
+Nunca público: e-mail, imbuements cadastrados (custos/Gold Token), lucro líquido pessoal, lista de personagens.
 
-## Métricas exibidas
+Cada sessão terá um botão **"Não compartilhar"** (privacidade opt-out), caso o usuário queira esconder uma sessão específica.
 
-Cards no dashboard (personagem ativo, agregado): XP/h médio, Lucro/h médio, Total de sessões, Horas jogadas, Balance total, Melhor hunt (spot).
-Por sessão: XP/h, Raw XP/h, Loot, Supplies, Balance, Dano/h, Healing/h, duração, kills totais, top monstro.
-Gráficos: evolução de XP/h e Lucro/h por sessão (linha), distribuição de kills por criatura (barra), pizza de tipos de dano recebido.
+## 3. Print do equipamento
 
-## Parser
+- Mesmo fluxo que já existe para outfit: **Ctrl+V** cola a imagem, o app comprime para WebP.
+- Ponto de entrada 1: na tela **Nova sessão**, um campo opcional "Equipamento" antes de salvar.
+- Ponto de entrada 2: na tela de **detalhe da sessão**, botão "Adicionar/trocar equipamento" — assim as sessões antigas também recebem a feature sem precisar refazer nada.
+- Como as imagens agora serão lidas por outros usuários, os prints de equipamento vão para um bucket de arquivos público (não em base64 dentro da tabela), o que mantém o carregamento da lista da comunidade rápido.
 
-Módulo `src/lib/parser.ts` puro (testável) com 3 funções:
-- `parseHunting(text)` → { startedAt, endedAt, durationSec, rawXp, xpGain, xpPerHour, rawXpPerHour, loot, supplies, balance, damage, damagePerHour, healing, healingPerHour, kills: [{name, count}], lootedItems: [{name, count}] }
-- `parseDamage(text)` → { totalReceived, maxDps, damageTypes: [{type, value, pct}], damageSources: [{source, value, pct}] }
-- `parseMiscellaneous(text)` → { session, charm: {...}, imbuement: {...}, itemUpgrade: {...} }
-- Regex tolerante a `.` e `,` como separador de milhar, formato `hh:mm`, e ao formato pt-BR/en.
+## 4. Tela Comunidade
 
-## Persistência
+**Topo — filtros:**
+- Vocação (Elite Knight, Royal Paladin, Master Sorcerer, Elder Druid, Monk…) — pré-selecionada com a vocação do personagem ativo
+- Busca por nome da hunt
+- Busca por monstro (com o mesmo autocomplete da calculadora de bounty)
+- Ordenação: mais recentes, maior XP/h, maior lucro/h, mais kills/h
 
-- `localStorage` com chaves `rubinot:characters` e `rubinot:sessions`.
-- Hook `useLocalStore<T>(key)` + tipagem forte.
-- Export/Import JSON (backup) na tela de personagens.
+**Corpo — duas visões:**
 
-## Detalhes técnicos
+1. **Por hunt (agrupado)** — visão padrão: cada card mostra a hunt, quantas sessões da comunidade existem, médias de XP/h, lucro/h e kills/h por vocação. Serve para "nunca fui nesse lugar, vale a pena?".
+2. **Sessões** — lista individual: personagem (nome + outfit + vocação), hunt, duração, XP ganha, balance, kills. Clicar abre um detalhe público somente-leitura com o print do equipamento, charms/imbuements e a lista completa de monstros.
 
-- TanStack Start + Router (já configurado). Todas as rotas usam `createFileRoute` com `head()` próprio (título/description por página).
-- Estado global leve via Zustand (personagem ativo + sessões).
-- Tokens de design em `src/styles.css` (@theme): `--color-rubi-blue`, `--color-rubi-gold`, gradientes e sombras semânticas. Sem cores hardcoded nos componentes.
-- Logo do RubinOT e avatar do canal salvos via `lovable-assets` a partir dos uploads.
-- SEO: title/description específicos em cada rota, og:image apenas nas leaf com hero (dashboard).
+Estados vazios explícitos ("Nenhuma sessão compartilhada para Elite Knight ainda").
 
-## Fora do escopo desta v1
+## 5. Detalhes técnicos
 
-- Login/nuvem (fica como próximo passo caso queira sincronizar entre dispositivos).
-- Tabela de preços editável por item (usa Balance do relatório).
-- Integração automática com cliente do jogo (o Tibia/RubinOT exporta apenas texto).
+**Banco (migração):**
+- `hunt_sessions`: novas colunas `is_public boolean default true`, `gear_url text`, e snapshots `char_name text` / `char_vocation text` (preenchidos ao salvar, evitam expor a tabela `characters` publicamente).
+- Backfill dos snapshots para as sessões já existentes.
+- Nova policy de leitura pública restrita: `SELECT` para `anon`/`authenticated` apenas onde `is_public = true`. As policies de escrita continuam presas a `auth.uid()`, e a policy atual de dono é mantida para o usuário ver as próprias sessões privadas.
+- Bucket público `gear` para os prints, com escrita apenas pelo dono (caminho `{user_id}/{session_id}`).
 
-Pronto para implementar assim que aprovar.
+**Leitura:**
+- Rota pública de servidor (`createServerFn` com cliente publicável) para o feed da comunidade, com projeção explícita de colunas seguras, filtros por vocação/hunt e paginação — nunca `select *`.
+- Agregações por hunt/vocação (médias ponderadas: total de kills ÷ total de horas, igual à calculadora) calculadas no servidor.
+- A rota `/comunidade` fica dentro da área autenticada nesta primeira versão (mesma navegação do resto do app).
+
+**Arquivos previstos:**
+- `src/routes/_authenticated/community.tsx` (feed + filtros) e `src/routes/_authenticated/community.$id.tsx` (detalhe público)
+- `src/lib/community.functions.ts` (server functions de leitura)
+- `src/components/PasteImage.tsx` — extrai o Ctrl+V/compressão hoje duplicado em `characters.tsx` para reuso no equipamento
+- Ajustes em `AppShell.tsx`, `import.tsx`, `sessions.$id.tsx` e `store.ts`
+
+## Fora do escopo desta etapa
+
+Comentários, curtidas, seguir usuários, ranking global e moderação de conteúdo — dá para adicionar depois sobre a mesma base.

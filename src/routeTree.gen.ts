@@ -18,8 +18,10 @@ import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
+import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
+import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -65,6 +67,12 @@ const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCommunityIndexRoute =
+  AuthenticatedCommunityIndexRouteImport.update({
+    id: '/community/',
+    path: '/community/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedToolsMonsterCalculatorRoute =
   AuthenticatedToolsMonsterCalculatorRouteImport.update({
     id: '/tools/monster-calculator',
@@ -76,6 +84,12 @@ const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedSessionsRoute,
 } as any)
+const AuthenticatedCommunityIdRoute =
+  AuthenticatedCommunityIdRouteImport.update({
+    id: '/community/$id',
+    path: '/community/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,8 +100,10 @@ export interface FileRoutesByFullPath {
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
+  '/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -98,8 +114,10 @@ export interface FileRoutesByTo {
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
+  '/community': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -112,8 +130,10 @@ export interface FileRoutesById {
   '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
+  '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -126,8 +146,10 @@ export interface FileRouteTypes {
     | '/imbuements'
     | '/import'
     | '/sessions'
+    | '/community/$id'
     | '/sessions/$id'
     | '/tools/monster-calculator'
+    | '/community/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -138,8 +160,10 @@ export interface FileRouteTypes {
     | '/imbuements'
     | '/import'
     | '/sessions'
+    | '/community/$id'
     | '/sessions/$id'
     | '/tools/monster-calculator'
+    | '/community'
   id:
     | '__root__'
     | '/'
@@ -151,8 +175,10 @@ export interface FileRouteTypes {
     | '/_authenticated/imbuements'
     | '/_authenticated/import'
     | '/_authenticated/sessions'
+    | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/tools/monster-calculator'
+    | '/_authenticated/community/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -226,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAboutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/community/': {
+      id: '/_authenticated/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tools/monster-calculator': {
       id: '/_authenticated/tools/monster-calculator'
       path: '/tools/monster-calculator'
@@ -239,6 +272,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sessions/$id'
       preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
       parentRoute: typeof AuthenticatedSessionsRoute
+    }
+    '/_authenticated/community/$id': {
+      id: '/_authenticated/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof AuthenticatedCommunityIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -263,7 +303,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
+  AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
+  AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -273,8 +315,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
+  AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
   AuthenticatedToolsMonsterCalculatorRoute:
     AuthenticatedToolsMonsterCalculatorRoute,
+  AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -288,13 +332,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
