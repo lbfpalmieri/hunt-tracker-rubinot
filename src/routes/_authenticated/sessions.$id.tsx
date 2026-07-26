@@ -84,7 +84,10 @@ function SessionDetail() {
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Sessão</div>
-          <h1 className="mt-1 font-display text-3xl font-bold">{session.huntName}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
+            {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {char?.name ?? "—"} · {fmtDate(session.createdAt)} ·{" "}
             {h.startedAt && h.endedAt ? `${h.startedAt} → ${h.endedAt}` : fmtDuration(h.durationSec)}
