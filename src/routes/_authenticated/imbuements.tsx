@@ -151,9 +151,8 @@ function ImbuementsPage() {
     }
   };
 
-  const [renewTarget, setRenewTarget] = useState<{ id: string; currentGold: number; label: string } | null>(null);
-  const [renewGold, setRenewGold] = useState<string>("");
-  const [renewBusy, setRenewBusy] = useState(false);
+
+
 
   const openRenew = (imbId: string, currentGold: number, label: string) => {
     setRenewTarget({ id: imbId, currentGold, label });
