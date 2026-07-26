@@ -20,10 +20,11 @@ export function CharacterSwitcher() {
     return (
       <Link
         to="/characters"
-        className="inline-flex items-center gap-2 rounded-lg bg-rubi-gold px-3 py-2 text-sm font-semibold text-background hover:opacity-90"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-rubi-gold px-2.5 py-2 text-sm font-semibold text-background hover:opacity-90 sm:gap-2 sm:px-3"
       >
-        <Plus className="h-4 w-4" />
-        Adicionar personagem
+        <Plus className="h-4 w-4 shrink-0" />
+        <span className="hidden sm:inline">Adicionar personagem</span>
+        <span className="sm:hidden">Personagem</span>
       </Link>
     );
   }
