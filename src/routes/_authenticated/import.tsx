@@ -5,8 +5,16 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { parseHunting, parseDamage, parseMiscellaneous, splitCombinedInput } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { useMemo, useState } from "react";
-import { Upload, Wand2, Save, UserCircle2, Sparkles } from "lucide-react";
+import { Upload, Wand2, Save, UserCircle2, Sparkles, Trophy } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
+import {
+  BOUNTY_DIFFICULTIES,
+  BOUNTY_TIERS,
+  parseXpAmount,
+  type BountyDifficulty,
+  type BountyTier,
+} from "@/lib/bounty";
+
 
 
 export const Route = createFileRoute("/_authenticated/import")({
