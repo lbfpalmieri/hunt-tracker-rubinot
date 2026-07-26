@@ -121,7 +121,10 @@ export const useAppStore = create<State>()((set, get) => ({
         hunting: s.hunting as HuntingData,
         damage: (s.damage ?? null) as DamageData | null,
         misc: (s.misc ?? null) as MiscData | null,
+        gearUrl: s.gear_url ?? null,
+        isPublic: s.is_public ?? true,
       }));
+
       const hunts: Hunt[] = (huntRes.data ?? []).map((h: any) => ({
         id: h.id,
         characterId: h.character_id,
