@@ -45,14 +45,19 @@ function Dashboard() {
 
   const agg = useMemo(() => {
     if (mySessions.length === 0) {
-      return { rawXph: 0, totalRawXp: 0, totalXp: 0, gph: 0, totalTime: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
+      return { rawXph: 0, totalRawXp: 0, totalXp: 0, gph: 0, totalTime: 0, xpTime: 0, excludedBounty: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
     }
     const totalTime = mySessions.reduce((a, s) => a + s.hunting.durationSec, 0);
     const totalXp = mySessions.reduce((a, s) => a + s.hunting.xpGain, 0);
-    const totalRawXp = mySessions.reduce((a, s) => a + (s.hunting.rawXp || s.hunting.xpGain), 0);
+    // Sessions flagged as bounty without a known bonus amount can't be normalized,
+    // so they stay out of the Raw XP figures instead of inflating them.
+    const xpSessions = mySessions.filter((s) => huntRawXp(s) != null);
+    const excludedBounty = mySessions.length - xpSessions.length;
+    const totalRawXp = xpSessions.reduce((a, s) => a + (huntRawXp(s) as number), 0);
+    const xpTime = xpSessions.reduce((a, s) => a + s.hunting.durationSec, 0);
     const totalBal = mySessions.reduce((a, s) => a + s.hunting.balance, 0);
     const hoursTotal = totalTime / 3600 || 1;
-    const rawXph = totalRawXp / hoursTotal;
+    const rawXph = totalRawXp / (xpTime / 3600 || 1);
     const gph = totalBal / hoursTotal;
     const bySpot = new Map<string, { time: number; bal: number }>();
     for (const s of mySessions) {
