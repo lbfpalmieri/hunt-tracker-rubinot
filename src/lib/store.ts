@@ -264,7 +264,27 @@ export const useAppStore = create<State>()((set, get) => ({
     const { data: userData } = await supabase.auth.getUser();
     const uid = userData.user?.id;
     if (!uid) throw new Error("Not signed in");
-    const char = get().characters.find((c) => c.id === input.characterId);
+    let char = get().characters.find((c) => c.id === input.characterId);
+    if (!char?.name || !char?.vocation) {
+      // Estado local pode estar vazio/desatualizado (ex.: acesso direto a /import).
+      // Busca o personagem no banco para nunca salvar a sessão sem nome/vocação.
+      const { data: cRow } = await db
+        .from("characters")
+        .select("id, name, vocation, world, outfit_url, created_at")
+        .eq("id", input.characterId)
+        .maybeSingle();
+      if (cRow) {
+        char = {
+          id: cRow.id,
+          name: cRow.name,
+          vocation: cRow.vocation,
+          world: cRow.world,
+          outfitUrl: cRow.outfit_url ?? null,
+          createdAt: cRow.created_at,
+        } as typeof char;
+      }
+    }
+    if (!char?.name) throw new Error("Personagem não encontrado — recarregue a página e tente novamente.");
     const { data, error } = await db
       .from("hunt_sessions")
       .insert({
