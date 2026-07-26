@@ -4,7 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { getCommunitySession } from "@/lib/community.functions";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
-import { ArrowLeft, Coins, Globe2, Shield, Skull, Timer, Zap } from "lucide-react";
+import { ArrowLeft, Coins, Globe2, Shield, Skull, Timer, Zap, Trophy } from "lucide-react";
+import { BountyBadge } from "@/components/BountyBadge";
+import { bountyLabel } from "@/lib/bounty";
 
 export const Route = createFileRoute("/_authenticated/community/$id")({
   head: () => ({
@@ -67,6 +69,7 @@ function SessionView({ session }: { session: any }) {
   const kills: { name: string; count: number }[] = (h.kills ?? []) as any[];
   const totalKills = kills.reduce((a, k) => a + Number(k.count || 0), 0);
   const hours = durationSec / 3600 || 1;
+  const rawXp = Number(h.rawXp ?? 0) || Number(h.xpGain ?? 0);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lootedItems: { name: string; count: number }[] = (h.lootedItems ?? []) as any[];
 
@@ -74,7 +77,10 @@ function SessionView({ session }: { session: any }) {
     <>
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Comunidade</div>
-        <h1 className="mt-1 font-display text-3xl font-bold">{session.huntName}</h1>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
+          {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {session.charName} · {session.vocation} · {fmtDate(session.createdAt)}
         </p>
@@ -83,11 +89,17 @@ function SessionView({ session }: { session: any }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Duração" value={fmtDuration(durationSec)} icon={Timer} />
         <Stat
-          label="Raw XP ganha"
-          value={fmtNum(Number(h.rawXp ?? 0) || Number(h.xpGain ?? 0))}
-          hint={`XP com bônus: ${fmtNum(Number(h.xpGain ?? 0))}`}
-          icon={Zap}
-          tone="blue"
+          label={session.bounty ? "Raw XP ganha (com bounty)" : "Raw XP ganha"}
+          value={fmtNum(rawXp)}
+          hint={
+            session.bounty
+              ? session.bounty.xp != null
+                ? `Raw XP de hunt: ${fmtNum(Math.max(0, rawXp - Number(session.bounty.xp)))} · Bônus Bounty (${bountyLabel(session.bounty)})`
+                : `Inclui bônus de Bounty Task (${bountyLabel(session.bounty)})`
+              : `XP com bônus: ${fmtNum(Number(h.xpGain ?? 0))}`
+          }
+          icon={session.bounty ? Trophy : Zap}
+          tone={session.bounty ? "gold" : "blue"}
         />
 
         <Stat
