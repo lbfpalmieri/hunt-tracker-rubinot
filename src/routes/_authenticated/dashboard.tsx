@@ -72,7 +72,7 @@ function Dashboard() {
       const g = v.bal / (v.time / 3600 || 1);
       if (!bestHunt || g > bestHunt.gph) bestHunt = { name, gph: g };
     }
-    return { rawXph, totalRawXp, totalXp, gph, totalTime, balance: totalBal, bestHunt };
+    return { rawXph, totalRawXp, totalXp, gph, totalTime, xpTime, excludedBounty, balance: totalBal, bestHunt };
   }, [mySessions]);
 
 
