@@ -6,7 +6,26 @@ import { AppShell } from "@/components/AppShell";
 import { getCommunitySessions, getCommunityMonsters } from "@/lib/community.functions";
 import { useAppStore } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
-import { Globe2, Search, Skull, Users, Zap, Coins, LayoutList, Layers } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Globe2,
+  Search,
+  Skull,
+  Users,
+  Zap,
+  Coins,
+  LayoutList,
+  Layers,
+  Calculator,
+  Target,
+  ChevronRight,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/community/")({
   head: () => ({
