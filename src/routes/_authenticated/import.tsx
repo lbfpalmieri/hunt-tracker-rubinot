@@ -105,6 +105,10 @@ function ImportPage() {
         misc: parsed.misc,
         gearUrl,
         isPublic,
+        bounty:
+          hasBounty && bountyDifficulty && bountyTier
+            ? { difficulty: bountyDifficulty, tier: bountyTier, xp: bountyXp }
+            : null,
       });
 
       navigate({ to: "/sessions/$id", params: { id: created.id } });
