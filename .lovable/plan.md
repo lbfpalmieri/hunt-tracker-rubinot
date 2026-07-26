@@ -1,68 +1,48 @@
 ## Objetivo
 
-Criar uma aba **Comunidade** no menu principal (no lugar de "Personagens", que já existe no menu do usuário) onde todas as sessões de hunt salvas pelos usuários aparecem automaticamente, com filtro por vocação, hunt e monstro — e a possibilidade de anexar um print do equipamento usado.
+Eliminar a divergência de busca na Comunidade deixando apenas as vocações promovidas no cadastro, e converter no banco todos os registros já criados com a vocação base.
 
-## 1. Menu
+## Estado atual no banco
 
-- Remover "Personagens" da barra superior (continua acessível em "Gerenciar personagens" no menu do avatar).
-- Adicionar **Comunidade** no lugar, com ícone de globo/usuários.
-- No mobile, mesma troca na barra inferior.
+- `characters`: 1 Knight, 1 Paladin, 1 Elite Knight, 1 Royal Paladin
+- `hunt_sessions` (snapshot `char_vocation`): 1 Knight, 6 Elite Knight
 
-## 2. O que é compartilhado (e o que não é)
+## O que muda
 
-Compartilhamento é **automático** ao salvar uma sessão. Público:
+**1. Lista de vocações (só promovidas)**
 
-- Nome da hunt, duração, XP ganha e Raw XP, loot, supplies, balance
-- Lista de monstros mortos (kills)
-- Charms / Imbuements / Item Upgrade da sessão (o bloco Misc)
-- Nome e vocação do personagem + outfit
-- Print do equipamento (quando existir)
+Nas telas de cadastro/edição de personagem e no filtro da Comunidade, a lista passa a ser:
 
-Nunca público: e-mail, imbuements cadastrados (custos/Gold Token), lucro líquido pessoal, lista de personagens.
+```text
+Elite Knight
+Royal Paladin
+Master Sorcerer
+Elder Druid
+Exalted Monk
+```
 
-Cada sessão terá um botão **"Não compartilhar"** (privacidade opt-out), caso o usuário queira esconder uma sessão específica.
+Observação: você citou "Monk", mas a promoção do Monk é **Exalted Monk**. Para manter o padrão "só promovida" mantenho `Exalted Monk`. Se preferir `Monk`, é só falar e eu troco.
 
-## 3. Print do equipamento
+**2. Migração dos dados existentes**
 
-- Mesmo fluxo que já existe para outfit: **Ctrl+V** cola a imagem, o app comprime para WebP.
-- Ponto de entrada 1: na tela **Nova sessão**, um campo opcional "Equipamento" antes de salvar.
-- Ponto de entrada 2: na tela de **detalhe da sessão**, botão "Adicionar/trocar equipamento" — assim as sessões antigas também recebem a feature sem precisar refazer nada.
-- Como as imagens agora serão lidas por outros usuários, os prints de equipamento vão para um bucket de arquivos público (não em base64 dentro da tabela), o que mantém o carregamento da lista da comunidade rápido.
+Conversão bruta em `characters.vocation` e em `hunt_sessions.char_vocation`:
 
-## 4. Tela Comunidade
+```text
+Knight    -> Elite Knight
+Paladin   -> Royal Paladin
+Sorcerer  -> Master Sorcerer
+Druid     -> Elder Druid
+Monk      -> Exalted Monk
+```
 
-**Topo — filtros:**
-- Vocação (Elite Knight, Royal Paladin, Master Sorcerer, Elder Druid, Monk…) — pré-selecionada com a vocação do personagem ativo
-- Busca por nome da hunt
-- Busca por monstro (com o mesmo autocomplete da calculadora de bounty)
-- Ordenação: mais recentes, maior XP/h, maior lucro/h, mais kills/h
+Isso é retroativo, então as sessões antigas dos seus amigos passam a aparecer nos filtros de Elite Knight / Royal Paladin normalmente.
 
-**Corpo — duas visões:**
+**3. Trava para o futuro**
 
-1. **Por hunt (agrupado)** — visão padrão: cada card mostra a hunt, quantas sessões da comunidade existem, médias de XP/h, lucro/h e kills/h por vocação. Serve para "nunca fui nesse lugar, vale a pena?".
-2. **Sessões** — lista individual: personagem (nome + outfit + vocação), hunt, duração, XP ganha, balance, kills. Clicar abre um detalhe público somente-leitura com o print do equipamento, charms/imbuements e a lista completa de monstros.
+Restrição no banco (check constraint) nas duas colunas aceitando apenas as 5 vocações promovidas, para nunca voltar a entrar uma vocação base — nem por cadastro novo nem por snapshot de sessão.
 
-Estados vazios explícitos ("Nenhuma sessão compartilhada para Elite Knight ainda").
+## Detalhes técnicos
 
-## 5. Detalhes técnicos
-
-**Banco (migração):**
-- `hunt_sessions`: novas colunas `is_public boolean default true`, `gear_url text`, e snapshots `char_name text` / `char_vocation text` (preenchidos ao salvar, evitam expor a tabela `characters` publicamente).
-- Backfill dos snapshots para as sessões já existentes.
-- Nova policy de leitura pública restrita: `SELECT` para `anon`/`authenticated` apenas onde `is_public = true`. As policies de escrita continuam presas a `auth.uid()`, e a policy atual de dono é mantida para o usuário ver as próprias sessões privadas.
-- Bucket público `gear` para os prints, com escrita apenas pelo dono (caminho `{user_id}/{session_id}`).
-
-**Leitura:**
-- Rota pública de servidor (`createServerFn` com cliente publicável) para o feed da comunidade, com projeção explícita de colunas seguras, filtros por vocação/hunt e paginação — nunca `select *`.
-- Agregações por hunt/vocação (médias ponderadas: total de kills ÷ total de horas, igual à calculadora) calculadas no servidor.
-- A rota `/comunidade` fica dentro da área autenticada nesta primeira versão (mesma navegação do resto do app).
-
-**Arquivos previstos:**
-- `src/routes/_authenticated/community.tsx` (feed + filtros) e `src/routes/_authenticated/community.$id.tsx` (detalhe público)
-- `src/lib/community.functions.ts` (server functions de leitura)
-- `src/components/PasteImage.tsx` — extrai o Ctrl+V/compressão hoje duplicado em `characters.tsx` para reuso no equipamento
-- Ajustes em `AppShell.tsx`, `import.tsx`, `sessions.$id.tsx` e `store.ts`
-
-## Fora do escopo desta etapa
-
-Comentários, curtidas, seguir usuários, ranking global e moderação de conteúdo — dá para adicionar depois sobre a mesma base.
+- Migração SQL: `UPDATE` de mapeamento nas duas tabelas, seguido de `ALTER TABLE ... ADD CONSTRAINT ... CHECK (vocation IN (...))` em `public.characters` e `public.hunt_sessions.char_vocation` (permitindo `NULL` no snapshot da sessão).
+- Frontend: constante `VOCATIONS` reduzida em `src/routes/_authenticated/characters.tsx` e a lista de filtro em `src/routes/_authenticated/community.index.tsx`.
+- Nenhuma mudança em lógica de cálculo, parser ou dashboard.
