@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { HuntingData, DamageData, MiscData } from "./parser";
+import type { BountyInfo, BountyDifficulty, BountyTier } from "./bounty";
 
 export interface Character {
   id: string;
