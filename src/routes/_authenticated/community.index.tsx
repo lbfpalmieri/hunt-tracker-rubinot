@@ -68,7 +68,9 @@ function CommunityPage() {
   const [monster, setMonster] = useState("");
   const [monsterInput, setMonsterInput] = useState("");
   const [sort, setSort] = useState<Sort>("recent");
-  const [view, setView] = useState<"hunts" | "sessions">("hunts");
+  const [view, setView] = useState<"hunts" | "sessions" | "calc">("hunts");
+  const [quantity, setQuantity] = useState<number>(400);
+  const [openHunt, setOpenHunt] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
   // Pre-select the active character's vocation once.
