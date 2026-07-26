@@ -13,7 +13,7 @@ import {
 
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import logo from "@/assets/hunt-tracker-logo.png.asset.json";
+import logo from "@/assets/dragon-logo.png.asset.json";
 import rubinotLogo from "@/assets/rubinot-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";

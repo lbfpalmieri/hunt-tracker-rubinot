@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import logo from "@/assets/hunt-tracker-logo.png.asset.json";
+import logo from "@/assets/dragon-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { Youtube, Instagram, Heart } from "lucide-react";
 
