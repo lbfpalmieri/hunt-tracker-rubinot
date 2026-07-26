@@ -262,7 +262,9 @@ function ImportPage() {
               <h3 className="mb-3 text-sm font-semibold">Preview</h3>
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <PreviewRow label="Duração" value={fmtDuration(parsed.hunting.durationSec)} />
-                <PreviewRow label="XP/h" value={fmtNum(parsed.hunting.xpPerHour)} />
+                <PreviewRow label="Raw XP" value={fmtNum(parsed.hunting.rawXp)} />
+                <PreviewRow label="Raw XP/h" value={fmtNum(parsed.hunting.rawXpPerHour || parsed.hunting.rawXp / (parsed.hunting.durationSec / 3600 || 1))} />
+
                 <PreviewRow label="Loot" value={fmtGold(parsed.hunting.loot)} />
                 <PreviewRow label="Supplies" value={fmtGold(parsed.hunting.supplies)} />
                 <PreviewRow

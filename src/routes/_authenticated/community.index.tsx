@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/community/")({
       {
         name: "description",
         content:
-          "Veja hunts compartilhadas por outros jogadores do RubinOT: XP/h, lucro/h, monstros e equipamentos por vocação.",
+          "Veja hunts compartilhadas por outros jogadores do RubinOT: Raw XP/h, lucro/h, monstros e equipamentos por vocação.",
       },
       { property: "og:title", content: "Comunidade — hunts compartilhadas" },
       {
@@ -115,6 +115,8 @@ function CommunityPage() {
         count: number;
         hours: number;
         xp: number;
+        rawXp: number;
+
         balance: number;
         kills: number;
       }
@@ -130,12 +132,14 @@ function CommunityPage() {
           count: 0,
           hours: 0,
           xp: 0,
+          rawXp: 0,
           balance: 0,
           kills: 0,
         };
       cur.count += 1;
       cur.hours += s.durationSec / 3600;
       cur.xp += s.xpGain;
+      cur.rawXp += s.rawXp || s.xpGain;
       cur.balance += s.balance;
       cur.kills += s.kills.reduce((a, k) => a + k.count, 0);
       map.set(key, cur);
@@ -143,11 +147,12 @@ function CommunityPage() {
     const list = [...map.values()].map((h) => ({
       ...h,
       xpPerHour: h.hours > 0 ? h.xp / h.hours : 0,
+      rawXpPerHour: h.hours > 0 ? h.rawXp / h.hours : 0,
       goldPerHour: h.hours > 0 ? h.balance / h.hours : 0,
       killsPerHour: h.hours > 0 ? h.kills / h.hours : 0,
     }));
     list.sort((a, b) => {
-      if (sort === "xph") return b.xpPerHour - a.xpPerHour;
+      if (sort === "xph") return b.rawXpPerHour - a.rawXpPerHour;
       if (sort === "gph") return b.goldPerHour - a.goldPerHour;
       if (sort === "killsh") return b.killsPerHour - a.killsPerHour;
       return b.count - a.count;
@@ -155,11 +160,12 @@ function CommunityPage() {
     return list;
   }, [sessions, sort]);
 
+
   const sortedSessions = useMemo(() => {
     const list = sessions.slice();
     const perHour = (v: number, sec: number) => (sec > 0 ? v / (sec / 3600) : 0);
     list.sort((a, b) => {
-      if (sort === "xph") return perHour(b.xpGain, b.durationSec) - perHour(a.xpGain, a.durationSec);
+      if (sort === "xph") return perHour(b.rawXp || b.xpGain, b.durationSec) - perHour(a.rawXp || a.xpGain, a.durationSec);
       if (sort === "gph") return perHour(b.balance, b.durationSec) - perHour(a.balance, a.durationSec);
       if (sort === "killsh") {
         const k = (s: typeof a) => perHour(s.kills.reduce((x, y) => x + y.count, 0), s.durationSec);
@@ -301,7 +307,7 @@ function CommunityPage() {
             className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
           >
             <option value="recent">Mais recentes</option>
-            <option value="xph">Maior XP/h</option>
+            <option value="xph">Maior Raw XP/h</option>
             <option value="gph">Maior lucro/h</option>
             <option value="killsh">Mais kills/h</option>
           </select>
@@ -491,7 +497,7 @@ function CommunityPage() {
                 {h.count} sessão(ões) · {fmtDuration(Math.round(h.hours * 3600))} registradas
               </p>
               <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <Metric label="XP/h" value={fmtNum(Math.round(h.xpPerHour))} tone="blue" />
+                <Metric label="Raw XP/h" value={fmtNum(Math.round(h.rawXpPerHour))} tone="blue" />
                 <Metric label="Lucro/h" value={fmtGold(h.goldPerHour)} tone={h.goldPerHour >= 0 ? "success" : "danger"} />
                 <Metric label="Kills/h" value={fmtNum(Math.round(h.killsPerHour))} tone="gold" />
               </dl>
@@ -526,7 +532,7 @@ function CommunityPage() {
                 </div>
                 <div className="grid grid-cols-4 gap-3 text-center text-xs sm:w-[420px]">
                   <Metric label="Duração" value={fmtDuration(s.durationSec)} tone="muted" />
-                  <Metric label="XP ganha" value={fmtNum(s.xpGain)} tone="blue" />
+                  <Metric label="Raw XP" value={fmtNum(s.rawXp || s.xpGain)} tone="blue" />
                   <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
                   <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
                 </div>
@@ -572,7 +578,7 @@ function CommunityPage() {
                     </div>
                   </div>
                   <div className="grid flex-none grid-cols-3 gap-3 text-center">
-                    <Metric label="XP" value={fmtNum(s.xpGain)} tone="blue" />
+                    <Metric label="Raw XP" value={fmtNum(s.rawXp || s.xpGain)} tone="blue" />
                     <Metric label="Balance" value={fmtGold(s.balance)} tone={s.balance >= 0 ? "success" : "danger"} />
                     <Metric label="Kills" value={fmtNum(kills)} tone="gold" />
                   </div>

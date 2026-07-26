@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — RubinOT Hunt Tracker" },
-      { name: "description", content: "Acompanhe suas hunts no RubinOT: XP/h, lucro/h e evolução." },
+      { name: "description", content: "Acompanhe suas hunts no RubinOT: Raw Raw XP/h, lucro/h e evolução." },
       { property: "og:title", content: "Dashboard RubinOT Hunt Tracker" },
       { property: "og:description", content: "Métricas das suas hunts no RubinOT." },
       { property: "og:type", content: "website" },
@@ -45,13 +45,14 @@ function Dashboard() {
 
   const agg = useMemo(() => {
     if (mySessions.length === 0) {
-      return { xph: 0, gph: 0, totalTime: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
+      return { rawXph: 0, totalRawXp: 0, totalXp: 0, gph: 0, totalTime: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
     }
     const totalTime = mySessions.reduce((a, s) => a + s.hunting.durationSec, 0);
     const totalXp = mySessions.reduce((a, s) => a + s.hunting.xpGain, 0);
+    const totalRawXp = mySessions.reduce((a, s) => a + (s.hunting.rawXp || s.hunting.xpGain), 0);
     const totalBal = mySessions.reduce((a, s) => a + s.hunting.balance, 0);
     const hoursTotal = totalTime / 3600 || 1;
-    const xph = totalXp / hoursTotal;
+    const rawXph = totalRawXp / hoursTotal;
     const gph = totalBal / hoursTotal;
     const bySpot = new Map<string, { time: number; bal: number }>();
     for (const s of mySessions) {
@@ -65,8 +66,9 @@ function Dashboard() {
       const g = v.bal / (v.time / 3600 || 1);
       if (!bestHunt || g > bestHunt.gph) bestHunt = { name, gph: g };
     }
-    return { xph, gph, totalTime, balance: totalBal, bestHunt };
+    return { rawXph, totalRawXp, totalXp, gph, totalTime, balance: totalBal, bestHunt };
   }, [mySessions]);
+
 
   const imbAgg = useMemo(
     () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
@@ -81,7 +83,7 @@ function Dashboard() {
       [...mySessions].reverse().map((s, i) => ({
         i: i + 1,
         name: s.huntName,
-        "XP/h": Math.round(s.hunting.xpPerHour),
+        "Raw XP/h": Math.round((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1)),
         "Lucro/h": Math.round(s.hunting.balance / (s.hunting.durationSec / 3600 || 1)),
       })),
     [mySessions],
@@ -193,22 +195,23 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-blue">
               <Zap className="h-3.5 w-3.5" /> Experiência
-              <InfoHint title="Experiência" description="Como XP/h e XP total são calculadas.">
-                <p><strong>XP total ganha:</strong> <code>Σ xpGain</code> de cada sessão (é o <em>XP Gain</em> que aparece no Hunting Analyser — já com bônus).</p>
-                <p><strong>XP / hora (média):</strong> <code>XP total ganha ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
-                <p>Usamos apenas o <em>XP Gain</em>, não o Raw XP — Raw XP não considera bônus (stamina, XP boost, event) e é volátil quando você para de matar.</p>
+              <InfoHint title="Experiência" description="Como a Raw XP/h e a Raw XP total são calculadas.">
+                <p><strong>Raw XP total:</strong> <code>Σ rawXp</code> de cada sessão (é o <em>Raw XP Gain</em> do Hunting Analyser — valor bruto, sem bônus de stamina/XP boost/evento).</p>
+                <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p>A <em>XP com bônus</em> (<code>XP Gain</code>) aparece como valor secundário — ela varia conforme os bônus ativos, por isso a Raw XP é a referência principal.</p>
               </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatCard label="XP / hora (média)" value={fmtNum(agg.xph)} icon={Zap} accent="blue" />
+              <StatCard label="Raw XP / hora (média)" value={fmtNum(agg.rawXph)} hint="valor bruto, sem bônus" icon={Zap} accent="blue" />
               <StatCard
-                label="XP total ganha"
-                value={fmtNum(mySessions.reduce((a, s) => a + s.hunting.xpGain, 0))}
-                hint={`em ${fmtDuration(agg.totalTime)}`}
+                label="Raw XP total"
+                value={fmtNum(agg.totalRawXp)}
+                hint={`em ${fmtDuration(agg.totalTime)} · ${fmtNum(agg.totalXp)} XP com bônus`}
                 icon={TrendingUp}
                 accent="blue"
               />
             </div>
+
           </div>
 
           {/* Gold */}
@@ -285,12 +288,13 @@ function Dashboard() {
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-semibold">Evolução por sessão</h2>
-                  <p className="text-xs text-muted-foreground">XP/h e Lucro/h nas últimas hunts</p>
+                  <p className="text-xs text-muted-foreground">Raw XP/h e Lucro/h nas últimas hunts</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <InfoHint title="Evolução por sessão" description="O que cada eixo representa.">
                     <p>Cada ponto no eixo X é uma sessão importada, da mais antiga (1) para a mais recente.</p>
-                    <p><strong>XP/h (azul, eixo esquerdo):</strong> <code>xpGain ÷ (duração em horas)</code> daquela sessão isolada — o mesmo valor exibido no Hunting Analyser.</p>
+                    <p><strong>Raw XP/h (azul, eixo esquerdo):</strong> <code>rawXp ÷ (duração em horas)</code> daquela sessão isolada — o <em>Raw XP Gain</em> do Hunting Analyser, sem bônus.</p>
+
                     <p><strong>Lucro/h (dourado, eixo direito):</strong> <code>balance ÷ (duração em horas)</code> daquela sessão isolada.</p>
                     <p>Não é média acumulada — é o desempenho hunt a hunt, útil para ver tendências.</p>
                   </InfoHint>
@@ -315,7 +319,7 @@ function Dashboard() {
                     <YAxis yAxisId="l" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(v: number) => fmtGold(v)} />
                     <YAxis yAxisId="r" orientation="right" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(v: number) => fmtGold(v)} />
                     <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }} formatter={(v) => fmtGold(Number(v))} />
-                    <Area yAxisId="l" type="monotone" dataKey="XP/h" stroke="var(--rubi-blue)" strokeWidth={2} fill="url(#gXp)" />
+                    <Area yAxisId="l" type="monotone" dataKey="Raw XP/h" stroke="var(--rubi-blue)" strokeWidth={2} fill="url(#gXp)" />
                     <Area yAxisId="r" type="monotone" dataKey="Lucro/h" stroke="var(--rubi-gold)" strokeWidth={2} fill="url(#gGold)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -344,7 +348,7 @@ function Dashboard() {
                         <div className={"text-sm font-semibold " + (s.hunting.balance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
                           {fmtGold(s.hunting.balance)}
                         </div>
-                        <div className="text-xs text-muted-foreground">{fmtNum(s.hunting.xpPerHour)} xp/h</div>
+                        <div className="text-xs text-muted-foreground">{fmtNum((s.hunting.rawXp || s.hunting.xpGain) / (s.hunting.durationSec / 3600 || 1))} raw xp/h</div>
                       </div>
                     </Link>
                   </li>

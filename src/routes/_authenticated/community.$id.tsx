@@ -83,12 +83,13 @@ function SessionView({ session }: { session: any }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Duração" value={fmtDuration(durationSec)} icon={Timer} />
         <Stat
-          label="XP ganha"
-          value={fmtNum(Number(h.xpGain ?? 0))}
-          hint={`Raw XP ganha: ${fmtNum(Number(h.rawXp ?? 0))}`}
+          label="Raw XP ganha"
+          value={fmtNum(Number(h.rawXp ?? 0) || Number(h.xpGain ?? 0))}
+          hint={`XP com bônus: ${fmtNum(Number(h.xpGain ?? 0))}`}
           icon={Zap}
           tone="blue"
         />
+
         <Stat
           label="Balance"
           value={fmtGold(Number(h.balance ?? 0))}

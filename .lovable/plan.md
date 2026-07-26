@@ -1,48 +1,37 @@
-## Objetivo
+# Raw XP como métrica principal
 
-Eliminar a divergência de busca na Comunidade deixando apenas as vocações promovidas no cadastro, e converter no banco todos os registros já criados com a vocação base.
+Hoje o app mostra **XP Gain / XP/h** (valor com bônus) como métrica principal e a Raw XP só como texto secundário. A mudança inverte essa prioridade: **Raw XP** passa a ser o número em destaque em todos os lugares, e a XP com bônus vira a informação secundária.
 
-## Estado atual no banco
+Os dois valores já são lidos do Hunting Analyser (`rawXp`, `rawXpPerHour`, `xpGain`, `xpPerHour`) e já estão salvos no banco — não precisa migração nem re-import de sessões antigas.
 
-- `characters`: 1 Knight, 1 Paladin, 1 Elite Knight, 1 Royal Paladin
-- `hunt_sessions` (snapshot `char_vocation`): 1 Knight, 6 Elite Knight
+## O que muda em cada tela
 
-## O que muda
+**Dashboard**
+- Card de experiência: destaque em **Raw XP total** (soma de `rawXp`), com a XP com bônus como linha secundária.
+- Gráfico de evolução: a linha azul passa a ser **Raw XP/h** (`rawXp ÷ horas`) em vez de XP/h.
+- Lista de sessões recentes: mostra `raw xp/h`.
+- Textos dos ícones de info atualizados para explicar Raw XP (valor bruto, sem bônus de eventos/XP boost) e onde a XP com bônus aparece.
 
-**1. Lista de vocações (só promovidas)**
+**Sessões (lista)**
+- Mini-stat principal: **Raw XP/h**.
+- Ordenação "Melhor XP/h" passa a ordenar por Raw XP/h.
 
-Nas telas de cadastro/edição de personagem e no filtro da Comunidade, a lista passa a ser:
+**Detalhe da sessão**
+- Card principal: **Raw XP ganha**, com "XP ganha (com bônus)" como hint. Mantém o padrão atual de mostrar valores totais (sem taxa horária no card), conforme já definido antes.
 
-```text
-Elite Knight
-Royal Paladin
-Master Sorcerer
-Elder Druid
-Exalted Monk
-```
+**Nova sessão (preview do import)**
+- Linha de preview passa a mostrar Raw XP e Raw XP/h.
 
-Observação: você citou "Monk", mas a promoção do Monk é **Exalted Monk**. Para manter o padrão "só promovida" mantenho `Exalted Monk`. Se preferir `Monk`, é só falar e eu troco.
+**Comunidade**
+- Cards de hunt agregada: métrica **Raw XP/h** (média ponderada: `Σ rawXp ÷ Σ horas`).
+- Cards/linhas de sessão: **Raw XP**.
+- Filtro de ordenação "Maior XP/h" → "Maior Raw XP/h".
+- Detalhe da sessão pública: destaque em Raw XP.
 
-**2. Migração dos dados existentes**
-
-Conversão bruta em `characters.vocation` e em `hunt_sessions.char_vocation`:
-
-```text
-Knight    -> Elite Knight
-Paladin   -> Royal Paladin
-Sorcerer  -> Master Sorcerer
-Druid     -> Elder Druid
-Monk      -> Exalted Monk
-```
-
-Isso é retroativo, então as sessões antigas dos seus amigos passam a aparecer nos filtros de Elite Knight / Royal Paladin normalmente.
-
-**3. Trava para o futuro**
-
-Restrição no banco (check constraint) nas duas colunas aceitando apenas as 5 vocações promovidas, para nunca voltar a entrar uma vocação base — nem por cadastro novo nem por snapshot de sessão.
+**Textos de SEO/marketing**
+- Landing, about e metadados: "XP/h" → "Raw XP/h".
 
 ## Detalhes técnicos
 
-- Migração SQL: `UPDATE` de mapeamento nas duas tabelas, seguido de `ALTER TABLE ... ADD CONSTRAINT ... CHECK (vocation IN (...))` em `public.characters` e `public.hunt_sessions.char_vocation` (permitindo `NULL` no snapshot da sessão).
-- Frontend: constante `VOCATIONS` reduzida em `src/routes/_authenticated/characters.tsx` e a lista de filtro em `src/routes/_authenticated/community.index.tsx`.
-- Nenhuma mudança em lógica de cálculo, parser ou dashboard.
+- `community.functions.ts` já retorna `rawXp` por sessão; a agregação em `community.index.tsx` passa a acumular `rawXp` além de `xpGain` para calcular `rawXpPerHour`.
+- Nenhuma mudança de schema, parser ou store. Sessões antigas já têm `rawXp` gravado; caso alguma tenha `rawXp = 0` (log sem a linha), a UI cai para exibir a XP com bônus como fallback para não mostrar zero.
