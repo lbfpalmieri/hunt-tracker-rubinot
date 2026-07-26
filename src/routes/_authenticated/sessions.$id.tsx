@@ -13,9 +13,11 @@ import {
 import { PasteImageBox } from "@/components/PasteImage";
 
 
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
-} from "recharts";
+import { lazy, Suspense } from "react";
+
+// Recharts é pesado: carrega depois do primeiro paint da sessão.
+const KillsChart = lazy(() => import("@/components/charts/KillsChart"));
+const DamagePie = lazy(() => import("@/components/charts/DamagePie"));
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: ({ params }) => ({
