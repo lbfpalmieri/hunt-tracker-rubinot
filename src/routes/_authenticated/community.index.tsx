@@ -148,6 +148,7 @@ function CommunityPage() {
           hours: 0,
           xp: 0,
           rawXp: 0,
+          rawHours: 0,
           balance: 0,
           kills: 0,
         };
