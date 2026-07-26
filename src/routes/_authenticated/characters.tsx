@@ -29,15 +29,10 @@ export const Route = createFileRoute("/_authenticated/characters")({
 });
 
 const VOCATIONS = [
-  "Knight",
   "Elite Knight",
-  "Paladin",
   "Royal Paladin",
-  "Sorcerer",
   "Master Sorcerer",
-  "Druid",
   "Elder Druid",
-  "Monk",
   "Exalted Monk",
 ];
 
