@@ -77,6 +77,16 @@ interface State {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowBounty(row: any): BountyInfo | null {
+  if (!row?.bounty_difficulty || !row?.bounty_tier) return null;
+  return {
+    difficulty: row.bounty_difficulty as BountyDifficulty,
+    tier: row.bounty_tier as BountyTier,
+    xp: row.bounty_xp == null ? null : Number(row.bounty_xp),
+  };
+}
+
 export const useAppStore = create<State>()((set, get) => ({
   characters: [],
   sessions: [],
