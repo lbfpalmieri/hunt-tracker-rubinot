@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/rubinot-logo.png.asset.json";
+import logo from "@/assets/dragon-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -59,7 +59,7 @@ function AuthPage() {
       <header className="border-b border-border/60">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-6">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo.url} alt="RubinOT" className="h-9 w-auto" />
+            <img src={logo.url} alt="Hunt Tracker" className="h-9 w-9 object-contain" />
             <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
               Hunt Tracker
             </span>
