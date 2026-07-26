@@ -197,19 +197,23 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">{children}</main>
 
       <footer className="mt-16 border-t border-border/60">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-center text-sm text-muted-foreground sm:flex-row sm:px-6 sm:text-left">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 text-center text-sm text-muted-foreground sm:grid-cols-3 sm:px-6 sm:text-left">
+          <div className="flex items-center justify-center gap-3 sm:justify-start">
             <img src={avatar.url} alt="Canal" className="h-10 w-10 rounded-full ring-2 ring-rubi-gold/40" />
             <div>
               <div className="font-semibold text-foreground">@Ésobrerubinot</div>
               <div className="text-xs">Desenvolvido pelo canal É sobre RubinOT</div>
             </div>
           </div>
-          <div className="text-xs">
+          <div className="flex justify-center">
+            <img src={rubinotLogo.url} alt="RubinOT" className="h-10 w-auto opacity-90" />
+          </div>
+          <div className="text-xs sm:text-right">
             {activeCharacter ? <>Conectado como <b className="text-foreground">{activeCharacter.name}</b></> : "Feito para a comunidade RubinOT"}
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
