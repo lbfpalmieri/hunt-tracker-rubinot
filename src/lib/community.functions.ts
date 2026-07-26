@@ -1,0 +1,131 @@
+import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+
+/** Columns that are safe to expose publicly. Never include user_id/character_id. */
+const LIST_COLUMNS =
+  "id, created_at, hunt_name, char_name, char_vocation, hunting";
+const DETAIL_COLUMNS =
+  "id, created_at, hunt_name, char_name, char_vocation, gear_url, hunting, damage, misc";
+
+function publicClient() {
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+  return createClient(url, key, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) => {
+        const h = new Headers(init?.headers);
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
+          h.delete("Authorization");
+        }
+        h.set("apikey", key);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+}
+
+const listInput = z.object({
+  vocation: z.string().trim().max(60).optional(),
+  hunt: z.string().trim().max(120).optional(),
+  monster: z.string().trim().max(120).optional(),
+  limit: z.number().int().min(1).max(400).optional(),
+});
+
+export const getCommunitySessions = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => listInput.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const supabase = publicClient();
+    let q = supabase
+      .from("hunt_sessions")
+      .select(LIST_COLUMNS)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 300);
+
+    if (data.vocation) q = q.eq("char_vocation", data.vocation);
+    if (data.hunt) q = q.ilike("hunt_name", `%${data.hunt}%`);
+
+    const { data: rows, error } = await q;
+    if (error) return { sessions: [], error: error.message };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let list = (rows ?? []) as any[];
+
+    if (data.monster) {
+      const needle = data.monster.toLowerCase();
+      list = list.filter((r) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (r.hunting?.kills ?? []).some((k: any) => String(k.name).toLowerCase().includes(needle)),
+      );
+    }
+
+    return {
+      sessions: list.map((r) => ({
+        id: r.id as string,
+        createdAt: r.created_at as string,
+        huntName: (r.hunt_name ?? "") as string,
+        charName: (r.char_name ?? "Anônimo") as string,
+        vocation: (r.char_vocation ?? "—") as string,
+        durationSec: Number(r.hunting?.durationSec ?? 0),
+        xpGain: Number(r.hunting?.xpGain ?? 0),
+        rawXp: Number(r.hunting?.rawXp ?? 0),
+        balance: Number(r.hunting?.balance ?? 0),
+        loot: Number(r.hunting?.loot ?? 0),
+        supplies: Number(r.hunting?.supplies ?? 0),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        kills: ((r.hunting?.kills ?? []) as any[]).map((k) => ({
+          name: String(k.name),
+          count: Number(k.count) || 0,
+        })),
+      })),
+      error: null as string | null,
+    };
+  });
+
+export const getCommunityMonsters = createServerFn({ method: "GET" }).handler(async () => {
+  const supabase = publicClient();
+  const { data, error } = await supabase
+    .from("hunt_sessions")
+    .select("hunting")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(400);
+  if (error) return { monsters: [] as string[], hunts: [] as string[] };
+  const monsters = new Set<string>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const row of (data ?? []) as any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const k of (row.hunting?.kills ?? []) as any[]) monsters.add(String(k.name));
+  }
+  return { monsters: [...monsters].sort((a, b) => a.localeCompare(b)), hunts: [] as string[] };
+});
+
+export const getCommunitySession = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const supabase = publicClient();
+    const { data: row, error } = await supabase
+      .from("hunt_sessions")
+      .select(DETAIL_COLUMNS)
+      .eq("is_public", true)
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error || !row) return { session: null };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const r = row as any;
+    return {
+      session: {
+        id: r.id as string,
+        createdAt: r.created_at as string,
+        huntName: (r.hunt_name ?? "") as string,
+        charName: (r.char_name ?? "Anônimo") as string,
+        vocation: (r.char_vocation ?? "—") as string,
+        gearUrl: (r.gear_url ?? null) as string | null,
+        hunting: r.hunting,
+        damage: r.damage ?? null,
+        misc: r.misc ?? null,
+      },
+    };
+  });
