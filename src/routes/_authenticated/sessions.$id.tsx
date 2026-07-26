@@ -4,10 +4,14 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
+import { huntRawXp, bountyLabel } from "@/lib/bounty";
+import { BountyBadge } from "@/components/BountyBadge";
+import { BountyEditor } from "@/components/BountyEditor";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
+
 
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
