@@ -170,6 +170,78 @@ function CommunityPage() {
     return list;
   }, [sessions, sort]);
 
+  /** Sessions of the hunt opened in the drill-down modal. */
+  const openHuntData = useMemo(() => {
+    if (!openHunt) return null;
+    const meta = hunts.find((h) => h.key === openHunt);
+    if (!meta) return null;
+    const list = sessions
+      .filter((s) => `${s.huntName.toLowerCase()}__${s.vocation}` === openHunt)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return { meta, list };
+  }, [openHunt, hunts, sessions]);
+
+  /** Community benchmark for the selected monster, grouped by hunt. */
+  const calcRows = useMemo(() => {
+    const needle = monster.trim().toLowerCase();
+    if (!needle) return [];
+    const map = new Map<
+      string,
+      {
+        huntName: string;
+        vocation: string;
+        sessionCount: number;
+        players: Set<string>;
+        totalSec: number;
+        totalKills: number;
+        bestPerHour: number;
+      }
+    >();
+    for (const s of sessions) {
+      const kills = s.kills
+        .filter((k) => k.name.toLowerCase() === needle)
+        .reduce((a, k) => a + k.count, 0);
+      if (kills <= 0 || s.durationSec <= 0) continue;
+      const key = `${s.huntName.toLowerCase()}__${s.vocation}`;
+      const cur =
+        map.get(key) ??
+        {
+          huntName: s.huntName,
+          vocation: s.vocation,
+          sessionCount: 0,
+          players: new Set<string>(),
+          totalSec: 0,
+          totalKills: 0,
+          bestPerHour: 0,
+        };
+      cur.sessionCount += 1;
+      cur.players.add(s.charName.toLowerCase());
+      cur.totalSec += s.durationSec;
+      cur.totalKills += kills;
+      cur.bestPerHour = Math.max(cur.bestPerHour, kills / (s.durationSec / 3600));
+      map.set(key, cur);
+    }
+    return [...map.values()]
+      .map((h) => {
+        const perHour = h.totalKills / (h.totalSec / 3600);
+        return {
+          key: `${h.huntName.toLowerCase()}__${h.vocation}`,
+          huntName: h.huntName,
+          vocation: h.vocation,
+          sessionCount: h.sessionCount,
+          playerCount: h.players.size,
+          totalKills: h.totalKills,
+          perHour,
+          bestPerHour: h.bestPerHour,
+          estSec: perHour > 0 ? (quantity / perHour) * 3600 : Infinity,
+          bestSec: h.bestPerHour > 0 ? (quantity / h.bestPerHour) * 3600 : Infinity,
+        };
+      })
+      .sort((a, b) => a.estSec - b.estSec);
+  }, [sessions, monster, quantity]);
+
+
+
   return (
     <AppShell>
       <div className="mb-6">
