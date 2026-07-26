@@ -203,16 +203,27 @@ function Dashboard() {
               <Zap className="h-3.5 w-3.5" /> Experiência
               <InfoHint title="Experiência" description="Como a Raw XP/h e a Raw XP total são calculadas.">
                 <p><strong>Raw XP total:</strong> <code>Σ rawXp</code> de cada sessão (é o <em>Raw XP Gain</em> do Hunting Analyser — valor bruto, sem bônus de stamina/XP boost/evento).</p>
-                <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas totais caçadas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas caçadas consideradas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
+                <p><strong>Bounty Task:</strong> quando você marca uma sessão como tendo bônus de Bounty e informa a XP do bônus, ela é descontada da Raw XP. Se o valor não for informado, a sessão fica fora das médias de Raw XP.</p>
                 <p>A <em>XP com bônus</em> (<code>XP Gain</code>) aparece como valor secundário — ela varia conforme os bônus ativos, por isso a Raw XP é a referência principal.</p>
               </InfoHint>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatCard label="Raw XP / hora (média)" value={fmtNum(agg.rawXph)} hint="valor bruto, sem bônus" icon={Zap} accent="blue" />
+              <StatCard
+                label="Raw XP / hora (média)"
+                value={fmtNum(agg.rawXph)}
+                hint={
+                  agg.excludedBounty > 0
+                    ? `sem bônus · ${agg.excludedBounty} sessão(ões) de bounty fora da média`
+                    : "valor bruto, sem bônus"
+                }
+                icon={Zap}
+                accent="blue"
+              />
               <StatCard
                 label="Raw XP total"
                 value={fmtNum(agg.totalRawXp)}
-                hint={`em ${fmtDuration(agg.totalTime)} · ${fmtNum(agg.totalXp)} XP com bônus`}
+                hint={`em ${fmtDuration(agg.xpTime)} · ${fmtNum(agg.totalXp)} XP com bônus`}
                 icon={TrendingUp}
                 accent="blue"
               />
