@@ -35,7 +35,13 @@ export function PreyPicker({
   const emit = useRef(onChange);
   emit.current = onChange;
 
+  const first = useRef(true);
+
   useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      if (!enabled) return; // nothing to report on mount
+    }
     if (!enabled) {
       emit.current(null, true);
       return;
