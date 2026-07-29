@@ -71,10 +71,10 @@ export function PreyPicker({
         {options.map((creature) => (
           <div
             key={creature}
-            className="flex flex-col gap-2 rounded-lg border border-border/60 bg-background/40 p-2.5 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 p-3"
           >
-            <span className="truncate text-sm font-medium">{creature}</span>
-            <div className="flex flex-wrap gap-1.5">
+            <span className="text-base font-semibold text-rubi-gold drop-shadow-sm">{creature}</span>
+            <div className="flex flex-wrap justify-center gap-1.5">
               {PREY_BONUSES.map((b) => {
                 const k = keyOf(creature, b.value);
                 const on = selected.includes(k);
@@ -86,14 +86,14 @@ export function PreyPicker({
                     title={`${b.label} — ${b.hint}`}
                     disabled={blocked}
                     onClick={() => toggle(creature, b.value)}
-                    className={`rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
+                    className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors ${
                       on
-                        ? "border-rubi-blue bg-rubi-blue/15 text-rubi-blue"
-                        : "border-border/60 text-muted-foreground hover:border-rubi-blue/50 disabled:cursor-not-allowed disabled:opacity-30"
+                        ? "border-rubi-gold bg-rubi-gold-soft text-rubi-gold"
+                        : "border-border/60 text-muted-foreground hover:border-rubi-gold/50 disabled:cursor-not-allowed disabled:opacity-30"
                     }`}
                   >
-                    <span className="mr-1">{b.emoji}</span>
-                    {b.label} {DEFAULT_PREY_PCT[b.value]}%
+                    <span>{b.emoji}</span>
+                    {DEFAULT_PREY_PCT[b.value]}%
                   </button>
                 );
               })}
