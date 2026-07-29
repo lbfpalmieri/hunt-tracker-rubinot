@@ -8,6 +8,7 @@ import {
   IMB_TIER_LABEL,
   IMB_DURATION_HOURS,
   aggregateImbuements,
+  type ImbuementBreakdown,
 } from "@/lib/imbuements";
 import { fmtGold, fmtDate, fmtHoursMin } from "@/lib/format";
 import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown, RefreshCw } from "lucide-react";
@@ -19,6 +20,7 @@ import {
   getImbuementType,
   type ImbuementCategory,
 } from "@/lib/imbuement-types";
+import { GEAR_SLOTS, MAX_IMBUEMENTS_PER_ITEM, type GearSlotId } from "@/lib/gear-slots";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +67,7 @@ function ImbuementsPage() {
 
   const active = characters.find((c) => c.id === activeId) ?? null;
 
+  const [addSlot, setAddSlot] = useState<GearSlotId | null>(null);
   const [tier, setTier] = useState<ImbuementTier>("powerful");
   const [gold, setGold] = useState<string>("");
   const [hoursRemaining, setHoursRemaining] = useState<string>("20");
@@ -115,6 +118,15 @@ function ImbuementsPage() {
     return aggregateImbuements(imbuements, sessions, active.id);
   }, [imbuements, sessions, active]);
 
+  const bySlot = useMemo(() => {
+    const map: Record<string, ImbuementBreakdown[]> = {};
+    for (const r of agg?.rows ?? []) {
+      const key = r.imb.gearSlot ?? "unassigned";
+      (map[key] ??= []).push(r);
+    }
+    return map;
+  }, [agg]);
+
   if (!active) {
     return (
       <AppShell>
@@ -134,8 +146,23 @@ function ImbuementsPage() {
   const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, parseHoursInput(hoursRemaining)));
   const remainingCostPreview = (totalPreview / IMB_DURATION_HOURS) * hoursNum;
 
+  const openAdd = (slot: GearSlotId) => {
+    setAddSlot(slot);
+    setTier("powerful");
+    setGold("");
+    setTypeId("");
+    setPickerQuery("");
+    setHoursRemaining("20");
+  };
+
+  const closeAdd = () => {
+    if (busy) return;
+    setAddSlot(null);
+    setPickerOpen(false);
+  };
+
   const handleAdd = async () => {
-    if (!typeId) return;
+    if (!typeId || !addSlot) return;
     setBusy(true);
     try {
       await addImbuement({
@@ -143,19 +170,20 @@ function ImbuementsPage() {
         tier,
         goldTokenCost: goldNum,
         label: typeId,
+        gearSlot: addSlot,
         hoursRemaining: hoursNum,
       });
+      setAddSlot(null);
       setGold("");
       setTypeId("");
       setPickerQuery("");
       setHoursRemaining("20");
+    } catch (e) {
+      toast.error("Falha ao adicionar", { description: (e as Error).message });
     } finally {
       setBusy(false);
     }
   };
-
-
-
 
   const openRenew = (imbId: string, currentGold: number, label: string) => {
     setRenewTarget({ id: imbId, currentGold, label });
@@ -184,6 +212,94 @@ function ImbuementsPage() {
     }
   };
 
+  const renderRow = (r: ImbuementBreakdown) => {
+    const t = getImbuementType(r.imb.label);
+    const budget = Math.max(0.0001, Math.min(IMB_DURATION_HOURS, r.imb.hoursRemaining));
+    const pct = Math.min(100, (r.hoursConsumed / budget) * 100);
+    const low = r.active && r.hoursRemaining <= 1;
+    return (
+      <div
+        key={r.imb.id}
+        className={
+          "rounded-lg border p-2.5 " +
+          (!r.active
+            ? "border-border/60 bg-surface/30 opacity-70"
+            : low
+              ? "border-rubi-danger/50 bg-rubi-danger/5"
+              : "border-border bg-surface/60")
+        }
+      >
+        <div className="flex items-start gap-2.5">
+          {t ? <img src={t.icon} alt="" loading="lazy" className="mt-0.5 h-7 w-7 shrink-0" /> : null}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="truncate text-sm font-semibold text-rubi-gold">
+                {t ? t.name : r.imb.label || "—"}
+              </span>
+              <span
+                className={
+                  "rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider " +
+                  (r.imb.tier === "powerful"
+                    ? "bg-rubi-gold/20 text-rubi-gold"
+                    : r.imb.tier === "intricate"
+                      ? "bg-rubi-blue-soft text-rubi-blue"
+                      : "bg-accent text-muted-foreground")
+                }
+              >
+                {IMB_TIER_LABEL[r.imb.tier]}
+              </span>
+            </div>
+            <div className="mt-0.5 text-[10px] text-muted-foreground">
+              {fmtDate(r.imb.createdAt)} · {fmtGold(r.costPerHour)}/h · gasto {fmtGold(r.amountSpent)}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              onClick={() =>
+                openRenew(
+                  r.imb.id,
+                  r.imb.goldTokenCost,
+                  `${IMB_TIER_LABEL[r.imb.tier]} · ${t ? t.name : r.imb.label || "Imbuement"}`,
+                )
+              }
+              className="rounded-md border border-rubi-gold/40 bg-rubi-gold/10 p-1.5 text-rubi-gold hover:bg-rubi-gold/20"
+              title="Renovar imbuement (recarrega para 20h)"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => removeImbuement(r.imb.id)}
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+              title="Remover"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+        <div className="mt-2">
+          <div className="mb-1 flex justify-between text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Timer className="h-3 w-3" />
+              restam {fmtHoursMin(r.hoursRemaining)}
+            </span>
+            <span>{fmtHoursMin(r.hoursConsumed)} / {fmtHoursMin(budget)}</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-accent">
+            <div
+              className={
+                "h-full " +
+                (!r.active ? "bg-muted-foreground/50" : low ? "bg-rubi-danger" : "bg-rubi-blue")
+              }
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const unassigned = bySlot["unassigned"] ?? [];
+
   return (
     <AppShell>
       <div className="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
@@ -192,7 +308,7 @@ function ImbuementsPage() {
             RubinOT · Imbuements
           </div>
           <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Custo de <span className="text-gradient-brand">imbuements</span>
+            Imbuements por <span className="text-gradient-brand">item</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Cada imbuement dura {IMB_DURATION_HOURS}h de hunt · o custo é diluído nas sessões de {active.name}.
@@ -206,16 +322,96 @@ function ImbuementsPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="card-surface p-5 lg:col-span-1">
-          <div className="mb-4 flex items-center gap-2">
-            <Plus className="h-4 w-4 text-rubi-blue" />
-            <h2 className="text-base font-semibold">Adicionar imbuement</h2>
-          </div>
+      <div className="card-surface mb-6 flex flex-wrap items-center gap-x-8 gap-y-2 p-4 text-sm">
+        <span className="inline-flex items-center gap-2 text-rubi-gold">
+          <Coins className="h-4 w-4" />
+          <strong>{fmtGold(agg?.activeCostPerHour ?? 0)}/h</strong>
+          <span className="text-xs text-muted-foreground">ativos</span>
+        </span>
+        <span className="text-muted-foreground">
+          Total gasto: <strong className="text-foreground">{fmtGold(agg?.totalSpent ?? 0)}</strong>
+        </span>
+        <span className="text-muted-foreground">
+          Registros: <strong className="text-foreground">{agg?.rows.length ?? 0}</strong>
+        </span>
+      </div>
 
-          <label className="mb-3 block">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {GEAR_SLOTS.map((slot) => {
+          const rows = bySlot[slot.id] ?? [];
+          const activeRows = rows.filter((r) => r.active);
+          const expired = rows.filter((r) => !r.active);
+          const freeSlots = Math.max(0, MAX_IMBUEMENTS_PER_ITEM - activeRows.length);
+          return (
+            <div key={slot.id} className="card-surface flex flex-col p-4">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="rounded-lg border border-border bg-background/60 p-1.5">
+                  <img src={slot.icon} alt={slot.name} loading="lazy" width={512} height={512} className="h-11 w-11 object-contain [image-rendering:pixelated]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display text-lg font-bold text-rubi-gold">{slot.name}</div>
+                  <div className="truncate text-[11px] text-muted-foreground">{slot.hint}</div>
+                </div>
+                <span className="ml-auto shrink-0 rounded-md bg-accent px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+                  {activeRows.length}/{MAX_IMBUEMENTS_PER_ITEM}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {activeRows.map(renderRow)}
+
+                {Array.from({ length: freeSlots }).map((_, i) => (
+                  <button
+                    key={`empty-${i}`}
+                    type="button"
+                    onClick={() => openAdd(slot.id)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:border-rubi-blue hover:text-rubi-blue"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Slot livre
+                  </button>
+                ))}
+
+                {expired.length > 0 && (
+                  <div className="pt-1">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Expirados ({expired.length})
+                    </div>
+                    <div className="space-y-2">{expired.map(renderRow)}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {unassigned.length > 0 && (
+        <div className="card-surface mt-6 p-4">
+          <div className="mb-1 text-base font-semibold">Sem item vinculado</div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Imbuements antigos registrados antes dos slots de item. Remova e recadastre no item correto quando quiser.
+          </p>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {unassigned.map(renderRow)}
+          </div>
+        </div>
+      )}
+
+      <Dialog open={!!addSlot} onOpenChange={(o) => { if (!o) closeAdd(); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Adicionar imbuement · {GEAR_SLOTS.find((s) => s.id === addSlot)?.name ?? ""}
+            </DialogTitle>
+            <DialogDescription>
+              O custo é diluído nas próximas horas de hunt de {active.name}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <label className="block">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Tipo
+              Tier
             </span>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {TIERS.map((t) => (
@@ -237,39 +433,7 @@ function ImbuementsPage() {
             </div>
           </label>
 
-          <label className="mb-3 block">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Gasto com Gold Token
-            </span>
-            <input
-              inputMode="numeric"
-              value={gold}
-              onChange={(e) => setGold(e.target.value)}
-              placeholder="Ex: 320000"
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
-            />
-          </label>
-
-          <label className="mb-3 block">
-            <span className="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <span>Horas restantes</span>
-              <span className="text-[10px] normal-case tracking-normal text-muted-foreground/70">
-                máx {IMB_DURATION_HOURS}h
-              </span>
-            </span>
-            <input
-              inputMode="text"
-              value={hoursRemaining}
-              onChange={(e) => setHoursRemaining(e.target.value)}
-              placeholder="Ex: 12:30 ou 12.5"
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
-            />
-            <span className="mt-1 block text-[10px] text-muted-foreground">
-              Pode digitar no formato <strong>HH:MM</strong> (ex: 12:30) ou em horas decimais (ex: 12,5).
-            </span>
-          </label>
-
-          <div className="mb-4 block" ref={pickerRef}>
+          <div ref={pickerRef}>
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Imbuement
             </span>
@@ -295,7 +459,7 @@ function ImbuementsPage() {
             </button>
             {pickerOpen && (
               <div className="relative">
-                <div className="absolute left-0 right-0 top-1 z-20 max-h-80 overflow-auto rounded-lg border border-border bg-popover p-2 shadow-xl">
+                <div className="absolute left-0 right-0 top-1 z-20 max-h-72 overflow-auto rounded-lg border border-border bg-popover p-2 shadow-xl">
                   <input
                     autoFocus
                     value={pickerQuery}
@@ -345,7 +509,39 @@ function ImbuementsPage() {
             )}
           </div>
 
-          <div className="mb-4 rounded-lg border border-border bg-accent/30 p-3 text-xs">
+          <label className="block">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Gasto com Gold Token
+            </span>
+            <input
+              inputMode="numeric"
+              value={gold}
+              onChange={(e) => setGold(e.target.value)}
+              placeholder="Ex: 320000"
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
+            />
+          </label>
+
+          <label className="block">
+            <span className="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span>Horas restantes</span>
+              <span className="text-[10px] normal-case tracking-normal text-muted-foreground/70">
+                máx {IMB_DURATION_HOURS}h
+              </span>
+            </span>
+            <input
+              inputMode="text"
+              value={hoursRemaining}
+              onChange={(e) => setHoursRemaining(e.target.value)}
+              placeholder="Ex: 12:30 ou 12.5"
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
+            />
+            <span className="mt-1 block text-[10px] text-muted-foreground">
+              Pode digitar no formato <strong>HH:MM</strong> (ex: 12:30) ou em horas decimais (ex: 12,5).
+            </span>
+          </label>
+
+          <div className="rounded-lg border border-border bg-accent/30 p-3 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Custo base ({IMB_TIER_LABEL[tier]})</span>
               <span>{fmtGold(IMB_TIER_COST[tier])}</span>
@@ -368,127 +564,27 @@ function ImbuementsPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleAdd}
-            disabled={busy || !typeId}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90 disabled:opacity-60"
-          >
-            <Plus className="h-4 w-4" />
-            Adicionar imbuement
-          </button>
-        </div>
-
-        <div className="card-surface p-5 lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold">Imbuements de {active.name}</h2>
-              <p className="text-xs text-muted-foreground">
-                {agg?.rows.length ?? 0} registrados · {fmtGold(agg?.activeCostPerHour ?? 0)}/h ativos · Total gasto: {fmtGold(agg?.totalSpent ?? 0)}
-              </p>
-            </div>
-            <Coins className="h-4 w-4 text-rubi-gold" />
-          </div>
-
-          {(!agg || agg.rows.length === 0) ? (
-            <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Nenhum imbuement registrado ainda. Adicione um ao lado para começar.
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {agg.rows.map((r) => {
-                const budget = Math.max(0.0001, Math.min(IMB_DURATION_HOURS, r.imb.hoursRemaining));
-                const pct = Math.min(100, (r.hoursConsumed / budget) * 100);
-                return (
-                  <li
-                    key={r.imb.id}
-                    className="rounded-lg border border-border bg-surface/60 p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-start gap-3">
-                        {(() => {
-                          const t = getImbuementType(r.imb.label);
-                          return t ? (
-                            <img src={t.icon} alt="" className="mt-0.5 h-8 w-8 shrink-0" />
-                          ) : null;
-                        })()}
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className={
-                                "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider " +
-                                (r.imb.tier === "powerful"
-                                  ? "bg-rubi-gold/20 text-rubi-gold"
-                                  : r.imb.tier === "intricate"
-                                    ? "bg-rubi-blue-soft text-rubi-blue"
-                                    : "bg-accent text-muted-foreground")
-                              }
-                            >
-                              {IMB_TIER_LABEL[r.imb.tier]}
-                            </span>
-                            {(() => {
-                              const t = getImbuementType(r.imb.label);
-                              return (
-                                <span className="text-sm font-medium">
-                                  {t ? t.name : r.imb.label || "—"}
-                                </span>
-                              );
-                            })()}
-                            <span className="text-xs text-muted-foreground">
-                              {fmtDate(r.imb.createdAt)}
-                            </span>
-                          </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            Total {fmtGold(r.totalCost)} · {fmtGold(r.costPerHour)}/h · Gold Token {fmtGold(r.imb.goldTokenCost)}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          onClick={() => {
-                            const t = getImbuementType(r.imb.label);
-                            const label = `${IMB_TIER_LABEL[r.imb.tier]} · ${t ? t.name : r.imb.label || "Imbuement"}`;
-                            openRenew(r.imb.id, r.imb.goldTokenCost, label);
-                          }}
-                          className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-1 text-[11px] font-semibold text-rubi-gold hover:bg-rubi-gold/20"
-                          title="Renovar imbuement (recarrega para 20h)"
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                          Renovar
-                        </button>
-                        <button
-                          onClick={() => removeImbuement(r.imb.id)}
-                          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
-                          title="Remover"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          <Timer className="h-3 w-3" />
-                          {fmtHoursMin(r.hoursConsumed)} / {fmtHoursMin(budget)}
-                        </span>
-                        <span>Gasto: {fmtGold(r.amountSpent)}</span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-accent">
-                        <div
-                          className={
-                            "h-full " + (r.active ? "bg-rubi-blue" : "bg-muted-foreground/50")
-                          }
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={closeAdd}
+              disabled={busy}
+              className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={busy || !typeId}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-blue px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90 disabled:opacity-60"
+            >
+              <Plus className="h-4 w-4" />
+              {busy ? "Adicionando..." : "Adicionar"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!renewTarget} onOpenChange={(o) => { if (!o) closeRenew(); }}>
         <DialogContent className="sm:max-w-md">
