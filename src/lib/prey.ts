@@ -10,11 +10,19 @@ export interface PreySlot {
   creature: string | null;
 }
 
+/** Percentual padrão de cada bônus no topo da barra de prey. */
+export const DEFAULT_PREY_PCT: Record<PreyBonus, number> = {
+  xp: 40,
+  loot: 40,
+  damage: 25,
+  defense: 30,
+};
+
 export const PREY_BONUSES: { value: PreyBonus; label: string; hint: string; emoji: string }[] = [
-  { value: "xp", label: "XP Bonus", hint: "mais experiência", emoji: "✨" },
-  { value: "loot", label: "Improved Loot", hint: "mais lucro", emoji: "💰" },
-  { value: "damage", label: "Damage Boost", hint: "mais dano", emoji: "⚔️" },
-  { value: "defense", label: "Damage Reduction", hint: "mais defesa", emoji: "🛡️" },
+  { value: "xp", label: "XP Bonus", hint: "+40% XP", emoji: "✨" },
+  { value: "loot", label: "Improved Loot", hint: "+40% loot", emoji: "💰" },
+  { value: "damage", label: "Damage Boost", hint: "+25% dano", emoji: "⚔️" },
+  { value: "defense", label: "Damage Reduction", hint: "-30% dano recebido", emoji: "🛡️" },
 ];
 
 export function preyBonusLabel(b: string): string {
