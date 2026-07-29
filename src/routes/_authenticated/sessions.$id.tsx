@@ -9,6 +9,8 @@ import { BountyBadge } from "@/components/BountyBadge";
 import { BountyEditor } from "@/components/BountyEditor";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
+import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
+
 import { Sparkles } from "lucide-react";
 import {
   ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy,
