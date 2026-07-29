@@ -118,6 +118,8 @@ function SessionDetail() {
         <StatCard
           label={session.bounty ? "Raw XP ganha (com bounty)" : "Raw XP ganha"}
           value={fmtNum(h.rawXp || h.xpGain)}
+          mark={preyMarkLabel(session.prey, "xp")}
+          markTitle={preyMarkTitle(session.prey, "xp")}
           hint={
             session.bounty
               ? session.bounty.xp != null
@@ -133,6 +135,8 @@ function SessionDetail() {
         <StatCard
           label="Lucro/h"
           value={fmtGold(gph)}
+          mark={preyMarkLabel(session.prey, "loot")}
+          markTitle={preyMarkTitle(session.prey, "loot")}
           hint={`Balance: ${fmtGold(h.balance)}`}
           icon={Coins}
           accent={gph >= 0 ? "success" : "danger"}
@@ -141,11 +145,25 @@ function SessionDetail() {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Loot" value={fmtGold(h.loot)} accent="gold" />
+        <StatCard
+          label="Loot"
+          value={fmtGold(h.loot)}
+          accent="gold"
+          mark={preyMarkLabel(session.prey, "loot")}
+          markTitle={preyMarkTitle(session.prey, "loot")}
+        />
         <StatCard label="Supplies" value={fmtGold(h.supplies)} accent="danger" />
-        <StatCard label="Dano/h" value={fmtNum(h.damagePerHour)} icon={Swords} accent="blue" />
+        <StatCard
+          label="Dano/h"
+          value={fmtNum(h.damagePerHour)}
+          icon={Swords}
+          accent="blue"
+          mark={preyMarkLabel(session.prey, "damage")}
+          markTitle={preyMarkTitle(session.prey, "damage")}
+        />
         <StatCard label="Healing/h" value={fmtNum(h.healingPerHour)} icon={Heart} accent="success" />
       </div>
+
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Kills chart */}
