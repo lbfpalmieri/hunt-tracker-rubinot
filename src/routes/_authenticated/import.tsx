@@ -342,7 +342,11 @@ function ImportPage() {
             </div>
 
             <div className="mt-3 rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.04] p-3">
-              <PreyPicker value={null} onChange={(next, valid) => { setPrey(next); setPreyValid(valid); }} />
+              <PreyPicker
+                creatures={(parsed.hunting?.kills ?? []).slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
+                value={null}
+                onChange={(next, valid) => { setPrey(next); setPreyValid(valid); }}
+              />
             </div>
 
             <button

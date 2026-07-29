@@ -4,9 +4,11 @@ import type { PreySlot } from "@/lib/prey";
 
 /** Inline editor to flag/unflag the Prey Creatures used in a saved session. */
 export function PreyEditor({
+  creatures,
   value,
   onSave,
 }: {
+  creatures: string[];
   value: PreySlot[] | null;
   onSave: (next: PreySlot[] | null) => void | Promise<void>;
 }) {
@@ -29,12 +31,14 @@ export function PreyEditor({
   return (
     <div>
       <PreyPicker
+        creatures={creatures}
         value={value}
         onChange={(next, isValid) => {
           setDraft(next);
           setValid(isValid);
         }}
       />
+
       <button
         type="button"
         onClick={handleSave}
