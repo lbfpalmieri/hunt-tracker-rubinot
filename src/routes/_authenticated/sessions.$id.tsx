@@ -7,6 +7,9 @@ import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import { huntRawXp, bountyLabel } from "@/lib/bounty";
 import { BountyBadge } from "@/components/BountyBadge";
 import { BountyEditor } from "@/components/BountyEditor";
+import { PreyBadge } from "@/components/PreyBadge";
+import { PreyEditor } from "@/components/PreyEditor";
+import { Sparkles } from "lucide-react";
 import {
   ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy,
 } from "lucide-react";
@@ -90,6 +93,7 @@ function SessionDetail() {
           <div className="mt-1 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
             {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
+            {session.prey && <PreyBadge prey={session.prey} detailed />}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {char?.name ?? "—"} · {fmtDate(session.createdAt)} ·{" "}
@@ -225,6 +229,20 @@ function SessionDetail() {
         <BountyEditor
           value={session.bounty}
           onSave={(next) => updateSession(session.id, { bounty: next })}
+        />
+      </div>
+
+      {/* Prey Creatures */}
+      <div className="card-surface mt-6 border-rubi-blue/25 p-5">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold">
+          <Sparkles className="h-4 w-4 text-rubi-blue" /> Prey Creatures
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Prey ativa aumenta XP, lucro, dano ou defesa — marque aqui para comparar sessões com e sem bônus.
+        </p>
+        <PreyEditor
+          value={session.prey}
+          onSave={(next) => updateSession(session.id, { prey: next })}
         />
       </div>
 
