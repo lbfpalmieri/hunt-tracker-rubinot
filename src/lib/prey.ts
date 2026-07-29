@@ -64,3 +64,31 @@ export function normalizePrey(value: unknown): PreySlot[] | null {
     }));
   return slots.length ? slots : null;
 }
+
+/** Slots ativos de um determinado bônus. */
+export function preySlotsOf(prey: PreySlot[] | null | undefined, bonus: PreyBonus): PreySlot[] {
+  return (prey ?? []).filter((s) => s.bonus === bonus);
+}
+
+/** Rótulo curto para marcar cards afetados por prey, ex. "Loot com Prey +40%". */
+export function preyMarkLabel(prey: PreySlot[] | null | undefined, bonus: PreyBonus): string | null {
+  const slots = preySlotsOf(prey, bonus);
+  if (!slots.length) return null;
+  const names: Record<PreyBonus, string> = {
+    xp: "XP com Prey",
+    loot: "Loot com Prey",
+    damage: "Dano com Prey",
+    defense: "Defesa com Prey",
+  };
+  const pcts = slots.map((s) => s.pct ?? DEFAULT_PREY_PCT[bonus]);
+  const sign = bonus === "defense" ? "-" : "+";
+  return `${names[bonus]} ${sign}${pcts.join("/")}%`;
+}
+
+/** Tooltip detalhado: criaturas com prey daquele bônus. */
+export function preyMarkTitle(prey: PreySlot[] | null | undefined, bonus: PreyBonus): string | undefined {
+  const slots = preySlotsOf(prey, bonus);
+  if (!slots.length) return undefined;
+  const list = slots.map((s) => `${s.creature ?? "criatura"} (${s.pct ?? DEFAULT_PREY_PCT[bonus]}%)`).join(", ");
+  return `Valor influenciado por Prey: ${list}. Sem a prey, o resultado seria menor.`;
+}
