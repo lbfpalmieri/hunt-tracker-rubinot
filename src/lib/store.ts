@@ -44,6 +44,7 @@ export interface Imbuement {
   tier: ImbuementTier;
   goldTokenCost: number;
   label: string | null;
+  gearSlot: string | null;
   hoursRemaining: number;
   createdAt: string;
 }
@@ -163,6 +164,7 @@ export const useAppStore = create<State>()((set, get) => ({
         tier: i.tier as ImbuementTier,
         goldTokenCost: Number(i.gold_token_cost ?? 0),
         label: i.label ?? null,
+        gearSlot: i.gear_slot ?? null,
         hoursRemaining: Number(i.hours_remaining ?? 20),
         createdAt: i.created_at,
       }));
@@ -377,6 +379,7 @@ export const useAppStore = create<State>()((set, get) => ({
         tier: input.tier,
         gold_token_cost: input.goldTokenCost,
         label: input.label,
+        gear_slot: input.gearSlot ?? null,
         hours_remaining: input.hoursRemaining,
       })
       .select()
@@ -388,6 +391,7 @@ export const useAppStore = create<State>()((set, get) => ({
       tier: data.tier as ImbuementTier,
       goldTokenCost: Number(data.gold_token_cost ?? 0),
       label: data.label ?? null,
+      gearSlot: data.gear_slot ?? null,
       hoursRemaining: Number(data.hours_remaining ?? 20),
       createdAt: data.created_at,
     };
@@ -403,6 +407,7 @@ export const useAppStore = create<State>()((set, get) => ({
       tier: current.tier,
       goldTokenCost: goldTokenCost ?? current.goldTokenCost,
       label: current.label,
+      gearSlot: current.gearSlot,
       hoursRemaining: 20,
     });
   },
