@@ -145,6 +145,7 @@ export type Database = {
         Row: {
           character_id: string
           created_at: string
+          gear_slot: string | null
           gold_token_cost: number
           hours_remaining: number
           id: string
@@ -155,6 +156,7 @@ export type Database = {
         Insert: {
           character_id: string
           created_at?: string
+          gear_slot?: string | null
           gold_token_cost?: number
           hours_remaining?: number
           id?: string
@@ -165,6 +167,7 @@ export type Database = {
         Update: {
           character_id?: string
           created_at?: string
+          gear_slot?: string | null
           gold_token_cost?: number
           hours_remaining?: number
           id?: string
