@@ -179,10 +179,25 @@ function SessionDetail() {
         </div>
 
         {/* Damage types pie */}
-        <div className="card-surface p-5">
+        <div
+          className={
+            "card-surface relative p-5 " +
+            (preyMarkLabel(session.prey, "defense") ? "border-rubi-gold/60 pt-7" : "")
+          }
+        >
+          {preyMarkLabel(session.prey, "defense") && (
+            <span
+              title={preyMarkTitle(session.prey, "defense")}
+              className="absolute right-0 top-0 inline-flex items-center gap-1 rounded-bl-lg bg-rubi-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-gold"
+            >
+              <Sparkles className="h-2.5 w-2.5" />
+              {preyMarkLabel(session.prey, "defense")}
+            </span>
+          )}
           <h2 className="mb-2 flex items-center gap-2 text-base font-semibold">
             <Shield className="h-4 w-4 text-rubi-danger" /> Dano recebido
           </h2>
+
           {session.damage && session.damage.damageTypes.length > 0 ? (
             <>
               <p className="mb-2 text-xs text-muted-foreground">
