@@ -5,6 +5,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
 import { BountyBadge } from "@/components/BountyBadge";
+import { PreyBadge } from "@/components/PreyBadge";
 import { ScrollText, Search, Filter, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -135,6 +136,7 @@ function SessionsList() {
                       <div className="flex items-center gap-2">
                         <span className="truncate font-display text-base font-semibold">{s.huntName}</span>
                         {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                        {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                       </div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
                         {charName(s.characterId)} · {fmtDate(s.createdAt)} · {fmtDuration(s.hunting.durationSec)}

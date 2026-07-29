@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { normalizePrey } from "./prey";
 
 /** Columns that are safe to expose publicly. Never include user_id/character_id. */
 const LIST_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, hunting, bounty_difficulty, bounty_tier, bounty_xp";
+  "id, created_at, hunt_name, char_name, char_vocation, hunting, bounty_difficulty, bounty_tier, bounty_xp, prey";
 const DETAIL_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, gear_url, hunting, damage, misc, bounty_difficulty, bounty_tier, bounty_xp";
+  "id, created_at, hunt_name, char_name, char_vocation, gear_url, hunting, damage, misc, bounty_difficulty, bounty_tier, bounty_xp, prey";
 
 function publicClient() {
   const url = process.env.SUPABASE_URL!;
@@ -78,6 +79,7 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
               xp: r.bounty_xp == null ? null : Number(r.bounty_xp),
             }
           : null,
+        prey: normalizePrey(r.prey),
         balance: Number(r.hunting?.balance ?? 0),
         loot: Number(r.hunting?.loot ?? 0),
         supplies: Number(r.hunting?.supplies ?? 0),
@@ -140,6 +142,7 @@ export const getCommunitySession = createServerFn({ method: "GET" })
               xp: r.bounty_xp == null ? null : Number(r.bounty_xp),
             }
           : null,
+        prey: normalizePrey(r.prey),
       },
     };
   });

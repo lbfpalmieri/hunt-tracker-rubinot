@@ -6,6 +6,7 @@ import { getCommunitySession } from "@/lib/community.functions";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import { ArrowLeft, Coins, Globe2, Shield, Skull, Timer, Zap, Trophy } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
+import { PreyBadge } from "@/components/PreyBadge";
 import { bountyLabel } from "@/lib/bounty";
 
 export const Route = createFileRoute("/_authenticated/community/$id")({
@@ -80,6 +81,7 @@ function SessionView({ session }: { session: any }) {
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
           {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
+          {session.prey && <PreyBadge prey={session.prey} detailed />}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {session.charName} · {session.vocation} · {fmtDate(session.createdAt)}

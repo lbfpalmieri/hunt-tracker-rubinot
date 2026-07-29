@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { BountyBadge } from "@/components/BountyBadge";
+import { PreyBadge } from "@/components/PreyBadge";
 import {
   getCommunitySessions,
   getCommunityMonsters,
@@ -591,6 +592,7 @@ function CommunityPage() {
                     <div className="flex items-center gap-2">
                       <span className="truncate font-semibold">{s.huntName}</span>
                       {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                      {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                     </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {s.charName} · {s.vocation} · {fmtDate(s.createdAt)}
@@ -642,6 +644,7 @@ function CommunityPage() {
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-semibold">{s.charName}</span>
                       {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
+                      {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                     </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {fmtDate(s.createdAt)} · {fmtDuration(s.durationSec)}
