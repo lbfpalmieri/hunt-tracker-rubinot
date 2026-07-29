@@ -14,6 +14,8 @@ import {
   type BountyDifficulty,
   type BountyTier,
 } from "@/lib/bounty";
+import { PreyPicker } from "@/components/PreyPicker";
+import type { PreySlot } from "@/lib/prey";
 
 
 
@@ -53,6 +55,8 @@ function ImportPage() {
   const [bountyXpText, setBountyXpText] = useState("");
   const bountyXp = parseXpAmount(bountyXpText);
   const bountyXpInvalid = bountyXpText.trim().length > 0 && bountyXp == null;
+  const [prey, setPrey] = useState<PreySlot[] | null>(null);
+  const [preyValid, setPreyValid] = useState(true);
   const bountyReady = !hasBounty || Boolean(bountyDifficulty && bountyTier && !bountyXpInvalid);
 
 
@@ -77,7 +81,7 @@ function ImportPage() {
     }
   }, [huntingText, damageText, miscText]);
 
-  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady);
+  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady && preyValid);
 
   const handleAutoSplit = () => {
     const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
@@ -109,6 +113,7 @@ function ImportPage() {
           hasBounty && bountyDifficulty && bountyTier
             ? { difficulty: bountyDifficulty, tier: bountyTier, xp: bountyXp }
             : null,
+        prey,
       });
 
       navigate({ to: "/sessions/$id", params: { id: created.id } });
@@ -336,6 +341,9 @@ function ImportPage() {
               )}
             </div>
 
+            <div className="mt-3 rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.04] p-3">
+              <PreyPicker value={null} onChange={(next, valid) => { setPrey(next); setPreyValid(valid); }} />
+            </div>
 
             <button
               onClick={handleSave}
@@ -355,7 +363,9 @@ function ImportPage() {
                   ? "Cole o Hunting Analyser para continuar."
                   : !selectedHuntName
                     ? "Dê um nome à hunt."
-                    : "Selecione a dificuldade e o tipo da Bounty Task."}
+                    : !preyValid
+                      ? "Revise os bônus de prey (use um número entre 0 e 100)."
+                      : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
 
             )}
