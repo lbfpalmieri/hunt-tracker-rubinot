@@ -1,0 +1,1 @@
+ALTER TABLE public.imbuements ADD COLUMN IF NOT EXISTS gear_slot text;
