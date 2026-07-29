@@ -9,6 +9,8 @@ import { BountyBadge } from "@/components/BountyBadge";
 import { BountyEditor } from "@/components/BountyEditor";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
+import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
+
 import { Sparkles } from "lucide-react";
 import {
   ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy,
@@ -118,6 +120,8 @@ function SessionDetail() {
         <StatCard
           label={session.bounty ? "Raw XP ganha (com bounty)" : "Raw XP ganha"}
           value={fmtNum(h.rawXp || h.xpGain)}
+          mark={preyMarkLabel(session.prey, "xp")}
+          markTitle={preyMarkTitle(session.prey, "xp")}
           hint={
             session.bounty
               ? session.bounty.xp != null
@@ -133,6 +137,8 @@ function SessionDetail() {
         <StatCard
           label="Lucro/h"
           value={fmtGold(gph)}
+          mark={preyMarkLabel(session.prey, "loot")}
+          markTitle={preyMarkTitle(session.prey, "loot")}
           hint={`Balance: ${fmtGold(h.balance)}`}
           icon={Coins}
           accent={gph >= 0 ? "success" : "danger"}
@@ -141,11 +147,25 @@ function SessionDetail() {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Loot" value={fmtGold(h.loot)} accent="gold" />
+        <StatCard
+          label="Loot"
+          value={fmtGold(h.loot)}
+          accent="gold"
+          mark={preyMarkLabel(session.prey, "loot")}
+          markTitle={preyMarkTitle(session.prey, "loot")}
+        />
         <StatCard label="Supplies" value={fmtGold(h.supplies)} accent="danger" />
-        <StatCard label="Dano/h" value={fmtNum(h.damagePerHour)} icon={Swords} accent="blue" />
+        <StatCard
+          label="Dano/h"
+          value={fmtNum(h.damagePerHour)}
+          icon={Swords}
+          accent="blue"
+          mark={preyMarkLabel(session.prey, "damage")}
+          markTitle={preyMarkTitle(session.prey, "damage")}
+        />
         <StatCard label="Healing/h" value={fmtNum(h.healingPerHour)} icon={Heart} accent="success" />
       </div>
+
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Kills chart */}
@@ -159,10 +179,25 @@ function SessionDetail() {
         </div>
 
         {/* Damage types pie */}
-        <div className="card-surface p-5">
+        <div
+          className={
+            "card-surface relative p-5 " +
+            (preyMarkLabel(session.prey, "defense") ? "border-rubi-gold/60 pt-7" : "")
+          }
+        >
+          {preyMarkLabel(session.prey, "defense") && (
+            <span
+              title={preyMarkTitle(session.prey, "defense")}
+              className="absolute right-0 top-0 inline-flex items-center gap-1 rounded-bl-lg bg-rubi-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-gold"
+            >
+              <Sparkles className="h-2.5 w-2.5" />
+              {preyMarkLabel(session.prey, "defense")}
+            </span>
+          )}
           <h2 className="mb-2 flex items-center gap-2 text-base font-semibold">
             <Shield className="h-4 w-4 text-rubi-danger" /> Dano recebido
           </h2>
+
           {session.damage && session.damage.damageTypes.length > 0 ? (
             <>
               <p className="mb-2 text-xs text-muted-foreground">
