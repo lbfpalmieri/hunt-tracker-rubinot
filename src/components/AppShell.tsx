@@ -8,6 +8,7 @@ import {
   LogOut,
   MoreHorizontal,
   Calculator,
+  GitCompareArrows,
   Sparkles,
   Globe2,
 
@@ -32,6 +33,7 @@ const nav = [
 const moreNav = [
   { to: "/imbuements", label: "Imbuements", icon: Sparkles },
   { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
+  { to: "/tools/compare", label: "Comparar hunts", icon: GitCompareArrows },
   { to: "/characters", label: "Personagens", icon: UserCircle2 },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
