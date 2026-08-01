@@ -31,8 +31,8 @@ export function HuntPickerCard({ hunt, selected, disabled, onToggle }: Props) {
           <Check className="h-3 w-3" />
         </span>
       )}
-      <div className="flex items-center gap-2 pr-6">
-        <span className="truncate font-display text-sm font-semibold">{hunt.huntName}</span>
+      <div className="flex flex-wrap items-start gap-2 pr-6">
+        <span className="font-display text-sm font-semibold leading-snug">{hunt.huntName}</span>
         {hunt.bounty && <BountyBadge bounty={hunt.bounty} className="flex-none" />}
         {hunt.prey && <PreyBadge prey={hunt.prey} className="flex-none" />}
       </div>
