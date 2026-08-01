@@ -20,6 +20,7 @@ import { Route as AuthenticatedCharactersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
+import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authenticated/tools.compare'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 
@@ -79,6 +80,12 @@ const AuthenticatedToolsMonsterCalculatorRoute =
     path: '/tools/monster-calculator',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedToolsCompareRoute =
+  AuthenticatedToolsCompareRouteImport.update({
+    id: '/tools/compare',
+    path: '/tools/compare',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/community/': typeof AuthenticatedCommunityIndexRoute
 }
@@ -116,6 +124,7 @@ export interface FileRoutesByTo {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/community': typeof AuthenticatedCommunityIndexRoute
 }
@@ -132,6 +141,7 @@ export interface FileRoutesById {
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/_authenticated/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
 }
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/community/$id'
     | '/sessions/$id'
+    | '/tools/compare'
     | '/tools/monster-calculator'
     | '/community/'
   fileRoutesByTo: FileRoutesByTo
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/community/$id'
     | '/sessions/$id'
+    | '/tools/compare'
     | '/tools/monster-calculator'
     | '/community'
   id:
@@ -177,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sessions'
     | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
+    | '/_authenticated/tools/compare'
     | '/_authenticated/tools/monster-calculator'
     | '/_authenticated/community/'
   fileRoutesById: FileRoutesById
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToolsMonsterCalculatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tools/compare': {
+      id: '/_authenticated/tools/compare'
+      path: '/tools/compare'
+      fullPath: '/tools/compare'
+      preLoaderRoute: typeof AuthenticatedToolsCompareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sessions/$id': {
       id: '/_authenticated/sessions/$id'
       path: '/$id'
@@ -304,6 +324,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
+  AuthenticatedToolsCompareRoute: typeof AuthenticatedToolsCompareRoute
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
   AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
 }
@@ -316,6 +337,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
+  AuthenticatedToolsCompareRoute: AuthenticatedToolsCompareRoute,
   AuthenticatedToolsMonsterCalculatorRoute:
     AuthenticatedToolsMonsterCalculatorRoute,
   AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,

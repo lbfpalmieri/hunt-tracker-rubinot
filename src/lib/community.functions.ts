@@ -83,6 +83,8 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
         balance: Number(r.hunting?.balance ?? 0),
         loot: Number(r.hunting?.loot ?? 0),
         supplies: Number(r.hunting?.supplies ?? 0),
+        damage: Number(r.hunting?.damage ?? 0),
+        healing: Number(r.hunting?.healing ?? 0),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         kills: ((r.hunting?.kills ?? []) as any[]).map((k) => ({
           name: String(k.name),
