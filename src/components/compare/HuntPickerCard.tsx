@@ -12,6 +12,7 @@ interface Props {
 }
 
 export function HuntPickerCard({ hunt, selected, disabled, onToggle }: Props) {
+  const agg = (hunt.sessionCount ?? 1) > 1;
   return (
     <button
       type="button"
