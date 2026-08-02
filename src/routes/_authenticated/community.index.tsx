@@ -10,7 +10,6 @@ import {
   getCommunityMonsters,
   getCommunityStats,
 } from "@/lib/community.functions";
-import { useAppStore } from "@/lib/store";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
   Dialog,
@@ -31,14 +30,14 @@ import {
   Calculator,
   Target,
   ChevronRight,
-  Shield,
-  Crosshair,
-  Flame,
-  Leaf,
-  Hand,
   Users2,
   type LucideIcon,
 } from "lucide-react";
+import eliteKnightImg from "@/assets/vocations/elite-knight.png";
+import paladinImg from "@/assets/vocations/paladin.png";
+import druidImg from "@/assets/vocations/druid.png";
+import sorcererImg from "@/assets/vocations/sorcerer.png";
+import monkImg from "@/assets/vocations/monk.png";
 
 export const Route = createFileRoute("/_authenticated/community/")({
   head: () => ({
@@ -61,21 +60,17 @@ export const Route = createFileRoute("/_authenticated/community/")({
   component: CommunityPage,
 });
 
-const VOCATIONS: { name: string; icon: LucideIcon }[] = [
-  { name: "Elite Knight", icon: Shield },
-  { name: "Royal Paladin", icon: Crosshair },
-  { name: "Master Sorcerer", icon: Flame },
-  { name: "Elder Druid", icon: Leaf },
-  { name: "Exalted Monk", icon: Hand },
+const VOCATIONS: { name: string; image: string }[] = [
+  { name: "Elite Knight", image: eliteKnightImg },
+  { name: "Royal Paladin", image: paladinImg },
+  { name: "Elder Druid", image: druidImg },
+  { name: "Master Sorcerer", image: sorcererImg },
+  { name: "Exalted Monk", image: monkImg },
 ];
 
 type Sort = "recent" | "xph" | "gph" | "killsh";
 
 function CommunityPage() {
-  const characters = useAppStore((s) => s.characters);
-  const activeId = useAppStore((s) => s.activeCharacterId);
-  const activeChar = characters.find((c) => c.id === activeId) ?? null;
-
   const [vocation, setVocation] = useState<string>("");
   const [huntQuery, setHuntQuery] = useState("");
   const [monster, setMonster] = useState("");
@@ -84,16 +79,6 @@ function CommunityPage() {
   const [view, setView] = useState<"hunts" | "sessions" | "calc">("hunts");
   const [quantity, setQuantity] = useState<number>(400);
   const [openHunt, setOpenHunt] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false);
-
-  // Pre-select the active character's vocation once.
-  useEffect(() => {
-    if (initialized) return;
-    if (activeChar) {
-      setVocation(activeChar.vocation);
-      setInitialized(true);
-    }
-  }, [activeChar, initialized]);
 
   const fetchSessions = useServerFn(getCommunitySessions);
   const fetchMonsters = useServerFn(getCommunityMonsters);
@@ -373,13 +358,16 @@ function CommunityPage() {
               type="button"
               onClick={() => setVocation("")}
               className={
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                "inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-xs font-medium transition-colors " +
                 (vocation === ""
                   ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                   : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
               }
             >
-              <Users2 className="h-3.5 w-3.5" /> Todas
+              <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent">
+                <Users2 className="h-3.5 w-3.5" />
+              </span>
+              Todas
             </button>
             {VOCATIONS.map((v) => (
               <button
@@ -387,13 +375,18 @@ function CommunityPage() {
                 type="button"
                 onClick={() => setVocation(vocation === v.name ? "" : v.name)}
                 className={
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                  "inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-xs font-medium transition-colors " +
                   (vocation === v.name
                     ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                     : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
                 }
               >
-                <v.icon className="h-3.5 w-3.5" /> {v.name}
+                <img
+                  src={v.image}
+                  alt=""
+                  className="h-7 w-7 flex-none rounded-full object-cover object-top"
+                />
+                {v.name}
               </button>
             ))}
           </div>
