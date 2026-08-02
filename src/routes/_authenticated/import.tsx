@@ -1,11 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { parseHunting, parseDamage, parseMiscellaneous, splitCombinedInput } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
-import { useMemo, useState } from "react";
-import { Upload, Wand2, Save, UserCircle2, Sparkles, Trophy } from "lucide-react";
+import { getCommunitySessions } from "@/lib/community.functions";
+import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Upload, Wand2, Save, UserCircle2, Sparkles, Trophy, Search, Globe2, AlertTriangle } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import {
   BOUNTY_DIFFICULTIES,
@@ -38,14 +42,16 @@ function ImportPage() {
   const characters = useAppStore((s) => s.characters);
   const activeId = useAppStore((s) => s.activeCharacterId);
   const hunts = useAppStore((s) => s.hunts);
+  const sessions = useAppStore((s) => s.sessions);
   const addSession = useAppStore((s) => s.addSession);
   const addHunt = useAppStore((s) => s.addHunt);
 
   const [huntingText, setHuntingText] = useState("");
   const [damageText, setDamageText] = useState("");
   const [miscText, setMiscText] = useState("");
-  const [huntId, setHuntId] = useState<string>("");
-  const [newHuntName, setNewHuntName] = useState("");
+  const [huntQuery, setHuntQuery] = useState("");
+  const [huntPickerOpen, setHuntPickerOpen] = useState(false);
+  const huntPickerRef = useRef<HTMLDivElement>(null);
   const [charId, setCharId] = useState<string>("");
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
@@ -65,10 +71,7 @@ function ImportPage() {
     () => hunts.filter((h) => h.characterId === effectiveCharId),
     [hunts, effectiveCharId],
   );
-  const isNewHunt = huntId === "__new__" || (!huntId && charHunts.length === 0);
-  const selectedHuntName = isNewHunt
-    ? newHuntName.trim()
-    : charHunts.find((h) => h.id === huntId)?.name ?? "";
+  const selectedHuntName = huntQuery.trim();
 
   const parsed = useMemo(() => {
     try {
@@ -80,6 +83,67 @@ function ImportPage() {
       return { hunting: null, damage: null, misc: null };
     }
   }, [huntingText, damageText, miscText]);
+
+  // Suggests which hunt this session belongs to by matching the monsters just
+  // killed against monsters seen before under each hunt name.
+  const newMonsters = useMemo(() => (parsed.hunting?.kills ?? []).map((k) => k.name), [parsed.hunting]);
+
+  const fetchCommunity = useServerFn(getCommunitySessions);
+  const { data: communityData } = useQuery({
+    queryKey: ["community-sessions", "hunt-suggest"],
+    queryFn: () => fetchCommunity({ data: { limit: 300 } }),
+    staleTime: 10 * 60_000,
+  });
+
+  const ownGroups = useMemo(
+    () => groupMonstersByHunt(sessions.map((s) => ({ huntName: s.huntName, kills: s.hunting.kills }))),
+    [sessions],
+  );
+  const communityGroups = useMemo(
+    () => groupMonstersByHunt(communityData?.sessions ?? []),
+    [communityData],
+  );
+
+  const ownMatches = useMemo(() => matchHuntsByMonsters(newMonsters, ownGroups), [newMonsters, ownGroups]);
+  const communityMatches = useMemo(() => {
+    const ownNames = new Set(ownMatches.map((m) => m.huntName.toLowerCase()));
+    return matchHuntsByMonsters(newMonsters, communityGroups).filter(
+      (m) => !ownNames.has(m.huntName.toLowerCase()),
+    );
+  }, [newMonsters, communityGroups, ownMatches]);
+
+  const huntFiltered = useMemo(() => {
+    const q = huntQuery.trim().toLowerCase();
+    if (!q) return charHunts;
+    return charHunts.filter((h) => h.name.toLowerCase().includes(q));
+  }, [charHunts, huntQuery]);
+
+  const knownHuntNames = useMemo(
+    () =>
+      new Set([
+        ...charHunts.map((h) => h.name.toLowerCase()),
+        ...ownMatches.map((m) => m.huntName.toLowerCase()),
+        ...communityMatches.map((m) => m.huntName.toLowerCase()),
+      ]),
+    [charHunts, ownMatches, communityMatches],
+  );
+  const huntNameLooksGeneric =
+    Boolean(selectedHuntName) &&
+    !knownHuntNames.has(selectedHuntName.toLowerCase()) &&
+    looksGenericHuntName(selectedHuntName);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!huntPickerRef.current?.contains(e.target as Node)) setHuntPickerOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const pickHunt = (name: string) => {
+    setHuntQuery(name);
+    setHuntPickerOpen(false);
+  };
 
   const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady && preyValid);
 
@@ -98,9 +162,8 @@ function ImportPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      if (isNewHunt) {
-        await addHunt(effectiveCharId, selectedHuntName);
-      }
+      // Idempotent by name — reuses the existing hunt row if one already matches.
+      await addHunt(effectiveCharId, selectedHuntName);
       const created = await addSession({
         characterId: effectiveCharId,
         huntName: selectedHuntName,
@@ -204,33 +267,93 @@ function ImportPage() {
                 ))}
               </select>
             </label>
-            <label className="block">
+            <div>
               <span className="text-xs font-medium text-muted-foreground">Hunt / spot</span>
-              {charHunts.length > 0 && (
-                <select
-                  value={isNewHunt ? "__new__" : huntId}
-                  onChange={(e) => setHuntId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
-                >
-                  <option value="">Selecione uma hunt salva…</option>
-                  {charHunts.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.name}
-                    </option>
-                  ))}
-                  <option value="__new__">+ Nova hunt…</option>
-                </select>
+
+              {(ownMatches.length > 0 || communityMatches.length > 0) && !selectedHuntName && (
+                <div className="mt-1.5 mb-2 space-y-1.5 rounded-lg border border-rubi-blue/30 bg-rubi-blue/[0.04] p-2.5">
+                  <p className="text-[11px] text-muted-foreground">
+                    Baseado nos monstros dessa sessão, pode ser uma dessas hunts:
+                  </p>
+                  {ownMatches.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {ownMatches.map((m) => (
+                        <button
+                          key={m.huntName}
+                          type="button"
+                          onClick={() => pickHunt(m.huntName)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2.5 py-1 text-xs font-medium text-rubi-blue hover:bg-rubi-blue/20"
+                        >
+                          {m.huntName}
+                          <span className="text-[10px] opacity-70">
+                            {m.shared}/{m.total} monstros
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {communityMatches.length > 0 && (
+                    <div>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Jogadores da comunidade usam esse nome pra hunts com esses monstros:
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {communityMatches.map((m) => (
+                          <button
+                            key={m.huntName}
+                            type="button"
+                            onClick={() => pickHunt(m.huntName)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-rubi-blue/50 hover:text-foreground"
+                          >
+                            <Globe2 className="h-3 w-3" />
+                            {m.huntName}
+                            <span className="text-[10px] opacity-70">
+                              {m.shared}/{m.total} monstros
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-              {isNewHunt && (
-                <input
-                  value={newHuntName}
-                  onChange={(e) => setNewHuntName(e.target.value)}
-                  placeholder="Ex: Rhindeers Norte"
-                  className="mt-2 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm placeholder:text-muted-foreground/60"
-                  autoFocus={charHunts.length > 0}
-                />
+
+              <div ref={huntPickerRef} className="relative">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={huntQuery}
+                    onChange={(e) => setHuntQuery(e.target.value)}
+                    onFocus={() => setHuntPickerOpen(true)}
+                    placeholder="Buscar ou digitar o nome da hunt…"
+                    className="mt-1 w-full rounded-lg border border-border bg-input py-2 pl-9 pr-3 text-sm placeholder:text-muted-foreground/60"
+                  />
+                </div>
+                {huntPickerOpen && huntFiltered.length > 0 && (
+                  <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-lg border border-border bg-popover py-1 shadow-xl">
+                    {huntFiltered.map((h) => (
+                      <li key={h.id}>
+                        <button
+                          type="button"
+                          onClick={() => pickHunt(h.name)}
+                          className="block w-full px-3 py-1.5 text-left text-sm hover:bg-accent"
+                        >
+                          {h.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {huntNameLooksGeneric && (
+                <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-rubi-gold">
+                  <AlertTriangle className="mt-0.5 h-3 w-3 flex-none" />
+                  Esse nome não parece bater com nenhum local conhecido — considere algo descritivo (ex:
+                  "Darashia - DT Seal -1") pra ajudar outros jogadores a encontrar essa hunt.
+                </p>
               )}
-            </label>
+            </div>
 
             <div className="mt-4">
               <span className="text-xs font-medium text-muted-foreground">
