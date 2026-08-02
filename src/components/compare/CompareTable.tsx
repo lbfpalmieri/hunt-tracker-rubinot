@@ -20,20 +20,15 @@ interface Row {
 
 const ROWS: Row[] = [
   {
-    label: "Duração",
+    label: "Duração média (referência)",
     better: "none",
     value: (h) => h.durationSec,
-    render: (h) => fmtDuration(h.durationSec),
+    render: (h) => (
+      <span className="text-muted-foreground">{fmtDuration(h.durationSec)}</span>
+    ),
   },
   {
-    label: "Raw XP (sem bounty)",
-    better: "high",
-    value: (h) => h.rawXpHunt,
-    render: (h) => (h.rawXpHunt == null ? "—" : fmtNum(h.rawXpHunt)),
-    prey: "xp",
-  },
-  {
-    label: "Raw XP/h",
+    label: "Raw XP em 1h (sem bounty)",
     better: "high",
     value: (h) => perHour(h.rawXpHunt, h.durationSec),
     render: (h) => {
@@ -43,66 +38,53 @@ const ROWS: Row[] = [
     prey: "xp",
   },
   {
-    label: "XP com bônus",
+    label: "XP com bônus em 1h",
     better: "high",
-    value: (h) => h.xpGain,
-    render: (h) => fmtNum(h.xpGain),
+    value: (h) => perHour(h.xpGain, h.durationSec),
+    render: (h) => fmtNum(perHour(h.xpGain, h.durationSec) ?? 0),
     prey: "xp",
   },
   {
-    label: "Balance",
-    better: "high",
-    value: (h) => h.balance,
-    render: (h) => fmtGold(h.balance),
-    prey: "loot",
-  },
-  {
-    label: "Lucro/h",
+    label: "Lucro em 1h",
     better: "high",
     value: (h) => perHour(h.balance, h.durationSec),
     render: (h) => fmtGold(perHour(h.balance, h.durationSec) ?? 0),
     prey: "loot",
   },
   {
-    label: "Loot/h",
+    label: "Loot em 1h",
     better: "high",
     value: (h) => perHour(h.loot, h.durationSec),
     render: (h) => fmtGold(perHour(h.loot, h.durationSec) ?? 0),
     prey: "loot",
   },
   {
-    label: "Supplies/h",
+    label: "Supplies em 1h",
     better: "low",
     value: (h) => perHour(h.supplies, h.durationSec),
     render: (h) => fmtGold(perHour(h.supplies, h.durationSec) ?? 0),
   },
   {
-    label: "Kills totais",
-    better: "high",
-    value: (h) => h.killsTotal,
-    render: (h) => fmtNum(h.killsTotal),
-  },
-  {
-    label: "Kills/h",
+    label: "Kills em 1h",
     better: "high",
     value: (h) => perHour(h.killsTotal, h.durationSec),
     render: (h) => fmtNum(perHour(h.killsTotal, h.durationSec) ?? 0),
   },
   {
-    label: "Dano causado/h",
+    label: "Dano causado em 1h",
     better: "high",
     value: (h) => perHour(h.damageDealt, h.durationSec),
     render: (h) => fmtNum(perHour(h.damageDealt, h.durationSec) ?? 0),
     prey: "damage",
   },
   {
-    label: "Cura/h",
+    label: "Cura em 1h",
     better: "none",
     value: (h) => perHour(h.healing, h.durationSec),
     render: (h) => fmtNum(perHour(h.healing, h.durationSec) ?? 0),
   },
   {
-    label: "Dano recebido/h",
+    label: "Dano recebido em 1h",
     better: "low",
     value: (h) => perHour(h.damageReceived, h.durationSec),
     render: (h) => {
@@ -112,7 +94,7 @@ const ROWS: Row[] = [
     prey: "defense",
   },
   {
-    label: "Top 3 monstros",
+    label: "Top 3 monstros em 1h",
     better: "none",
     value: () => null,
     render: (h) => {
@@ -122,7 +104,10 @@ const ROWS: Row[] = [
         <span className="inline-flex flex-col gap-0.5 text-xs">
           {top.map((k) => (
             <span key={k.name}>
-              {k.name} <span className="font-mono text-rubi-gold">×{fmtNum(k.count)}</span>
+              {k.name}{" "}
+              <span className="font-mono text-rubi-gold">
+                ×{fmtNum(perHour(k.count, h.durationSec) ?? 0)}
+              </span>
             </span>
           ))}
         </span>
@@ -130,6 +115,8 @@ const ROWS: Row[] = [
     },
   },
 ];
+
+
 
 function toneFor(row: Row, hunts: CompareHunt[], h: CompareHunt): string {
   if (row.better === "none" || hunts.length < 2) return "";
@@ -220,10 +207,12 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
         </tbody>
       </table>
       <div className="border-t border-border/60 px-4 py-2 text-xs text-muted-foreground">
-        <span className="font-semibold text-rubi-success">Verde</span> = melhor resultado ·{" "}
-        <span className="font-semibold text-rubi-danger">Vermelho</span> = pior resultado · valores com Prey
-        estão marcados em dourado.
+        Todos os valores são a média das sessões da hunt <strong>projetada para 1 hora</strong> de caça, para
+        comparação justa entre durações diferentes. <span className="font-semibold text-rubi-success">Verde</span>{" "}
+        = melhor resultado · <span className="font-semibold text-rubi-danger">Vermelho</span> = pior resultado ·
+        valores com Prey estão marcados em dourado.
       </div>
+
     </div>
   );
 }
