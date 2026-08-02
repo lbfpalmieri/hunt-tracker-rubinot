@@ -102,8 +102,10 @@ function ComparePage() {
             <GitCompareArrows className="h-7 w-7 text-rubi-blue" /> Comparar hunts
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Clique nas hunts para selecionar (até {MAX_COMPARE}). O comparativo aparece automaticamente abaixo.
+            Cada card é uma hunt (média de todas as sessões dela). Clique para selecionar até {MAX_COMPARE} e o
+            comparativo aparece automaticamente abaixo.
           </p>
+
         </div>
         {selected.length > 0 && (
           <button
