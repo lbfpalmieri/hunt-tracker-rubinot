@@ -116,25 +116,7 @@ const ROWS: Row[] = [
   },
 ];
 
-  {
-    label: "Top 3 monstros",
-    better: "none",
-    value: () => null,
-    render: (h) => {
-      const top = topKills(h);
-      if (!top.length) return "—";
-      return (
-        <span className="inline-flex flex-col gap-0.5 text-xs">
-          {top.map((k) => (
-            <span key={k.name}>
-              {k.name} <span className="font-mono text-rubi-gold">×{fmtNum(k.count)}</span>
-            </span>
-          ))}
-        </span>
-      );
-    },
-  },
-];
+
 
 function toneFor(row: Row, hunts: CompareHunt[], h: CompareHunt): string {
   if (row.better === "none" || hunts.length < 2) return "";
