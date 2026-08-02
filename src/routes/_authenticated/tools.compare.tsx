@@ -148,20 +148,6 @@ function ComparePage() {
         </div>
       </div>
 
-      {selected.length >= 2 && (
-        <button
-          type="button"
-          onClick={scrollToCompare}
-          className="mb-4 flex w-full items-center gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-left text-sm text-rubi-gold transition-colors hover:bg-rubi-gold/20"
-        >
-          <GitCompareArrows className="h-4 w-4 flex-none" />
-          <span className="flex-1">
-            Comparativo com <strong>{selected.length} hunts</strong> pronto — clique para visualizar.
-          </span>
-          <ArrowDown className="h-4 w-4 flex-none animate-bounce" />
-        </button>
-      )}
-
       {full && (
         <p className="mb-3 text-xs text-rubi-gold">
           Limite de {MAX_COMPARE} hunts atingido — remova uma para escolher outra.
@@ -217,6 +203,20 @@ function ComparePage() {
           </>
         )}
       </div>
+
+      {selected.length >= 2 && (
+        <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 md:bottom-6">
+          <button
+            type="button"
+            onClick={scrollToCompare}
+            className="flex items-center gap-3 rounded-full border border-rubi-gold/60 bg-background/95 px-5 py-3 text-sm font-semibold text-rubi-gold shadow-glow-gold backdrop-blur-md transition-transform hover:scale-[1.02]"
+          >
+            <GitCompareArrows className="h-4 w-4 flex-none" />
+            Ver comparativo ({selected.length})
+            <ArrowDown className="h-4 w-4 flex-none animate-bounce" />
+          </button>
+        </div>
+      )}
     </AppShell>
   );
 }
