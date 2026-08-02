@@ -28,7 +28,12 @@ export interface CompareHunt {
   damageReceived: number | null;
   bounty: BountyInfo | null;
   prey: PreySlot[] | null;
+  /** Quantas sessões formam esta hunt (1 = sessão única). */
+  sessionCount?: number;
+  /** Quantas dessas sessões tinham prey ativa. */
+  preySessions?: number;
 }
+
 
 const hoursOf = (durationSec: number) => durationSec / 3600 || 1;
 
@@ -118,6 +123,86 @@ export function fromCommunityRow(r: CommunityRow): CompareHunt {
 }
 
 export const MAX_COMPARE = 4;
+
+const avg = (values: number[]): number =>
+  values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+
+const avgOrNull = (values: (number | null)[]): number | null => {
+  const nums = values.filter((v): v is number => v != null);
+  return nums.length ? avg(nums) : null;
+};
+
+const uniq = (values: string[]): string[] => Array.from(new Set(values.filter(Boolean)));
+
+/**
+ * Agrupa sessões pelo nome da hunt e devolve a MÉDIA de cada métrica.
+ * É isso que o comparativo usa: hunts (médias), não sessões individuais.
+ */
+export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
+  const groups = new Map<string, CompareHunt[]>();
+  for (const s of sessions) {
+    const k = s.huntName.trim().toLowerCase();
+    const arr = groups.get(k);
+    if (arr) arr.push(s);
+    else groups.set(k, [s]);
+  }
+
+  const out: CompareHunt[] = [];
+  for (const [slug, group] of groups) {
+    const first = group[0];
+    if (group.length === 1) {
+      out.push({ ...first, sessionCount: 1, preySessions: first.prey?.length ? 1 : 0 });
+      continue;
+    }
+
+    // Kills médias por criatura
+    const killMap = new Map<string, number>();
+    for (const s of group) {
+      for (const k of s.kills) killMap.set(k.name, (killMap.get(k.name) ?? 0) + k.count);
+    }
+    const kills = Array.from(killMap, ([name, total]) => ({
+      name,
+      count: total / group.length,
+    })).sort((a, b) => b.count - a.count);
+
+    const chars = uniq(group.map((s) => s.charName));
+    const vocs = uniq(group.map((s) => s.vocation));
+    const preySlots = group.flatMap((s) => s.prey ?? []);
+
+    out.push({
+      key: `${first.source}:hunt:${slug}`,
+      id: first.id,
+      source: first.source,
+      huntName: first.huntName,
+      charName: chars.length === 1 ? chars[0] : `${chars.length} personagens`,
+      vocation: vocs.length === 1 ? vocs[0] : "Várias vocações",
+      // Data da sessão mais recente do grupo
+      createdAt: group.reduce(
+        (acc, s) => (new Date(s.createdAt) > new Date(acc) ? s.createdAt : acc),
+        first.createdAt,
+      ),
+      durationSec: avg(group.map((s) => s.durationSec)),
+      rawXpHunt: avgOrNull(group.map((s) => s.rawXpHunt)),
+      rawXpTotal: avg(group.map((s) => s.rawXpTotal)),
+      xpGain: avg(group.map((s) => s.xpGain)),
+      balance: avg(group.map((s) => s.balance)),
+      loot: avg(group.map((s) => s.loot)),
+      supplies: avg(group.map((s) => s.supplies)),
+      killsTotal: avg(group.map((s) => s.killsTotal)),
+      kills,
+      damageDealt: avg(group.map((s) => s.damageDealt)),
+      healing: avg(group.map((s) => s.healing)),
+      damageReceived: avgOrNull(group.map((s) => s.damageReceived)),
+      bounty: null,
+      prey: preySlots.length ? preySlots : null,
+      sessionCount: group.length,
+      preySessions: group.filter((s) => s.prey?.length).length,
+    });
+  }
+
+  return out.sort((a, b) => b.huntName.localeCompare(a.huntName) * -1);
+}
+
 
 export function topKills(h: CompareHunt, n = 3): { name: string; count: number }[] {
   return h.kills

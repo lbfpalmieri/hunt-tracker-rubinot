@@ -11,6 +11,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
 import {
   MAX_COMPARE,
+  aggregateByHunt,
   fromCommunityRow,
   fromOwnSession,
   type CommunityRow,
@@ -55,17 +56,20 @@ function ComparePage() {
 
   const ownHunts = useMemo(
     () =>
-      sessions.map((s) => {
-        const c = characters.find((x) => x.id === s.characterId);
-        return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
-      }),
+      aggregateByHunt(
+        sessions.map((s) => {
+          const c = characters.find((x) => x.id === s.characterId);
+          return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
+        }),
+      ),
     [sessions, characters],
   );
 
   const communityHunts = useMemo(
-    () => ((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow),
+    () => aggregateByHunt(((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow)),
     [communityData],
   );
+
 
   const list = tab === "own" ? ownHunts : communityHunts;
   const visible = useMemo(() => {
@@ -98,8 +102,10 @@ function ComparePage() {
             <GitCompareArrows className="h-7 w-7 text-rubi-blue" /> Comparar hunts
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Clique nas hunts para selecionar (até {MAX_COMPARE}). O comparativo aparece automaticamente abaixo.
+            Cada card é uma hunt (média de todas as sessões dela). Clique para selecionar até {MAX_COMPARE} e o
+            comparativo aparece automaticamente abaixo.
           </p>
+
         </div>
         {selected.length > 0 && (
           <button
