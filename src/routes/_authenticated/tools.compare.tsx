@@ -55,17 +55,20 @@ function ComparePage() {
 
   const ownHunts = useMemo(
     () =>
-      sessions.map((s) => {
-        const c = characters.find((x) => x.id === s.characterId);
-        return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
-      }),
+      aggregateByHunt(
+        sessions.map((s) => {
+          const c = characters.find((x) => x.id === s.characterId);
+          return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
+        }),
+      ),
     [sessions, characters],
   );
 
   const communityHunts = useMemo(
-    () => ((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow),
+    () => aggregateByHunt(((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow)),
     [communityData],
   );
+
 
   const list = tab === "own" ? ownHunts : communityHunts;
   const visible = useMemo(() => {
