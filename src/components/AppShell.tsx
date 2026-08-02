@@ -11,6 +11,7 @@ import {
   GitCompareArrows,
   Sparkles,
   Globe2,
+  Trophy,
 
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -34,6 +35,7 @@ const moreNav = [
   { to: "/imbuements", label: "Imbuements", icon: Sparkles },
   { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
   { to: "/tools/compare", label: "Comparar hunts", icon: GitCompareArrows },
+  { to: "/tools/ranking", label: "Ranking de hunts", icon: Trophy },
   { to: "/characters", label: "Personagens", icon: UserCircle2 },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
