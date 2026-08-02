@@ -242,11 +242,16 @@ function RankingPage() {
             );
             const className =
               "card-surface flex items-center gap-3 p-3 transition-colors " +
-              (agg ? "" : "hover:border-rubi-blue/60");
+              (agg ? "cursor-default" : "hover:border-rubi-blue/60");
             return (
               <li key={h.key}>
                 {agg ? (
-                  <div className={className}>{content}</div>
+                  <div
+                    className={className}
+                    title={`Este valor é a média de ${h.sessionCount} sessões dessa hunt — não existe uma sessão única pra abrir. Veja o histórico em Sessões.`}
+                  >
+                    {content}
+                  </div>
                 ) : (
                   <Link
                     to={h.source === "own" ? "/sessions/$id" : "/community/$id"}
