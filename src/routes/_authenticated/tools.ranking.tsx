@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Trophy, Search, User, Globe2 } from "lucide-react";
+import { Trophy, Search, User, Globe2, Clock } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { BountyBadge } from "@/components/BountyBadge";
@@ -173,6 +173,17 @@ function RankingPage() {
         </select>
       </div>
 
+      {!loading && ranked.length > 0 && (
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">
+          <Clock className="h-4 w-4 flex-none translate-y-0.5" />
+          <span>
+            <strong>Projeção para 1 hora de caça</strong>, calculada a partir da média de todas as sessões de
+            cada hunt — os números abaixo não são o total acumulado, e sim o ritmo médio por hora. Use isso
+            pra saber qual é a top 1 na hora, tanto na Comunidade quanto nas suas sessões.
+          </span>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -211,11 +222,9 @@ function RankingPage() {
                     <span className="font-display text-sm font-semibold">{h.huntName}</span>
                     {!agg && h.bounty && <BountyBadge bounty={h.bounty} className="flex-none" />}
                     {!agg && h.prey && <PreyBadge prey={h.prey} className="flex-none" />}
-                    {agg && (
-                      <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue">
-                        Média de {h.sessionCount} sessões
-                      </span>
-                    )}
+                    <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue">
+                      {(h.sessionCount ?? 1) === 1 ? "1 sessão" : `Média de ${h.sessionCount} sessões`}
+                    </span>
                   </div>
                   <div className="mt-0.5 truncate text-xs text-muted-foreground">
                     {h.charName} · {h.vocation}
