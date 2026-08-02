@@ -61,9 +61,11 @@ function ImportPage() {
   const [bountyXpText, setBountyXpText] = useState("");
   const bountyXp = parseXpAmount(bountyXpText);
   const bountyXpInvalid = bountyXpText.trim().length > 0 && bountyXp == null;
+  const [hasPrey, setHasPrey] = useState(false);
   const [prey, setPrey] = useState<PreySlot[] | null>(null);
   const [preyValid, setPreyValid] = useState(true);
   const bountyReady = !hasBounty || Boolean(bountyDifficulty && bountyTier && !bountyXpInvalid);
+  const preyReady = !hasPrey || preyValid;
 
 
   const effectiveCharId = charId || activeId || characters[0]?.id || "";
@@ -145,7 +147,7 @@ function ImportPage() {
     setHuntPickerOpen(false);
   };
 
-  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady && preyValid);
+  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady && preyReady);
 
   const handleAutoSplit = () => {
     const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
@@ -176,7 +178,7 @@ function ImportPage() {
           hasBounty && bountyDifficulty && bountyTier
             ? { difficulty: bountyDifficulty, tier: bountyTier, xp: bountyXp }
             : null,
-        prey,
+        prey: hasPrey ? prey : null,
       });
 
       navigate({ to: "/sessions/$id", params: { id: created.id } });
@@ -465,11 +467,28 @@ function ImportPage() {
             </div>
 
             <div className="mt-3 rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.04] p-3">
-              <PreyPicker
-                creatures={(parsed.hunting?.kills ?? []).slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
-                value={null}
-                onChange={(next, valid) => { setPrey(next); setPreyValid(valid); }}
-              />
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={hasPrey}
+                  onChange={(e) => setHasPrey(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[var(--rubi-blue)]"
+                />
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-rubi-blue" />
+                  Esta sessão teve <b className="text-foreground">Prey</b> ativa
+                </span>
+              </label>
+
+              {hasPrey && (
+                <div className="mt-3">
+                  <PreyPicker
+                    creatures={(parsed.hunting?.kills ?? []).slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
+                    value={null}
+                    onChange={(next, valid) => { setPrey(next); setPreyValid(valid); }}
+                  />
+                </div>
+              )}
             </div>
 
             <button
@@ -490,7 +509,7 @@ function ImportPage() {
                   ? "Cole o Hunting Analyser para continuar."
                   : !selectedHuntName
                     ? "Dê um nome à hunt."
-                    : !preyValid
+                    : !preyReady
                       ? "Revise os bônus de prey (use um número entre 0 e 100)."
                       : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
