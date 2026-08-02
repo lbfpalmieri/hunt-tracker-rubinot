@@ -154,33 +154,43 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
             <th className="sticky left-0 z-10 bg-card px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
               Métrica
             </th>
-            {hunts.map((h) => (
-              <th key={h.key} className="px-4 py-3 text-left align-top">
-                <div className="flex items-center gap-1.5">
-                  {h.source === "community" ? (
-                    <Globe2 className="h-3.5 w-3.5 flex-none text-rubi-blue" />
-                  ) : (
-                    <User className="h-3.5 w-3.5 flex-none text-rubi-gold" />
-                  )}
-                  <Link
-                    to={h.source === "own" ? "/sessions/$id" : "/community/$id"}
-                    params={{ id: h.id }}
-                    className="font-display text-sm font-semibold hover:text-rubi-blue"
-                  >
-                    {h.huntName}
-                  </Link>
-                </div>
-                <div className="mt-0.5 text-xs font-normal text-muted-foreground">
-                  {h.charName} · {h.vocation}
-                </div>
-                <div className="text-xs font-normal text-muted-foreground">{fmtDate(h.createdAt)}</div>
-                {h.bounty && (
-                  <div className="mt-1">
-                    <BountyBadge bounty={h.bounty} />
+            {hunts.map((h) => {
+              const agg = (h.sessionCount ?? 1) > 1;
+              return (
+                <th key={h.key} className="px-4 py-3 text-left align-top">
+                  <div className="flex items-center gap-1.5">
+                    {h.source === "community" ? (
+                      <Globe2 className="h-3.5 w-3.5 flex-none text-rubi-blue" />
+                    ) : (
+                      <User className="h-3.5 w-3.5 flex-none text-rubi-gold" />
+                    )}
+                    {agg ? (
+                      <span className="font-display text-sm font-semibold">{h.huntName}</span>
+                    ) : (
+                      <Link
+                        to={h.source === "own" ? "/sessions/$id" : "/community/$id"}
+                        params={{ id: h.id }}
+                        className="font-display text-sm font-semibold hover:text-rubi-blue"
+                      >
+                        {h.huntName}
+                      </Link>
+                    )}
                   </div>
-                )}
-              </th>
-            ))}
+                  <div className="mt-0.5 text-xs font-normal text-muted-foreground">
+                    {h.charName} · {h.vocation}
+                  </div>
+                  <div className="text-xs font-normal text-muted-foreground">
+                    {agg ? `Média de ${h.sessionCount} sessões` : fmtDate(h.createdAt)}
+                  </div>
+                  {!agg && h.bounty && (
+                    <div className="mt-1">
+                      <BountyBadge bounty={h.bounty} />
+                    </div>
+                  )}
+                </th>
+              );
+            })}
+
           </tr>
         </thead>
         <tbody>
