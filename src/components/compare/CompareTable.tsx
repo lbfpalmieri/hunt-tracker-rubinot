@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Globe2, User } from "lucide-react";
 import type { CompareHunt } from "@/lib/compare";
 import { perHour, topKills } from "@/lib/compare";
-import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
+import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import { BountyBadge } from "@/components/BountyBadge";
 
@@ -20,15 +20,7 @@ interface Row {
 
 const ROWS: Row[] = [
   {
-    label: "Duração média (referência)",
-    better: "none",
-    value: (h) => h.durationSec,
-    render: (h) => (
-      <span className="text-muted-foreground">{fmtDuration(h.durationSec)}</span>
-    ),
-  },
-  {
-    label: "Raw XP em 1h (sem bounty)",
+    label: "Raw XP (sem bounty)",
     better: "high",
     value: (h) => perHour(h.rawXpHunt, h.durationSec),
     render: (h) => {
@@ -38,53 +30,53 @@ const ROWS: Row[] = [
     prey: "xp",
   },
   {
-    label: "XP com bônus em 1h",
+    label: "XP com bônus",
     better: "high",
     value: (h) => perHour(h.xpGain, h.durationSec),
     render: (h) => fmtNum(perHour(h.xpGain, h.durationSec) ?? 0),
     prey: "xp",
   },
   {
-    label: "Lucro em 1h",
+    label: "Lucro",
     better: "high",
     value: (h) => perHour(h.balance, h.durationSec),
     render: (h) => fmtGold(perHour(h.balance, h.durationSec) ?? 0),
     prey: "loot",
   },
   {
-    label: "Loot em 1h",
+    label: "Loot",
     better: "high",
     value: (h) => perHour(h.loot, h.durationSec),
     render: (h) => fmtGold(perHour(h.loot, h.durationSec) ?? 0),
     prey: "loot",
   },
   {
-    label: "Supplies em 1h",
+    label: "Supplies",
     better: "low",
     value: (h) => perHour(h.supplies, h.durationSec),
     render: (h) => fmtGold(perHour(h.supplies, h.durationSec) ?? 0),
   },
   {
-    label: "Kills em 1h",
+    label: "Kills",
     better: "high",
     value: (h) => perHour(h.killsTotal, h.durationSec),
     render: (h) => fmtNum(perHour(h.killsTotal, h.durationSec) ?? 0),
   },
   {
-    label: "Dano causado em 1h",
+    label: "Dano causado",
     better: "high",
     value: (h) => perHour(h.damageDealt, h.durationSec),
     render: (h) => fmtNum(perHour(h.damageDealt, h.durationSec) ?? 0),
     prey: "damage",
   },
   {
-    label: "Cura em 1h",
+    label: "Cura",
     better: "none",
     value: (h) => perHour(h.healing, h.durationSec),
     render: (h) => fmtNum(perHour(h.healing, h.durationSec) ?? 0),
   },
   {
-    label: "Dano recebido em 1h",
+    label: "Dano recebido",
     better: "low",
     value: (h) => perHour(h.damageReceived, h.durationSec),
     render: (h) => {
@@ -94,7 +86,7 @@ const ROWS: Row[] = [
     prey: "defense",
   },
   {
-    label: "Top 3 monstros em 1h",
+    label: "Top 3 monstros",
     better: "none",
     value: () => null,
     render: (h) => {
@@ -207,8 +199,8 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
         </tbody>
       </table>
       <div className="border-t border-border/60 px-4 py-2 text-xs text-muted-foreground">
-        Todos os valores são a média das sessões da hunt <strong>projetada para 1 hora</strong> de caça, para
-        comparação justa entre durações diferentes. <span className="font-semibold text-rubi-success">Verde</span>{" "}
+        Valores calculados a partir da <strong>média de todas as sessões da hunt</strong>, projetada para uma
+        hora de caça. <span className="font-semibold text-rubi-success">Verde</span>{" "}
         = melhor resultado · <span className="font-semibold text-rubi-danger">Vermelho</span> = pior resultado ·
         valores com Prey estão marcados em dourado.
       </div>

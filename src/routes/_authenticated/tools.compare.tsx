@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { GitCompareArrows, Search, X } from "lucide-react";
+import { GitCompareArrows, Search, X, ArrowDown } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
@@ -144,6 +144,16 @@ function ComparePage() {
           />
         </div>
       </div>
+
+      {selected.length >= 2 && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
+          <GitCompareArrows className="h-4 w-4 flex-none" />
+          <span className="flex-1">
+            Comparativo com <strong>{selected.length} hunts</strong> pronto — desça a página para visualizar.
+          </span>
+          <ArrowDown className="h-4 w-4 flex-none animate-bounce" />
+        </div>
+      )}
 
       {full && (
         <p className="mb-3 text-xs text-rubi-gold">
