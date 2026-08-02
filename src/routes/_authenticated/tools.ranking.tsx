@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -250,7 +250,7 @@ function RankingPage() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="font-display text-sm font-semibold">{h.huntName}</span>
                     {!agg && h.bounty && <BountyBadge bounty={h.bounty} className="flex-none" />}
-                    {!agg && h.prey && <PreyBadge prey={h.prey} className="flex-none" />}
+                    {h.prey && <PreyBadge prey={h.prey} className="flex-none" />}
                     <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue">
                       {(h.sessionCount ?? 1) === 1 ? "1 sessão" : `Média de ${h.sessionCount} sessões`}
                     </span>
@@ -269,28 +269,16 @@ function RankingPage() {
                 </div>
               </>
             );
-            const className =
-              "card-surface flex w-full items-center gap-3 p-3 text-left transition-colors hover:border-rubi-blue/60";
             return (
               <li key={h.key}>
-                {agg ? (
-                  <button
-                    type="button"
-                    onClick={() => setOpenHunt(h)}
-                    className={className}
-                    title={`Média de ${h.sessionCount} sessões — clique para ver o resumo completo`}
-                  >
-                    {content}
-                  </button>
-                ) : (
-                  <Link
-                    to={h.source === "own" ? "/sessions/$id" : "/community/$id"}
-                    params={{ id: h.id }}
-                    className={className}
-                  >
-                    {content}
-                  </Link>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setOpenHunt(h)}
+                  className="card-surface flex w-full items-center gap-3 p-3 text-left transition-colors hover:border-rubi-blue/60"
+                  title="Clique para ver o resumo dessa hunt, projetado para 1 hora de caça"
+                >
+                  {content}
+                </button>
               </li>
             );
           })}
@@ -304,15 +292,20 @@ function RankingPage() {
               <DialogHeader>
                 <DialogTitle className="font-display">{openHunt.huntName}</DialogTitle>
                 <DialogDescription>
-                  {openHunt.charName} · {openHunt.vocation} · média de{" "}
-                  <strong className="text-foreground">{openHunt.sessionCount}</strong> sessões · projetado
-                  para 1 hora de caça
+                  {openHunt.charName} · {openHunt.vocation} ·{" "}
+                  {(openHunt.sessionCount ?? 1) === 1 ? (
+                    <>baseado em <strong className="text-foreground">1 sessão</strong></>
+                  ) : (
+                    <>média de <strong className="text-foreground">{openHunt.sessionCount}</strong> sessões</>
+                  )}{" "}
+                  · projetado para 1 hora de caça
                 </DialogDescription>
               </DialogHeader>
 
-              {openHunt.prey && (
+              {(openHunt.bounty || openHunt.prey) && (
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <PreyBadge prey={openHunt.prey} detailed />
+                  {openHunt.bounty && <BountyBadge bounty={openHunt.bounty} showXp />}
+                  {openHunt.prey && <PreyBadge prey={openHunt.prey} detailed />}
                   {(openHunt.preySessions ?? 0) > 0 && (
                     <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
                       Prey em {openHunt.preySessions}/{openHunt.sessionCount} sessões
