@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Globe2, User } from "lucide-react";
+import { Globe2, User, Trophy } from "lucide-react";
+import { useMemo, useState } from "react";
 import type { CompareHunt } from "@/lib/compare";
 import { perHour, topKills } from "@/lib/compare";
 import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
@@ -27,13 +28,6 @@ const ROWS: Row[] = [
       const v = perHour(h.rawXpHunt, h.durationSec);
       return v == null ? "—" : fmtNum(v);
     },
-    prey: "xp",
-  },
-  {
-    label: "XP com bônus",
-    better: "high",
-    value: (h) => perHour(h.xpGain, h.durationSec),
-    render: (h) => fmtNum(perHour(h.xpGain, h.durationSec) ?? 0),
     prey: "xp",
   },
   {
@@ -124,9 +118,104 @@ function toneFor(row: Row, hunts: CompareHunt[], h: CompareHunt): string {
   return "";
 }
 
+/** Rows with a clear winner/loser — the ones that make sense as scoring criteria. */
+const SCORABLE_ROWS = ROWS.filter((r) => r.better !== "none");
+
+function winnersOf(row: Row, hunts: CompareHunt[]): Set<string> {
+  const values = hunts.map(row.value).filter((v): v is number => v != null);
+  if (values.length < 2) return new Set();
+  const best = row.better === "high" ? Math.max(...values) : Math.min(...values);
+  const winners = new Set<string>();
+  for (const h of hunts) {
+    if (row.value(h) === best) winners.add(h.key);
+  }
+  return winners;
+}
+
 export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
+  const [scoreOn, setScoreOn] = useState<Set<string>>(() => new Set(SCORABLE_ROWS.map((r) => r.label)));
+  const toggleScore = (label: string) =>
+    setScoreOn((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+
+  const scores = useMemo(() => {
+    const map = new Map<string, number>(hunts.map((h) => [h.key, 0]));
+    for (const row of SCORABLE_ROWS) {
+      if (!scoreOn.has(row.label)) continue;
+      for (const key of winnersOf(row, hunts)) map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }, [hunts, scoreOn]);
+
+  const activeCriteria = SCORABLE_ROWS.filter((r) => scoreOn.has(r.label)).length;
+  const topScore = Math.max(0, ...hunts.map((h) => scores.get(h.key) ?? 0));
+
   return (
-    <div className="card-surface overflow-x-auto">
+    <div className="space-y-4">
+      <div className="card-surface p-3">
+        <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <Trophy className="h-3.5 w-3.5 text-rubi-gold" /> Critérios da pontuação
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {SCORABLE_ROWS.map((row) => {
+            const on = scoreOn.has(row.label);
+            return (
+              <button
+                key={row.label}
+                type="button"
+                onClick={() => toggleScore(row.label)}
+                aria-pressed={on}
+                className={
+                  "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors " +
+                  (on
+                    ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                    : "border-border/60 text-muted-foreground hover:border-rubi-gold/40")
+                }
+              >
+                {row.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activeCriteria > 0 && (
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${hunts.length}, minmax(0, 1fr))` }}
+        >
+          {hunts.map((h) => {
+            const score = scores.get(h.key) ?? 0;
+            const isWinner = topScore > 0 && score === topScore;
+            return (
+              <div
+                key={h.key}
+                className={
+                  "rounded-xl border p-3 text-center transition-colors " +
+                  (isWinner
+                    ? "border-rubi-gold bg-rubi-gold/10 shadow-glow-gold"
+                    : "border-border/60 bg-surface/40")
+                }
+              >
+                <div className="text-lg leading-none">{isWinner ? "🏆" : " "}</div>
+                <div className="mt-1 truncate text-xs font-medium text-muted-foreground" title={h.huntName}>
+                  {h.huntName}
+                </div>
+                <div className="mt-1 font-display text-2xl font-bold text-foreground">
+                  {score}
+                  <span className="text-sm font-normal text-muted-foreground">/{activeCriteria}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="card-surface overflow-x-auto">
       <table className="w-full min-w-[640px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-border/60">
@@ -202,9 +291,11 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
         Valores calculados a partir da <strong>média de todas as sessões da hunt</strong>, projetada para uma
         hora de caça. <span className="font-semibold text-rubi-success">Verde</span>{" "}
         = melhor resultado · <span className="font-semibold text-rubi-danger">Vermelho</span> = pior resultado ·
-        valores com Prey estão marcados em dourado.
+        valores com Prey estão marcados em dourado. A pontuação 🏆 conta quantos dos critérios marcados acima
+        cada hunt venceu.
       </div>
 
+      </div>
     </div>
   );
 }
