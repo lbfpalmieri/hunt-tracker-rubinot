@@ -11,6 +11,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
 import {
   MAX_COMPARE,
+  aggregateByHunt,
   fromCommunityRow,
   fromOwnSession,
   type CommunityRow,
