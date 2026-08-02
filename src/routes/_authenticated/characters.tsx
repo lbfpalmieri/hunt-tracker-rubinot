@@ -13,6 +13,7 @@ import {
   ClipboardPaste,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { blobToCompressedImage } from "@/components/PasteImage";
 
 
 export const Route = createFileRoute("/_authenticated/characters")({
@@ -35,34 +36,6 @@ const VOCATIONS = [
   "Elder Druid",
   "Exalted Monk",
 ];
-
-async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function compressImage(dataUrl: string, maxDim = 512, quality = 0.85): Promise<string> {
-  const img = new Image();
-  img.src = dataUrl;
-  await new Promise((res, rej) => {
-    img.onload = res;
-    img.onerror = rej;
-  });
-  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-  const w = Math.round(img.width * scale);
-  const h = Math.round(img.height * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return dataUrl;
-  ctx.drawImage(img, 0, 0, w, h);
-  return canvas.toDataURL("image/webp", quality);
-}
 
 function CharactersPage() {
   const hydrated = useHydrated();
@@ -106,15 +79,7 @@ function CharactersPage() {
     }
   };
 
-  const processImageBlob = async (blob: Blob): Promise<string> => {
-    const dataUrl: string = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error("Falha ao ler imagem"));
-      reader.readAsDataURL(blob);
-    });
-    return compressImage(dataUrl, 512, 0.9);
-  };
+  const processImageBlob = (blob: Blob): Promise<string> => blobToCompressedImage(blob, 512, 0.9);
 
   useEffect(() => {
     const onPaste = async (e: ClipboardEvent) => {

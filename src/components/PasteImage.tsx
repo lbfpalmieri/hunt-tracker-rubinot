@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ClipboardPaste, ImageIcon, X } from "lucide-react";
 
 export async function compressImage(dataUrl: string, maxDim = 640, quality = 0.8): Promise<string> {
@@ -54,6 +54,9 @@ export function PasteImageBox({
   const [flash, setFlash] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const emit = useRef(onChange);
+  emit.current = onChange;
+
   useEffect(() => {
     if (!active) return;
     const onPaste = async (e: ClipboardEvent) => {
@@ -69,7 +72,7 @@ export function PasteImageBox({
         setError(null);
         try {
           const compressed = await blobToCompressedImage(file, maxDim, quality);
-          await onChange(compressed);
+          await emit.current(compressed);
           setFlash(true);
           setTimeout(() => setFlash(false), 1200);
         } catch (err) {
@@ -80,7 +83,7 @@ export function PasteImageBox({
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-  }, [active, maxDim, quality, onChange]);
+  }, [active, maxDim, quality]);
 
   return (
     <div className={className}>

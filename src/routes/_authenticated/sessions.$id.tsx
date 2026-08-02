@@ -262,6 +262,7 @@ function SessionDetail() {
           descontada das médias de Raw XP/h.
         </p>
         <BountyEditor
+          key={session.id}
           value={session.bounty}
           onSave={(next) => updateSession(session.id, { bounty: next })}
         />
@@ -276,6 +277,7 @@ function SessionDetail() {
           Prey ativa aumenta XP, lucro, dano ou defesa — marque aqui para comparar sessões com e sem bônus.
         </p>
         <PreyEditor
+          key={session.id}
           creatures={h.kills.slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
           value={session.prey}
           onSave={(next) => updateSession(session.id, { prey: next })}
