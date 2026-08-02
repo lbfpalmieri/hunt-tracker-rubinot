@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Globe2, User } from "lucide-react";
 import type { CompareHunt } from "@/lib/compare";
 import { perHour, topKills } from "@/lib/compare";
-import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
+import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import { BountyBadge } from "@/components/BountyBadge";
 
@@ -199,8 +199,8 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
         </tbody>
       </table>
       <div className="border-t border-border/60 px-4 py-2 text-xs text-muted-foreground">
-        Todos os valores são a média das sessões da hunt <strong>projetada para 1 hora</strong> de caça, para
-        comparação justa entre durações diferentes. <span className="font-semibold text-rubi-success">Verde</span>{" "}
+        Valores calculados a partir da <strong>média de todas as sessões da hunt</strong>, projetada para uma
+        hora de caça. <span className="font-semibold text-rubi-success">Verde</span>{" "}
         = melhor resultado · <span className="font-semibold text-rubi-danger">Vermelho</span> = pior resultado ·
         valores com Prey estão marcados em dourado.
       </div>
