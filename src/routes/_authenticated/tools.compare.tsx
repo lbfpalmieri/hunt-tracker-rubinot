@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown, Clock } from "lucide-react";
+import { GitCompareArrows, Search, X, ArrowDown, Clock, Trophy, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
@@ -12,6 +12,7 @@ import { getCommunitySessions } from "@/lib/community.functions";
 import {
   MAX_COMPARE,
   aggregateByHunt,
+  filterByBonusInclusion,
   fromCommunityRow,
   fromOwnSession,
   type CommunityRow,
@@ -46,6 +47,8 @@ function ComparePage() {
   const [tab, setTab] = useState<"own" | "community">("own");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
+  const [includeBounty, setIncludeBounty] = useState(true);
+  const [includePrey, setIncludePrey] = useState(true);
   const compareRef = useRef<HTMLDivElement>(null);
   const scrollToCompare = () =>
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -57,21 +60,59 @@ function ComparePage() {
     enabled: tab === "community",
   });
 
-  const ownHunts = useMemo(
+  const ownRaw = useMemo(
     () =>
-      aggregateByHunt(
-        sessions.map((s) => {
-          const c = characters.find((x) => x.id === s.characterId);
-          return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
-        }),
-      ),
+      sessions.map((s) => {
+        const c = characters.find((x) => x.id === s.characterId);
+        return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
+      }),
     [sessions, characters],
   );
-
-  const communityHunts = useMemo(
-    () => aggregateByHunt(((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow)),
+  const communityRaw = useMemo(
+    () => ((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow),
     [communityData],
   );
+
+  const ownHunts = useMemo(
+    () => aggregateByHunt(filterByBonusInclusion(ownRaw, includeBounty, includePrey)),
+    [ownRaw, includeBounty, includePrey],
+  );
+  const communityHunts = useMemo(
+    () => aggregateByHunt(filterByBonusInclusion(communityRaw, includeBounty, includePrey)),
+    [communityRaw, includeBounty, includePrey],
+  );
+
+  /** Currently selected hunts (by name) that would have zero sessions left under a hypothetical filter change. */
+  const selectedThatWouldVanish = (nextIncludeBounty: boolean, nextIncludePrey: boolean) =>
+    selected.filter((sel) => {
+      const raw = sel.source === "own" ? ownRaw : communityRaw;
+      const stillHasSessions = raw.some(
+        (h) =>
+          h.huntName.trim().toLowerCase() === sel.huntName.trim().toLowerCase() &&
+          (nextIncludeBounty || !h.bounty) &&
+          (nextIncludePrey || !(h.prey && h.prey.length)),
+      );
+      return !stillHasSessions;
+    });
+
+  const applyBonusFilter = (kind: "bounty" | "prey", checked: boolean) => {
+    const nextBounty = kind === "bounty" ? checked : includeBounty;
+    const nextPrey = kind === "prey" ? checked : includePrey;
+    if (!checked) {
+      const vanishing = selectedThatWouldVanish(nextBounty, nextPrey);
+      if (vanishing.length > 0) {
+        const names = vanishing.map((h) => h.huntName).join(", ");
+        const label = kind === "bounty" ? "Bounty" : "Prey";
+        const ok = confirm(
+          `${vanishing.length > 1 ? "Essas hunts só têm" : "Essa hunt só tem"} sessão(ões) com ${label} — sem esse filtro, ${vanishing.length > 1 ? "elas saem" : "ela sai"} da comparação:\n\n${names}\n\nRemover da comparação e desativar o filtro de ${label}?`,
+        );
+        if (!ok) return;
+        setSelected((prev) => prev.filter((h) => !vanishing.includes(h)));
+      }
+    }
+    if (kind === "bounty") setIncludeBounty(checked);
+    else setIncludePrey(checked);
+  };
 
 
   const list = tab === "own" ? ownHunts : communityHunts;
@@ -146,7 +187,31 @@ function ComparePage() {
             className="w-full rounded-lg border border-border bg-background/60 py-2 pl-9 pr-3 text-sm"
           />
         </div>
+        <div className="flex flex-none items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={includeBounty}
+              onChange={(e) => applyBonusFilter("bounty", e.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+            />
+            <Trophy className="h-3.5 w-3.5 text-rubi-gold" /> Bounty
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={includePrey}
+              onChange={(e) => applyBonusFilter("prey", e.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--rubi-blue)]"
+            />
+            <Sparkles className="h-3.5 w-3.5 text-rubi-blue" /> Prey
+          </label>
+        </div>
       </div>
+      <p className="-mt-2 mb-4 text-xs text-muted-foreground">
+        Desmarque pra tirar sessões com esse bônus da média das hunts — útil pra ver o rendimento "limpo",
+        sem prey ou bounty.
+      </p>
 
       {full && (
         <p className="mb-3 text-xs text-rubi-gold">

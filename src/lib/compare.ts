@@ -124,6 +124,22 @@ export function fromCommunityRow(r: CommunityRow): CompareHunt {
 
 export const MAX_COMPARE = 4;
 
+/**
+ * Sessions to keep before averaging into a hunt, based on whether Bounty/Prey
+ * bonuses should count. Both default true (include everything — current
+ * behavior). Turning one off drops sessions that had that bonus active, so
+ * the average reflects "clean" runs only.
+ */
+export function filterByBonusInclusion(
+  list: CompareHunt[],
+  includeBounty: boolean,
+  includePrey: boolean,
+): CompareHunt[] {
+  return list.filter(
+    (h) => (includeBounty || !h.bounty) && (includePrey || !(h.prey && h.prey.length)),
+  );
+}
+
 const avg = (values: number[]): number =>
   values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
 

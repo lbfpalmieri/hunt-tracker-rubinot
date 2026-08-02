@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Trophy, Search, User, Globe2, Clock } from "lucide-react";
+import { Trophy, Search, User, Globe2, Clock, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { BountyBadge } from "@/components/BountyBadge";
@@ -20,6 +20,7 @@ import { fmtGold, fmtNum } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import {
   aggregateByHunt,
+  filterByBonusInclusion,
   fromCommunityRow,
   fromOwnSession,
   perHour,
@@ -95,6 +96,8 @@ function RankingPage() {
   const [q, setQ] = useState("");
   const [vocation, setVocation] = useState("");
   const [openHunt, setOpenHunt] = useState<CompareHunt | null>(null);
+  const [includeBounty, setIncludeBounty] = useState(true);
+  const [includePrey, setIncludePrey] = useState(true);
 
   const fetchCommunity = useServerFn(getCommunitySessions);
   const { data: communityData, isLoading: loadingCommunity } = useQuery({
@@ -103,20 +106,26 @@ function RankingPage() {
     enabled: tab === "community",
   });
 
-  const ownHunts = useMemo(
+  const ownRaw = useMemo(
     () =>
-      aggregateByHunt(
-        sessions.map((s) => {
-          const c = characters.find((x) => x.id === s.characterId);
-          return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
-        }),
-      ),
+      sessions.map((s) => {
+        const c = characters.find((x) => x.id === s.characterId);
+        return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
+      }),
     [sessions, characters],
   );
-
-  const communityHunts = useMemo(
-    () => aggregateByHunt(((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow)),
+  const communityRaw = useMemo(
+    () => ((communityData?.sessions ?? []) as CommunityRow[]).map(fromCommunityRow),
     [communityData],
+  );
+
+  const ownHunts = useMemo(
+    () => aggregateByHunt(filterByBonusInclusion(ownRaw, includeBounty, includePrey)),
+    [ownRaw, includeBounty, includePrey],
+  );
+  const communityHunts = useMemo(
+    () => aggregateByHunt(filterByBonusInclusion(communityRaw, includeBounty, includePrey)),
+    [communityRaw, includeBounty, includePrey],
   );
 
   const list = tab === "own" ? ownHunts : communityHunts;
@@ -200,7 +209,32 @@ function RankingPage() {
             </option>
           ))}
         </select>
+
+        <div className="flex flex-none items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={includeBounty}
+              onChange={(e) => setIncludeBounty(e.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+            />
+            <Trophy className="h-3.5 w-3.5 text-rubi-gold" /> Bounty
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={includePrey}
+              onChange={(e) => setIncludePrey(e.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--rubi-blue)]"
+            />
+            <Sparkles className="h-3.5 w-3.5 text-rubi-blue" /> Prey
+          </label>
+        </div>
       </div>
+      <p className="-mt-2 mb-4 text-xs text-muted-foreground">
+        Desmarque pra tirar sessões com esse bônus da média das hunts — útil pra ver o rendimento "limpo",
+        sem prey ou bounty.
+      </p>
 
       {!loading && ranked.length > 0 && (
         <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">
