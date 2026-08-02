@@ -7,14 +7,23 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { fmtGold, fmtNum } from "@/lib/format";
+import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import {
   aggregateByHunt,
   fromCommunityRow,
   fromOwnSession,
   perHour,
+  topKills,
   type CommunityRow,
   type CompareHunt,
 } from "@/lib/compare";
@@ -58,6 +67,25 @@ function metricFormat(v: number | null, m: Metric): string {
 
 const MEDAL = ["🥇", "🥈", "🥉"];
 
+interface SummaryRow {
+  label: string;
+  value: (h: CompareHunt) => number | null;
+  format: (v: number | null) => string;
+  prey?: PreyBonus;
+}
+
+const SUMMARY_ROWS: SummaryRow[] = [
+  { label: "Raw XP/h", value: (h) => perHour(h.rawXpHunt, h.durationSec), format: (v) => (v == null ? "—" : fmtNum(v)), prey: "xp" },
+  { label: "XP com bônus/h", value: (h) => perHour(h.xpGain, h.durationSec), format: (v) => fmtNum(v ?? 0), prey: "xp" },
+  { label: "Lucro/h", value: (h) => perHour(h.balance, h.durationSec), format: (v) => fmtGold(v ?? 0), prey: "loot" },
+  { label: "Loot/h", value: (h) => perHour(h.loot, h.durationSec), format: (v) => fmtGold(v ?? 0), prey: "loot" },
+  { label: "Supplies/h", value: (h) => perHour(h.supplies, h.durationSec), format: (v) => fmtGold(v ?? 0) },
+  { label: "Kills/h", value: (h) => perHour(h.killsTotal, h.durationSec), format: (v) => fmtNum(v ?? 0) },
+  { label: "Dano causado/h", value: (h) => perHour(h.damageDealt, h.durationSec), format: (v) => fmtNum(v ?? 0), prey: "damage" },
+  { label: "Cura/h", value: (h) => perHour(h.healing, h.durationSec), format: (v) => fmtNum(v ?? 0) },
+  { label: "Dano recebido/h", value: (h) => perHour(h.damageReceived, h.durationSec), format: (v) => (v == null ? "—" : fmtNum(v)), prey: "defense" },
+];
+
 function RankingPage() {
   const hydrated = useHydrated();
   const sessions = useAppStore((s) => s.sessions);
@@ -66,6 +94,7 @@ function RankingPage() {
   const [metric, setMetric] = useState<Metric>("gph");
   const [q, setQ] = useState("");
   const [vocation, setVocation] = useState("");
+  const [openHunt, setOpenHunt] = useState<CompareHunt | null>(null);
 
   const fetchCommunity = useServerFn(getCommunitySessions);
   const { data: communityData, isLoading: loadingCommunity } = useQuery({
@@ -241,17 +270,18 @@ function RankingPage() {
               </>
             );
             const className =
-              "card-surface flex items-center gap-3 p-3 transition-colors " +
-              (agg ? "cursor-default" : "hover:border-rubi-blue/60");
+              "card-surface flex w-full items-center gap-3 p-3 text-left transition-colors hover:border-rubi-blue/60";
             return (
               <li key={h.key}>
                 {agg ? (
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => setOpenHunt(h)}
                     className={className}
-                    title={`Este valor é a média de ${h.sessionCount} sessões dessa hunt — não existe uma sessão única pra abrir. Veja o histórico em Sessões.`}
+                    title={`Média de ${h.sessionCount} sessões — clique para ver o resumo completo`}
                   >
                     {content}
-                  </div>
+                  </button>
                 ) : (
                   <Link
                     to={h.source === "own" ? "/sessions/$id" : "/community/$id"}
@@ -266,6 +296,70 @@ function RankingPage() {
           })}
         </ol>
       )}
+
+      <Dialog open={!!openHunt} onOpenChange={(o) => { if (!o) setOpenHunt(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          {openHunt && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display">{openHunt.huntName}</DialogTitle>
+                <DialogDescription>
+                  {openHunt.charName} · {openHunt.vocation} · média de{" "}
+                  <strong className="text-foreground">{openHunt.sessionCount}</strong> sessões · projetado
+                  para 1 hora de caça
+                </DialogDescription>
+              </DialogHeader>
+
+              {openHunt.prey && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <PreyBadge prey={openHunt.prey} detailed />
+                  {(openHunt.preySessions ?? 0) > 0 && (
+                    <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                      Prey em {openHunt.preySessions}/{openHunt.sessionCount} sessões
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                {SUMMARY_ROWS.map((row) => {
+                  const v = row.value(openHunt);
+                  const mark = row.prey ? preyMarkLabel(openHunt.prey, row.prey) : null;
+                  return (
+                    <div key={row.label}>
+                      <dt className="text-xs uppercase tracking-wider text-muted-foreground">{row.label}</dt>
+                      <dd className="font-mono font-semibold">{row.format(v)}</dd>
+                      {mark && (
+                        <div
+                          title={row.prey ? preyMarkTitle(openHunt.prey, row.prey) : undefined}
+                          className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-gold"
+                        >
+                          {mark}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </dl>
+
+              <div>
+                <div className="mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">Top 3 monstros/h</div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {topKills(openHunt, 3).map((k) => (
+                    <span key={k.name} className="rounded-full border border-border/60 bg-background/40 px-2.5 py-1">
+                      {k.name}{" "}
+                      <span className="font-mono font-semibold text-rubi-gold">
+                        ×{fmtNum(perHour(k.count, openHunt.durationSec) ?? 0)}
+                      </span>
+                    </span>
+                  ))}
+                  {topKills(openHunt, 3).length === 0 && <span className="text-muted-foreground">—</span>}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
