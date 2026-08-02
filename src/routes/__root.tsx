@@ -35,11 +35,28 @@ function NotFoundComponent() {
   );
 }
 
+const CHUNK_RELOAD_KEY = "rubinot-chunk-reload-at";
+const isStaleChunkError = (message: string) =>
+  /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(
+    message,
+  );
+
+/** Reloads once when a deploy replaces a chunk mid-session. Guarded so a genuinely broken build doesn't loop forever. */
+function reloadOnceForStaleChunk(): boolean {
+  if (typeof window === "undefined") return false;
+  const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0);
+  if (Date.now() - last < 10_000) return false;
+  sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+  window.location.reload();
+  return true;
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    if (isStaleChunkError(error.message)) reloadOnceForStaleChunk();
   }, [error]);
 
   return (
@@ -128,6 +145,14 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+
+  useEffect(() => {
+    // Vite fires this when a dynamic import (e.g. a lazy-loaded chart) 404s
+    // because a new deploy replaced the chunk while this tab was open.
+    const onPreloadError = () => reloadOnceForStaleChunk();
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
+  }, []);
 
   useEffect(() => {
     // Import inside effect so SSR doesn't touch the browser client.
