@@ -95,22 +95,49 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
     };
   });
 
+/** Catalog used to power the Comunidade filters — monster/hunt names plus which monsters live in which hunt. */
 export const getCommunityMonsters = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = publicClient();
   const { data, error } = await supabase
     .from("hunt_sessions")
-    .select("hunting")
+    .select("hunt_name, hunting")
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(400);
-  if (error) return { monsters: [] as string[], hunts: [] as string[] };
+  if (error) return { monsters: [] as string[], hunts: [] as string[], huntMonsters: {} as Record<string, string[]> };
+
   const monsters = new Set<string>();
+  // Hunt names collide case-insensitively; keep the first-seen casing as the display name.
+  const huntDisplayByKey = new Map<string, string>();
+  const huntMonsterSets = new Map<string, Set<string>>();
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const row of (data ?? []) as any[]) {
+    const huntName = String(row.hunt_name ?? "").trim();
+    const key = huntName.toLowerCase();
+    if (huntName && !huntDisplayByKey.has(key)) huntDisplayByKey.set(key, huntName);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const k of (row.hunting?.kills ?? []) as any[]) monsters.add(String(k.name));
+    for (const k of (row.hunting?.kills ?? []) as any[]) {
+      const name = String(k.name);
+      monsters.add(name);
+      if (huntName) {
+        const set = huntMonsterSets.get(key) ?? new Set<string>();
+        set.add(name);
+        huntMonsterSets.set(key, set);
+      }
+    }
   }
-  return { monsters: [...monsters].sort((a, b) => a.localeCompare(b)), hunts: [] as string[] };
+
+  const huntMonsters: Record<string, string[]> = {};
+  for (const [key, display] of huntDisplayByKey) {
+    huntMonsters[display] = [...(huntMonsterSets.get(key) ?? [])].sort((a, b) => a.localeCompare(b));
+  }
+
+  return {
+    monsters: [...monsters].sort((a, b) => a.localeCompare(b)),
+    hunts: [...huntDisplayByKey.values()].sort((a, b) => a.localeCompare(b)),
+    huntMonsters,
+  };
 });
 
 export const getCommunitySession = createServerFn({ method: "GET" })

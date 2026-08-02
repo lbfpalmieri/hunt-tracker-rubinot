@@ -31,6 +31,13 @@ import {
   Calculator,
   Target,
   ChevronRight,
+  Shield,
+  Crosshair,
+  Flame,
+  Leaf,
+  Hand,
+  Users2,
+  type LucideIcon,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/community/")({
@@ -54,12 +61,12 @@ export const Route = createFileRoute("/_authenticated/community/")({
   component: CommunityPage,
 });
 
-const VOCATIONS = [
-  "Elite Knight",
-  "Royal Paladin",
-  "Master Sorcerer",
-  "Elder Druid",
-  "Exalted Monk",
+const VOCATIONS: { name: string; icon: LucideIcon }[] = [
+  { name: "Elite Knight", icon: Shield },
+  { name: "Royal Paladin", icon: Crosshair },
+  { name: "Master Sorcerer", icon: Flame },
+  { name: "Elder Druid", icon: Leaf },
+  { name: "Exalted Monk", icon: Hand },
 ];
 
 type Sort = "recent" | "xph" | "gph" | "killsh";
@@ -118,6 +125,37 @@ function CommunityPage() {
     queryFn: () => fetchMonsters(),
     staleTime: 10 * 60 * 1000,
   });
+
+  // Reverse lookup: monster -> which hunts have it, built from the hunt -> monsters catalog.
+  const monsterToHunts = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const [hunt, monsterList] of Object.entries(catalog?.huntMonsters ?? {})) {
+      for (const m of monsterList) {
+        const arr = map.get(m) ?? [];
+        arr.push(hunt);
+        map.set(m, arr);
+      }
+    }
+    return map;
+  }, [catalog]);
+
+  // Only cross-filter once the field's text exactly matches a known name — partial typing
+  // shouldn't narrow the other field before the user has actually picked something.
+  const matchedHunt = useMemo(() => {
+    const q = huntQuery.trim().toLowerCase();
+    if (!q) return null;
+    return (catalog?.hunts ?? []).find((h) => h.toLowerCase() === q) ?? null;
+  }, [catalog, huntQuery]);
+
+  const huntOptions = useMemo(() => {
+    if (!monster.trim()) return catalog?.hunts ?? [];
+    return monsterToHunts.get(monster) ?? [];
+  }, [catalog, monster, monsterToHunts]);
+
+  const monsterOptions = useMemo(() => {
+    if (!matchedHunt) return catalog?.monsters ?? [];
+    return catalog?.huntMonsters?.[matchedHunt] ?? [];
+  }, [catalog, matchedHunt]);
 
   const fetchStats = useServerFn(getCommunityStats);
   const { data: stats } = useQuery({
@@ -327,56 +365,78 @@ function CommunityPage() {
 
 
       {/* Filters */}
-      <div className="card-surface mb-6 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="block">
+      <div className="card-surface mb-6 space-y-4 p-4">
+        <div>
           <span className="text-xs font-medium text-muted-foreground">Vocação</span>
-          <select
-            value={vocation}
-            onChange={(e) => setVocation(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
-          >
-            <option value="">Todas as vocações</option>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setVocation("")}
+              className={
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                (vocation === ""
+                  ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                  : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+              }
+            >
+              <Users2 className="h-3.5 w-3.5" /> Todas
+            </button>
             {VOCATIONS.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
+              <button
+                key={v.name}
+                type="button"
+                onClick={() => setVocation(vocation === v.name ? "" : v.name)}
+                className={
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                  (vocation === v.name
+                    ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                    : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+                }
+              >
+                <v.icon className="h-3.5 w-3.5" /> {v.name}
+              </button>
             ))}
-          </select>
-        </label>
-
-        <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">Hunt / spot</span>
-          <div className="relative mt-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={huntQuery}
-              onChange={(e) => setHuntQuery(e.target.value)}
-              placeholder="Ex: Ingol"
-              className="w-full rounded-lg border border-border bg-input pl-9 pr-3 py-2 text-sm"
-            />
           </div>
-        </label>
+        </div>
 
-        <MonsterFilter
-          value={monsterInput}
-          onChange={setMonsterInput}
-          onCommit={setMonster}
-          options={catalog?.monsters ?? []}
-        />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <AutocompleteFilter
+            label="Hunt / spot"
+            icon={Search}
+            value={huntQuery}
+            onChange={setHuntQuery}
+            onSelect={setHuntQuery}
+            options={huntOptions}
+            placeholder="Ex: Ingol"
+          />
 
-        <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">Ordenar por</span>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as Sort)}
-            className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
-          >
-            <option value="recent">Mais recentes</option>
-            <option value="xph">Maior Raw XP/h</option>
-            <option value="gph">Maior lucro/h</option>
-            <option value="killsh">Mais kills/h</option>
-          </select>
-        </label>
+          <AutocompleteFilter
+            label="Monstro"
+            icon={Skull}
+            value={monsterInput}
+            onChange={(v) => {
+              setMonsterInput(v);
+              if (!v.trim()) setMonster("");
+            }}
+            onSelect={setMonster}
+            options={monsterOptions}
+            placeholder="Ex: choking fear"
+          />
+
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Ordenar por</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as Sort)}
+              className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
+            >
+              <option value="recent">Mais recentes</option>
+              <option value="xph">Maior Raw XP/h</option>
+              <option value="gph">Maior lucro/h</option>
+              <option value="killsh">Mais kills/h</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       {/* View toggle */}
@@ -723,16 +783,28 @@ function Metric({
   );
 }
 
-function MonsterFilter({
+/**
+ * Typeahead text field: shows matching suggestions from `options` as the
+ * user types. `onChange` fires on every keystroke; `onSelect` fires when a
+ * suggestion is picked (click, Enter on a highlighted match) or on Enter
+ * with free text that doesn't match anything.
+ */
+function AutocompleteFilter({
+  label,
+  icon: Icon,
   value,
   onChange,
-  onCommit,
+  onSelect,
   options,
+  placeholder,
 }: {
+  label: string;
+  icon: LucideIcon;
   value: string;
   onChange: (v: string) => void;
-  onCommit: (v: string) => void;
+  onSelect: (v: string) => void;
   options: string[];
+  placeholder: string;
 }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -754,23 +826,23 @@ function MonsterFilter({
 
   const pick = (name: string) => {
     onChange(name);
-    onCommit(name);
+    onSelect(name);
     setOpen(false);
   };
 
   return (
     <div className="relative block" ref={ref}>
-      <span className="text-xs font-medium text-muted-foreground">Monstro</span>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <div className="relative mt-1">
-        <Skull className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Icon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
             setOpen(true);
             setHighlight(0);
-            if (!e.target.value.trim()) onCommit("");
           }}
+          onFocus={() => setOpen(true)}
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
               e.preventDefault();
@@ -782,12 +854,12 @@ function MonsterFilter({
             } else if (e.key === "Enter") {
               e.preventDefault();
               if (open && matches[highlight]) pick(matches[highlight]);
-              else onCommit(value);
+              else onSelect(value);
             } else if (e.key === "Escape") {
               setOpen(false);
             }
           }}
-          placeholder="Ex: choking fear"
+          placeholder={placeholder}
           className="w-full rounded-lg border border-border bg-input pl-9 pr-3 py-2 text-sm"
         />
       </div>
