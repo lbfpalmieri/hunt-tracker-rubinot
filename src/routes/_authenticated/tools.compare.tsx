@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { GitCompareArrows, Search, X, ArrowDown, Clock } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
@@ -46,6 +46,9 @@ function ComparePage() {
   const [tab, setTab] = useState<"own" | "community">("own");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
+  const compareRef = useRef<HTMLDivElement>(null);
+  const scrollToCompare = () =>
+    compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const fetchCommunity = useServerFn(getCommunitySessions);
   const { data: communityData, isLoading: loadingCommunity } = useQuery({
@@ -146,13 +149,17 @@ function ComparePage() {
       </div>
 
       {selected.length >= 2 && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
+        <button
+          type="button"
+          onClick={scrollToCompare}
+          className="mb-4 flex w-full items-center gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-left text-sm text-rubi-gold transition-colors hover:bg-rubi-gold/20"
+        >
           <GitCompareArrows className="h-4 w-4 flex-none" />
           <span className="flex-1">
-            Comparativo com <strong>{selected.length} hunts</strong> pronto — desça a página para visualizar.
+            Comparativo com <strong>{selected.length} hunts</strong> pronto — clique para visualizar.
           </span>
           <ArrowDown className="h-4 w-4 flex-none animate-bounce" />
-        </div>
+        </button>
       )}
 
       {full && (
@@ -191,7 +198,7 @@ function ComparePage() {
         </div>
       )}
 
-      <div className="mt-8">
+      <div ref={compareRef} className="mt-8 scroll-mt-4">
         {selected.length < 2 ? (
           <div className="card-surface p-6 text-center text-sm text-muted-foreground">
             Selecione pelo menos 2 hunts para gerar o comparativo.
@@ -199,6 +206,13 @@ function ComparePage() {
         ) : (
           <>
             <h2 className="mb-3 font-display text-xl font-bold">Comparativo ({selected.length})</h2>
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">
+              <Clock className="h-4 w-4 flex-none translate-y-0.5" />
+              <span>
+                <strong>Projeção para 1 hora de caça</strong>, calculada a partir da média de todas as sessões de
+                cada hunt — os números abaixo não são o total acumulado, e sim o ritmo médio por hora.
+              </span>
+            </div>
             <CompareTable hunts={selected} />
           </>
         )}
