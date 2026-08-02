@@ -33,8 +33,21 @@ export function HuntPickerCard({ hunt, selected, disabled, onToggle }: Props) {
       )}
       <div className="flex flex-wrap items-start gap-2 pr-6">
         <span className="font-display text-sm font-semibold leading-snug">{hunt.huntName}</span>
-        {hunt.bounty && <BountyBadge bounty={hunt.bounty} className="flex-none" />}
-        {hunt.prey && <PreyBadge prey={hunt.prey} className="flex-none" />}
+        {agg ? (
+          <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-blue">
+            Média de {hunt.sessionCount} sessões
+          </span>
+        ) : (
+          <>
+            {hunt.bounty && <BountyBadge bounty={hunt.bounty} className="flex-none" />}
+            {hunt.prey && <PreyBadge prey={hunt.prey} className="flex-none" />}
+          </>
+        )}
+        {agg && (hunt.preySessions ?? 0) > 0 && (
+          <span className="flex-none rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-gold">
+            Prey em {hunt.preySessions}/{hunt.sessionCount}
+          </span>
+        )}
       </div>
       <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
         {hunt.source === "community" ? (
@@ -48,8 +61,10 @@ export function HuntPickerCard({ hunt, selected, disabled, onToggle }: Props) {
       </div>
       <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
         <Timer className="h-3 w-3" />
-        {fmtDuration(hunt.durationSec)} · {fmtDate(hunt.createdAt)}
+        {fmtDuration(hunt.durationSec)}
+        {agg ? " em média" : ` · ${fmtDate(hunt.createdAt)}`}
       </div>
+
       <div className="mt-2 flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
           Raw XP{" "}
