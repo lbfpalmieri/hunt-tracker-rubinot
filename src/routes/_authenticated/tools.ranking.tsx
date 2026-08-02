@@ -16,13 +16,15 @@ import {
 } from "@/components/ui/dialog";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
-import { fmtGold, fmtNum } from "@/lib/format";
+import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import {
   aggregateByHunt,
   filterByBonusInclusion,
   fromCommunityRow,
   fromOwnSession,
+  isHuntValid,
+  MIN_HUNT_DURATION_SEC,
   perHour,
   topKills,
   type CommunityRow,
@@ -119,14 +121,18 @@ function RankingPage() {
     [communityData],
   );
 
-  const ownHunts = useMemo(
+  const ownHuntsAll = useMemo(
     () => aggregateByHunt(filterByBonusInclusion(ownRaw, includeBounty, includePrey)),
     [ownRaw, includeBounty, includePrey],
   );
-  const communityHunts = useMemo(
+  const communityHuntsAll = useMemo(
     () => aggregateByHunt(filterByBonusInclusion(communityRaw, includeBounty, includePrey)),
     [communityRaw, includeBounty, includePrey],
   );
+  const ownHunts = useMemo(() => ownHuntsAll.filter(isHuntValid), [ownHuntsAll]);
+  const communityHunts = useMemo(() => communityHuntsAll.filter(isHuntValid), [communityHuntsAll]);
+  const hiddenCount =
+    tab === "own" ? ownHuntsAll.length - ownHunts.length : communityHuntsAll.length - communityHunts.length;
 
   const list = tab === "own" ? ownHunts : communityHunts;
 
@@ -231,9 +237,15 @@ function RankingPage() {
           </label>
         </div>
       </div>
-      <p className="-mt-2 mb-4 text-xs text-muted-foreground">
+      <p className="-mt-2 mb-1 text-xs text-muted-foreground">
         Desmarque pra tirar sessões com esse bônus da média das hunts — útil pra ver o rendimento "limpo",
         sem prey ou bounty.
+      </p>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Só entram no ranking hunts com pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} somados de sessões —
+        evita que uma sessão curta e isolada apareça como top 1 quando projetada para 1h.
+        {hiddenCount > 0 &&
+          ` ${hiddenCount} hunt${hiddenCount > 1 ? "s" : ""} escondida${hiddenCount > 1 ? "s" : ""} por enquanto — continue registrando sessões nela${hiddenCount > 1 ? "s" : ""}.`}
       </p>
 
       {!loading && ranked.length > 0 && (

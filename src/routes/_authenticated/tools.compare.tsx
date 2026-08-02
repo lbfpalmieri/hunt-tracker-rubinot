@@ -9,15 +9,19 @@ import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
+import { confirmDialog } from "@/lib/confirm-dialog";
 import {
   MAX_COMPARE,
+  MIN_HUNT_DURATION_SEC,
   aggregateByHunt,
   filterByBonusInclusion,
   fromCommunityRow,
   fromOwnSession,
+  isHuntValid,
   type CommunityRow,
   type CompareHunt,
 } from "@/lib/compare";
+import { fmtDuration } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/tools/compare")({
   head: () => ({
@@ -73,14 +77,18 @@ function ComparePage() {
     [communityData],
   );
 
-  const ownHunts = useMemo(
+  const ownHuntsAll = useMemo(
     () => aggregateByHunt(filterByBonusInclusion(ownRaw, includeBounty, includePrey)),
     [ownRaw, includeBounty, includePrey],
   );
-  const communityHunts = useMemo(
+  const communityHuntsAll = useMemo(
     () => aggregateByHunt(filterByBonusInclusion(communityRaw, includeBounty, includePrey)),
     [communityRaw, includeBounty, includePrey],
   );
+  const ownHunts = useMemo(() => ownHuntsAll.filter(isHuntValid), [ownHuntsAll]);
+  const communityHunts = useMemo(() => communityHuntsAll.filter(isHuntValid), [communityHuntsAll]);
+  const hiddenCount =
+    (tab === "own" ? ownHuntsAll.length - ownHunts.length : communityHuntsAll.length - communityHunts.length);
 
   /** Currently selected hunts (by name) that would have zero sessions left under a hypothetical filter change. */
   const selectedThatWouldVanish = (nextIncludeBounty: boolean, nextIncludePrey: boolean) =>
@@ -95,17 +103,20 @@ function ComparePage() {
       return !stillHasSessions;
     });
 
-  const applyBonusFilter = (kind: "bounty" | "prey", checked: boolean) => {
+  const applyBonusFilter = async (kind: "bounty" | "prey", checked: boolean) => {
     const nextBounty = kind === "bounty" ? checked : includeBounty;
     const nextPrey = kind === "prey" ? checked : includePrey;
     if (!checked) {
       const vanishing = selectedThatWouldVanish(nextBounty, nextPrey);
       if (vanishing.length > 0) {
-        const names = vanishing.map((h) => h.huntName).join(", ");
+        const names = vanishing.map((h) => h.huntName).join("\n");
         const label = kind === "bounty" ? "Bounty" : "Prey";
-        const ok = confirm(
-          `${vanishing.length > 1 ? "Essas hunts só têm" : "Essa hunt só tem"} sessão(ões) com ${label} — sem esse filtro, ${vanishing.length > 1 ? "elas saem" : "ela sai"} da comparação:\n\n${names}\n\nRemover da comparação e desativar o filtro de ${label}?`,
-        );
+        const ok = await confirmDialog({
+          title: "Remover hunt da comparação?",
+          description: `${vanishing.length > 1 ? "Essas hunts só têm" : "Essa hunt só tem"} sessão(ões) com ${label} — sem esse filtro, ${vanishing.length > 1 ? "elas saem" : "ela sai"} da comparação:\n\n${names}\n\nRemover da comparação e desativar o filtro de ${label}?`,
+          confirmLabel: "Remover e desativar filtro",
+          cancelLabel: "Manter filtro ligado",
+        });
         if (!ok) return;
         setSelected((prev) => prev.filter((h) => !vanishing.includes(h)));
       }
@@ -208,9 +219,15 @@ function ComparePage() {
           </label>
         </div>
       </div>
-      <p className="-mt-2 mb-4 text-xs text-muted-foreground">
+      <p className="-mt-2 mb-1 text-xs text-muted-foreground">
         Desmarque pra tirar sessões com esse bônus da média das hunts — útil pra ver o rendimento "limpo",
         sem prey ou bounty.
+      </p>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Só entram aqui hunts com pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} somados de sessões — evita
+        que uma sessão curta e isolada pareça um resultado absurdo quando projetada para 1h.
+        {hiddenCount > 0 &&
+          ` ${hiddenCount} hunt${hiddenCount > 1 ? "s" : ""} escondida${hiddenCount > 1 ? "s" : ""} por enquanto — continue registrando sessões nela${hiddenCount > 1 ? "s" : ""}.`}
       </p>
 
       {full && (

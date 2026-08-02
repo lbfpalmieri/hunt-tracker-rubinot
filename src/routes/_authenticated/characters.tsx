@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { blobToCompressedImage } from "@/components/PasteImage";
+import { confirmDialog } from "@/lib/confirm-dialog";
 
 
 export const Route = createFileRoute("/_authenticated/characters")({
@@ -307,8 +308,11 @@ function CharactersPage() {
                       )}
                       <button
                         onClick={async () => {
-                          if (confirm(`Excluir ${c.name} e todas as suas sessões?`))
-                            await removeCharacter(c.id);
+                          const ok = await confirmDialog({
+                            description: `Excluir ${c.name} e todas as suas sessões?`,
+                            tone: "danger",
+                          });
+                          if (ok) await removeCharacter(c.id);
                         }}
                         className="rounded-lg border border-rubi-danger/40 p-1.5 text-rubi-danger hover:bg-rubi-danger/10"
                         aria-label="Excluir"

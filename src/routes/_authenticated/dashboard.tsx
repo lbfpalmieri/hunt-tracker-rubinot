@@ -7,6 +7,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
+import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
 import {
   Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
@@ -69,6 +70,8 @@ function Dashboard() {
     }
     let bestHunt: null | { name: string; gph: number } = null;
     for (const [name, v] of bySpot) {
+      // Menos de 30min somados na hunt ainda não é dado suficiente pra virar "top spot".
+      if (v.time < MIN_HUNT_DURATION_SEC) continue;
       const g = v.bal / (v.time / 3600 || 1);
       if (!bestHunt || g > bestHunt.gph) bestHunt = { name, gph: g };
     }
@@ -168,14 +171,18 @@ function Dashboard() {
                   <InfoHint title="Balance acumulado" description="Soma bruta do saldo de todas as sessões deste personagem.">
                     <p><strong>Fórmula:</strong> <code>Σ (loot − supplies)</code> de cada sessão importada, exatamente como o Balance do Hunting Analyser do jogo.</p>
                     <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements — isso aparece separado como <em>Lucro líquido</em>.</p>
-                    <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>.</p>
+                    <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>, entre as que já somam pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões — evita que uma sessão curta isolada pareça o melhor spot.</p>
                   </InfoHint>
                 </div>
                 <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (agg.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
                   {fmtGold(agg.balance)}
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  {agg.bestHunt ? <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></> : "sem hunts comparáveis ainda"}
+                  {agg.bestHunt ? (
+                    <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></>
+                  ) : (
+                    `nenhuma hunt com ${fmtDuration(MIN_HUNT_DURATION_SEC)} ou mais registrados ainda`
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:min-w-[280px]">

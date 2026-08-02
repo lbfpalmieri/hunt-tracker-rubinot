@@ -32,6 +32,8 @@ export interface CompareHunt {
   sessionCount?: number;
   /** Quantas dessas sessões tinham prey ativa. */
   preySessions?: number;
+  /** Soma da duração de todas as sessões do grupo (não a média) — usado para o filtro de dados mínimos. */
+  totalDurationSec?: number;
 }
 
 
@@ -167,7 +169,12 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
   for (const [slug, group] of groups) {
     const first = group[0];
     if (group.length === 1) {
-      out.push({ ...first, sessionCount: 1, preySessions: first.prey?.length ? 1 : 0 });
+      out.push({
+        ...first,
+        sessionCount: 1,
+        preySessions: first.prey?.length ? 1 : 0,
+        totalDurationSec: first.durationSec,
+      });
       continue;
     }
 
@@ -213,12 +220,25 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
       prey: preySlots.length ? preySlots : null,
       sessionCount: group.length,
       preySessions: group.filter((s) => s.prey?.length).length,
+      totalDurationSec: group.reduce((a, s) => a + s.durationSec, 0),
     });
   }
 
   return out.sort((a, b) => b.huntName.localeCompare(a.huntName) * -1);
 }
 
+
+/**
+ * Uma hunt só entra em rankings/comparativos/"melhor spot" quando o total de
+ * tempo caçado nela (somando todas as sessões) passa desse piso. Uma sessão
+ * de 5 min isolada projetada pra 1h pode parecer um resultado absurdo — o
+ * piso evita que isso vire "top 1" sem dado suficiente pra sustentar.
+ */
+export const MIN_HUNT_DURATION_SEC = 30 * 60;
+
+export function isHuntValid(h: CompareHunt): boolean {
+  return (h.totalDurationSec ?? h.durationSec) >= MIN_HUNT_DURATION_SEC;
+}
 
 export function topKills(h: CompareHunt, n = 3): { name: string; count: number }[] {
   return h.kills

@@ -16,6 +16,7 @@ import {
   ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
+import { confirmDialog } from "@/lib/confirm-dialog";
 
 
 import { lazy, Suspense } from "react";
@@ -104,7 +105,8 @@ function SessionDetail() {
         </div>
         <button
           onClick={async () => {
-            if (confirm("Excluir esta sessão?")) {
+            const ok = await confirmDialog({ description: "Excluir esta sessão?", tone: "danger" });
+            if (ok) {
               await removeSession(session.id);
               navigate({ to: "/sessions" });
             }
