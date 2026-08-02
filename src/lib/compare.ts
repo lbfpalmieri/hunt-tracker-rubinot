@@ -28,7 +28,12 @@ export interface CompareHunt {
   damageReceived: number | null;
   bounty: BountyInfo | null;
   prey: PreySlot[] | null;
+  /** Quantas sessões formam esta hunt (1 = sessão única). */
+  sessionCount?: number;
+  /** Quantas dessas sessões tinham prey ativa. */
+  preySessions?: number;
 }
+
 
 const hoursOf = (durationSec: number) => durationSec / 3600 || 1;
 
