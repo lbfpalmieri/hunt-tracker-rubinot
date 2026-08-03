@@ -32,6 +32,7 @@ import {
   Trash2,
   Target,
   PartyPopper,
+  Calendar,
 } from "lucide-react";
 
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
@@ -53,26 +54,64 @@ export const Route = createFileRoute("/_authenticated/rendimento")({
   component: RendimentoPage,
 });
 
-type Period = "today" | "week" | "month" | "all";
+type Period = "yesterday" | "today" | "week" | "month" | "all" | "custom";
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: "today", label: "Hoje" },
+  { value: "yesterday", label: "Ontem" },
   { value: "week", label: "Esta semana" },
   { value: "month", label: "Este mês" },
   { value: "all", label: "Tudo" },
+  { value: "custom", label: "Personalizado" },
 ];
 
-function startOfPeriod(period: Period): Date | null {
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+/** Parses a <input type="date"> value ("YYYY-MM-DD") as a local date, not UTC. */
+function parseDateInput(value: string): Date | null {
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+/** Inclusive [start, end] window for a period — null on either side means "sem limite". */
+function periodRange(
+  period: Period,
+  customStart: string,
+  customEnd: string,
+): { start: Date | null; end: Date | null } {
   const now = new Date();
-  if (period === "all") return null;
-  if (period === "today") return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (period === "month") return new Date(now.getFullYear(), now.getMonth(), 1);
-  // week — segunda-feira como início
-  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const day = d.getDay();
-  const diffToMonday = day === 0 ? 6 : day - 1;
-  d.setDate(d.getDate() - diffToMonday);
-  return d;
+  if (period === "all") return { start: null, end: null };
+  if (period === "today") return { start: startOfDay(now), end: endOfDay(now) };
+  if (period === "yesterday") {
+    const y = new Date(now);
+    y.setDate(y.getDate() - 1);
+    return { start: startOfDay(y), end: endOfDay(y) };
+  }
+  if (period === "month") return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: endOfDay(now) };
+  if (period === "week") {
+    // segunda-feira como início
+    const d = startOfDay(now);
+    const day = d.getDay();
+    const diffToMonday = day === 0 ? 6 : day - 1;
+    d.setDate(d.getDate() - diffToMonday);
+    return { start: d, end: endOfDay(now) };
+  }
+  // custom
+  const s = parseDateInput(customStart);
+  const e = parseDateInput(customEnd);
+  return { start: s ? startOfDay(s) : null, end: e ? endOfDay(e) : null };
+}
+
+const fmtDay = (d: Date) =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(d);
+
+function formatRange(start: Date | null, end: Date | null): string {
+  if (!start && !end) return "Todo o histórico registrado";
+  if (!start || !end) return "Escolha as duas datas";
+  if (start.toDateString() === end.toDateString()) return fmtDay(start);
+  return `${fmtDay(start)} — ${fmtDay(end)}`;
 }
 
 function RendimentoPage() {
@@ -90,17 +129,29 @@ function RendimentoPage() {
   const active = characters.find((c) => c.id === activeId) ?? null;
   const [tab, setTab] = useState<"overview" | "level" | "goals">("overview");
   const [period, setPeriod] = useState<Period>("week");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
   const mySessions = useMemo(
     () => (active ? sessions.filter((s) => s.characterId === active.id) : []),
     [sessions, active],
   );
 
+  const range = useMemo(
+    () => periodRange(period, customStart, customEnd),
+    [period, customStart, customEnd],
+  );
+
   const periodSessions = useMemo(() => {
-    const start = startOfPeriod(period);
-    if (!start) return mySessions;
-    return mySessions.filter((s) => new Date(s.createdAt) >= start);
-  }, [mySessions, period]);
+    const { start, end } = range;
+    if (!start && !end) return mySessions;
+    return mySessions.filter((s) => {
+      const t = new Date(s.createdAt);
+      if (start && t < start) return false;
+      if (end && t > end) return false;
+      return true;
+    });
+  }, [mySessions, range]);
 
   const agg = useMemo(() => aggregateSessions(periodSessions), [periodSessions]);
 
@@ -281,12 +332,23 @@ function RendimentoPage() {
 
       {tab === "overview" && (
         <>
-          <div className="mb-4 flex flex-wrap gap-1.5">
+          <div className="mb-2 flex flex-wrap gap-1.5">
             {PERIODS.map((p) => (
               <button
                 key={p.value}
                 type="button"
-                onClick={() => setPeriod(p.value)}
+                onClick={() => {
+                  setPeriod(p.value);
+                  if (p.value === "custom" && !customStart && !customEnd) {
+                    const today = new Date();
+                    const weekAgo = new Date(today);
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    const toInput = (d: Date) =>
+                      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    setCustomStart(toInput(weekAgo));
+                    setCustomEnd(toInput(today));
+                  }
+                }}
                 className={
                   "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
                   (period === p.value
@@ -297,6 +359,36 @@ function RendimentoPage() {
                 {p.label}
               </button>
             ))}
+          </div>
+
+          {period === "custom" && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+              <label className="flex items-center gap-1.5 text-muted-foreground">
+                De
+                <input
+                  type="date"
+                  value={customStart}
+                  max={customEnd || undefined}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="rounded-md border border-border/60 bg-background px-2 py-1 text-foreground"
+                />
+              </label>
+              <label className="flex items-center gap-1.5 text-muted-foreground">
+                até
+                <input
+                  type="date"
+                  value={customEnd}
+                  min={customStart || undefined}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="rounded-md border border-border/60 bg-background px-2 py-1 text-foreground"
+                />
+              </label>
+            </div>
+          )}
+
+          <div className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" />
+            {formatRange(range.start, range.end)}
           </div>
 
           {periodSessions.length === 0 ? (
