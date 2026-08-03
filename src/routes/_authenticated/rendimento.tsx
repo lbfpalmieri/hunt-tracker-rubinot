@@ -89,14 +89,20 @@ function periodRange(
     y.setDate(y.getDate() - 1);
     return { start: startOfDay(y), end: endOfDay(y) };
   }
-  if (period === "month") return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: endOfDay(now) };
+  if (period === "month") {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return { start, end: endOfDay(end) };
+  }
   if (period === "week") {
-    // segunda-feira como início
-    const d = startOfDay(now);
-    const day = d.getDay();
+    // segunda-feira como início, domingo como fim
+    const start = startOfDay(now);
+    const day = start.getDay();
     const diffToMonday = day === 0 ? 6 : day - 1;
-    d.setDate(d.getDate() - diffToMonday);
-    return { start: d, end: endOfDay(now) };
+    start.setDate(start.getDate() - diffToMonday);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    return { start, end: endOfDay(end) };
   }
   // custom
   const s = parseDateInput(customStart);
