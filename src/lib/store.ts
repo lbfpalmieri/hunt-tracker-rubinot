@@ -146,7 +146,7 @@ export const useAppStore = create<State>()((set, get) => ({
       const { data: userData } = await supabase.auth.getSession();
       const uid = userData.session?.user?.id;
       if (!uid) throw new Error("Not signed in");
-      const [charRes, sessRes, huntRes, imbRes, levelRes, goalRes] = await Promise.all([
+      const [charRes, sessRes, huntRes, imbRes] = await Promise.all([
         db.from("characters").select("*").order("created_at", { ascending: true }),
         // The public community policy also exposes other users' public sessions,
         // so scope the personal history explicitly to the signed-in user.
@@ -157,16 +157,29 @@ export const useAppStore = create<State>()((set, get) => ({
           .order("created_at", { ascending: false }),
         db.from("hunts").select("*").order("created_at", { ascending: true }),
         db.from("imbuements").select("*").order("created_at", { ascending: false }),
-        db.from("level_snapshots").select("*").order("created_at", { ascending: true }),
-        db.from("goals").select("*").order("created_at", { ascending: false }),
       ]);
 
       if (charRes.error) throw charRes.error;
       if (sessRes.error) throw sessRes.error;
       if (huntRes.error) throw huntRes.error;
       if (imbRes.error) throw imbRes.error;
-      if (levelRes.error) throw levelRes.error;
-      if (goalRes.error) throw goalRes.error;
+
+      // "Meu rendimento" tables are additive — if the migration hasn't landed yet
+      // (or either query hiccups), the rest of the app must keep working normally.
+      let levelRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
+      let goalRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
+      try {
+        [levelRes, goalRes] = await Promise.all([
+          db.from("level_snapshots").select("*").order("created_at", { ascending: true }),
+          db.from("goals").select("*").order("created_at", { ascending: false }),
+        ]);
+        if (levelRes.error) throw levelRes.error;
+        if (goalRes.error) throw goalRes.error;
+      } catch (e) {
+        console.error("[rendimento] level_snapshots/goals indisponíveis (migration ainda não aplicada?)", e);
+        levelRes = { data: [], error: null };
+        goalRes = { data: [], error: null };
+      }
 
       const characters: Character[] = (charRes.data ?? []).map((c: any) => ({
         id: c.id,
