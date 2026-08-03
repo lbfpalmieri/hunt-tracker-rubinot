@@ -12,6 +12,7 @@ import {
   Sparkles,
   Globe2,
   Trophy,
+  Gauge,
 
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -32,6 +33,7 @@ const nav = [
 ] as const;
 
 const moreNav = [
+  { to: "/rendimento", label: "Meu rendimento", icon: Gauge },
   { to: "/imbuements", label: "Imbuements", icon: Sparkles },
   { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
   { to: "/tools/compare", label: "Comparar hunts", icon: GitCompareArrows },

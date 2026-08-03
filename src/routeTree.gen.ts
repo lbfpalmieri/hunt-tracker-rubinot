@@ -17,6 +17,7 @@ import { Route as AuthenticatedCharactersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
@@ -62,6 +63,11 @@ const AuthenticatedImbuementsRoute = AuthenticatedImbuementsRouteImport.update({
 const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   id: '/import',
   path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRendimentoRoute = AuthenticatedRendimentoRouteImport.update({
+  id: '/rendimento',
+  path: '/rendimento',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
+  '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
+  '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
+  '/_authenticated/rendimento': typeof AuthenticatedRendimentoRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/imbuements'
     | '/import'
+    | '/rendimento'
     | '/sessions'
     | '/community/$id'
     | '/sessions/$id'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/imbuements'
     | '/import'
+    | '/rendimento'
     | '/sessions'
     | '/community/$id'
     | '/sessions/$id'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/imbuements'
     | '/_authenticated/import'
+    | '/_authenticated/rendimento'
     | '/_authenticated/sessions'
     | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
@@ -271,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rendimento': {
+      id: '/_authenticated/rendimento'
+      path: '/rendimento'
+      fullPath: '/rendimento'
+      preLoaderRoute: typeof AuthenticatedRendimentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sessions': {
       id: '/_authenticated/sessions'
       path: '/sessions'
@@ -342,6 +361,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
+  AuthenticatedRendimentoRoute: typeof AuthenticatedRendimentoRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
   AuthenticatedToolsCompareRoute: typeof AuthenticatedToolsCompareRoute
@@ -356,6 +376,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
+  AuthenticatedRendimentoRoute: AuthenticatedRendimentoRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
   AuthenticatedToolsCompareRoute: AuthenticatedToolsCompareRoute,

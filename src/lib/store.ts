@@ -49,11 +49,30 @@ export interface Imbuement {
   createdAt: string;
 }
 
+export interface LevelSnapshot {
+  id: string;
+  characterId: string;
+  level: number;
+  createdAt: string;
+}
+
+export interface Goal {
+  id: string;
+  characterId: string;
+  name: string;
+  targetAmount: number;
+  currencyLabel: string;
+  imageUrl: string | null;
+  createdAt: string;
+}
+
 interface State {
   characters: Character[];
   sessions: HuntSession[];
   hunts: Hunt[];
   imbuements: Imbuement[];
+  levelSnapshots: LevelSnapshot[];
+  goals: Goal[];
   activeCharacterId: string | null;
   loaded: boolean;
   loading: boolean;
@@ -72,6 +91,10 @@ interface State {
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
 
   removeImbuement: (id: string) => Promise<void>;
+  addLevelSnapshot: (characterId: string, level: number) => Promise<LevelSnapshot>;
+  removeLevelSnapshot: (id: string) => Promise<void>;
+  addGoal: (g: Omit<Goal, "id" | "createdAt">) => Promise<Goal>;
+  removeGoal: (id: string) => Promise<void>;
 }
 
 
@@ -95,6 +118,8 @@ export const useAppStore = create<State>()((set, get) => ({
   sessions: [],
   hunts: [],
   imbuements: [],
+  levelSnapshots: [],
+  goals: [],
   activeCharacterId: null,
   loaded: false,
   loading: false,
@@ -102,7 +127,17 @@ export const useAppStore = create<State>()((set, get) => ({
   setActive: (id) => set({ activeCharacterId: id }),
 
   reset: () =>
-    set({ characters: [], sessions: [], hunts: [], imbuements: [], activeCharacterId: null, loaded: false, loading: false }),
+    set({
+      characters: [],
+      sessions: [],
+      hunts: [],
+      imbuements: [],
+      levelSnapshots: [],
+      goals: [],
+      activeCharacterId: null,
+      loaded: false,
+      loading: false,
+    }),
 
   loadAll: async () => {
     if (get().loading) return;
@@ -111,7 +146,7 @@ export const useAppStore = create<State>()((set, get) => ({
       const { data: userData } = await supabase.auth.getSession();
       const uid = userData.session?.user?.id;
       if (!uid) throw new Error("Not signed in");
-      const [charRes, sessRes, huntRes, imbRes] = await Promise.all([
+      const [charRes, sessRes, huntRes, imbRes, levelRes, goalRes] = await Promise.all([
         db.from("characters").select("*").order("created_at", { ascending: true }),
         // The public community policy also exposes other users' public sessions,
         // so scope the personal history explicitly to the signed-in user.
@@ -122,12 +157,16 @@ export const useAppStore = create<State>()((set, get) => ({
           .order("created_at", { ascending: false }),
         db.from("hunts").select("*").order("created_at", { ascending: true }),
         db.from("imbuements").select("*").order("created_at", { ascending: false }),
+        db.from("level_snapshots").select("*").order("created_at", { ascending: true }),
+        db.from("goals").select("*").order("created_at", { ascending: false }),
       ]);
 
       if (charRes.error) throw charRes.error;
       if (sessRes.error) throw sessRes.error;
       if (huntRes.error) throw huntRes.error;
       if (imbRes.error) throw imbRes.error;
+      if (levelRes.error) throw levelRes.error;
+      if (goalRes.error) throw goalRes.error;
 
       const characters: Character[] = (charRes.data ?? []).map((c: any) => ({
         id: c.id,
@@ -168,12 +207,29 @@ export const useAppStore = create<State>()((set, get) => ({
         hoursRemaining: Number(i.hours_remaining ?? 20),
         createdAt: i.created_at,
       }));
+      const levelSnapshots: LevelSnapshot[] = (levelRes.data ?? []).map((l: any) => ({
+        id: l.id,
+        characterId: l.character_id,
+        level: Number(l.level ?? 0),
+        createdAt: l.created_at,
+      }));
+      const goals: Goal[] = (goalRes.data ?? []).map((g: any) => ({
+        id: g.id,
+        characterId: g.character_id,
+        name: g.name,
+        targetAmount: Number(g.target_amount ?? 0),
+        currencyLabel: g.currency_label ?? "Gold",
+        imageUrl: g.image_url ?? null,
+        createdAt: g.created_at,
+      }));
       const prevActive = get().activeCharacterId;
       set({
         characters,
         sessions,
         hunts,
         imbuements,
+        levelSnapshots,
+        goals,
         loaded: true,
         loading: false,
         activeCharacterId:
@@ -240,6 +296,8 @@ export const useAppStore = create<State>()((set, get) => ({
       sessions: s.sessions.filter((se) => se.characterId !== id),
       hunts: s.hunts.filter((h) => h.characterId !== id),
       imbuements: s.imbuements.filter((i) => i.characterId !== id),
+      levelSnapshots: s.levelSnapshots.filter((l) => l.characterId !== id),
+      goals: s.goals.filter((g) => g.characterId !== id),
       activeCharacterId: s.activeCharacterId === id ? null : s.activeCharacterId,
     }));
   },
@@ -417,6 +475,68 @@ export const useAppStore = create<State>()((set, get) => ({
     const { error } = await db.from("imbuements").delete().eq("id", id);
     if (error) throw error;
     set((s) => ({ imbuements: s.imbuements.filter((i) => i.id !== id) }));
+  },
+
+  addLevelSnapshot: async (characterId, level) => {
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
+    if (!uid) throw new Error("Not signed in");
+    const { data, error } = await db
+      .from("level_snapshots")
+      .insert({ user_id: uid, character_id: characterId, level })
+      .select()
+      .single();
+    if (error) throw error;
+    const created: LevelSnapshot = {
+      id: data.id,
+      characterId: data.character_id,
+      level: Number(data.level ?? 0),
+      createdAt: data.created_at,
+    };
+    set((s) => ({ levelSnapshots: [...s.levelSnapshots, created] }));
+    return created;
+  },
+
+  removeLevelSnapshot: async (id) => {
+    const { error } = await db.from("level_snapshots").delete().eq("id", id);
+    if (error) throw error;
+    set((s) => ({ levelSnapshots: s.levelSnapshots.filter((l) => l.id !== id) }));
+  },
+
+  addGoal: async (input) => {
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
+    if (!uid) throw new Error("Not signed in");
+    const { data, error } = await db
+      .from("goals")
+      .insert({
+        user_id: uid,
+        character_id: input.characterId,
+        name: input.name,
+        target_amount: input.targetAmount,
+        currency_label: input.currencyLabel,
+        image_url: input.imageUrl,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const created: Goal = {
+      id: data.id,
+      characterId: data.character_id,
+      name: data.name,
+      targetAmount: Number(data.target_amount ?? 0),
+      currencyLabel: data.currency_label ?? "Gold",
+      imageUrl: data.image_url ?? null,
+      createdAt: data.created_at,
+    };
+    set((s) => ({ goals: [created, ...s.goals] }));
+    return created;
+  },
+
+  removeGoal: async (id) => {
+    const { error } = await db.from("goals").delete().eq("id", id);
+    if (error) throw error;
+    set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
   },
 }));
 

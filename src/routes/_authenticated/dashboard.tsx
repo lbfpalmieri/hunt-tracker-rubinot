@@ -8,8 +8,9 @@ import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
 import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
+import { aggregateSessions } from "@/lib/performance";
 import {
-  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
+  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, Gauge,
 } from "lucide-react";
 
 import { lazy, Suspense, useMemo } from "react";
@@ -45,38 +46,7 @@ function Dashboard() {
     [sessions, active],
   );
 
-  const agg = useMemo(() => {
-    if (mySessions.length === 0) {
-      return { rawXph: 0, totalRawXp: 0, totalXp: 0, gph: 0, totalTime: 0, xpTime: 0, excludedBounty: 0, balance: 0, bestHunt: null as null | { name: string; gph: number } };
-    }
-    const totalTime = mySessions.reduce((a, s) => a + s.hunting.durationSec, 0);
-    const totalXp = mySessions.reduce((a, s) => a + s.hunting.xpGain, 0);
-    // Sessions flagged as bounty without a known bonus amount can't be normalized,
-    // so they stay out of the Raw XP figures instead of inflating them.
-    const xpSessions = mySessions.filter((s) => huntRawXp(s) != null);
-    const excludedBounty = mySessions.length - xpSessions.length;
-    const totalRawXp = xpSessions.reduce((a, s) => a + (huntRawXp(s) as number), 0);
-    const xpTime = xpSessions.reduce((a, s) => a + s.hunting.durationSec, 0);
-    const totalBal = mySessions.reduce((a, s) => a + s.hunting.balance, 0);
-    const hoursTotal = totalTime / 3600 || 1;
-    const rawXph = totalRawXp / (xpTime / 3600 || 1);
-    const gph = totalBal / hoursTotal;
-    const bySpot = new Map<string, { time: number; bal: number }>();
-    for (const s of mySessions) {
-      const cur = bySpot.get(s.huntName) ?? { time: 0, bal: 0 };
-      cur.time += s.hunting.durationSec;
-      cur.bal += s.hunting.balance;
-      bySpot.set(s.huntName, cur);
-    }
-    let bestHunt: null | { name: string; gph: number } = null;
-    for (const [name, v] of bySpot) {
-      // Menos de 30min somados na hunt ainda não é dado suficiente pra virar "top spot".
-      if (v.time < MIN_HUNT_DURATION_SEC) continue;
-      const g = v.bal / (v.time / 3600 || 1);
-      if (!bestHunt || g > bestHunt.gph) bestHunt = { name, gph: g };
-    }
-    return { rawXph, totalRawXp, totalXp, gph, totalTime, xpTime, excludedBounty, balance: totalBal, bestHunt };
-  }, [mySessions]);
+  const agg = useMemo(() => aggregateSessions(mySessions), [mySessions]);
 
 
   const imbAgg = useMemo(
@@ -105,11 +75,21 @@ function Dashboard() {
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
             RubinOT Hunt Tracker
           </div>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="mt-1 flex items-center gap-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
             {active ? (
               <>Olá, <span className="text-gradient-brand">{active.name}</span></>
             ) : (
               <>Bem-vindo, caçador</>
+            )}
+            {active && (
+              <Link
+                to="/rendimento"
+                title="Ver meu rendimento"
+                aria-label="Ver meu rendimento"
+                className="text-muted-foreground/50 transition-colors hover:text-rubi-blue"
+              >
+                <Gauge className="h-5 w-5" />
+              </Link>
             )}
           </h1>
           {active && (
