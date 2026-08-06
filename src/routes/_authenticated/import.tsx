@@ -9,7 +9,19 @@ import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Wand2, Save, UserCircle2, Sparkles, Trophy, Search, Globe2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Upload,
+  Wand2,
+  Save,
+  UserCircle2,
+  Sparkles,
+  Trophy,
+  Search,
+  Globe2,
+  AlertTriangle,
+  ClipboardPaste,
+} from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import {
   BOUNTY_DIFFICULTIES,
@@ -555,8 +567,38 @@ function ImportPage() {
 function TextBlock({
   label, help, value, onChange,
 }: { label: string; help: string; value: string; onChange: (v: string) => void }) {
+  const [pasting, setPasting] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handlePaste = async () => {
+    setPasting(true);
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) {
+        toast.error("Área de transferência vazia");
+        return;
+      }
+      onChange(text);
+      textareaRef.current?.focus();
+    } catch {
+      toast.error("Não deu pra acessar a área de transferência — cole com Ctrl+V direto no campo.");
+    } finally {
+      setPasting(false);
+    }
+  };
+
   return (
-    <div className="card-surface p-4">
+    <div className="card-surface relative p-4">
+      <button
+        type="button"
+        onClick={handlePaste}
+        disabled={pasting}
+        title="Colar da área de transferência"
+        className="animate-float-pop group absolute -right-3 -top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-3 py-1.5 text-xs font-bold text-background shadow-glow-gold ring-2 ring-background transition-transform hover:scale-110 hover:shadow-glow-blue hover:[animation-play-state:paused] active:scale-95 disabled:pointer-events-none disabled:opacity-60"
+      >
+        <ClipboardPaste className="h-3.5 w-3.5 flex-none" />
+        Colar
+      </button>
       <label className="block">
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-semibold">{label}</span>
@@ -564,6 +606,7 @@ function TextBlock({
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">{help}</p>
         <textarea
+          ref={textareaRef}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={7}

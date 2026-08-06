@@ -133,3 +133,12 @@
   background-clip: text;
   color: transparent;
 }
+
+@keyframes float-pop {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-7px) rotate(1deg); }
+}
+
+@utility animate-float-pop {
+  animation: float-pop 2.4s ease-in-out infinite;
+}
