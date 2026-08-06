@@ -6,7 +6,7 @@ import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
-import { ScrollText, Search, Filter, ChevronRight } from "lucide-react";
+import { ScrollText, Search, Filter, ChevronRight, GitCompareArrows } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
@@ -69,12 +69,22 @@ function SessionsList() {
 
   return (
     <AppShell>
-      <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Histórico</div>
           <h1 className="mt-1 font-display text-3xl font-bold">Sessões</h1>
         </div>
-        <div className="text-sm text-muted-foreground">{visible.length} resultado(s)</div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">{visible.length} resultado(s)</span>
+          {sessions.length > 0 && (
+            <Link
+              to="/sessions/compare"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-rubi-blue/60 hover:text-foreground"
+            >
+              <GitCompareArrows className="h-4 w-4" /> Comparar sessões
+            </Link>
+          )}
+        </div>
       </div>
 
       {sessions.length === 0 ? (

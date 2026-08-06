@@ -288,8 +288,12 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
         </tbody>
       </table>
       <div className="border-t border-border/60 px-4 py-2 text-xs text-muted-foreground">
-        Valores calculados a partir da <strong>média de todas as sessões da hunt</strong>, projetada para uma
-        hora de caça. <span className="font-semibold text-rubi-success">Verde</span>{" "}
+        {hunts.some((h) => (h.sessionCount ?? 1) > 1) ? (
+          <>Valores calculados a partir da <strong>média de todas as sessões da hunt</strong>, projetada para uma hora de caça. </>
+        ) : (
+          <>Valores de cada sessão <strong>projetados para uma hora de caça</strong>, pra comparar durações diferentes de forma justa. </>
+        )}
+        <span className="font-semibold text-rubi-success">Verde</span>{" "}
         = melhor resultado · <span className="font-semibold text-rubi-danger">Vermelho</span> = pior resultado ·
         valores com Prey estão marcados em dourado. A pontuação 🏆 conta quantos dos critérios marcados acima
         cada hunt venceu.

@@ -22,6 +22,7 @@ import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
+import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_authenticated/sessions.compare'
 import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authenticated/tools.compare'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
 import { Route as AuthenticatedToolsRankingRouteImport } from './routes/_authenticated/tools.ranking'
@@ -92,6 +93,12 @@ const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedSessionsRoute,
 } as any)
+const AuthenticatedSessionsCompareRoute =
+  AuthenticatedSessionsCompareRouteImport.update({
+    id: '/compare',
+    path: '/compare',
+    getParentRoute: () => AuthenticatedSessionsRoute,
+  } as any)
 const AuthenticatedToolsCompareRoute =
   AuthenticatedToolsCompareRouteImport.update({
     id: '/tools/compare',
@@ -123,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
   '/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
@@ -140,6 +148,7 @@ export interface FileRoutesByTo {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
   '/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
@@ -159,6 +168,7 @@ export interface FileRoutesById {
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/_authenticated/sessions/compare': typeof AuthenticatedSessionsCompareRoute
   '/_authenticated/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/_authenticated/tools/ranking': typeof AuthenticatedToolsRankingRoute
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/community/$id'
     | '/sessions/$id'
+    | '/sessions/compare'
     | '/tools/compare'
     | '/tools/monster-calculator'
     | '/tools/ranking'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/community/$id'
     | '/sessions/$id'
+    | '/sessions/compare'
     | '/tools/compare'
     | '/tools/monster-calculator'
     | '/tools/ranking'
@@ -213,6 +225,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sessions'
     | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
+    | '/_authenticated/sessions/compare'
     | '/_authenticated/tools/compare'
     | '/_authenticated/tools/monster-calculator'
     | '/_authenticated/tools/ranking'
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
       parentRoute: typeof AuthenticatedSessionsRoute
     }
+    '/_authenticated/sessions/compare': {
+      id: '/_authenticated/sessions/compare'
+      path: '/compare'
+      fullPath: '/sessions/compare'
+      preLoaderRoute: typeof AuthenticatedSessionsCompareRouteImport
+      parentRoute: typeof AuthenticatedSessionsRoute
+    }
     '/_authenticated/tools/compare': {
       id: '/_authenticated/tools/compare'
       path: '/tools/compare'
@@ -344,10 +364,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSessionsRouteChildren {
   AuthenticatedSessionsIdRoute: typeof AuthenticatedSessionsIdRoute
+  AuthenticatedSessionsCompareRoute: typeof AuthenticatedSessionsCompareRoute
 }
 
 const AuthenticatedSessionsRouteChildren: AuthenticatedSessionsRouteChildren = {
   AuthenticatedSessionsIdRoute: AuthenticatedSessionsIdRoute,
+  AuthenticatedSessionsCompareRoute: AuthenticatedSessionsCompareRoute,
 }
 
 const AuthenticatedSessionsRouteWithChildren =
