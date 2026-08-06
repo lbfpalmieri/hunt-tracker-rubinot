@@ -240,18 +240,21 @@ function ImportPage() {
             help="Bloco com XP Gain, Loot, Supplies, Balance, Killed Monsters e Looted Items."
             value={huntingText}
             onChange={setHuntingText}
+            variant="hunting"
           />
           <TextBlock
             label="Input Analyser (Received Damage)"
             help="Opcional. Total, Max-DPS, Damage Types e Damage Sources."
             value={damageText}
             onChange={setDamageText}
+            variant="damage"
           />
           <TextBlock
             label="Miscellaneous"
             help="Opcional. Charm Data, Imbuement Data e Item Upgrade."
             value={miscText}
             onChange={setMiscText}
+            variant="misc"
           />
           <button
             onClick={handleAutoSplit}
@@ -564,11 +567,33 @@ function ImportPage() {
   );
 }
 
+const TEXT_BLOCK_VARIANTS = {
+  hunting: {
+    border: "border-rubi-blue/40",
+    bg: "bg-gradient-to-br from-rubi-blue/20 via-surface to-surface",
+  },
+  damage: {
+    border: "border-white/10",
+    bg: "bg-gradient-to-br from-rubi-success/15 via-surface to-rubi-danger/15",
+  },
+  misc: {
+    border: "border-rubi-gold/40",
+    bg: "bg-gradient-to-br from-rubi-gold/20 via-surface to-surface",
+  },
+} as const;
+
 function TextBlock({
-  label, help, value, onChange,
-}: { label: string; help: string; value: string; onChange: (v: string) => void }) {
+  label, help, value, onChange, variant,
+}: {
+  label: string;
+  help: string;
+  value: string;
+  onChange: (v: string) => void;
+  variant: keyof typeof TEXT_BLOCK_VARIANTS;
+}) {
   const [pasting, setPasting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const theme = TEXT_BLOCK_VARIANTS[variant];
 
   const handlePaste = async () => {
     setPasting(true);
@@ -588,28 +613,30 @@ function TextBlock({
   };
 
   return (
-    <div className="card-surface relative p-4">
-      <button
-        type="button"
-        onClick={handlePaste}
-        disabled={pasting}
-        title="Colar da área de transferência"
-        className="animate-float-pop group absolute -right-3 -top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-3 py-1.5 text-xs font-bold text-background shadow-glow-gold ring-2 ring-background transition-transform hover:scale-110 hover:shadow-glow-blue hover:[animation-play-state:paused] active:scale-95 disabled:pointer-events-none disabled:opacity-60"
-      >
-        <ClipboardPaste className="h-3.5 w-3.5 flex-none" />
-        Colar
-      </button>
+    <div className={"rounded-lg border p-3 " + theme.border + " " + theme.bg} style={{ boxShadow: "var(--shadow-card)" }}>
       <label className="block">
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm font-semibold">{label}</span>
-          <span className="text-xs text-muted-foreground">{value.length} chars</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-sm font-semibold">{label}</span>
+            <button
+              type="button"
+              onClick={handlePaste}
+              disabled={pasting}
+              title="Colar da área de transferência"
+              className="animate-float-pop inline-flex flex-none items-center gap-1 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-2 py-0.5 text-[11px] font-bold text-background shadow-glow-gold transition-transform hover:scale-110 hover:shadow-glow-blue hover:[animation-play-state:paused] active:scale-95 disabled:pointer-events-none disabled:opacity-60"
+            >
+              <ClipboardPaste className="h-3 w-3 flex-none" />
+              Colar
+            </button>
+          </div>
+          <span className="flex-none text-xs text-muted-foreground">{value.length} chars</span>
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">{help}</p>
         <textarea
           ref={textareaRef}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          rows={7}
+          rows={4}
           className="mt-2 w-full resize-y rounded-lg border border-border bg-background/60 p-3 font-mono text-xs leading-relaxed placeholder:text-muted-foreground/50"
           placeholder="Cole o texto aqui..."
           spellCheck={false}
