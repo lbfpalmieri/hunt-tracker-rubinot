@@ -5,8 +5,10 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
+import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { MAX_COMPARE, fromOwnSession, type CompareHunt } from "@/lib/compare";
+import { fmtDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/sessions/compare")({
   head: () => ({
@@ -66,6 +68,15 @@ function SessionsComparePage() {
 
   const selectedKeys = new Set(selected.map((h) => h.key));
   const full = selected.length >= MAX_COMPARE;
+
+  const selectedSessions = useMemo(
+    () => selected.map((h) => sessions.find((s) => s.id === h.id)),
+    [selected, sessions],
+  );
+  const miscCols = useMemo(
+    () => selected.map((h) => ({ key: h.key, label: h.huntName, sub: fmtDate(h.createdAt) })),
+    [selected],
+  );
 
   const toggle = (h: CompareHunt) =>
     setSelected((prev) => {
@@ -182,6 +193,7 @@ function SessionsComparePage() {
               </span>
             </div>
             <CompareTable hunts={selected} />
+            <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
           </>
         )}
       </div>
