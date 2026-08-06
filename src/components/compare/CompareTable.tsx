@@ -153,9 +153,53 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
 
   const activeCriteria = SCORABLE_ROWS.filter((r) => scoreOn.has(r.label)).length;
   const topScore = Math.max(0, ...hunts.map((h) => scores.get(h.key) ?? 0));
+  const winners = hunts.filter((h) => topScore > 0 && (scores.get(h.key) ?? 0) === topScore);
+  const soleWinner = winners.length === 1 ? winners[0] : null;
+  // Só entram critérios que a vencedora levou sozinha — um critério empatado
+  // (ex.: mesmo número de kills) não deveria virar "venceu em Kills" no texto.
+  const winnerCriteria = soleWinner
+    ? SCORABLE_ROWS.filter((r) => {
+        if (!scoreOn.has(r.label)) return false;
+        const w = winnersOf(r, hunts);
+        return w.size === 1 && w.has(soleWinner.key);
+      }).map((r) => r.label)
+    : [];
 
   return (
     <div className="space-y-4">
+      {activeCriteria === 0 ? (
+        <div className="rounded-xl border border-border/60 bg-surface/40 px-4 py-3 text-sm text-muted-foreground">
+          Marque pelo menos um critério abaixo para o sistema apontar automaticamente qual saiu melhor.
+        </div>
+      ) : winners.length === 0 ? (
+        <div className="rounded-xl border border-border/60 bg-surface/40 px-4 py-3 text-sm text-muted-foreground">
+          Sem dados suficientes nos critérios marcados pra apontar uma vencedora clara.
+        </div>
+      ) : winners.length === hunts.length ? (
+        <div className="rounded-xl border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">
+          Empate geral — nenhuma se destacou nos {activeCriteria} critério(s) avaliados.
+        </div>
+      ) : soleWinner ? (
+        <div className="flex items-start gap-3 rounded-xl border border-rubi-gold/60 bg-rubi-gold/10 px-4 py-3 text-sm shadow-glow-gold">
+          <span className="text-lg leading-none">🏆</span>
+          <span>
+            <strong className="text-rubi-gold">{soleWinner.huntName}</strong> teve o melhor resultado geral —
+            venceu {topScore} de {activeCriteria} critério(s) avaliados
+            {winnerCriteria.length > 0 && (
+              <>
+                : <span className="text-foreground">{winnerCriteria.join(", ")}</span>
+              </>
+            )}
+            .
+          </span>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-rubi-gold/60 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
+          Empate entre {winners.map((h) => h.huntName).join(" e ")} — cada uma venceu {topScore} de{" "}
+          {activeCriteria} critério(s) avaliados.
+        </div>
+      )}
+
       <div className="card-surface p-3">
         <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           <Trophy className="h-3.5 w-3.5 text-rubi-gold" /> Critérios da pontuação
