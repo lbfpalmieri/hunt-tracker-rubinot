@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
 import { InfoHint } from "@/components/InfoHint";
+import { RendimentoNudge } from "@/components/RendimentoNudge";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
@@ -10,7 +11,7 @@ import { huntRawXp } from "@/lib/bounty";
 import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
 import { aggregateSessions } from "@/lib/performance";
 import {
-  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, Gauge,
+  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
 
 import { lazy, Suspense, useMemo } from "react";
@@ -81,16 +82,7 @@ function Dashboard() {
             ) : (
               <>Bem-vindo, caçador</>
             )}
-            {active && (
-              <Link
-                to="/rendimento"
-                title="Ver meu rendimento"
-                aria-label="Ver meu rendimento"
-                className="text-muted-foreground/50 transition-colors hover:text-rubi-blue"
-              >
-                <Gauge className="h-5 w-5" />
-              </Link>
-            )}
+            {active && <RendimentoNudge />}
           </h1>
           {active && (
             <p className="mt-1 text-sm text-muted-foreground">
