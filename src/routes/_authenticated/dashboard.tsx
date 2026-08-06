@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
 import { InfoHint } from "@/components/InfoHint";
+import { RendimentoNudge } from "@/components/RendimentoNudge";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
@@ -10,7 +11,7 @@ import { huntRawXp } from "@/lib/bounty";
 import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
 import { aggregateSessions } from "@/lib/performance";
 import {
-  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, Gauge,
+  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
 
 import { lazy, Suspense, useMemo } from "react";
