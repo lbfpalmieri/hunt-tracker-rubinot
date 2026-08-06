@@ -81,16 +81,7 @@ function Dashboard() {
             ) : (
               <>Bem-vindo, caçador</>
             )}
-            {active && (
-              <Link
-                to="/rendimento"
-                title="Ver meu rendimento"
-                aria-label="Ver meu rendimento"
-                className="text-muted-foreground/50 transition-colors hover:text-rubi-blue"
-              >
-                <Gauge className="h-5 w-5" />
-              </Link>
-            )}
+            {active && <RendimentoNudge />}
           </h1>
           {active && (
             <p className="mt-1 text-sm text-muted-foreground">
