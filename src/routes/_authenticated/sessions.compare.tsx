@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter } from "lucide-react";
+import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter, Calendar } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
@@ -9,6 +9,15 @@ import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { MAX_COMPARE, fromOwnSession, type CompareHunt } from "@/lib/compare";
 import { fmtDate } from "@/lib/format";
+import {
+  type Period,
+  PERIODS,
+  periodRange,
+  formatRange,
+  filterByPeriod,
+  startOfWeek,
+  endOfDay,
+} from "@/lib/period";
 
 export const Route = createFileRoute("/_authenticated/sessions/compare")({
   head: () => ({
@@ -39,10 +48,15 @@ function SessionsComparePage() {
 
   const [filterChar, setFilterChar] = useState<string>(activeId ?? "all");
   const [q, setQ] = useState("");
+  const [period, setPeriod] = useState<Period>("all");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
   const compareRef = useRef<HTMLDivElement>(null);
   const scrollToCompare = () =>
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const range = useMemo(() => periodRange(period, customStart, customEnd), [period, customStart, customEnd]);
 
   const all = useMemo(
     () =>
@@ -63,8 +77,31 @@ function SessionsComparePage() {
           x.hunt.huntName.toLowerCase().includes(needle) || x.hunt.charName.toLowerCase().includes(needle),
       );
     }
-    return list.map((x) => x.hunt).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [all, filterChar, q]);
+    const hunts = list.map((x) => x.hunt).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return filterByPeriod(hunts, (h) => h.createdAt, range);
+  }, [all, filterChar, q, range]);
+
+  /** Só entra em cena sem filtro de data — divide a lista inteira em blocos semanais pra facilitar a leitura. */
+  const cappedKeys = useMemo(() => new Set(visible.slice(0, 60).map((h) => h.key)), [visible]);
+  const weekGroups = useMemo(() => {
+    if (period !== "all") return null;
+    const map = new Map<string, CompareHunt[]>();
+    for (const h of visible) {
+      if (!cappedKeys.has(h.key)) continue;
+      const key = startOfWeek(new Date(h.createdAt)).toISOString();
+      const arr = map.get(key);
+      if (arr) arr.push(h);
+      else map.set(key, [h]);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, items]) => {
+        const start = new Date(key);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6);
+        return { key, label: formatRange(start, endOfDay(end)), items };
+      });
+  }, [visible, period, cappedKeys]);
 
   const selectedKeys = new Set(selected.map((h) => h.key));
   const full = selected.length >= MAX_COMPARE;
@@ -149,6 +186,65 @@ function SessionsComparePage() {
         </div>
       </div>
 
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {PERIODS.map((p) => (
+          <button
+            key={p.value}
+            type="button"
+            onClick={() => {
+              setPeriod(p.value);
+              if (p.value === "custom" && !customStart && !customEnd) {
+                const today = new Date();
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                const toInput = (d: Date) =>
+                  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                setCustomStart(toInput(weekAgo));
+                setCustomEnd(toInput(today));
+              }
+            }}
+            className={
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+              (period === p.value
+                ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+            }
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {period === "custom" && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+          <label className="flex items-center gap-1.5 text-muted-foreground">
+            De
+            <input
+              type="date"
+              value={customStart}
+              max={customEnd || undefined}
+              onChange={(e) => setCustomStart(e.target.value)}
+              className="rounded-md border border-border/60 bg-background px-2 py-1 text-foreground"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-muted-foreground">
+            até
+            <input
+              type="date"
+              value={customEnd}
+              min={customStart || undefined}
+              onChange={(e) => setCustomEnd(e.target.value)}
+              className="rounded-md border border-border/60 bg-background px-2 py-1 text-foreground"
+            />
+          </label>
+        </div>
+      )}
+
+      <div className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Calendar className="h-3.5 w-3.5" />
+        {formatRange(range.start, range.end)}
+      </div>
+
       {full && (
         <p className="mb-3 text-xs text-rubi-gold">
           Limite de {MAX_COMPARE} sessões atingido — remova uma para escolher outra.
@@ -159,10 +255,37 @@ function SessionsComparePage() {
         <EmptyState
           icon={GitCompareArrows}
           title="Nenhuma sessão para comparar"
-          description="Importe suas hunts para poder compará-las entre si, sessão a sessão."
-          ctaLabel="Importar sessão"
-          ctaTo="/import"
+          description={
+            period === "all"
+              ? "Importe suas hunts para poder compará-las entre si, sessão a sessão."
+              : "Nenhuma sessão nesse período — tente outro filtro de data."
+          }
+          ctaLabel={period === "all" ? "Importar sessão" : undefined}
+          ctaTo={period === "all" ? "/import" : undefined}
         />
+      ) : weekGroups ? (
+        <div className="space-y-6">
+          {weekGroups.map((g) => (
+            <div key={g.key}>
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5 flex-none text-rubi-blue" />
+                {g.label}
+                <span className="h-px flex-1 bg-border/60" />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {g.items.map((h) => (
+                  <HuntPickerCard
+                    key={h.key}
+                    hunt={h}
+                    selected={selectedKeys.has(h.key)}
+                    disabled={full}
+                    onToggle={() => toggle(h)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.slice(0, 60).map((h) => (

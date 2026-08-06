@@ -79,9 +79,10 @@ function SessionsList() {
           {sessions.length > 0 && (
             <Link
               to="/sessions/compare"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-rubi-blue/60 hover:text-foreground"
+              className="group inline-flex items-center gap-2 rounded-xl border border-rubi-gold/50 bg-gradient-to-r from-rubi-gold/10 to-rubi-blue/10 px-4 py-2 text-sm font-bold shadow-glow-gold transition-all hover:scale-[1.03] hover:border-rubi-blue/50 hover:shadow-glow-blue"
             >
-              <GitCompareArrows className="h-4 w-4" /> Comparar sessões
+              <GitCompareArrows className="h-4 w-4 flex-none text-rubi-gold transition-colors group-hover:text-rubi-blue" />
+              <span className="text-gradient-brand">Comparar sessões</span>
             </Link>
           )}
         </div>

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateSessions, balanceSince } from "@/lib/performance";
+import { type Period, PERIODS, periodRange, formatRange, filterByPeriod } from "@/lib/period";
 import { huntRawXp } from "@/lib/bounty";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -54,72 +55,6 @@ export const Route = createFileRoute("/_authenticated/rendimento")({
   component: RendimentoPage,
 });
 
-type Period = "yesterday" | "today" | "week" | "month" | "all" | "custom";
-
-const PERIODS: { value: Period; label: string }[] = [
-  { value: "today", label: "Hoje" },
-  { value: "yesterday", label: "Ontem" },
-  { value: "week", label: "Esta semana" },
-  { value: "month", label: "Este mês" },
-  { value: "all", label: "Tudo" },
-  { value: "custom", label: "Personalizado" },
-];
-
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-
-/** Parses a <input type="date"> value ("YYYY-MM-DD") as a local date, not UTC. */
-function parseDateInput(value: string): Date | null {
-  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-}
-
-/** Inclusive [start, end] window for a period — null on either side means "sem limite". */
-function periodRange(
-  period: Period,
-  customStart: string,
-  customEnd: string,
-): { start: Date | null; end: Date | null } {
-  const now = new Date();
-  if (period === "all") return { start: null, end: null };
-  if (period === "today") return { start: startOfDay(now), end: endOfDay(now) };
-  if (period === "yesterday") {
-    const y = new Date(now);
-    y.setDate(y.getDate() - 1);
-    return { start: startOfDay(y), end: endOfDay(y) };
-  }
-  if (period === "month") {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    return { start, end: endOfDay(end) };
-  }
-  if (period === "week") {
-    // segunda-feira como início, domingo como fim
-    const start = startOfDay(now);
-    const day = start.getDay();
-    const diffToMonday = day === 0 ? 6 : day - 1;
-    start.setDate(start.getDate() - diffToMonday);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    return { start, end: endOfDay(end) };
-  }
-  // custom
-  const s = parseDateInput(customStart);
-  const e = parseDateInput(customEnd);
-  return { start: s ? startOfDay(s) : null, end: e ? endOfDay(e) : null };
-}
-
-const fmtDay = (d: Date) =>
-  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(d);
-
-function formatRange(start: Date | null, end: Date | null): string {
-  if (!start && !end) return "Todo o histórico registrado";
-  if (!start || !end) return "Escolha as duas datas";
-  if (start.toDateString() === end.toDateString()) return fmtDay(start);
-  return `${fmtDay(start)} — ${fmtDay(end)}`;
-}
-
 function RendimentoPage() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
@@ -149,14 +84,7 @@ function RendimentoPage() {
   );
 
   const periodSessions = useMemo(() => {
-    const { start, end } = range;
-    if (!start && !end) return mySessions;
-    return mySessions.filter((s) => {
-      const t = new Date(s.createdAt);
-      if (start && t < start) return false;
-      if (end && t > end) return false;
-      return true;
-    });
+    return filterByPeriod(mySessions, (s) => s.createdAt, range);
   }, [mySessions, range]);
 
   const agg = useMemo(() => aggregateSessions(periodSessions), [periodSessions]);
