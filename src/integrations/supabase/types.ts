@@ -44,6 +44,47 @@ export type Database = {
         }
         Relationships: []
       }
+      goals: {
+        Row: {
+          character_id: string
+          created_at: string
+          currency_label: string
+          id: string
+          image_url: string | null
+          name: string
+          target_amount: number
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          currency_label?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          target_amount?: number
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          currency_label?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          target_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunt_sessions: {
         Row: {
           bounty_difficulty: string | null
@@ -178,6 +219,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "imbuements_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      level_snapshots: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          level: number
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          level: number
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          level?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_snapshots_character_id_fkey"
             columns: ["character_id"]
             isOneToOne: false
             referencedRelation: "characters"
