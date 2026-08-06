@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Globe2, User, Trophy } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Globe2, User, Trophy, Zap } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 import type { CompareHunt } from "@/lib/compare";
 import { perHour, topKills } from "@/lib/compare";
 import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
@@ -132,6 +132,65 @@ function winnersOf(row: Row, hunts: CompareHunt[]): Set<string> {
   return winners;
 }
 
+/**
+ * Sessões individuais da mesma hunt (o caso normal em Comparar sessões,
+ * já que é aí que faz sentido testar variações no mesmo spot) têm o mesmo
+ * huntName — nomeá-las igual no veredito/placar seria ambíguo, então
+ * marcamos com o horário da sessão pra diferenciar.
+ */
+function isAmbiguousName(h: CompareHunt, hunts: CompareHunt[]): boolean {
+  if ((h.sessionCount ?? 1) > 1) return false;
+  return hunts.filter(
+    (x) => (x.sessionCount ?? 1) <= 1 && x.huntName.trim().toLowerCase() === h.huntName.trim().toLowerCase(),
+  ).length > 1;
+}
+
+function HuntLabel({ h, hunts, className }: { h: CompareHunt; hunts: CompareHunt[]; className?: string }) {
+  return (
+    <span className={className}>
+      {h.huntName}
+      {isAmbiguousName(h, hunts) && (
+        <span className="font-normal text-muted-foreground"> ({fmtDate(h.createdAt)})</span>
+      )}
+    </span>
+  );
+}
+
+interface Highlight {
+  row: Row;
+  pct: number;
+  hi: CompareHunt;
+  lo: CompareHunt;
+}
+
+/** Maior diferença percentual entre a maior e a menor sessão, entre os critérios marcados. */
+function biggestGap(hunts: CompareHunt[], scoreOn: Set<string>): Highlight | null {
+  let best: Highlight | null = null;
+  for (const row of SCORABLE_ROWS) {
+    if (!scoreOn.has(row.label)) continue;
+    const vals = hunts
+      .map((h) => ({ h, v: row.value(h) }))
+      .filter((x): x is { h: CompareHunt; v: number } => x.v != null);
+    if (vals.length < 2) continue;
+    let hi = vals[0];
+    let lo = vals[0];
+    for (const x of vals) {
+      if (x.v > hi.v) hi = x;
+      if (x.v < lo.v) lo = x;
+    }
+    if (hi.h.key === lo.h.key) continue;
+    const denom = Math.abs(lo.v) > 1e-9 ? Math.abs(lo.v) : Math.abs(hi.v);
+    if (denom < 1e-9) continue;
+    const pct = (Math.abs(hi.v - lo.v) / denom) * 100;
+    if (!best || pct > best.pct) best = { row, pct, hi: hi.h, lo: lo.h };
+  }
+  return best;
+}
+
+const fmtPct = (v: number) => (v >= 10 ? `${Math.round(v)}%` : `${v.toFixed(1)}%`);
+/** Abaixo disso a diferença não é interessante o bastante pra virar destaque. */
+const MIN_HIGHLIGHT_PCT = 5;
+
 export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
   const [scoreOn, setScoreOn] = useState<Set<string>>(() => new Set(SCORABLE_ROWS.map((r) => r.label)));
   const toggleScore = (label: string) =>
@@ -165,40 +224,84 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
       }).map((r) => r.label)
     : [];
 
+  const highlight = useMemo(() => {
+    const gap = biggestGap(hunts, scoreOn);
+    return gap && gap.pct >= MIN_HIGHLIGHT_PCT ? gap : null;
+  }, [hunts, scoreOn]);
+
   return (
     <div className="space-y-4">
-      {activeCriteria === 0 ? (
-        <div className="rounded-xl border border-border/60 bg-surface/40 px-4 py-3 text-sm text-muted-foreground">
-          Marque pelo menos um critério abaixo para o sistema apontar automaticamente qual saiu melhor.
-        </div>
-      ) : winners.length === 0 ? (
-        <div className="rounded-xl border border-border/60 bg-surface/40 px-4 py-3 text-sm text-muted-foreground">
-          Sem dados suficientes nos critérios marcados pra apontar uma vencedora clara.
-        </div>
-      ) : winners.length === hunts.length ? (
-        <div className="rounded-xl border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">
-          Empate geral — nenhuma se destacou nos {activeCriteria} critério(s) avaliados.
-        </div>
-      ) : soleWinner ? (
-        <div className="flex items-start gap-3 rounded-xl border border-rubi-gold/60 bg-rubi-gold/10 px-4 py-3 text-sm shadow-glow-gold">
-          <span className="text-lg leading-none">🏆</span>
-          <span>
-            <strong className="text-rubi-gold">{soleWinner.huntName}</strong> teve o melhor resultado geral —
-            venceu {topScore} de {activeCriteria} critério(s) avaliados
-            {winnerCriteria.length > 0 && (
-              <>
-                : <span className="text-foreground">{winnerCriteria.join(", ")}</span>
-              </>
-            )}
-            .
+      <div className="overflow-hidden rounded-2xl border border-rubi-gold/50 bg-gradient-to-br from-rubi-gold/10 via-surface to-rubi-blue/10 shadow-glow-gold">
+        <div className="flex items-start gap-3 px-4 py-3 sm:px-5 sm:py-4">
+          <span className="text-xl leading-none sm:text-2xl">
+            {activeCriteria === 0 || winners.length === 0 ? "🤔" : winners.length === hunts.length ? "🤝" : "🏆"}
           </span>
+          <div className="min-w-0 text-sm sm:text-[15px]">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+              Veredito automático
+            </div>
+            <div className="mt-0.5">
+              {activeCriteria === 0 ? (
+                <span className="text-muted-foreground">
+                  Marque pelo menos um critério abaixo para o sistema apontar automaticamente qual saiu melhor.
+                </span>
+              ) : winners.length === 0 ? (
+                <span className="text-muted-foreground">
+                  Sem dados suficientes nos critérios marcados pra apontar uma vencedora clara.
+                </span>
+              ) : winners.length === hunts.length ? (
+                <span>Empate geral — nenhuma se destacou nos {activeCriteria} critério(s) avaliados.</span>
+              ) : soleWinner ? (
+                <span>
+                  <strong className="text-rubi-gold">
+                    <HuntLabel h={soleWinner} hunts={hunts} />
+                  </strong>{" "}
+                  teve o melhor resultado geral — venceu <strong>{topScore}</strong> de {activeCriteria}{" "}
+                  critério(s) avaliados
+                  {winnerCriteria.length > 0 && (
+                    <>
+                      : <span className="text-foreground">{winnerCriteria.join(", ")}</span>
+                    </>
+                  )}
+                  .
+                </span>
+              ) : (
+                <span>
+                  Empate entre{" "}
+                  {winners.map((h, i) => (
+                    <Fragment key={h.key}>
+                      {i > 0 && (i === winners.length - 1 ? " e " : ", ")}
+                      <strong className="text-rubi-gold">
+                        <HuntLabel h={h} hunts={hunts} />
+                      </strong>
+                    </Fragment>
+                  ))}{" "}
+                  — cada uma venceu {topScore} de {activeCriteria} critério(s) avaliados.
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="rounded-xl border border-rubi-gold/60 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
-          Empate entre {winners.map((h) => h.huntName).join(" e ")} — cada uma venceu {topScore} de{" "}
-          {activeCriteria} critério(s) avaliados.
-        </div>
-      )}
+
+        {highlight && (
+          <div className="flex items-start gap-3 border-t border-rubi-gold/20 bg-background/30 px-4 py-3 sm:px-5">
+            <Zap className="h-4 w-4 flex-none translate-y-0.5 text-rubi-blue" />
+            <div className="min-w-0 text-sm">
+              <span className="font-semibold text-rubi-blue">Maior diferença: </span>
+              <span className="text-foreground">{highlight.row.label}</span> foi{" "}
+              <strong className="text-rubi-blue">{fmtPct(highlight.pct)}</strong> maior em{" "}
+              <strong>
+                <HuntLabel h={highlight.hi} hunts={hunts} />
+              </strong>{" "}
+              (<span className="font-mono">{highlight.row.render(highlight.hi)}</span>) do que em{" "}
+              <strong>
+                <HuntLabel h={highlight.lo} hunts={hunts} />
+              </strong>{" "}
+              (<span className="font-mono">{highlight.row.render(highlight.lo)}</span>).
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="card-surface p-3">
         <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -235,6 +338,7 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
           {hunts.map((h) => {
             const score = scores.get(h.key) ?? 0;
             const isWinner = topScore > 0 && score === topScore;
+            const pct = activeCriteria > 0 ? (score / activeCriteria) * 100 : 0;
             return (
               <div
                 key={h.key}
@@ -249,9 +353,18 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                 <div className="mt-1 truncate text-xs font-medium text-muted-foreground" title={h.huntName}>
                   {h.huntName}
                 </div>
+                {isAmbiguousName(h, hunts) && (
+                  <div className="text-[10px] text-muted-foreground/70">{fmtDate(h.createdAt)}</div>
+                )}
                 <div className="mt-1 font-display text-2xl font-bold text-foreground">
                   {score}
                   <span className="text-sm font-normal text-muted-foreground">/{activeCriteria}</span>
+                </div>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border/40">
+                  <div
+                    className={"h-full rounded-full transition-all " + (isWinner ? "bg-rubi-gold" : "bg-rubi-blue/50")}
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               </div>
             );
