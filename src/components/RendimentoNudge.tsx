@@ -44,16 +44,16 @@ export function RendimentoNudge() {
         title="Ver meu rendimento"
         aria-label="Ver meu rendimento"
         className={
-          "relative inline-flex h-8 w-8 items-center justify-center rounded-full transition-all " +
-          (visible
-            ? "bg-rubi-gold/15 text-rubi-gold shadow-[0_0_0_1px_var(--rubi-gold)] animate-pulse"
-            : "text-muted-foreground/60 hover:bg-accent hover:text-rubi-blue")
+          "nudge-attention relative inline-flex h-8 w-8 items-center justify-center rounded-full transition-all hover:scale-110 " +
+          (visible ? "text-rubi-gold" : "text-rubi-gold/80 hover:text-rubi-gold")
         }
       >
-        <Gauge className="h-5 w-5" />
-        {visible && (
-          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-rubi-gold shadow-glow-blue" />
-        )}
+        <Gauge className="h-5 w-5 drop-shadow-[0_0_4px_var(--rubi-gold)]" />
+        <span
+          aria-hidden
+          className="absolute -right-0.5 -top-0.5 h-2 w-2 animate-pulse rounded-full bg-rubi-gold"
+        />
+
       </Link>
 
       {visible && !dismissed && (
