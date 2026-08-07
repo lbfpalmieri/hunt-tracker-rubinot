@@ -275,7 +275,10 @@ function ComparePage() {
         </div>
       )}
 
-      <div ref={compareRef} className="mt-8 scroll-mt-4">
+      <div
+        ref={compareRef}
+        className={"mt-8 scroll-mt-4 " + (selected.length >= 2 ? "pb-40 md:pb-24" : "")}
+      >
         {selected.length < 2 ? (
           <div className="card-surface p-6 text-center text-sm text-muted-foreground">
             Selecione pelo menos 2 hunts para gerar o comparativo.
