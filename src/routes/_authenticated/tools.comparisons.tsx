@@ -46,7 +46,7 @@ function SavedComparisonsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["saved-comparisons"],
-    queryFn: () => fetchList({ data: {} }),
+    queryFn: () => fetchList(),
   });
 
   const update = useMutation({
@@ -90,8 +90,6 @@ function SavedComparisonsPage() {
           icon={GitCompareArrows}
           title="Nenhuma comparação salva"
           description="Monte um comparativo em 'Comparar hunts' e clique em 'Salvar comparação' para guardá-la aqui."
-          ctaLabel="Comparar hunts"
-          ctaTo="/tools/compare"
         />
       ) : (
         <div className="space-y-3">
