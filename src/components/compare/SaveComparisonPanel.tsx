@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { CompareHunt } from "@/lib/compare";
+import { fmtDuration } from "@/lib/format";
 import { saveComparison } from "@/lib/saved-comparisons.functions";
 
 interface Props {
@@ -103,9 +104,28 @@ export function SaveComparisonPanel({ hunts, includeBounty, includePrey }: Props
       </label>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {hunts.map((h) => (
-          <label key={h.key} className="block text-xs font-medium text-muted-foreground">
-            {h.huntName}
+        {hunts.map((h, i) => (
+          <label key={h.key} className="block">
+            <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs font-semibold text-foreground">
+              <span className="rounded bg-rubi-blue/20 px-1.5 py-0.5 font-mono text-[10px] text-rubi-blue">
+                #{i + 1}
+              </span>
+              <span className="text-rubi-blue">{h.huntName}</span>
+              <span className="font-normal text-muted-foreground">
+                {new Date(h.createdAt).toLocaleString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+                {" · "}
+                {fmtDuration(h.durationSec)}
+                {h.sessionCount && h.sessionCount > 1 ? ` · ${h.sessionCount} sessões` : ""}
+                {" · "}
+                {h.charName}
+              </span>
+            </span>
             <textarea
               value={huntNotes[h.key] ?? ""}
               onChange={(e) => setHuntNotes((prev) => ({ ...prev, [h.key]: e.target.value }))}
@@ -116,6 +136,7 @@ export function SaveComparisonPanel({ hunts, includeBounty, includePrey }: Props
           </label>
         ))}
       </div>
+
 
       <div className="flex flex-wrap items-center gap-2">
         <button
