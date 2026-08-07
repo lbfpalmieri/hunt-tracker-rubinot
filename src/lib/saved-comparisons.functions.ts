@@ -84,10 +84,11 @@ export const updateComparison = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => updateInput.parse(input))
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: { title?: string; notes?: string; hunt_notes?: Record<string, string> } = {};
     if (data.title !== undefined) patch.title = data.title;
     if (data.notes !== undefined) patch.notes = data.notes;
     if (data.huntNotes !== undefined) patch.hunt_notes = data.huntNotes;
+
     const { data: row, error } = await context.supabase
       .from("saved_comparisons")
       .update(patch)
