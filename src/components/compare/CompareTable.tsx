@@ -379,11 +379,14 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
             <th className="sticky left-0 z-10 bg-card px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
               Métrica
             </th>
-            {hunts.map((h) => {
+            {hunts.map((h, i) => {
               const agg = (h.sessionCount ?? 1) > 1;
               return (
                 <th key={h.key} className="px-4 py-3 text-left align-top">
                   <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-rubi-blue/20 px-1.5 py-0.5 font-mono text-[10px] text-rubi-blue">
+                      #{i + 1}
+                    </span>
                     {h.source === "community" ? (
                       <Globe2 className="h-3.5 w-3.5 flex-none text-rubi-blue" />
                     ) : (
@@ -391,6 +394,7 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                     )}
                     {agg ? (
                       <span className="font-display text-sm font-semibold">{h.huntName}</span>
+
                     ) : (
                       <Link
                         to={h.source === "own" ? "/sessions/$id" : "/community/$id"}
