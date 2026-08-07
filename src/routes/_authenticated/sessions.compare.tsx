@@ -300,7 +300,10 @@ function SessionsComparePage() {
         </div>
       )}
 
-      <div ref={compareRef} className="mt-8 scroll-mt-4">
+      <div
+        ref={compareRef}
+        className={"mt-8 scroll-mt-4 " + (selected.length >= 2 ? "pb-40 md:pb-24" : "")}
+      >
         {selected.length < 2 ? (
           <div className="card-surface p-6 text-center text-sm text-muted-foreground">
             Selecione pelo menos 2 sessões para gerar o comparativo.
@@ -317,9 +320,11 @@ function SessionsComparePage() {
             </div>
             <CompareTable hunts={selected} />
             <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
+            <SaveComparisonPanel hunts={selected} includeBounty includePrey />
           </>
         )}
       </div>
+
 
       {selected.length >= 2 && (
         <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 md:bottom-6">
