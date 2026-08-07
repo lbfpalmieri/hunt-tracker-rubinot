@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
+import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
+
 import { useAppStore, useHydrated } from "@/lib/store";
 import { MAX_COMPARE, fromOwnSession, type CompareHunt } from "@/lib/compare";
 import { fmtDate } from "@/lib/format";
