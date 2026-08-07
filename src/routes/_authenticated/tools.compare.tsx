@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown, Clock, Trophy, Sparkles } from "lucide-react";
+import { GitCompareArrows, Search, X, ArrowDown, Clock, Trophy, Sparkles, BookmarkCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
+import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -162,6 +163,13 @@ function ComparePage() {
           </p>
 
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/tools/comparisons"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-3 py-1.5 text-sm font-semibold text-rubi-gold"
+          >
+            <BookmarkCheck className="h-4 w-4" /> Comparações salvas
+          </Link>
         {selected.length > 0 && (
           <button
             type="button"
@@ -171,6 +179,7 @@ function ComparePage() {
             <X className="h-4 w-4" /> Limpar seleção ({selected.length})
           </button>
         )}
+        </div>
       </div>
 
       <div className="card-surface mb-4 flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
@@ -282,6 +291,11 @@ function ComparePage() {
               </span>
             </div>
             <CompareTable hunts={selected} />
+            <SaveComparisonPanel
+              hunts={selected}
+              includeBounty={includeBounty}
+              includePrey={includePrey}
+            />
           </>
         )}
       </div>
