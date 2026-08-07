@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { CompareHunt } from "@/lib/compare";
+import { fmtDuration } from "@/lib/format";
 import { saveComparison } from "@/lib/saved-comparisons.functions";
 
 interface Props {
