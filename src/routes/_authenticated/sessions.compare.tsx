@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
+import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
+
 import { useAppStore, useHydrated } from "@/lib/store";
 import { MAX_COMPARE, fromOwnSession, type CompareHunt } from "@/lib/compare";
 import { fmtDate } from "@/lib/format";
@@ -300,7 +302,10 @@ function SessionsComparePage() {
         </div>
       )}
 
-      <div ref={compareRef} className="mt-8 scroll-mt-4">
+      <div
+        ref={compareRef}
+        className={"mt-8 scroll-mt-4 " + (selected.length >= 2 ? "pb-40 md:pb-24" : "")}
+      >
         {selected.length < 2 ? (
           <div className="card-surface p-6 text-center text-sm text-muted-foreground">
             Selecione pelo menos 2 sessões para gerar o comparativo.
@@ -317,9 +322,11 @@ function SessionsComparePage() {
             </div>
             <CompareTable hunts={selected} />
             <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
+            <SaveComparisonPanel hunts={selected} includeBounty includePrey />
           </>
         )}
       </div>
+
 
       {selected.length >= 2 && (
         <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 md:bottom-6">
