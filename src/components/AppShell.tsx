@@ -13,6 +13,7 @@ import {
   Globe2,
   Trophy,
   Gauge,
+  BookmarkCheck,
 
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -38,6 +39,7 @@ const moreNav = [
   { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
   { to: "/tools/compare", label: "Comparar hunts", icon: GitCompareArrows },
   { to: "/tools/ranking", label: "Ranking de hunts", icon: Trophy },
+  { to: "/tools/comparisons", label: "Comparações salvas", icon: BookmarkCheck },
   { to: "/characters", label: "Personagens", icon: UserCircle2 },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
