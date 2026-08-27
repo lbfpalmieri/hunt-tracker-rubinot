@@ -7,6 +7,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { parseHunting, parseDamage, parseMiscellaneous } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
+import { detectBlockKind, BLOCK_LABEL, type BlockKind } from "@/lib/block-detect";
 import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -246,6 +247,7 @@ function ImportPage() {
             value={huntingText}
             onChange={setHuntingText}
             status={huntingStatus}
+            expect="hunting"
             summary={huntingSummary}
             message={huntingMessage}
           />
@@ -255,6 +257,7 @@ function ImportPage() {
             value={damageText}
             onChange={setDamageText}
             status={damageText ? (parsed.damage ? "ok" : "error") : "empty"}
+            expect="damage"
             summary={
               parsed.damage ? `Dano recebido ${fmtNum(parsed.damage.totalReceived ?? 0)}` : undefined
             }
@@ -267,6 +270,7 @@ function ImportPage() {
             value={miscText}
             onChange={setMiscText}
             status={miscText ? (parsed.misc ? "ok" : "error") : "empty"}
+            expect="misc"
             summary={parsed.misc ? "Charms, imbuements e upgrades lidos" : undefined}
             message="Não reconheci esse bloco. Copie o Miscellaneous completo."
             optional
