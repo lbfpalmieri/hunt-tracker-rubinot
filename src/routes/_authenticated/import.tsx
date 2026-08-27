@@ -25,6 +25,7 @@ import {
   ClipboardPaste,
   Trash2,
   MapPin,
+  X,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import {
@@ -289,6 +290,56 @@ function ImportPage() {
 
   return (
     <AppShell>
+      {notice && (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            role="status"
+            className={
+              "pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md transition-all " +
+              (notice.tone === "ok"
+                ? "border-rubi-success/60 bg-rubi-success/15"
+                : "border-rubi-danger/60 bg-rubi-danger/15")
+            }
+          >
+            <span
+              className={
+                "flex h-10 w-10 flex-none items-center justify-center rounded-xl border " +
+                (notice.tone === "ok"
+                  ? "border-rubi-success/60 bg-rubi-success/20 text-rubi-success"
+                  : "border-rubi-danger/60 bg-rubi-danger/20 text-rubi-danger")
+              }
+            >
+              {notice.tone === "ok" ? (
+                <Check className="h-5 w-5" strokeWidth={2.5} />
+              ) : (
+                <AlertTriangle className="h-5 w-5" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p
+                className={
+                  "font-display text-sm font-bold " +
+                  (notice.tone === "ok" ? "text-rubi-success" : "text-rubi-danger")
+                }
+              >
+                {notice.title}
+              </p>
+              {notice.detail && (
+                <p className="mt-0.5 text-xs text-foreground/80">{notice.detail}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              className="ml-1 flex-none rounded-lg p-1 text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Fechar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Importar</div>
         <h1 className="mt-1 font-display text-3xl font-bold">Nova sessão de hunt</h1>
