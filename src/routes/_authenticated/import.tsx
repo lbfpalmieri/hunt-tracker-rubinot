@@ -851,7 +851,8 @@ function PasteSlot({
   message,
   optional,
   expect,
-  onPasteText,
+  onPasteEvent,
+  onPasteBtn,
 }: {
   label: string;
   help: string;
@@ -862,16 +863,15 @@ function PasteSlot({
   message?: string;
   optional?: boolean;
   expect: Exclude<BlockKind, "unknown">;
-  onPasteText: (text: string, from: Exclude<BlockKind, "unknown">) => void;
+  onPasteEvent: (e: ClipboardEvent, from: Exclude<BlockKind, "unknown">) => void;
+  onPasteBtn: (from: Exclude<BlockKind, "unknown">) => Promise<void>;
 }) {
   const [pasting, setPasting] = useState(false);
 
   const pasteFromClipboard = async () => {
     setPasting(true);
     try {
-      onPasteText(await navigator.clipboard.readText(), expect);
-    } catch {
-      toast.error("Não deu pra acessar a área de transferência — use Ctrl+V na tela.");
+      await onPasteBtn(expect);
     } finally {
       setPasting(false);
     }
@@ -880,10 +880,7 @@ function PasteSlot({
   return (
     <div
       tabIndex={0}
-      onPaste={(e) => {
-        e.preventDefault();
-        onPasteText(e.clipboardData.getData("text"), expect);
-      }}
+      onPaste={(e) => onPasteEvent(e, expect)}
       className={
         "group relative overflow-hidden rounded-2xl border p-4 outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
         SLOT_THEME[status]
