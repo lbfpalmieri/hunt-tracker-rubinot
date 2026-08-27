@@ -431,7 +431,8 @@ function ImportPage() {
             onChange={setDamageText}
             status={damageText ? (parsed.damage ? "ok" : "error") : "empty"}
             expect="damage"
-            onPasteText={routePaste}
+            onPasteEvent={handlePasteEvent}
+            onPasteBtn={handleClipboardButton}
             summary={
               parsed.damage ? `Dano recebido ${fmtNum(parsed.damage.totalReceived ?? 0)}` : undefined
             }
