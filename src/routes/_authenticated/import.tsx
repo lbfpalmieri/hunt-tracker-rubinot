@@ -66,7 +66,6 @@ function ImportPage() {
   const [huntQuery, setHuntQuery] = useState("");
   const [huntPickerOpen, setHuntPickerOpen] = useState(false);
   const huntPickerRef = useRef<HTMLDivElement>(null);
-  const [charId, setCharId] = useState<string>("");
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [hasBounty, setHasBounty] = useState(false);
@@ -82,7 +81,8 @@ function ImportPage() {
   const preyReady = !hasPrey || preyValid;
 
 
-  const effectiveCharId = charId || activeId || characters[0]?.id || "";
+  const effectiveCharId = activeId || characters[0]?.id || "";
+  const activeChar = characters.find((c) => c.id === effectiveCharId);
   const charHunts = useMemo(
     () => hunts.filter((h) => h.characterId === effectiveCharId),
     [hunts, effectiveCharId],
