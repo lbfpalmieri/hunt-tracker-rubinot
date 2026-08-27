@@ -7,6 +7,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { parseHunting, parseDamage, parseMiscellaneous } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
+import { Crown } from "lucide-react";
 import { detectBlockKind, BLOCK_LABEL, type BlockKind } from "@/lib/block-detect";
 import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -121,11 +122,13 @@ function ImportPage() {
     [communityData],
   );
 
-  const ownMatches = useMemo(() => matchHuntsByMonsters(newMonsters, ownGroups), [newMonsters, ownGroups]);
+  const ownMatches = useMemo(() => sortByFullMatch(matchHuntsByMonsters(newMonsters, ownGroups)), [newMonsters, ownGroups]);
   const communityMatches = useMemo(() => {
     const ownNames = new Set(ownMatches.map((m) => m.huntName.toLowerCase()));
-    return matchHuntsByMonsters(newMonsters, communityGroups).filter(
-      (m) => !ownNames.has(m.huntName.toLowerCase()),
+    return sortByFullMatch(
+      matchHuntsByMonsters(newMonsters, communityGroups).filter(
+        (m) => !ownNames.has(m.huntName.toLowerCase()),
+      ),
     );
   }, [newMonsters, communityGroups, ownMatches]);
 
@@ -329,21 +332,47 @@ function ImportPage() {
                   </p>
                   {ownMatches.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {ownMatches.map((m) => (
-                        <button
-                          key={m.huntName}
-                          type="button"
-                          onClick={() => pickHunt(m.huntName)}
-                          className="group inline-flex items-center gap-2 rounded-xl border border-rubi-blue/50 bg-rubi-blue/10 px-3 py-1.5 text-left transition-all hover:border-rubi-blue hover:bg-rubi-blue/20 hover:shadow-glow-blue active:scale-95"
-                        >
-                          <span className="font-display text-[13px] font-bold text-foreground">
-                            {m.huntName}
-                          </span>
-                          <span className="rounded-full bg-rubi-blue/20 px-1.5 py-px text-[10px] font-semibold text-rubi-blue">
-                            {m.shared}/{m.total}
-                          </span>
-                        </button>
-                      ))}
+                      {ownMatches.map((m) => {
+                        const full = m.total > 0 && m.shared >= m.total;
+                        return (
+                          <button
+                            key={m.huntName}
+                            type="button"
+                            onClick={() => pickHunt(m.huntName)}
+                            className={
+                              "group relative inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-all active:scale-95 " +
+                              (full
+                                ? "border-rubi-gold bg-gradient-to-r from-rubi-gold/25 to-rubi-gold/10 shadow-glow-gold hover:from-rubi-gold/35"
+                                : "border-rubi-blue/50 bg-rubi-blue/10 hover:border-rubi-blue hover:bg-rubi-blue/20 hover:shadow-glow-blue")
+                            }
+                          >
+                            {full && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
+                            <span
+                              className={
+                                "font-display text-[13px] font-bold " +
+                                (full ? "text-rubi-gold" : "text-foreground")
+                              }
+                            >
+                              {m.huntName}
+                            </span>
+                            <span
+                              className={
+                                "rounded-full px-1.5 py-px text-[10px] font-bold " +
+                                (full
+                                  ? "bg-rubi-gold/25 text-rubi-gold"
+                                  : "bg-rubi-blue/20 text-rubi-blue")
+                              }
+                            >
+                              {m.shared}/{m.total}
+                            </span>
+                            {full && (
+                              <span className="rounded-full bg-rubi-gold px-1.5 py-px text-[10px] font-bold uppercase tracking-wider text-background">
+                                match total
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                   {communityMatches.length > 0 && (
@@ -353,21 +382,42 @@ function ImportPage() {
                         Usadas pela comunidade
                       </p>
                       <div className="mt-1.5 flex flex-wrap gap-2">
-                        {communityMatches.map((m) => (
-                          <button
-                            key={m.huntName}
-                            type="button"
-                            onClick={() => pickHunt(m.huntName)}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-1.5 text-left transition-all hover:border-rubi-blue/60 hover:bg-rubi-blue/10 active:scale-95"
-                          >
-                            <span className="font-display text-[13px] font-semibold text-foreground/90">
-                              {m.huntName}
-                            </span>
-                            <span className="rounded-full bg-muted/40 px-1.5 py-px text-[10px] font-semibold text-muted-foreground">
-                              {m.shared}/{m.total}
-                            </span>
-                          </button>
-                        ))}
+                        {communityMatches.map((m) => {
+                          const full = m.total > 0 && m.shared >= m.total;
+                          return (
+                            <button
+                              key={m.huntName}
+                              type="button"
+                              onClick={() => pickHunt(m.huntName)}
+                              className={
+                                "inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-all active:scale-95 " +
+                                (full
+                                  ? "border-rubi-gold/70 bg-rubi-gold/10 hover:border-rubi-gold hover:bg-rubi-gold/20"
+                                  : "border-border/60 bg-background/40 hover:border-rubi-blue/60 hover:bg-rubi-blue/10")
+                              }
+                            >
+                              {full && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
+                              <span
+                                className={
+                                  "font-display text-[13px] font-semibold " +
+                                  (full ? "text-rubi-gold" : "text-foreground/90")
+                                }
+                              >
+                                {m.huntName}
+                              </span>
+                              <span
+                                className={
+                                  "rounded-full px-1.5 py-px text-[10px] font-semibold " +
+                                  (full
+                                    ? "bg-rubi-gold/20 text-rubi-gold"
+                                    : "bg-muted/40 text-muted-foreground")
+                                }
+                              >
+                                {m.shared}/{m.total}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -597,6 +647,15 @@ function ImportPage() {
       )}
     </AppShell>
   );
+}
+
+/** Sugestões com todos os monstros do spot vêm primeiro. */
+function sortByFullMatch<T extends { shared: number; total: number }>(list: T[]): T[] {
+  return [...list].sort((a, b) => {
+    const fa = a.total > 0 && a.shared >= a.total ? 1 : 0;
+    const fb = b.total > 0 && b.shared >= b.total ? 1 : 0;
+    return fb - fa || b.shared - a.shared;
+  });
 }
 
 type SlotStatus = "empty" | "ok" | "error";
