@@ -635,16 +635,36 @@ function TextBlock({
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={() => {}}
+          onPaste={(e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData("text");
+            if (text.trim()) onChange(text);
+          }}
+          onBeforeInput={(e) => e.preventDefault()}
+          onKeyDown={(e) => {
+            const ctrl = e.ctrlKey || e.metaKey;
+            const allowed =
+              (ctrl && ["v", "a", "c", "x"].includes(e.key.toLowerCase())) ||
+              ["Tab", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(e.key);
+            if (!allowed) e.preventDefault();
+          }}
+          onDrop={(e) => e.preventDefault()}
           rows={4}
           className="mt-2 w-full resize-y rounded-lg border border-border bg-background/60 p-3 font-mono text-xs leading-relaxed placeholder:text-muted-foreground/50"
-          placeholder="Cole o texto aqui..."
+          placeholder="Cole o texto aqui (Ctrl+V) — campo somente para colar"
           spellCheck={false}
         />
-      </label>
-    </div>
-  );
-}
+        {value.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="mt-2 inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
+          >
+            Limpar
+          </button>
+        )}
+
 
 function PreviewRow({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
   return (
