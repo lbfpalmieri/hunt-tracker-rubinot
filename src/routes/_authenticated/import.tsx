@@ -159,7 +159,10 @@ function ImportPage() {
     setHuntPickerOpen(false);
   };
 
-  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady && preyReady);
+  const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
+  const canSave = Boolean(
+    parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady,
+  );
 
   const handleAutoSplit = () => {
     const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
