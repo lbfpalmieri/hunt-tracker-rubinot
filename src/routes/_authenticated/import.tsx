@@ -291,51 +291,61 @@ function ImportPage() {
   return (
     <AppShell>
       {notice && (
-        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-3">
           <div
             role="status"
             className={
-              "pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md transition-all " +
+              "animate-notice-in pointer-events-auto flex w-full max-w-lg items-stretch overflow-hidden rounded-2xl border shadow-2xl " +
               (notice.tone === "ok"
-                ? "border-rubi-success/60 bg-rubi-success/15"
-                : "border-rubi-danger/60 bg-rubi-danger/15")
+                ? "border-rubi-success/40 bg-background"
+                : "border-rubi-danger/40 bg-background")
             }
           >
             <span
               className={
-                "flex h-10 w-10 flex-none items-center justify-center rounded-xl border " +
-                (notice.tone === "ok"
-                  ? "border-rubi-success/60 bg-rubi-success/20 text-rubi-success"
-                  : "border-rubi-danger/60 bg-rubi-danger/20 text-rubi-danger")
+                "flex w-1.5 flex-none " +
+                (notice.tone === "ok" ? "bg-rubi-success" : "bg-rubi-danger")
               }
-            >
-              {notice.tone === "ok" ? (
-                <Check className="h-5 w-5" strokeWidth={2.5} />
-              ) : (
-                <AlertTriangle className="h-5 w-5" />
-              )}
-            </span>
-            <div className="min-w-0">
-              <p
+            />
+            <div className="flex items-center gap-3 p-3 pr-2">
+              <span
                 className={
-                  "font-display text-sm font-bold " +
-                  (notice.tone === "ok" ? "text-rubi-success" : "text-rubi-danger")
+                  "flex h-9 w-9 flex-none items-center justify-center rounded-xl " +
+                  (notice.tone === "ok"
+                    ? "bg-rubi-success/15 text-rubi-success"
+                    : "bg-rubi-danger/15 text-rubi-danger")
                 }
               >
-                {notice.title}
-              </p>
-              {notice.detail && (
-                <p className="mt-0.5 text-xs text-foreground/80">{notice.detail}</p>
-              )}
+                {notice.tone === "ok" ? (
+                  <Check className="h-5 w-5" strokeWidth={2.5} />
+                ) : (
+                  <AlertTriangle className="h-5 w-5" />
+                )}
+              </span>
+              <div className="min-w-0 flex-1 py-0.5">
+                <p
+                  className={
+                    "font-display text-sm font-bold leading-tight " +
+                    (notice.tone === "ok" ? "text-rubi-success" : "text-rubi-danger")
+                  }
+                >
+                  {notice.title}
+                </p>
+                {notice.detail && (
+                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                    {notice.detail}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setNotice(null)}
+                className="ml-1 flex-none self-start rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+                aria-label="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setNotice(null)}
-              className="ml-1 flex-none rounded-lg p-1 text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="Fechar"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
         </div>
       )}
