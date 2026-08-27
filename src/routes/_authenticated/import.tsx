@@ -21,6 +21,8 @@ import {
   AlertTriangle,
   Check,
   ClipboardPaste,
+  Trash2,
+  MapPin,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import {
@@ -64,7 +66,6 @@ function ImportPage() {
   const [huntQuery, setHuntQuery] = useState("");
   const [huntPickerOpen, setHuntPickerOpen] = useState(false);
   const huntPickerRef = useRef<HTMLDivElement>(null);
-  const [charId, setCharId] = useState<string>("");
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [hasBounty, setHasBounty] = useState(false);
@@ -80,7 +81,8 @@ function ImportPage() {
   const preyReady = !hasPrey || preyValid;
 
 
-  const effectiveCharId = charId || activeId || characters[0]?.id || "";
+  const effectiveCharId = activeId || characters[0]?.id || "";
+  const activeChar = characters.find((c) => c.id === effectiveCharId);
   const charHunts = useMemo(
     () => hunts.filter((h) => h.characterId === effectiveCharId),
     [hunts, effectiveCharId],
@@ -293,44 +295,48 @@ function ImportPage() {
 
         <div className="space-y-4">
           <div className="card-surface p-5">
-            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-              <Sparkles className="h-4 w-4 text-rubi-gold" />
-              Detalhes da sessão
-            </h2>
-            <label className="mb-3 block">
-              <span className="text-xs font-medium text-muted-foreground">Personagem</span>
-              <select
-                value={effectiveCharId}
-                onChange={(e) => setCharId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
-              >
-                {characters.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} · {c.vocation}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 font-display text-sm font-bold uppercase tracking-wider">
+                <Sparkles className="h-4 w-4 text-rubi-gold" />
+                Detalhes da sessão
+              </h2>
+              {activeChar && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2.5 py-1 text-[11px] font-semibold text-rubi-blue"
+                  title="Personagem ativo do seu perfil"
+                >
+                  <UserCircle2 className="h-3.5 w-3.5" />
+                  {activeChar.name}
+                </span>
+              )}
+            </div>
             <div>
-              <span className="text-xs font-medium text-muted-foreground">Hunt / spot</span>
+              <span className="flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-wider text-rubi-gold">
+                <MapPin className="h-3.5 w-3.5" />
+                Hunt / spot
+              </span>
+
 
               {(ownMatches.length > 0 || communityMatches.length > 0) && !selectedHuntName && (
-                <div className="mt-1.5 mb-2 space-y-1.5 rounded-lg border border-rubi-blue/30 bg-rubi-blue/[0.04] p-2.5">
-                  <p className="text-[11px] text-muted-foreground">
-                    Baseado nos monstros dessa sessão, pode ser uma dessas hunts:
+                <div className="mt-2 mb-2.5 space-y-2.5 rounded-xl border border-rubi-blue/40 bg-rubi-blue/[0.07] p-3">
+                  <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rubi-blue">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Sugestões pelos monstros
                   </p>
                   {ownMatches.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {ownMatches.map((m) => (
                         <button
                           key={m.huntName}
                           type="button"
                           onClick={() => pickHunt(m.huntName)}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2.5 py-1 text-xs font-medium text-rubi-blue hover:bg-rubi-blue/20"
+                          className="group inline-flex items-center gap-2 rounded-xl border border-rubi-blue/50 bg-rubi-blue/10 px-3 py-1.5 text-left transition-all hover:border-rubi-blue hover:bg-rubi-blue/20 hover:shadow-glow-blue active:scale-95"
                         >
-                          {m.huntName}
-                          <span className="text-[10px] opacity-70">
-                            {m.shared}/{m.total} monstros
+                          <span className="font-display text-[13px] font-bold text-foreground">
+                            {m.huntName}
+                          </span>
+                          <span className="rounded-full bg-rubi-blue/20 px-1.5 py-px text-[10px] font-semibold text-rubi-blue">
+                            {m.shared}/{m.total}
                           </span>
                         </button>
                       ))}
@@ -338,21 +344,23 @@ function ImportPage() {
                   )}
                   {communityMatches.length > 0 && (
                     <div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        Jogadores da comunidade usam esse nome pra hunts com esses monstros:
+                      <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <Globe2 className="h-3 w-3" />
+                        Usadas pela comunidade
                       </p>
-                      <div className="mt-1 flex flex-wrap gap-1.5">
+                      <div className="mt-1.5 flex flex-wrap gap-2">
                         {communityMatches.map((m) => (
                           <button
                             key={m.huntName}
                             type="button"
                             onClick={() => pickHunt(m.huntName)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-rubi-blue/50 hover:text-foreground"
+                            className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-1.5 text-left transition-all hover:border-rubi-blue/60 hover:bg-rubi-blue/10 active:scale-95"
                           >
-                            <Globe2 className="h-3 w-3" />
-                            {m.huntName}
-                            <span className="text-[10px] opacity-70">
-                              {m.shared}/{m.total} monstros
+                            <span className="font-display text-[13px] font-semibold text-foreground/90">
+                              {m.huntName}
+                            </span>
+                            <span className="rounded-full bg-muted/40 px-1.5 py-px text-[10px] font-semibold text-muted-foreground">
+                              {m.shared}/{m.total}
                             </span>
                           </button>
                         ))}
@@ -361,6 +369,7 @@ function ImportPage() {
                   )}
                 </div>
               )}
+
 
               <div ref={huntPickerRef} className="relative">
                 <div className="relative">
@@ -536,9 +545,11 @@ function ImportPage() {
             <button
               onClick={handleSave}
               disabled={!canSave || saving}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rubi-gold px-4 py-2.5 text-sm font-semibold text-background shadow-glow-gold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+              className="group/save relative mt-4 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-rubi-gold via-rubi-gold to-rubi-blue px-4 py-3 font-display text-sm font-bold uppercase tracking-wider text-background shadow-glow-gold transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-none disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-70 disabled:shadow-none"
             >
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 group-hover/save:translate-x-full group-disabled/save:hidden" />
               <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar sessão"}
+
             </button>
             {saveError && (
               <p className="mt-2 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
@@ -644,46 +655,63 @@ function PasteSlot({
         apply(e.clipboardData.getData("text"));
       }}
       className={
-        "rounded-xl border p-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
+        "group relative overflow-hidden rounded-2xl border p-4 outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
         SLOT_THEME[status]
       }
     >
-      <div className="flex items-center gap-3">
+      {/* faixa de status na borda esquerda */}
+      <span
+        aria-hidden
+        className={
+          "absolute inset-y-0 left-0 w-1 transition-colors " +
+          (status === "ok"
+            ? "bg-rubi-success"
+            : status === "error"
+              ? "bg-rubi-danger"
+              : "bg-border group-hover:bg-rubi-blue/70")
+        }
+      />
+
+      <div className="flex items-center gap-3.5 pl-1.5">
         <span
           className={
-            "flex h-8 w-8 flex-none items-center justify-center rounded-lg border " +
+            "flex h-11 w-11 flex-none items-center justify-center rounded-xl border transition-all duration-300 " +
             (status === "ok"
-              ? "border-rubi-success/50 text-rubi-success"
+              ? "border-rubi-success/60 bg-rubi-success/15 text-rubi-success"
               : status === "error"
-                ? "border-rubi-danger/50 text-rubi-danger"
-                : "border-border text-muted-foreground")
+                ? "border-rubi-danger/60 bg-rubi-danger/15 text-rubi-danger"
+                : "border-border bg-background/40 text-muted-foreground group-hover:border-rubi-blue/60 group-hover:text-rubi-blue")
           }
         >
           {status === "ok" ? (
-            <Check className="h-4 w-4" />
+            <Check className="h-5 w-5" strokeWidth={2.5} />
           ) : status === "error" ? (
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle className="h-5 w-5" />
           ) : (
-            <ClipboardPaste className="h-4 w-4" />
+            <ClipboardPaste className="h-5 w-5" />
           )}
         </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold">{label}</span>
-            {optional && (
-              <span className="flex-none rounded-full border border-border px-1.5 text-[10px] font-medium text-muted-foreground">
+            <span className="truncate font-display text-[15px] font-bold tracking-tight">{label}</span>
+            {optional ? (
+              <span className="flex-none rounded-full border border-border/70 px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 opcional
+              </span>
+            ) : (
+              <span className="flex-none rounded-full border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+                obrigatório
               </span>
             )}
           </div>
           <p
             className={
-              "mt-0.5 truncate text-xs " +
+              "mt-1 truncate text-xs " +
               (status === "ok"
-                ? "text-rubi-success"
+                ? "font-semibold text-rubi-success"
                 : status === "error"
-                  ? "text-rubi-danger"
+                  ? "font-semibold text-rubi-danger"
                   : "text-muted-foreground")
             }
             title={status === "empty" ? help : (message ?? summary ?? "")}
@@ -696,20 +724,29 @@ function PasteSlot({
           <button
             type="button"
             onClick={() => onChange("")}
-            className="flex-none rounded-full border border-border px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
+            className="inline-flex flex-none items-center gap-1.5 rounded-xl border border-border/70 bg-background/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-all hover:border-rubi-danger/60 hover:bg-rubi-danger/10 hover:text-rubi-danger active:scale-95"
           >
+            <Trash2 className="h-3.5 w-3.5" />
             Limpar
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={pasteFromClipboard}
-            disabled={pasting}
-            className="inline-flex flex-none items-center gap-1 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-2.5 py-1 text-[11px] font-bold text-background shadow-glow-gold transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-60"
-          >
-            <ClipboardPaste className="h-3 w-3 flex-none" />
-            Colar
-          </button>
+          <div className="flex flex-none flex-col items-end gap-1">
+            <button
+              type="button"
+              onClick={pasteFromClipboard}
+              disabled={pasting}
+              className="group/btn relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-rubi-gold via-rubi-gold to-rubi-blue px-4 py-2 text-xs font-bold uppercase tracking-wide text-background shadow-glow-gold transition-all hover:brightness-110 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-60"
+            >
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover/btn:translate-x-full" />
+              <ClipboardPaste className="h-3.5 w-3.5 flex-none" />
+              {pasting ? "Colando…" : "Colar"}
+            </button>
+            <span className="hidden text-[10px] font-medium text-muted-foreground/70 sm:block">
+              ou <kbd className="rounded border border-border/70 bg-background/60 px-1">Ctrl</kbd>
+              <span className="mx-px">+</span>
+              <kbd className="rounded border border-border/70 bg-background/60 px-1">V</kbd>
+            </span>
+          </div>
         )}
       </div>
     </div>
