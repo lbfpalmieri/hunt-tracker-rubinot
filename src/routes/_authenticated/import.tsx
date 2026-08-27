@@ -25,6 +25,7 @@ import {
   ClipboardPaste,
   Trash2,
   MapPin,
+  X,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import {
@@ -90,6 +91,61 @@ function ImportPage() {
     [hunts, effectiveCharId],
   );
   const selectedHuntName = huntQuery.trim();
+
+  // Roteamento automático da colagem: o sistema decide em qual bloco o texto entra.
+  const [notice, setNotice] = useState<
+    { tone: "ok" | "error"; title: string; detail?: string } | null
+  >(null);
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), notice.tone === "error" ? 6000 : 2600);
+    return () => clearTimeout(t);
+  }, [notice]);
+
+  const setters: Record<Exclude<BlockKind, "unknown">, (v: string) => void> = {
+    hunting: setHuntingText,
+    damage: setDamageText,
+    misc: setMiscText,
+  };
+
+  const routePaste = (text: string, from?: Exclude<BlockKind, "unknown">) => {
+    if (!text.trim()) {
+      setNotice({ tone: "error", title: "Nada para colar", detail: "Sua área de transferência está vazia." });
+      return;
+    }
+    const kind = detectBlockKind(text);
+    if (kind === "unknown") {
+      setNotice({
+        tone: "error",
+        title: "Não reconheci esse texto",
+        detail: "Copie o bloco completo direto do jogo (Hunting Analyser, Input Analyser ou Miscellaneous).",
+      });
+      return;
+    }
+    setters[kind](text);
+    setNotice({
+      tone: "ok",
+      title: `${BLOCK_LABEL[kind]} reconhecido`,
+      detail:
+        from && from !== kind
+          ? `O texto era do ${BLOCK_LABEL[kind]} — coloquei no bloco certo automaticamente.`
+          : undefined,
+    });
+  };
+
+  // Ctrl+V em qualquer lugar da tela (fora de campos de texto) já vai pro bloco correto.
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.closest("input, textarea, [contenteditable='true']"))) return;
+      const text = e.clipboardData?.getData("text") ?? "";
+      if (!text.trim()) return;
+      e.preventDefault();
+      routePaste(text);
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  });
 
   const parsed = useMemo(() => {
     try {
@@ -234,11 +290,64 @@ function ImportPage() {
 
   return (
     <AppShell>
+      {notice && (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            role="status"
+            className={
+              "pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md transition-all " +
+              (notice.tone === "ok"
+                ? "border-rubi-success/60 bg-rubi-success/15"
+                : "border-rubi-danger/60 bg-rubi-danger/15")
+            }
+          >
+            <span
+              className={
+                "flex h-10 w-10 flex-none items-center justify-center rounded-xl border " +
+                (notice.tone === "ok"
+                  ? "border-rubi-success/60 bg-rubi-success/20 text-rubi-success"
+                  : "border-rubi-danger/60 bg-rubi-danger/20 text-rubi-danger")
+              }
+            >
+              {notice.tone === "ok" ? (
+                <Check className="h-5 w-5" strokeWidth={2.5} />
+              ) : (
+                <AlertTriangle className="h-5 w-5" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p
+                className={
+                  "font-display text-sm font-bold " +
+                  (notice.tone === "ok" ? "text-rubi-success" : "text-rubi-danger")
+                }
+              >
+                {notice.title}
+              </p>
+              {notice.detail && (
+                <p className="mt-0.5 text-xs text-foreground/80">{notice.detail}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              className="ml-1 flex-none rounded-lg p-1 text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Fechar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Importar</div>
         <h1 className="mt-1 font-display text-3xl font-bold">Nova sessão de hunt</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Cole os blocos exportados pelo RubinOT. O sistema faz o parse automaticamente.
+          Dê <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">Ctrl</kbd>
+          <span className="mx-px">+</span>
+          <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">V</kbd> em
+          qualquer lugar da tela — o sistema identifica o bloco e encaixa no lugar certo.
         </p>
       </div>
 
@@ -251,6 +360,7 @@ function ImportPage() {
             onChange={setHuntingText}
             status={huntingStatus}
             expect="hunting"
+            onPasteText={routePaste}
             summary={huntingSummary}
             message={huntingMessage}
           />
@@ -261,6 +371,7 @@ function ImportPage() {
             onChange={setDamageText}
             status={damageText ? (parsed.damage ? "ok" : "error") : "empty"}
             expect="damage"
+            onPasteText={routePaste}
             summary={
               parsed.damage ? `Dano recebido ${fmtNum(parsed.damage.totalReceived ?? 0)}` : undefined
             }
@@ -274,6 +385,7 @@ function ImportPage() {
             onChange={setMiscText}
             status={miscText ? (parsed.misc ? "ok" : "error") : "empty"}
             expect="misc"
+            onPasteText={routePaste}
             summary={parsed.misc ? "Charms, imbuements e upgrades lidos" : undefined}
             message="Não reconheci esse bloco. Copie o Miscellaneous completo."
             optional
@@ -680,6 +792,7 @@ function PasteSlot({
   message,
   optional,
   expect,
+  onPasteText,
 }: {
   label: string;
   help: string;
@@ -690,50 +803,27 @@ function PasteSlot({
   message?: string;
   optional?: boolean;
   expect: Exclude<BlockKind, "unknown">;
+  onPasteText: (text: string, from: Exclude<BlockKind, "unknown">) => void;
 }) {
   const [pasting, setPasting] = useState(false);
-
-  const apply = (text: string) => {
-    if (!text.trim()) {
-      toast.error("Área de transferência vazia");
-      return;
-    }
-    // Barreira anti-erro: valida o tipo do bloco ANTES de aceitar a colagem.
-    const kind = detectBlockKind(text);
-    if (kind === "unknown") {
-      toast.error(`Isso não parece o ${label}`, {
-        description: "Copie o bloco completo direto do jogo (Ctrl+A no analyser) e cole de novo.",
-      });
-      return;
-    }
-    if (kind !== expect) {
-      toast.error(`Bloco errado: isso é o ${BLOCK_LABEL[kind]}`, {
-        description: `Cole esse conteúdo no card "${BLOCK_LABEL[kind]}". Aqui só entra o ${label}.`,
-      });
-      return;
-    }
-    onChange(text);
-    toast.success(`${label} reconhecido`);
-  };
 
   const pasteFromClipboard = async () => {
     setPasting(true);
     try {
-      apply(await navigator.clipboard.readText());
+      onPasteText(await navigator.clipboard.readText(), expect);
     } catch {
-      toast.error("Não deu pra acessar a área de transferência — clique no card e use Ctrl+V.");
+      toast.error("Não deu pra acessar a área de transferência — use Ctrl+V na tela.");
     } finally {
       setPasting(false);
     }
   };
-
 
   return (
     <div
       tabIndex={0}
       onPaste={(e) => {
         e.preventDefault();
-        apply(e.clipboardData.getData("text"));
+        onPasteText(e.clipboardData.getData("text"), expect);
       }}
       className={
         "group relative overflow-hidden rounded-2xl border p-4 outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
