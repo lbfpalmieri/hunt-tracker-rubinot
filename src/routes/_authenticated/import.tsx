@@ -545,9 +545,11 @@ function ImportPage() {
             <button
               onClick={handleSave}
               disabled={!canSave || saving}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rubi-gold px-4 py-2.5 text-sm font-semibold text-background shadow-glow-gold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+              className="group/save relative mt-4 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-rubi-gold via-rubi-gold to-rubi-blue px-4 py-3 font-display text-sm font-bold uppercase tracking-wider text-background shadow-glow-gold transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-none disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-70 disabled:shadow-none"
             >
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 group-hover/save:translate-x-full group-disabled/save:hidden" />
               <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar sessão"}
+
             </button>
             {saveError && (
               <p className="mt-2 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
