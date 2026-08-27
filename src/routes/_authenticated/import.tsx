@@ -664,6 +664,12 @@ function TextBlock({
             Limpar
           </button>
         )}
+      </label>
+    </div>
+  );
+}
+
+
 
 
 function PreviewRow({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
