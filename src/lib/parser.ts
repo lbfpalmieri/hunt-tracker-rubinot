@@ -16,6 +16,40 @@ const durationToSec = (s: string): number => {
   return h * 3600 + mi * 60 + se;
 };
 
+/** "2026-08-27, 05:36:39" -> ms (local). Devolve null quando não dá pra ler. */
+export const parseSessionStamp = (s: string | null | undefined): number | null => {
+  if (!s) return null;
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  const t = new Date(
+    Number(m[1]),
+    Number(m[2]) - 1,
+    Number(m[3]),
+    Number(m[4]),
+    Number(m[5]),
+    Number(m[6] ?? "0"),
+  ).getTime();
+  return Number.isFinite(t) ? t : null;
+};
+
+/**
+ * Alguns logs do RubinOT não trazem a linha "Session: HH:MM" — nesses casos a
+ * duração vem do intervalo "Session data: From ... to ..." ou do
+ * Miscellaneous ("Session: HH:MM:SS").
+ */
+export const resolveDurationSec = (
+  hunting: { durationSec?: number; startedAt?: string | null; endedAt?: string | null },
+  miscSessionSec?: number | null,
+): number => {
+  const direct = Number(hunting?.durationSec ?? 0);
+  if (direct > 0) return direct;
+  const start = parseSessionStamp(hunting?.startedAt);
+  const end = parseSessionStamp(hunting?.endedAt);
+  if (start != null && end != null && end > start) return Math.round((end - start) / 1000);
+  return Number(miscSessionSec ?? 0) || 0;
+};
+
+
 export interface HuntingData {
   startedAt: string | null;
   endedAt: string | null;
