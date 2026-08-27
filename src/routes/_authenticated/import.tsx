@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
-import { parseHunting, parseDamage, parseMiscellaneous, splitCombinedInput } from "@/lib/parser";
+import { parseHunting, parseDamage, parseMiscellaneous } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
@@ -12,7 +12,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Upload,
-  Wand2,
   Save,
   UserCircle2,
   Sparkles,
@@ -20,6 +19,7 @@ import {
   Search,
   Globe2,
   AlertTriangle,
+  Check,
   ClipboardPaste,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
@@ -160,17 +160,17 @@ function ImportPage() {
   };
 
   const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
+  const huntingStatus: SlotStatus = !huntingText ? "empty" : parsed.hunting && durationOk ? "ok" : "error";
+  const huntingSummary =
+    parsed.hunting && durationOk
+      ? `${fmtDuration(parsed.hunting.durationSec)} · ${fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} kills · ${fmtGold(parsed.hunting.balance)}`
+      : undefined;
+  const huntingMessage = !parsed.hunting
+    ? "Não reconheci esse bloco. Copie o Hunt Analyser completo do jogo."
+    : "Duração não identificada. O texto precisa incluir \"Session data: From ... to ...\" e \"Session length\".";
   const canSave = Boolean(
     parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady,
   );
-
-  const handleAutoSplit = () => {
-    const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
-    const parts = splitCombinedInput(combined);
-    if (parts.hunting) setHuntingText(parts.hunting);
-    if (parts.damage) setDamageText(parts.damage);
-    if (parts.misc) setMiscText(parts.misc);
-  };
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
