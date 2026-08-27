@@ -237,35 +237,40 @@ function ImportPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <TextBlock
+        <div className="space-y-2 lg:col-span-2">
+          <PasteSlot
             label="Hunting Analyser"
-            help="Bloco com XP Gain, Loot, Supplies, Balance, Killed Monsters e Looted Items."
+            help="Cole aqui o bloco do Hunt Analyser (obrigatório)."
             value={huntingText}
             onChange={setHuntingText}
-            variant="hunting"
+            status={huntingStatus}
+            summary={huntingSummary}
+            message={huntingMessage}
           />
-          <TextBlock
-            label="Input Analyser (Received Damage)"
-            help="Opcional. Total, Max-DPS, Damage Types e Damage Sources."
+          <PasteSlot
+            label="Input Analyser"
+            help="Dano recebido: Total, Max-DPS, Damage Types e Sources."
             value={damageText}
             onChange={setDamageText}
-            variant="damage"
+            status={damageText ? (parsed.damage ? "ok" : "error") : "empty"}
+            summary={
+              parsed.damage ? `Dano recebido ${fmtNum(parsed.damage.totalReceived ?? 0)}` : undefined
+            }
+            message="Não reconheci esse bloco. Copie o Input Analyser completo."
+            optional
           />
-          <TextBlock
+          <PasteSlot
             label="Miscellaneous"
-            help="Opcional. Charm Data, Imbuement Data e Item Upgrade."
+            help="Charm Data, Imbuement Data e Item Upgrade."
             value={miscText}
             onChange={setMiscText}
-            variant="misc"
+            status={miscText ? (parsed.misc ? "ok" : "error") : "empty"}
+            summary={parsed.misc ? "Charms, imbuements e upgrades lidos" : undefined}
+            message="Não reconheci esse bloco. Copie o Miscellaneous completo."
+            optional
           />
-          <button
-            onClick={handleAutoSplit}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            <Wand2 className="h-3.5 w-3.5" /> Auto-separar blocos misturados
-          </button>
         </div>
+
 
         <div className="space-y-4">
           <div className="card-surface p-5">
