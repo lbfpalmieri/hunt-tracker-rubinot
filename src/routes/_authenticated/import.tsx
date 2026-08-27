@@ -419,7 +419,8 @@ function ImportPage() {
             onChange={setHuntingText}
             status={huntingStatus}
             expect="hunting"
-            onPasteText={routePaste}
+            onPasteEvent={handlePasteEvent}
+            onPasteBtn={handleClipboardButton}
             summary={huntingSummary}
             message={huntingMessage}
           />
