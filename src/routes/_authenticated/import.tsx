@@ -644,46 +644,63 @@ function PasteSlot({
         apply(e.clipboardData.getData("text"));
       }}
       className={
-        "rounded-xl border p-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
+        "group relative overflow-hidden rounded-2xl border p-4 outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
         SLOT_THEME[status]
       }
     >
-      <div className="flex items-center gap-3">
+      {/* faixa de status na borda esquerda */}
+      <span
+        aria-hidden
+        className={
+          "absolute inset-y-0 left-0 w-1 transition-colors " +
+          (status === "ok"
+            ? "bg-rubi-success"
+            : status === "error"
+              ? "bg-rubi-danger"
+              : "bg-border group-hover:bg-rubi-blue/70")
+        }
+      />
+
+      <div className="flex items-center gap-3.5 pl-1.5">
         <span
           className={
-            "flex h-8 w-8 flex-none items-center justify-center rounded-lg border " +
+            "flex h-11 w-11 flex-none items-center justify-center rounded-xl border transition-all duration-300 " +
             (status === "ok"
-              ? "border-rubi-success/50 text-rubi-success"
+              ? "border-rubi-success/60 bg-rubi-success/15 text-rubi-success"
               : status === "error"
-                ? "border-rubi-danger/50 text-rubi-danger"
-                : "border-border text-muted-foreground")
+                ? "border-rubi-danger/60 bg-rubi-danger/15 text-rubi-danger"
+                : "border-border bg-background/40 text-muted-foreground group-hover:border-rubi-blue/60 group-hover:text-rubi-blue")
           }
         >
           {status === "ok" ? (
-            <Check className="h-4 w-4" />
+            <Check className="h-5 w-5" strokeWidth={2.5} />
           ) : status === "error" ? (
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle className="h-5 w-5" />
           ) : (
-            <ClipboardPaste className="h-4 w-4" />
+            <ClipboardPaste className="h-5 w-5" />
           )}
         </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold">{label}</span>
-            {optional && (
-              <span className="flex-none rounded-full border border-border px-1.5 text-[10px] font-medium text-muted-foreground">
+            <span className="truncate font-display text-[15px] font-bold tracking-tight">{label}</span>
+            {optional ? (
+              <span className="flex-none rounded-full border border-border/70 px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 opcional
+              </span>
+            ) : (
+              <span className="flex-none rounded-full border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+                obrigatório
               </span>
             )}
           </div>
           <p
             className={
-              "mt-0.5 truncate text-xs " +
+              "mt-1 truncate text-xs " +
               (status === "ok"
-                ? "text-rubi-success"
+                ? "font-semibold text-rubi-success"
                 : status === "error"
-                  ? "text-rubi-danger"
+                  ? "font-semibold text-rubi-danger"
                   : "text-muted-foreground")
             }
             title={status === "empty" ? help : (message ?? summary ?? "")}
@@ -696,20 +713,29 @@ function PasteSlot({
           <button
             type="button"
             onClick={() => onChange("")}
-            className="flex-none rounded-full border border-border px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
+            className="inline-flex flex-none items-center gap-1.5 rounded-xl border border-border/70 bg-background/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-all hover:border-rubi-danger/60 hover:bg-rubi-danger/10 hover:text-rubi-danger active:scale-95"
           >
+            <Trash2 className="h-3.5 w-3.5" />
             Limpar
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={pasteFromClipboard}
-            disabled={pasting}
-            className="inline-flex flex-none items-center gap-1 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-2.5 py-1 text-[11px] font-bold text-background shadow-glow-gold transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-60"
-          >
-            <ClipboardPaste className="h-3 w-3 flex-none" />
-            Colar
-          </button>
+          <div className="flex flex-none flex-col items-end gap-1">
+            <button
+              type="button"
+              onClick={pasteFromClipboard}
+              disabled={pasting}
+              className="group/btn relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-rubi-gold via-rubi-gold to-rubi-blue px-4 py-2 text-xs font-bold uppercase tracking-wide text-background shadow-glow-gold transition-all hover:brightness-110 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-60"
+            >
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover/btn:translate-x-full" />
+              <ClipboardPaste className="h-3.5 w-3.5 flex-none" />
+              {pasting ? "Colando…" : "Colar"}
+            </button>
+            <span className="hidden text-[10px] font-medium text-muted-foreground/70 sm:block">
+              ou <kbd className="rounded border border-border/70 bg-background/60 px-1">Ctrl</kbd>
+              <span className="mx-px">+</span>
+              <kbd className="rounded border border-border/70 bg-background/60 px-1">V</kbd>
+            </span>
+          </div>
         )}
       </div>
     </div>
