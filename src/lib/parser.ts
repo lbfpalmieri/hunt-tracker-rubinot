@@ -110,7 +110,12 @@ export function parseHunting(text: string): HuntingData {
   return {
     startedAt: rangeMatch?.[1]?.trim() ?? null,
     endedAt: rangeMatch?.[2]?.trim() ?? null,
-    durationSec: durationToSec(get(/Session:\s*([\d:h\s]+)/)),
+    durationSec: resolveDurationSec({
+      durationSec: durationToSec(get(/Session:\s*([\d:h\s]+)/)),
+      startedAt: rangeMatch?.[1]?.trim() ?? null,
+      endedAt: rangeMatch?.[2]?.trim() ?? null,
+    }),
+
     rawXp: toNum(get(/Raw XP Gain:\s*([\d.,]+)/)),
     xpGain: toNum(get(/(?<!Raw )XP Gain:\s*([\d.,]+)/)),
     xpPerHour: toNum(get(/(?<!Raw )XP\/h:\s*([\d.,]+)/)),
