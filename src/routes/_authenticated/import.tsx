@@ -579,107 +579,138 @@ function ImportPage() {
   );
 }
 
-const TEXT_BLOCK_VARIANTS = {
-  hunting: {
-    border: "border-rubi-blue/40",
-    bg: "bg-gradient-to-br from-rubi-blue/20 via-surface to-surface",
-  },
-  damage: {
-    border: "border-white/10",
-    bg: "bg-gradient-to-br from-rubi-success/15 via-surface to-rubi-danger/15",
-  },
-  misc: {
-    border: "border-rubi-gold/40",
-    bg: "bg-gradient-to-br from-rubi-gold/20 via-surface to-surface",
-  },
-} as const;
+type SlotStatus = "empty" | "ok" | "error";
 
-function TextBlock({
-  label, help, value, onChange, variant,
+const SLOT_THEME: Record<SlotStatus, string> = {
+  empty: "border-border/60 bg-surface/40 hover:border-rubi-blue/50",
+  ok: "border-rubi-success/50 bg-rubi-success/10",
+  error: "border-rubi-danger/50 bg-rubi-danger/10",
+};
+
+/**
+ * Card compacto de colagem: o usuário nunca vê o texto colado, só o status.
+ * Aceita Ctrl+V no card (foco) ou o botão de colar da área de transferência.
+ */
+function PasteSlot({
+  label,
+  help,
+  value,
+  onChange,
+  status,
+  summary,
+  message,
+  optional,
 }: {
   label: string;
   help: string;
   value: string;
   onChange: (v: string) => void;
-  variant: keyof typeof TEXT_BLOCK_VARIANTS;
+  status: SlotStatus;
+  summary?: string;
+  message?: string;
+  optional?: boolean;
 }) {
   const [pasting, setPasting] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const theme = TEXT_BLOCK_VARIANTS[variant];
 
-  const handlePaste = async () => {
+  const apply = (text: string) => {
+    if (!text.trim()) {
+      toast.error("Área de transferência vazia");
+      return;
+    }
+    onChange(text);
+  };
+
+  const pasteFromClipboard = async () => {
     setPasting(true);
     try {
-      const text = await navigator.clipboard.readText();
-      if (!text.trim()) {
-        toast.error("Área de transferência vazia");
-        return;
-      }
-      onChange(text);
-      textareaRef.current?.focus();
+      apply(await navigator.clipboard.readText());
     } catch {
-      toast.error("Não deu pra acessar a área de transferência — cole com Ctrl+V direto no campo.");
+      toast.error("Não deu pra acessar a área de transferência — clique no card e use Ctrl+V.");
     } finally {
       setPasting(false);
     }
   };
 
   return (
-    <div className={"rounded-lg border p-3 " + theme.border + " " + theme.bg} style={{ boxShadow: "var(--shadow-card)" }}>
-      <label className="block">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
+    <div
+      tabIndex={0}
+      onPaste={(e) => {
+        e.preventDefault();
+        apply(e.clipboardData.getData("text"));
+      }}
+      className={
+        "rounded-xl border p-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
+        SLOT_THEME[status]
+      }
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={
+            "flex h-8 w-8 flex-none items-center justify-center rounded-lg border " +
+            (status === "ok"
+              ? "border-rubi-success/50 text-rubi-success"
+              : status === "error"
+                ? "border-rubi-danger/50 text-rubi-danger"
+                : "border-border text-muted-foreground")
+          }
+        >
+          {status === "ok" ? (
+            <Check className="h-4 w-4" />
+          ) : status === "error" ? (
+            <AlertTriangle className="h-4 w-4" />
+          ) : (
+            <ClipboardPaste className="h-4 w-4" />
+          )}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold">{label}</span>
-            <button
-              type="button"
-              onClick={handlePaste}
-              disabled={pasting}
-              title="Colar da área de transferência"
-              className="animate-float-pop inline-flex flex-none items-center gap-1 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-2 py-0.5 text-[11px] font-bold text-background shadow-glow-gold transition-transform hover:scale-110 hover:shadow-glow-blue hover:[animation-play-state:paused] active:scale-95 disabled:pointer-events-none disabled:opacity-60"
-            >
-              <ClipboardPaste className="h-3 w-3 flex-none" />
-              Colar
-            </button>
+            {optional && (
+              <span className="flex-none rounded-full border border-border px-1.5 text-[10px] font-medium text-muted-foreground">
+                opcional
+              </span>
+            )}
           </div>
-          <span className="flex-none text-xs text-muted-foreground">{value.length} chars</span>
+          <p
+            className={
+              "mt-0.5 truncate text-xs " +
+              (status === "ok"
+                ? "text-rubi-success"
+                : status === "error"
+                  ? "text-rubi-danger"
+                  : "text-muted-foreground")
+            }
+            title={status === "empty" ? help : (message ?? summary ?? "")}
+          >
+            {status === "ok" ? (summary ?? "Dados lidos com sucesso") : status === "error" ? message : help}
+          </p>
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">{help}</p>
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={() => {}}
-          onPaste={(e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData("text");
-            if (text.trim()) onChange(text);
-          }}
-          onBeforeInput={(e) => e.preventDefault()}
-          onKeyDown={(e) => {
-            const ctrl = e.ctrlKey || e.metaKey;
-            const allowed =
-              (ctrl && ["v", "a", "c", "x"].includes(e.key.toLowerCase())) ||
-              ["Tab", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(e.key);
-            if (!allowed) e.preventDefault();
-          }}
-          onDrop={(e) => e.preventDefault()}
-          rows={4}
-          className="mt-2 w-full resize-y rounded-lg border border-border bg-background/60 p-3 font-mono text-xs leading-relaxed placeholder:text-muted-foreground/50"
-          placeholder="Cole o texto aqui (Ctrl+V) — campo somente para colar"
-          spellCheck={false}
-        />
-        {value.length > 0 && (
+
+        {value ? (
           <button
             type="button"
             onClick={() => onChange("")}
-            className="mt-2 inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
+            className="flex-none rounded-full border border-border px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
           >
             Limpar
           </button>
+        ) : (
+          <button
+            type="button"
+            onClick={pasteFromClipboard}
+            disabled={pasting}
+            className="inline-flex flex-none items-center gap-1 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-2.5 py-1 text-[11px] font-bold text-background shadow-glow-gold transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-60"
+          >
+            <ClipboardPaste className="h-3 w-3 flex-none" />
+            Colar
+          </button>
         )}
-      </label>
+      </div>
     </div>
   );
 }
+
 
 
 
