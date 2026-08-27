@@ -169,3 +169,12 @@
   background-size: 200% 100%;
   animation: nudge-sweep 3.2s linear infinite, nudge-glow 2.6s ease-in-out infinite;
 }
+
+@keyframes notice-slide-in {
+  from { transform: translateY(-130%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@utility animate-notice-in {
+  animation: notice-slide-in 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
