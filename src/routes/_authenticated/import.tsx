@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
-import { parseHunting, parseDamage, parseMiscellaneous, splitCombinedInput } from "@/lib/parser";
+import { parseHunting, parseDamage, parseMiscellaneous } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
@@ -12,7 +12,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Upload,
-  Wand2,
   Save,
   UserCircle2,
   Sparkles,
@@ -20,6 +19,7 @@ import {
   Search,
   Globe2,
   AlertTriangle,
+  Check,
   ClipboardPaste,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
@@ -160,17 +160,17 @@ function ImportPage() {
   };
 
   const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
+  const huntingStatus: SlotStatus = !huntingText ? "empty" : parsed.hunting && durationOk ? "ok" : "error";
+  const huntingSummary =
+    parsed.hunting && durationOk
+      ? `${fmtDuration(parsed.hunting.durationSec)} · ${fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} kills · ${fmtGold(parsed.hunting.balance)}`
+      : undefined;
+  const huntingMessage = !parsed.hunting
+    ? "Não reconheci esse bloco. Copie o Hunt Analyser completo do jogo."
+    : "Duração não identificada. O texto precisa incluir \"Session data: From ... to ...\" e \"Session length\".";
   const canSave = Boolean(
     parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady,
   );
-
-  const handleAutoSplit = () => {
-    const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
-    const parts = splitCombinedInput(combined);
-    if (parts.hunting) setHuntingText(parts.hunting);
-    if (parts.damage) setDamageText(parts.damage);
-    if (parts.misc) setMiscText(parts.misc);
-  };
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -237,35 +237,59 @@ function ImportPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <TextBlock
+        <div className="space-y-2 lg:col-span-2">
+          <PasteSlot
             label="Hunting Analyser"
-            help="Bloco com XP Gain, Loot, Supplies, Balance, Killed Monsters e Looted Items."
+            help="Cole aqui o bloco do Hunt Analyser (obrigatório)."
             value={huntingText}
             onChange={setHuntingText}
-            variant="hunting"
+            status={huntingStatus}
+            summary={huntingSummary}
+            message={huntingMessage}
           />
-          <TextBlock
-            label="Input Analyser (Received Damage)"
-            help="Opcional. Total, Max-DPS, Damage Types e Damage Sources."
+          <PasteSlot
+            label="Input Analyser"
+            help="Dano recebido: Total, Max-DPS, Damage Types e Sources."
             value={damageText}
             onChange={setDamageText}
-            variant="damage"
+            status={damageText ? (parsed.damage ? "ok" : "error") : "empty"}
+            summary={
+              parsed.damage ? `Dano recebido ${fmtNum(parsed.damage.totalReceived ?? 0)}` : undefined
+            }
+            message="Não reconheci esse bloco. Copie o Input Analyser completo."
+            optional
           />
-          <TextBlock
+          <PasteSlot
             label="Miscellaneous"
-            help="Opcional. Charm Data, Imbuement Data e Item Upgrade."
+            help="Charm Data, Imbuement Data e Item Upgrade."
             value={miscText}
             onChange={setMiscText}
-            variant="misc"
+            status={miscText ? (parsed.misc ? "ok" : "error") : "empty"}
+            summary={parsed.misc ? "Charms, imbuements e upgrades lidos" : undefined}
+            message="Não reconheci esse bloco. Copie o Miscellaneous completo."
+            optional
           />
-          <button
-            onClick={handleAutoSplit}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            <Wand2 className="h-3.5 w-3.5" /> Auto-separar blocos misturados
-          </button>
+          {parsed.hunting && (
+            <div className="card-surface p-5">
+              <h3 className="mb-3 text-sm font-semibold">Preview</h3>
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                <PreviewRow label="Duração" value={fmtDuration(parsed.hunting.durationSec)} />
+                <PreviewRow label="Raw XP" value={fmtNum(parsed.hunting.rawXp)} />
+                <PreviewRow label="Raw XP/h" value={fmtNum(parsed.hunting.rawXpPerHour || parsed.hunting.rawXp / (parsed.hunting.durationSec / 3600 || 1))} />
+
+                <PreviewRow label="Loot" value={fmtGold(parsed.hunting.loot)} />
+                <PreviewRow label="Supplies" value={fmtGold(parsed.hunting.supplies)} />
+                <PreviewRow
+                  label="Balance"
+                  value={fmtGold(parsed.hunting.balance)}
+                  positive={parsed.hunting.balance >= 0}
+                />
+                <PreviewRow label="Kills" value={fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} />
+              </dl>
+            </div>
+          )}
         </div>
+
 
         <div className="space-y-4">
           <div className="card-surface p-5">
@@ -544,25 +568,6 @@ function ImportPage() {
 
           </div>
 
-          {parsed.hunting && (
-            <div className="card-surface p-5">
-              <h3 className="mb-3 text-sm font-semibold">Preview</h3>
-              <dl className="grid grid-cols-2 gap-3 text-sm">
-                <PreviewRow label="Duração" value={fmtDuration(parsed.hunting.durationSec)} />
-                <PreviewRow label="Raw XP" value={fmtNum(parsed.hunting.rawXp)} />
-                <PreviewRow label="Raw XP/h" value={fmtNum(parsed.hunting.rawXpPerHour || parsed.hunting.rawXp / (parsed.hunting.durationSec / 3600 || 1))} />
-
-                <PreviewRow label="Loot" value={fmtGold(parsed.hunting.loot)} />
-                <PreviewRow label="Supplies" value={fmtGold(parsed.hunting.supplies)} />
-                <PreviewRow
-                  label="Balance"
-                  value={fmtGold(parsed.hunting.balance)}
-                  positive={parsed.hunting.balance >= 0}
-                />
-                <PreviewRow label="Kills" value={fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} />
-              </dl>
-            </div>
-          )}
         </div>
       </div>
 
@@ -579,107 +584,138 @@ function ImportPage() {
   );
 }
 
-const TEXT_BLOCK_VARIANTS = {
-  hunting: {
-    border: "border-rubi-blue/40",
-    bg: "bg-gradient-to-br from-rubi-blue/20 via-surface to-surface",
-  },
-  damage: {
-    border: "border-white/10",
-    bg: "bg-gradient-to-br from-rubi-success/15 via-surface to-rubi-danger/15",
-  },
-  misc: {
-    border: "border-rubi-gold/40",
-    bg: "bg-gradient-to-br from-rubi-gold/20 via-surface to-surface",
-  },
-} as const;
+type SlotStatus = "empty" | "ok" | "error";
 
-function TextBlock({
-  label, help, value, onChange, variant,
+const SLOT_THEME: Record<SlotStatus, string> = {
+  empty: "border-border/60 bg-surface/40 hover:border-rubi-blue/50",
+  ok: "border-rubi-success/50 bg-rubi-success/10",
+  error: "border-rubi-danger/50 bg-rubi-danger/10",
+};
+
+/**
+ * Card compacto de colagem: o usuário nunca vê o texto colado, só o status.
+ * Aceita Ctrl+V no card (foco) ou o botão de colar da área de transferência.
+ */
+function PasteSlot({
+  label,
+  help,
+  value,
+  onChange,
+  status,
+  summary,
+  message,
+  optional,
 }: {
   label: string;
   help: string;
   value: string;
   onChange: (v: string) => void;
-  variant: keyof typeof TEXT_BLOCK_VARIANTS;
+  status: SlotStatus;
+  summary?: string;
+  message?: string;
+  optional?: boolean;
 }) {
   const [pasting, setPasting] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const theme = TEXT_BLOCK_VARIANTS[variant];
 
-  const handlePaste = async () => {
+  const apply = (text: string) => {
+    if (!text.trim()) {
+      toast.error("Área de transferência vazia");
+      return;
+    }
+    onChange(text);
+  };
+
+  const pasteFromClipboard = async () => {
     setPasting(true);
     try {
-      const text = await navigator.clipboard.readText();
-      if (!text.trim()) {
-        toast.error("Área de transferência vazia");
-        return;
-      }
-      onChange(text);
-      textareaRef.current?.focus();
+      apply(await navigator.clipboard.readText());
     } catch {
-      toast.error("Não deu pra acessar a área de transferência — cole com Ctrl+V direto no campo.");
+      toast.error("Não deu pra acessar a área de transferência — clique no card e use Ctrl+V.");
     } finally {
       setPasting(false);
     }
   };
 
   return (
-    <div className={"rounded-lg border p-3 " + theme.border + " " + theme.bg} style={{ boxShadow: "var(--shadow-card)" }}>
-      <label className="block">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
+    <div
+      tabIndex={0}
+      onPaste={(e) => {
+        e.preventDefault();
+        apply(e.clipboardData.getData("text"));
+      }}
+      className={
+        "rounded-xl border p-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
+        SLOT_THEME[status]
+      }
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={
+            "flex h-8 w-8 flex-none items-center justify-center rounded-lg border " +
+            (status === "ok"
+              ? "border-rubi-success/50 text-rubi-success"
+              : status === "error"
+                ? "border-rubi-danger/50 text-rubi-danger"
+                : "border-border text-muted-foreground")
+          }
+        >
+          {status === "ok" ? (
+            <Check className="h-4 w-4" />
+          ) : status === "error" ? (
+            <AlertTriangle className="h-4 w-4" />
+          ) : (
+            <ClipboardPaste className="h-4 w-4" />
+          )}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold">{label}</span>
-            <button
-              type="button"
-              onClick={handlePaste}
-              disabled={pasting}
-              title="Colar da área de transferência"
-              className="animate-float-pop inline-flex flex-none items-center gap-1 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-2 py-0.5 text-[11px] font-bold text-background shadow-glow-gold transition-transform hover:scale-110 hover:shadow-glow-blue hover:[animation-play-state:paused] active:scale-95 disabled:pointer-events-none disabled:opacity-60"
-            >
-              <ClipboardPaste className="h-3 w-3 flex-none" />
-              Colar
-            </button>
+            {optional && (
+              <span className="flex-none rounded-full border border-border px-1.5 text-[10px] font-medium text-muted-foreground">
+                opcional
+              </span>
+            )}
           </div>
-          <span className="flex-none text-xs text-muted-foreground">{value.length} chars</span>
+          <p
+            className={
+              "mt-0.5 truncate text-xs " +
+              (status === "ok"
+                ? "text-rubi-success"
+                : status === "error"
+                  ? "text-rubi-danger"
+                  : "text-muted-foreground")
+            }
+            title={status === "empty" ? help : (message ?? summary ?? "")}
+          >
+            {status === "ok" ? (summary ?? "Dados lidos com sucesso") : status === "error" ? message : help}
+          </p>
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">{help}</p>
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={() => {}}
-          onPaste={(e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData("text");
-            if (text.trim()) onChange(text);
-          }}
-          onBeforeInput={(e) => e.preventDefault()}
-          onKeyDown={(e) => {
-            const ctrl = e.ctrlKey || e.metaKey;
-            const allowed =
-              (ctrl && ["v", "a", "c", "x"].includes(e.key.toLowerCase())) ||
-              ["Tab", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(e.key);
-            if (!allowed) e.preventDefault();
-          }}
-          onDrop={(e) => e.preventDefault()}
-          rows={4}
-          className="mt-2 w-full resize-y rounded-lg border border-border bg-background/60 p-3 font-mono text-xs leading-relaxed placeholder:text-muted-foreground/50"
-          placeholder="Cole o texto aqui (Ctrl+V) — campo somente para colar"
-          spellCheck={false}
-        />
-        {value.length > 0 && (
+
+        {value ? (
           <button
             type="button"
             onClick={() => onChange("")}
-            className="mt-2 inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
+            className="flex-none rounded-full border border-border px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
           >
             Limpar
           </button>
+        ) : (
+          <button
+            type="button"
+            onClick={pasteFromClipboard}
+            disabled={pasting}
+            className="inline-flex flex-none items-center gap-1 rounded-full bg-gradient-to-br from-rubi-gold to-rubi-blue px-2.5 py-1 text-[11px] font-bold text-background shadow-glow-gold transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-60"
+          >
+            <ClipboardPaste className="h-3 w-3 flex-none" />
+            Colar
+          </button>
         )}
-      </label>
+      </div>
     </div>
   );
 }
+
 
 
 
