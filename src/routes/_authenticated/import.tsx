@@ -446,7 +446,8 @@ function ImportPage() {
             onChange={setMiscText}
             status={miscText ? (parsed.misc ? "ok" : "error") : "empty"}
             expect="misc"
-            onPasteText={routePaste}
+            onPasteEvent={handlePasteEvent}
+            onPasteBtn={handleClipboardButton}
             summary={parsed.misc ? "Charms, imbuements e upgrades lidos" : undefined}
             message="Não reconheci esse bloco. Copie o Miscellaneous completo."
             optional
