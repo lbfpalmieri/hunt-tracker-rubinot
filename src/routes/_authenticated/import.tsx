@@ -133,16 +133,65 @@ function ImportPage() {
     });
   };
 
+  // Detecta imagem na área de transferência → equipamento; senão trata como texto.
+  const hasImageItem = (items?: DataTransferItemList | null): boolean => {
+    if (!items) return false;
+    return Array.from(items).some((it) => it.type.startsWith("image/"));
+  };
+
+  const gearNotice = () =>
+    setNotice({
+      tone: "ok",
+      title: "Equipamento detectado",
+      detail: "Print do equipamento adicionado à sessão.",
+    });
+
+  // Cola via evento (Ctrl+V no card ou global): imagem vai pro equipamento, texto é roteado.
+  const handlePasteEvent = (e: ClipboardEvent, from?: Exclude<BlockKind, "unknown">) => {
+    const el = e.target as HTMLElement | null;
+    if (el && el.closest("input, textarea, [contenteditable='true']")) return;
+    if (hasImageItem(e.clipboardData?.items)) {
+      e.preventDefault();
+      gearNotice();
+      return;
+    }
+    const text = e.clipboardData?.getData("text") ?? "";
+    if (!text.trim()) return;
+    e.preventDefault();
+    routePaste(text, from);
+  };
+
+  // Botão "Colar": lê a área de transferência (imagem primeiro, depois texto).
+  const handleClipboardButton = async (from: Exclude<BlockKind, "unknown">) => {
+    try {
+      const clipItems = await navigator.clipboard.read?.();
+      if (clipItems) {
+        for (const item of clipItems) {
+          for (const type of item.types) {
+            if (type.startsWith("image/")) {
+              const blob = await item.getType(type);
+              const compressed = await blobToCompressedImage(blob);
+              setGearUrl(compressed);
+              gearNotice();
+              return;
+            }
+          }
+        }
+      }
+    } catch {
+      // read() pode ser indisponível/negado — segue para texto.
+    }
+    try {
+      const text = await navigator.clipboard.readText();
+      routePaste(text, from);
+    } catch {
+      toast.error("Não deu pra acessar a área de transferência — use Ctrl+V na tela.");
+    }
+  };
+
   // Ctrl+V em qualquer lugar da tela (fora de campos de texto) já vai pro bloco correto.
   useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      if (el && (el.closest("input, textarea, [contenteditable='true']"))) return;
-      const text = e.clipboardData?.getData("text") ?? "";
-      if (!text.trim()) return;
-      e.preventDefault();
-      routePaste(text);
-    };
+    const onPaste = (e: ClipboardEvent) => handlePasteEvent(e);
     document.addEventListener("paste", onPaste);
     return () => document.removeEventListener("paste", onPaste);
   });
