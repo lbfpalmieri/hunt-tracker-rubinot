@@ -27,7 +27,7 @@ import {
   MapPin,
   X,
 } from "lucide-react";
-import { PasteImageBox } from "@/components/PasteImage";
+import { PasteImageBox, blobToCompressedImage } from "@/components/PasteImage";
 import {
   BOUNTY_DIFFICULTIES,
   BOUNTY_TIERS,
@@ -133,16 +133,65 @@ function ImportPage() {
     });
   };
 
+  // Detecta imagem na área de transferência → equipamento; senão trata como texto.
+  const hasImageItem = (items?: DataTransferItemList | null): boolean => {
+    if (!items) return false;
+    return Array.from(items).some((it) => it.type.startsWith("image/"));
+  };
+
+  const gearNotice = () =>
+    setNotice({
+      tone: "ok",
+      title: "Equipamento detectado",
+      detail: "Print do equipamento adicionado à sessão.",
+    });
+
+  // Cola via evento (Ctrl+V no card ou global): imagem vai pro equipamento, texto é roteado.
+  const handlePasteEvent = (e: ClipboardEvent, from?: Exclude<BlockKind, "unknown">) => {
+    const el = e.target as HTMLElement | null;
+    if (el && el.closest("input, textarea, [contenteditable='true']")) return;
+    if (hasImageItem(e.clipboardData?.items)) {
+      e.preventDefault();
+      gearNotice();
+      return;
+    }
+    const text = e.clipboardData?.getData("text") ?? "";
+    if (!text.trim()) return;
+    e.preventDefault();
+    routePaste(text, from);
+  };
+
+  // Botão "Colar": lê a área de transferência (imagem primeiro, depois texto).
+  const handleClipboardButton = async (from: Exclude<BlockKind, "unknown">) => {
+    try {
+      const clipItems = await navigator.clipboard.read?.();
+      if (clipItems) {
+        for (const item of clipItems) {
+          for (const type of item.types) {
+            if (type.startsWith("image/")) {
+              const blob = await item.getType(type);
+              const compressed = await blobToCompressedImage(blob);
+              setGearUrl(compressed);
+              gearNotice();
+              return;
+            }
+          }
+        }
+      }
+    } catch {
+      // read() pode ser indisponível/negado — segue para texto.
+    }
+    try {
+      const text = await navigator.clipboard.readText();
+      routePaste(text, from);
+    } catch {
+      toast.error("Não deu pra acessar a área de transferência — use Ctrl+V na tela.");
+    }
+  };
+
   // Ctrl+V em qualquer lugar da tela (fora de campos de texto) já vai pro bloco correto.
   useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      if (el && (el.closest("input, textarea, [contenteditable='true']"))) return;
-      const text = e.clipboardData?.getData("text") ?? "";
-      if (!text.trim()) return;
-      e.preventDefault();
-      routePaste(text);
-    };
+    const onPaste = (e: ClipboardEvent) => handlePasteEvent(e);
     document.addEventListener("paste", onPaste);
     return () => document.removeEventListener("paste", onPaste);
   });
@@ -370,7 +419,8 @@ function ImportPage() {
             onChange={setHuntingText}
             status={huntingStatus}
             expect="hunting"
-            onPasteText={routePaste}
+            onPasteEvent={handlePasteEvent}
+            onPasteBtn={handleClipboardButton}
             summary={huntingSummary}
             message={huntingMessage}
           />
@@ -381,7 +431,8 @@ function ImportPage() {
             onChange={setDamageText}
             status={damageText ? (parsed.damage ? "ok" : "error") : "empty"}
             expect="damage"
-            onPasteText={routePaste}
+            onPasteEvent={handlePasteEvent}
+            onPasteBtn={handleClipboardButton}
             summary={
               parsed.damage ? `Dano recebido ${fmtNum(parsed.damage.totalReceived ?? 0)}` : undefined
             }
@@ -395,7 +446,8 @@ function ImportPage() {
             onChange={setMiscText}
             status={miscText ? (parsed.misc ? "ok" : "error") : "empty"}
             expect="misc"
-            onPasteText={routePaste}
+            onPasteEvent={handlePasteEvent}
+            onPasteBtn={handleClipboardButton}
             summary={parsed.misc ? "Charms, imbuements e upgrades lidos" : undefined}
             message="Não reconheci esse bloco. Copie o Miscellaneous completo."
             optional
@@ -802,7 +854,8 @@ function PasteSlot({
   message,
   optional,
   expect,
-  onPasteText,
+  onPasteEvent,
+  onPasteBtn,
 }: {
   label: string;
   help: string;
@@ -813,16 +866,15 @@ function PasteSlot({
   message?: string;
   optional?: boolean;
   expect: Exclude<BlockKind, "unknown">;
-  onPasteText: (text: string, from: Exclude<BlockKind, "unknown">) => void;
+  onPasteEvent: (e: ClipboardEvent, from: Exclude<BlockKind, "unknown">) => void;
+  onPasteBtn: (from: Exclude<BlockKind, "unknown">) => Promise<void>;
 }) {
   const [pasting, setPasting] = useState(false);
 
   const pasteFromClipboard = async () => {
     setPasting(true);
     try {
-      onPasteText(await navigator.clipboard.readText(), expect);
-    } catch {
-      toast.error("Não deu pra acessar a área de transferência — use Ctrl+V na tela.");
+      await onPasteBtn(expect);
     } finally {
       setPasting(false);
     }
@@ -831,10 +883,7 @@ function PasteSlot({
   return (
     <div
       tabIndex={0}
-      onPaste={(e) => {
-        e.preventDefault();
-        onPasteText(e.clipboardData.getData("text"), expect);
-      }}
+      onPaste={(e) => onPasteEvent(e.nativeEvent, expect)}
       className={
         "group relative overflow-hidden rounded-2xl border p-4 outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
         SLOT_THEME[status]
