@@ -344,7 +344,10 @@ function ImportPage() {
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Importar</div>
         <h1 className="mt-1 font-display text-3xl font-bold">Nova sessão de hunt</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Cole os blocos exportados pelo RubinOT. O sistema faz o parse automaticamente.
+          Dê <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">Ctrl</kbd>
+          <span className="mx-px">+</span>
+          <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">V</kbd> em
+          qualquer lugar da tela — o sistema identifica o bloco e encaixa no lugar certo.
         </p>
       </div>
 
