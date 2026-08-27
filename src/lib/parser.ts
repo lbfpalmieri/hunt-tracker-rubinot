@@ -111,7 +111,7 @@ export function parseHunting(text: string): HuntingData {
     startedAt: rangeMatch?.[1]?.trim() ?? null,
     endedAt: rangeMatch?.[2]?.trim() ?? null,
     durationSec: resolveDurationSec({
-      durationSec: durationToSec(get(/Session:\s*([\d:h\s]+)/)),
+      durationSec: durationToSec(get(/Session(?:\s*length)?:\s*([\d:h\s]+)/)),
       startedAt: rangeMatch?.[1]?.trim() ?? null,
       endedAt: rangeMatch?.[2]?.trim() ?? null,
     }),
