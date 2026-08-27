@@ -1,3 +1,4 @@
+import { resolveDurationSec } from "./parser";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -69,7 +70,7 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
         huntName: (r.hunt_name ?? "") as string,
         charName: (r.char_name ?? "Anônimo") as string,
         vocation: (r.char_vocation ?? "—") as string,
-        durationSec: Number(r.hunting?.durationSec ?? 0),
+        durationSec: resolveDurationSec(r.hunting ?? {}, r.misc?.sessionSec ?? null),
         xpGain: Number(r.hunting?.xpGain ?? 0),
         rawXp: Number(r.hunting?.rawXp ?? 0),
         bounty: r.bounty_difficulty && r.bounty_tier
@@ -206,7 +207,7 @@ export const getCommunityStats = createServerFn({ method: "GET" }).handler(async
   for (const row of (data ?? []) as any[]) {
     if (row.char_name) players.add(String(row.char_name).toLowerCase());
     if (row.hunt_name) hunts.add(String(row.hunt_name).toLowerCase());
-    hours += Number(row.hunting?.durationSec ?? 0) / 3600;
+    hours += resolveDurationSec(row.hunting ?? {}, row.misc?.sessionSec ?? null) / 3600;
     rawXp += Number(row.hunting?.rawXp ?? row.hunting?.xpGain ?? 0);
     gold += Number(row.hunting?.balance ?? 0);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
