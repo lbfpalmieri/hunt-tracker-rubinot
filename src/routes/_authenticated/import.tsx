@@ -616,6 +616,7 @@ function PasteSlot({
   summary,
   message,
   optional,
+  expect,
 }: {
   label: string;
   help: string;
@@ -625,6 +626,7 @@ function PasteSlot({
   summary?: string;
   message?: string;
   optional?: boolean;
+  expect: Exclude<BlockKind, "unknown">;
 }) {
   const [pasting, setPasting] = useState(false);
 
@@ -633,7 +635,22 @@ function PasteSlot({
       toast.error("Área de transferência vazia");
       return;
     }
+    // Barreira anti-erro: valida o tipo do bloco ANTES de aceitar a colagem.
+    const kind = detectBlockKind(text);
+    if (kind === "unknown") {
+      toast.error(`Isso não parece o ${label}`, {
+        description: "Copie o bloco completo direto do jogo (Ctrl+A no analyser) e cole de novo.",
+      });
+      return;
+    }
+    if (kind !== expect) {
+      toast.error(`Bloco errado: isso é o ${BLOCK_LABEL[kind]}`, {
+        description: `Cole esse conteúdo no card "${BLOCK_LABEL[kind]}". Aqui só entra o ${label}.`,
+      });
+      return;
+    }
     onChange(text);
+    toast.success(`${label} reconhecido`);
   };
 
   const pasteFromClipboard = async () => {
@@ -646,6 +663,7 @@ function PasteSlot({
       setPasting(false);
     }
   };
+
 
   return (
     <div
