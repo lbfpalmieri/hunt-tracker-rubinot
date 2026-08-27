@@ -318,22 +318,25 @@ function ImportPage() {
 
 
               {(ownMatches.length > 0 || communityMatches.length > 0) && !selectedHuntName && (
-                <div className="mt-1.5 mb-2 space-y-1.5 rounded-lg border border-rubi-blue/30 bg-rubi-blue/[0.04] p-2.5">
-                  <p className="text-[11px] text-muted-foreground">
-                    Baseado nos monstros dessa sessão, pode ser uma dessas hunts:
+                <div className="mt-2 mb-2.5 space-y-2.5 rounded-xl border border-rubi-blue/40 bg-rubi-blue/[0.07] p-3">
+                  <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rubi-blue">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Sugestões pelos monstros
                   </p>
                   {ownMatches.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {ownMatches.map((m) => (
                         <button
                           key={m.huntName}
                           type="button"
                           onClick={() => pickHunt(m.huntName)}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2.5 py-1 text-xs font-medium text-rubi-blue hover:bg-rubi-blue/20"
+                          className="group inline-flex items-center gap-2 rounded-xl border border-rubi-blue/50 bg-rubi-blue/10 px-3 py-1.5 text-left transition-all hover:border-rubi-blue hover:bg-rubi-blue/20 hover:shadow-glow-blue active:scale-95"
                         >
-                          {m.huntName}
-                          <span className="text-[10px] opacity-70">
-                            {m.shared}/{m.total} monstros
+                          <span className="font-display text-[13px] font-bold text-foreground">
+                            {m.huntName}
+                          </span>
+                          <span className="rounded-full bg-rubi-blue/20 px-1.5 py-px text-[10px] font-semibold text-rubi-blue">
+                            {m.shared}/{m.total}
                           </span>
                         </button>
                       ))}
@@ -341,21 +344,23 @@ function ImportPage() {
                   )}
                   {communityMatches.length > 0 && (
                     <div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        Jogadores da comunidade usam esse nome pra hunts com esses monstros:
+                      <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <Globe2 className="h-3 w-3" />
+                        Usadas pela comunidade
                       </p>
-                      <div className="mt-1 flex flex-wrap gap-1.5">
+                      <div className="mt-1.5 flex flex-wrap gap-2">
                         {communityMatches.map((m) => (
                           <button
                             key={m.huntName}
                             type="button"
                             onClick={() => pickHunt(m.huntName)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-rubi-blue/50 hover:text-foreground"
+                            className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-1.5 text-left transition-all hover:border-rubi-blue/60 hover:bg-rubi-blue/10 active:scale-95"
                           >
-                            <Globe2 className="h-3 w-3" />
-                            {m.huntName}
-                            <span className="text-[10px] opacity-70">
-                              {m.shared}/{m.total} monstros
+                            <span className="font-display text-[13px] font-semibold text-foreground/90">
+                              {m.huntName}
+                            </span>
+                            <span className="rounded-full bg-muted/40 px-1.5 py-px text-[10px] font-semibold text-muted-foreground">
+                              {m.shared}/{m.total}
                             </span>
                           </button>
                         ))}
@@ -364,6 +369,7 @@ function ImportPage() {
                   )}
                 </div>
               )}
+
 
               <div ref={huntPickerRef} className="relative">
                 <div className="relative">
