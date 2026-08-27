@@ -21,6 +21,8 @@ import {
   AlertTriangle,
   Check,
   ClipboardPaste,
+  Trash2,
+  MapPin,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import {
