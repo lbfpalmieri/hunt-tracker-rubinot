@@ -159,7 +159,10 @@ function ImportPage() {
     setHuntPickerOpen(false);
   };
 
-  const canSave = Boolean(parsed.hunting && effectiveCharId && selectedHuntName && bountyReady && preyReady);
+  const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
+  const canSave = Boolean(
+    parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady,
+  );
 
   const handleAutoSplit = () => {
     const combined = [huntingText, damageText, miscText].filter(Boolean).join("\n\n");
@@ -519,17 +522,26 @@ function ImportPage() {
               </p>
             )}
             {!canSave && (
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p
+                className={
+                  "mt-2 text-xs " +
+                  (parsed.hunting && !durationOk
+                    ? "rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-rubi-danger"
+                    : "text-muted-foreground")
+                }
+              >
                 {!parsed.hunting
                   ? "Cole o Hunting Analyser para continuar."
-                  : !selectedHuntName
-                    ? "Dê um nome à hunt."
-                    : !preyReady
-                      ? "Revise os bônus de prey (use um número entre 0 e 100)."
-                      : "Selecione a dificuldade e o tipo da Bounty Task."}
+                  : !durationOk
+                    ? "Não foi possível identificar a duração da sessão. Cole o Hunting Analyser completo, incluindo as linhas \"Session data: From ... to ...\" e \"Session length: HH:MMh\"."
+                    : !selectedHuntName
+                      ? "Dê um nome à hunt."
+                      : !preyReady
+                        ? "Revise os bônus de prey (use um número entre 0 e 100)."
+                        : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
-
             )}
+
           </div>
 
           {parsed.hunting && (
@@ -635,16 +647,42 @@ function TextBlock({
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={() => {}}
+          onPaste={(e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData("text");
+            if (text.trim()) onChange(text);
+          }}
+          onBeforeInput={(e) => e.preventDefault()}
+          onKeyDown={(e) => {
+            const ctrl = e.ctrlKey || e.metaKey;
+            const allowed =
+              (ctrl && ["v", "a", "c", "x"].includes(e.key.toLowerCase())) ||
+              ["Tab", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(e.key);
+            if (!allowed) e.preventDefault();
+          }}
+          onDrop={(e) => e.preventDefault()}
           rows={4}
           className="mt-2 w-full resize-y rounded-lg border border-border bg-background/60 p-3 font-mono text-xs leading-relaxed placeholder:text-muted-foreground/50"
-          placeholder="Cole o texto aqui..."
+          placeholder="Cole o texto aqui (Ctrl+V) — campo somente para colar"
           spellCheck={false}
         />
+        {value.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="mt-2 inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-rubi-danger/60 hover:text-rubi-danger"
+          >
+            Limpar
+          </button>
+        )}
       </label>
     </div>
   );
 }
+
+
+
 
 function PreviewRow({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
   return (
