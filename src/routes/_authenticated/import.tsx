@@ -522,17 +522,26 @@ function ImportPage() {
               </p>
             )}
             {!canSave && (
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p
+                className={
+                  "mt-2 text-xs " +
+                  (parsed.hunting && !durationOk
+                    ? "rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-rubi-danger"
+                    : "text-muted-foreground")
+                }
+              >
                 {!parsed.hunting
                   ? "Cole o Hunting Analyser para continuar."
-                  : !selectedHuntName
-                    ? "Dê um nome à hunt."
-                    : !preyReady
-                      ? "Revise os bônus de prey (use um número entre 0 e 100)."
-                      : "Selecione a dificuldade e o tipo da Bounty Task."}
+                  : !durationOk
+                    ? "Não foi possível identificar a duração da sessão. Cole o Hunting Analyser completo, incluindo as linhas \"Session data: From ... to ...\" e \"Session length: HH:MMh\"."
+                    : !selectedHuntName
+                      ? "Dê um nome à hunt."
+                      : !preyReady
+                        ? "Revise os bônus de prey (use um número entre 0 e 100)."
+                        : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
-
             )}
+
           </div>
 
           {parsed.hunting && (
