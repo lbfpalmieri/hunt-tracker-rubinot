@@ -880,7 +880,7 @@ function PasteSlot({
   return (
     <div
       tabIndex={0}
-      onPaste={(e) => onPasteEvent(e, expect)}
+      onPaste={(e) => onPasteEvent(e.nativeEvent, expect)}
       className={
         "group relative overflow-hidden rounded-2xl border p-4 outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-rubi-gold/60 " +
         SLOT_THEME[status]
