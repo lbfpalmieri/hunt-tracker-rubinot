@@ -27,7 +27,7 @@ import {
   MapPin,
   X,
 } from "lucide-react";
-import { PasteImageBox } from "@/components/PasteImage";
+import { PasteImageBox, blobToCompressedImage } from "@/components/PasteImage";
 import {
   BOUNTY_DIFFICULTIES,
   BOUNTY_TIERS,
