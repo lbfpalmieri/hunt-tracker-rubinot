@@ -295,26 +295,27 @@ function ImportPage() {
 
         <div className="space-y-4">
           <div className="card-surface p-5">
-            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-              <Sparkles className="h-4 w-4 text-rubi-gold" />
-              Detalhes da sessão
-            </h2>
-            <label className="mb-3 block">
-              <span className="text-xs font-medium text-muted-foreground">Personagem</span>
-              <select
-                value={effectiveCharId}
-                onChange={(e) => setCharId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
-              >
-                {characters.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} · {c.vocation}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 font-display text-sm font-bold uppercase tracking-wider">
+                <Sparkles className="h-4 w-4 text-rubi-gold" />
+                Detalhes da sessão
+              </h2>
+              {activeChar && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2.5 py-1 text-[11px] font-semibold text-rubi-blue"
+                  title="Personagem ativo do seu perfil"
+                >
+                  <UserCircle2 className="h-3.5 w-3.5" />
+                  {activeChar.name}
+                </span>
+              )}
+            </div>
             <div>
-              <span className="text-xs font-medium text-muted-foreground">Hunt / spot</span>
+              <span className="flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-wider text-rubi-gold">
+                <MapPin className="h-3.5 w-3.5" />
+                Hunt / spot
+              </span>
+
 
               {(ownMatches.length > 0 || communityMatches.length > 0) && !selectedHuntName && (
                 <div className="mt-1.5 mb-2 space-y-1.5 rounded-lg border border-rubi-blue/30 bg-rubi-blue/[0.04] p-2.5">
