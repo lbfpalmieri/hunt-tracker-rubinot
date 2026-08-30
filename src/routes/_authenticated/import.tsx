@@ -9,7 +9,12 @@ import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { Crown } from "lucide-react";
 import { detectBlockKind, BLOCK_LABEL, type BlockKind } from "@/lib/block-detect";
-import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
+import {
+  groupMonstersByHunt,
+  matchHuntsByMonsters,
+  looksGenericHuntName,
+  canonicalizeHuntRows,
+} from "@/lib/hunt-suggest";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -222,20 +227,27 @@ function ImportPage() {
     () => groupMonstersByHunt(sessions.map((s) => ({ huntName: s.huntName, kills: s.hunting.kills }))),
     [sessions],
   );
-  const communityGroups = useMemo(
-    () => groupMonstersByHunt(communityData?.sessions ?? []),
-    [communityData],
-  );
+  // A comunidade digita o nome à mão: unificamos grafias parecidas sob a mais
+  // usada e marcamos andares improváveis para não sugerir nomes errados.
+  const community = useMemo(() => {
+    const own = (sessions ?? []).map((s) => ({ huntName: s.huntName, kills: s.hunting.kills }));
+    const all = [...own, ...(communityData?.sessions ?? []).map((s) => ({ huntName: s.huntName, kills: s.kills }))];
+    const { rows, suspicious } = canonicalizeHuntRows(all);
+    return { groups: groupMonstersByHunt(rows.slice(own.length)), suspicious };
+  }, [communityData, sessions]);
+  const communityGroups = community.groups;
 
   const ownMatches = useMemo(() => sortByFullMatch(matchHuntsByMonsters(newMonsters, ownGroups)), [newMonsters, ownGroups]);
   const communityMatches = useMemo(() => {
     const ownNames = new Set(ownMatches.map((m) => m.huntName.toLowerCase()));
-    return sortByFullMatch(
+    const list = sortByFullMatch(
       matchHuntsByMonsters(newMonsters, communityGroups).filter(
         (m) => !ownNames.has(m.huntName.toLowerCase()),
       ),
-    );
-  }, [newMonsters, communityGroups, ownMatches]);
+    ).map((m) => ({ ...m, suspicious: community.suspicious.has(m.huntName.toLowerCase()) }));
+    // Nomes suspeitos vão para o fim da lista.
+    return [...list].sort((a, b) => Number(a.suspicious) - Number(b.suspicious));
+  }, [newMonsters, communityGroups, ownMatches, community.suspicious]);
 
   const huntFiltered = useMemo(() => {
     const q = huntQuery.trim().toLowerCase();
@@ -557,20 +569,30 @@ function ImportPage() {
                       </p>
                       <div className="mt-1.5 flex flex-wrap gap-2">
                         {communityMatches.map((m) => {
-                          const full = m.total > 0 && m.shared >= m.total;
+                          const full = m.total > 0 && m.shared >= m.total && !m.suspicious;
                           return (
                             <button
                               key={m.huntName}
                               type="button"
                               onClick={() => pickHunt(m.huntName)}
+                              title={
+                                m.suspicious
+                                  ? "Esse nome apareceu só uma vez e o andar difere dos mais usados — pode ser erro de digitação."
+                                  : undefined
+                              }
                               className={
                                 "inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-all active:scale-95 " +
-                                (full
-                                  ? "border-rubi-gold/70 bg-rubi-gold/10 hover:border-rubi-gold hover:bg-rubi-gold/20"
-                                  : "border-border/60 bg-background/40 hover:border-rubi-blue/60 hover:bg-rubi-blue/10")
+                                (m.suspicious
+                                  ? "border-dashed border-amber-500/50 bg-amber-500/[0.06] opacity-70 hover:opacity-100"
+                                  : full
+                                    ? "border-rubi-gold/70 bg-rubi-gold/10 hover:border-rubi-gold hover:bg-rubi-gold/20"
+                                    : "border-border/60 bg-background/40 hover:border-rubi-blue/60 hover:bg-rubi-blue/10")
                               }
                             >
                               {full && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
+                              {m.suspicious && (
+                                <AlertTriangle className="h-3.5 w-3.5 flex-none text-amber-400" />
+                              )}
                               <span
                                 className={
                                   "font-display text-[13px] font-semibold " +
@@ -589,6 +611,11 @@ function ImportPage() {
                               >
                                 {m.shared}/{m.total}
                               </span>
+                              {m.suspicious && (
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                                  nome suspeito
+                                </span>
+                              )}
                             </button>
                           );
                         })}

@@ -157,3 +157,170 @@ export function looksGenericHuntName(name: string): boolean {
   if (/^([a-z])\1{2,}$/.test(base)) return true;
   return false;
 }
+
+// ── Canonicalização de nomes de hunt ────────────────────────────────────────
+// A comunidade digita o nome à mão, então o mesmo spot aparece como "Plage Seal
+// -3", "Plague seal -1", "plague  seal -2"... Aqui normalizamos, agrupamos
+// grafias parecidas sob a mais usada e marcamos andares improváveis (ex: um
+// "-3" com uma única sessão quando "-1"/"-2" têm várias) como suspeitos.
+
+const FLOOR_RE = /(-?\s*[+-]?\d+)\s*$/;
+
+/** Chave comparável: sem acento, minúscula, espaços/hífens normalizados. */
+export function normalizeHuntKey(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[_/]+/g, " ")
+    .replace(/\s*-\s*/g, " -")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function splitFloor(key: string): { base: string; floor: string } {
+  const m = key.match(FLOOR_RE);
+  if (!m) return { base: key, floor: "" };
+  return { base: key.slice(0, m.index).trim(), floor: m[1].replace(/\s+/g, "") };
+}
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let last = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cur = prev[j];
+      prev[j] = Math.min(
+        prev[j] + 1,
+        prev[j - 1] + 1,
+        last + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+      last = cur;
+    }
+  }
+  return prev[b.length];
+}
+
+function similarBase(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.min(a.length, b.length) < 5) return false;
+  if (Math.abs(a.length - b.length) > 2) return false;
+  const tolerance = a.length >= 12 ? 2 : 1;
+  return levenshtein(a, b) <= tolerance;
+}
+
+export interface CanonicalizedHunts<T> {
+  rows: T[];
+  /** Nomes (lowercase) cujo andar parece digitado errado. */
+  suspicious: Set<string>;
+}
+
+/**
+ * Reescreve o nome de cada linha para a grafia dominante do spot e devolve
+ * quais nomes têm andar improvável.
+ */
+export function canonicalizeHuntRows<T extends { huntName: string }>(
+  rows: T[],
+): CanonicalizedHunts<T> {
+  // 1. contagem por chave normalizada, guardando a grafia mais frequente
+  const byKey = new Map<string, { count: number; spellings: Map<string, number> }>();
+  for (const r of rows) {
+    const key = normalizeHuntKey(r.huntName);
+    if (!key) continue;
+    const cur = byKey.get(key) ?? { count: 0, spellings: new Map() };
+    cur.count += 1;
+    cur.spellings.set(r.huntName.trim(), (cur.spellings.get(r.huntName.trim()) ?? 0) + 1);
+    byKey.set(key, cur);
+  }
+
+  const display = (key: string) => {
+    const entry = byKey.get(key);
+    if (!entry) return key;
+    return [...entry.spellings.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+  };
+
+  // 2. clusteriza bases parecidas (typos) — o andar continua distinguindo spots
+  const bases: { base: string; count: number }[] = [];
+  const baseCount = new Map<string, number>();
+  for (const [key, entry] of byKey) {
+    const { base } = splitFloor(key);
+    baseCount.set(base, (baseCount.get(base) ?? 0) + entry.count);
+  }
+  for (const [base, count] of [...baseCount.entries()].sort((a, b) => b[1] - a[1])) {
+    bases.push({ base, count });
+  }
+  const baseCanon = new Map<string, string>();
+  for (const { base } of bases) {
+    const hit = [...new Set(baseCanon.values())].find((c) => similarBase(c, base));
+    baseCanon.set(base, hit ?? base);
+  }
+
+  // 3. andares por cluster de base → detecta o "-3" que não existe
+  const floorsByBase = new Map<string, Map<string, number>>();
+  for (const [key, entry] of byKey) {
+    const { base, floor } = splitFloor(key);
+    const canonBase = baseCanon.get(base) ?? base;
+    const floors = floorsByBase.get(canonBase) ?? new Map<string, number>();
+    floors.set(floor, (floors.get(floor) ?? 0) + entry.count);
+    floorsByBase.set(canonBase, floors);
+  }
+
+  // 4. chave normalizada → nome canônico exibido
+  const keyToName = new Map<string, string>();
+  const suspicious = new Set<string>();
+  for (const [key, entry] of byKey) {
+    const { base, floor } = splitFloor(key);
+    const canonBase = baseCanon.get(base) ?? base;
+    // Grafia dominante da mesma base+andar
+    let bestKey = key;
+    let bestCount = entry.count;
+    for (const [otherKey, other] of byKey) {
+      const o = splitFloor(otherKey);
+      if ((baseCanon.get(o.base) ?? o.base) !== canonBase || o.floor !== floor) continue;
+      if (other.count > bestCount) {
+        bestCount = other.count;
+        bestKey = otherKey;
+      }
+    }
+    let name = display(bestKey);
+    if (bestKey === key && floor) {
+      // Nenhuma outra sessão com esse andar: corrige a grafia da base usando a
+      // variante dominante do cluster ("Plage Seal -3" → "Plague Seal -3").
+      let clusterKey = key;
+      let clusterCount = entry.count;
+      for (const [otherKey, other] of byKey) {
+        const o = splitFloor(otherKey);
+        if ((baseCanon.get(o.base) ?? o.base) !== canonBase) continue;
+        if (other.count > clusterCount) {
+          clusterCount = other.count;
+          clusterKey = otherKey;
+        }
+      }
+      const clusterBase = splitFloor(clusterKey).base;
+      if (clusterKey !== key && clusterBase !== base) {
+        const ref = display(clusterKey);
+        const m = ref.match(FLOOR_RE);
+        if (m) name = `${ref.slice(0, m.index).trim()} ${floor}`;
+      }
+    }
+    keyToName.set(key, name);
+
+    const floors = floorsByBase.get(canonBase);
+    if (floor && floors) {
+      const mine = floors.get(floor) ?? 0;
+      const strongest = Math.max(...[...floors.entries()].filter(([f]) => f !== floor).map(([, c]) => c), 0);
+      if (mine <= 1 && strongest >= 3) suspicious.add(name.toLowerCase());
+    }
+  }
+
+  return {
+    rows: rows.map((r) => {
+      const key = normalizeHuntKey(r.huntName);
+      const name = keyToName.get(key);
+      return name && name !== r.huntName ? { ...r, huntName: name } : r;
+    }),
+    suspicious,
+  };
+}
