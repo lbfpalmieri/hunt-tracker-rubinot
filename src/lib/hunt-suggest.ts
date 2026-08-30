@@ -298,10 +298,11 @@ export function canonicalizeHuntRows<T extends { huntName: string }>(
           clusterKey = otherKey;
         }
       }
-      if (clusterKey !== key) {
+      const clusterBase = splitFloor(clusterKey).base;
+      if (clusterKey !== key && clusterBase !== base) {
         const ref = display(clusterKey);
         const m = ref.match(FLOOR_RE);
-        if (m) name = (ref.slice(0, m.index) + floor.replace(/^-?/, (s) => s)).trim();
+        if (m) name = `${ref.slice(0, m.index).trim()} ${floor}`;
       }
     }
     keyToName.set(key, name);
