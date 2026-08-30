@@ -217,13 +217,99 @@ export interface CanonicalizedHunts<T> {
   suspicious: Set<string>;
 }
 
+// ── Correção de typos por palavra ───────────────────────────────────────────
+// Nomes de spot têm estruturas diferentes ("Plage Seal -3" vs "Darashia -
+// Ferumbras Plague -1"), então comparar a string inteira não resolve. Aqui
+// corrigimos palavra por palavra: uma palavra rara que é quase igual a uma
+// palavra muito usada na base ("plage" → "plague") é reescrita.
+const WORD_RE = /[\p{L}\p{N}]+/gu;
+
+function tokenFreq(rows: { huntName: string }[]): Map<string, number> {
+  const freq = new Map<string, number>();
+  for (const r of rows) {
+    const base = splitFloor(normalizeHuntKey(r.huntName)).base;
+    for (const w of base.match(WORD_RE) ?? []) {
+      if (w.length < 4) continue;
+      freq.set(w, (freq.get(w) ?? 0) + 1);
+    }
+  }
+  return freq;
+}
+
+function buildTokenFix(freq: Map<string, number>): Map<string, string> {
+  const fix = new Map<string, string>();
+  const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
+  for (const [word, count] of sorted) {
+    for (const [other, otherCount] of sorted) {
+      if (other === word) continue;
+      if (otherCount < count * 2 || otherCount < 2) continue;
+      if (Math.abs(other.length - word.length) > 1) continue;
+      if (levenshtein(word, other) <= 1) {
+        fix.set(word, fix.get(other) ?? other);
+        break;
+      }
+    }
+  }
+  return fix;
+}
+
+function applyTokenFix(name: string, fix: Map<string, string>): string {
+  if (fix.size === 0) return name;
+  return name.replace(WORD_RE, (w) => {
+    const key = w
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    const target = fix.get(key);
+    if (!target) return w;
+    // Preserva a caixa do original ("Plage" → "Plague").
+    return /^[A-Z]/.test(w) ? target.charAt(0).toUpperCase() + target.slice(1) : target;
+  });
+}
+
 /**
  * Reescreve o nome de cada linha para a grafia dominante do spot e devolve
  * quais nomes têm andar improvável.
  */
 export function canonicalizeHuntRows<T extends { huntName: string }>(
-  rows: T[],
+  input: T[],
 ): CanonicalizedHunts<T> {
+  // 0. corrige typos palavra por palavra antes de qualquer agrupamento
+  const tokenFix = buildTokenFix(tokenFreq(input));
+  const rows = input.map((r) => {
+    const fixed = applyTokenFix(r.huntName, tokenFix);
+    return fixed === r.huntName ? r : { ...r, huntName: fixed };
+  });
+
+  // Andares plausíveis por palavra: "plague" aparece com -1 e -2 várias vezes,
+  // então um "-3" solitário nessa família é provável erro de digitação.
+  const floorsByWord = new Map<string, Map<string, number>>();
+  for (const r of rows) {
+    const { base, floor } = splitFloor(normalizeHuntKey(r.huntName));
+    if (!floor) continue;
+    for (const w of base.match(WORD_RE) ?? []) {
+      if (w.length < 4) continue;
+      const m = floorsByWord.get(w) ?? new Map<string, number>();
+      m.set(floor, (m.get(floor) ?? 0) + 1);
+      floorsByWord.set(w, m);
+    }
+  }
+  const wordFloorSuspicious = (name: string): boolean => {
+    const { base, floor } = splitFloor(normalizeHuntKey(name));
+    if (!floor) return false;
+    for (const w of base.match(WORD_RE) ?? []) {
+      const m = floorsByWord.get(w);
+      if (!m) continue;
+      const mine = m.get(floor) ?? 0;
+      const strongest = Math.max(
+        ...[...m.entries()].filter(([f]) => f !== floor).map(([, c]) => c),
+        0,
+      );
+      if (mine <= 1 && strongest >= 3) return true;
+    }
+    return false;
+  };
+
   // 1. contagem por chave normalizada, guardando a grafia mais frequente
   const byKey = new Map<string, { count: number; spellings: Map<string, number> }>();
   for (const r of rows) {
@@ -313,7 +399,9 @@ export function canonicalizeHuntRows<T extends { huntName: string }>(
       const strongest = Math.max(...[...floors.entries()].filter(([f]) => f !== floor).map(([, c]) => c), 0);
       if (mine <= 1 && strongest >= 3) suspicious.add(name.toLowerCase());
     }
+    if (wordFloorSuspicious(name)) suspicious.add(name.toLowerCase());
   }
+
 
   return {
     rows: rows.map((r) => {
