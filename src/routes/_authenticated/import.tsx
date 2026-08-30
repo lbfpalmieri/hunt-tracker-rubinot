@@ -569,20 +569,30 @@ function ImportPage() {
                       </p>
                       <div className="mt-1.5 flex flex-wrap gap-2">
                         {communityMatches.map((m) => {
-                          const full = m.total > 0 && m.shared >= m.total;
+                          const full = m.total > 0 && m.shared >= m.total && !m.suspicious;
                           return (
                             <button
                               key={m.huntName}
                               type="button"
                               onClick={() => pickHunt(m.huntName)}
+                              title={
+                                m.suspicious
+                                  ? "Esse nome apareceu só uma vez e o andar difere dos mais usados — pode ser erro de digitação."
+                                  : undefined
+                              }
                               className={
                                 "inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-all active:scale-95 " +
-                                (full
-                                  ? "border-rubi-gold/70 bg-rubi-gold/10 hover:border-rubi-gold hover:bg-rubi-gold/20"
-                                  : "border-border/60 bg-background/40 hover:border-rubi-blue/60 hover:bg-rubi-blue/10")
+                                (m.suspicious
+                                  ? "border-dashed border-amber-500/50 bg-amber-500/[0.06] opacity-70 hover:opacity-100"
+                                  : full
+                                    ? "border-rubi-gold/70 bg-rubi-gold/10 hover:border-rubi-gold hover:bg-rubi-gold/20"
+                                    : "border-border/60 bg-background/40 hover:border-rubi-blue/60 hover:bg-rubi-blue/10")
                               }
                             >
                               {full && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
+                              {m.suspicious && (
+                                <AlertTriangle className="h-3.5 w-3.5 flex-none text-amber-400" />
+                              )}
                               <span
                                 className={
                                   "font-display text-[13px] font-semibold " +
@@ -601,6 +611,11 @@ function ImportPage() {
                               >
                                 {m.shared}/{m.total}
                               </span>
+                              {m.suspicious && (
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                                  nome suspeito
+                                </span>
+                              )}
                             </button>
                           );
                         })}
