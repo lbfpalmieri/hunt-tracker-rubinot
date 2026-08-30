@@ -284,7 +284,26 @@ export function canonicalizeHuntRows<T extends { huntName: string }>(
         bestKey = otherKey;
       }
     }
-    const name = display(bestKey);
+    let name = display(bestKey);
+    if (bestKey === key && floor) {
+      // Nenhuma outra sessão com esse andar: corrige a grafia da base usando a
+      // variante dominante do cluster ("Plage Seal -3" → "Plague Seal -3").
+      let clusterKey = key;
+      let clusterCount = entry.count;
+      for (const [otherKey, other] of byKey) {
+        const o = splitFloor(otherKey);
+        if ((baseCanon.get(o.base) ?? o.base) !== canonBase) continue;
+        if (other.count > clusterCount) {
+          clusterCount = other.count;
+          clusterKey = otherKey;
+        }
+      }
+      if (clusterKey !== key) {
+        const ref = display(clusterKey);
+        const m = ref.match(FLOOR_RE);
+        if (m) name = (ref.slice(0, m.index) + floor.replace(/^-?/, (s) => s)).trim();
+      }
+    }
     keyToName.set(key, name);
 
     const floors = floorsByBase.get(canonBase);
