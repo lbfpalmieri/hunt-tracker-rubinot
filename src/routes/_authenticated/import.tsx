@@ -222,20 +222,27 @@ function ImportPage() {
     () => groupMonstersByHunt(sessions.map((s) => ({ huntName: s.huntName, kills: s.hunting.kills }))),
     [sessions],
   );
-  const communityGroups = useMemo(
-    () => groupMonstersByHunt(communityData?.sessions ?? []),
-    [communityData],
-  );
+  // A comunidade digita o nome à mão: unificamos grafias parecidas sob a mais
+  // usada e marcamos andares improváveis para não sugerir nomes errados.
+  const community = useMemo(() => {
+    const own = (sessions ?? []).map((s) => ({ huntName: s.huntName, kills: s.hunting.kills }));
+    const all = [...own, ...(communityData?.sessions ?? []).map((s) => ({ huntName: s.huntName, kills: s.kills }))];
+    const { rows, suspicious } = canonicalizeHuntRows(all);
+    return { groups: groupMonstersByHunt(rows.slice(own.length)), suspicious };
+  }, [communityData, sessions]);
+  const communityGroups = community.groups;
 
   const ownMatches = useMemo(() => sortByFullMatch(matchHuntsByMonsters(newMonsters, ownGroups)), [newMonsters, ownGroups]);
   const communityMatches = useMemo(() => {
     const ownNames = new Set(ownMatches.map((m) => m.huntName.toLowerCase()));
-    return sortByFullMatch(
+    const list = sortByFullMatch(
       matchHuntsByMonsters(newMonsters, communityGroups).filter(
         (m) => !ownNames.has(m.huntName.toLowerCase()),
       ),
-    );
-  }, [newMonsters, communityGroups, ownMatches]);
+    ).map((m) => ({ ...m, suspicious: community.suspicious.has(m.huntName.toLowerCase()) }));
+    // Nomes suspeitos vão para o fim da lista.
+    return [...list].sort((a, b) => Number(a.suspicious) - Number(b.suspicious));
+  }, [newMonsters, communityGroups, ownMatches, community.suspicious]);
 
   const huntFiltered = useMemo(() => {
     const q = huntQuery.trim().toLowerCase();
