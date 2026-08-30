@@ -9,7 +9,12 @@ import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { Crown } from "lucide-react";
 import { detectBlockKind, BLOCK_LABEL, type BlockKind } from "@/lib/block-detect";
-import { groupMonstersByHunt, matchHuntsByMonsters, looksGenericHuntName } from "@/lib/hunt-suggest";
+import {
+  groupMonstersByHunt,
+  matchHuntsByMonsters,
+  looksGenericHuntName,
+  canonicalizeHuntRows,
+} from "@/lib/hunt-suggest";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
