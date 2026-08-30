@@ -399,7 +399,9 @@ export function canonicalizeHuntRows<T extends { huntName: string }>(
       const strongest = Math.max(...[...floors.entries()].filter(([f]) => f !== floor).map(([, c]) => c), 0);
       if (mine <= 1 && strongest >= 3) suspicious.add(name.toLowerCase());
     }
+    if (wordFloorSuspicious(name)) suspicious.add(name.toLowerCase());
   }
+
 
   return {
     rows: rows.map((r) => {
