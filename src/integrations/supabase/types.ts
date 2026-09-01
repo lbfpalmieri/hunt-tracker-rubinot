@@ -44,6 +44,47 @@ export type Database = {
         }
         Relationships: []
       }
+      goals: {
+        Row: {
+          character_id: string
+          created_at: string
+          currency_label: string
+          id: string
+          image_url: string | null
+          name: string
+          target_amount: number
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          currency_label?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          target_amount?: number
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          currency_label?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          target_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunt_sessions: {
         Row: {
           bounty_difficulty: string | null
@@ -184,6 +225,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      level_snapshots: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          level: number
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          level: number
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          level?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_snapshots_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_comparisons: {
+        Row: {
+          created_at: string
+          hunt_notes: Json
+          hunts: Json
+          id: string
+          include_bounty: boolean
+          include_prey: boolean
+          notes: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hunt_notes?: Json
+          hunts?: Json
+          id?: string
+          include_bounty?: boolean
+          include_prey?: boolean
+          notes?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hunt_notes?: Json
+          hunts?: Json
+          id?: string
+          include_bounty?: boolean
+          include_prey?: boolean
+          notes?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

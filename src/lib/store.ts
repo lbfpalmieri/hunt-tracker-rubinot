@@ -1,8 +1,14 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
-import type { HuntingData, DamageData, MiscData } from "./parser";
+import { resolveDurationSec, type HuntingData, type DamageData, type MiscData } from "./parser";
 import type { BountyInfo, BountyDifficulty, BountyTier } from "./bounty";
 import { normalizePrey, type PreySlot } from "./prey";
+
+/** Repara sessões antigas salvas sem duração, derivando do intervalo/miscellaneous. */
+const withDuration = (h: HuntingData, misc: MiscData | null): HuntingData => ({
+  ...h,
+  durationSec: resolveDurationSec(h, misc?.sessionSec ?? null),
+});
 
 export interface Character {
   id: string;
@@ -195,7 +201,7 @@ export const useAppStore = create<State>()((set, get) => ({
         characterId: s.character_id,
         huntName: s.hunt_name,
         createdAt: s.created_at,
-        hunting: s.hunting as HuntingData,
+        hunting: withDuration(s.hunting as HuntingData, (s.misc ?? null) as MiscData | null),
         damage: (s.damage ?? null) as DamageData | null,
         misc: (s.misc ?? null) as MiscData | null,
         gearUrl: s.gear_url ?? null,
@@ -401,7 +407,7 @@ export const useAppStore = create<State>()((set, get) => ({
       characterId: data.character_id,
       huntName: data.hunt_name,
       createdAt: data.created_at,
-      hunting: data.hunting as HuntingData,
+      hunting: withDuration(data.hunting as HuntingData, (data.misc ?? null) as MiscData | null),
       damage: (data.damage ?? null) as DamageData | null,
       misc: (data.misc ?? null) as MiscData | null,
       gearUrl: data.gear_url ?? null,
