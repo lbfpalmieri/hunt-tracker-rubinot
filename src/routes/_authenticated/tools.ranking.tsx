@@ -250,6 +250,20 @@ function RankingPage() {
             />
             <Sparkles className="h-3.5 w-3.5 text-rubi-blue" /> Prey
           </label>
+          {patch && (
+            <label
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              title={`Sessões de antes do ${patch.label} (${formatPatchDate(patch)})`}
+            >
+              <input
+                type="checkbox"
+                checked={includePrePatch}
+                onChange={(e) => setIncludePrePatch(e.target.checked)}
+                className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+              />
+              <AlertTriangle className="h-3.5 w-3.5 text-rubi-gold" /> Antes do {patch.label}
+            </label>
+          )}
         </div>
       </div>
       <p className="-mt-2 mb-1 text-xs text-muted-foreground">
@@ -261,29 +275,9 @@ function RankingPage() {
         evita que uma sessão curta e isolada apareça como top 1 quando projetada para 1h.
         {hiddenCount > 0 &&
           ` ${hiddenCount} hunt${hiddenCount > 1 ? "s" : ""} escondida${hiddenCount > 1 ? "s" : ""} por enquanto — continue registrando sessões nela${hiddenCount > 1 ? "s" : ""}.`}
+        {patch && prePatchCount > 0 && !includePrePatch &&
+          ` ${prePatchCount} sessão(ões) de antes do ${patch.label} também ficam de fora por padrão.`}
       </p>
-
-      {patch && prePatchCount > 0 && (
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-4 w-4 flex-none translate-y-0.5" />
-            <span>
-              <strong>{patch.label}</strong> ({formatPatchDate(patch)}) mudou quanto as hunts rendem —{" "}
-              {prePatchCount} sessão(ões) de antes disso {includePrePatch ? "estão incluídas no" : "foram tiradas do"}{" "}
-              ranking pra não misturar rendimento de antes e depois do balanceamento.
-            </span>
-          </div>
-          <label className="flex flex-none items-center gap-1.5 text-xs font-medium">
-            <input
-              type="checkbox"
-              checked={includePrePatch}
-              onChange={(e) => setIncludePrePatch(e.target.checked)}
-              className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
-            />
-            Incluir mesmo assim
-          </label>
-        </div>
-      )}
 
       {!loading && ranked.length > 0 && (
         <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">

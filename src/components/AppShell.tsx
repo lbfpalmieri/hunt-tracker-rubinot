@@ -21,6 +21,7 @@ import logo from "@/assets/dragon-logo.png.asset.json";
 import rubinotLogo from "@/assets/rubinot-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";
+import { PatchAnnouncementBanner } from "./PatchAnnouncementBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/lib/store";
 import { useLowImbuements, useLowImbuementToasts } from "@/lib/use-low-imbuements";
@@ -178,6 +179,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+
+      <PatchAnnouncementBanner />
 
       <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:py-8 md:pb-8">{children}</main>
 

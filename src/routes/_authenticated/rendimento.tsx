@@ -334,9 +334,26 @@ function RendimentoPage() {
             </div>
           )}
 
-          <div className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" />
-            {formatRange(range.start, range.end)}
+          <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              {formatRange(range.start, range.end)}
+            </span>
+            {isAllPeriod && patch && prePatchCount > 0 && (
+              <label
+                className="flex items-center gap-1.5"
+                title={`Sessões de antes do ${patch.label} (${formatPatchDate(patch)})`}
+              >
+                <input
+                  type="checkbox"
+                  checked={includePrePatchOverview}
+                  onChange={(e) => setIncludePrePatchOverview(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+                />
+                <AlertTriangle className="h-3.5 w-3.5 text-rubi-gold" /> Incluir {prePatchCount} de antes do{" "}
+                {patch.label}
+              </label>
+            )}
           </div>
 
           {periodSessions.length === 0 ? (
@@ -363,27 +380,6 @@ function RendimentoPage() {
             </div>
           ) : (
             <>
-              {patch && prePatchCount > 0 && (
-                <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-4 w-4 flex-none translate-y-0.5" />
-                    <span>
-                      <strong>{patch.label}</strong> ({formatPatchDate(patch)}) mudou quanto as hunts rendem —{" "}
-                      {prePatchCount} sessão(ões) de antes disso{" "}
-                      {includePrePatchOverview ? "estão incluídas nesse" : "foram tiradas desse"} resumo.
-                    </span>
-                  </div>
-                  <label className="flex flex-none items-center gap-1.5 text-xs font-medium">
-                    <input
-                      type="checkbox"
-                      checked={includePrePatchOverview}
-                      onChange={(e) => setIncludePrePatchOverview(e.target.checked)}
-                      className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
-                    />
-                    Incluir mesmo assim
-                  </label>
-                </div>
-              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                   label="Raw XP / hora"

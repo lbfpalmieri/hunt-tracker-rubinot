@@ -15,7 +15,7 @@ import {
   Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
 } from "lucide-react";
 
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo } from "react";
 
 // Recharts é pesado: carrega depois do primeiro paint do dashboard.
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
@@ -48,16 +48,14 @@ function Dashboard() {
     [sessions, active],
   );
 
-  const [includePrePatchInBestHunt, setIncludePrePatchInBestHunt] = useState(false);
+  // Top spot ignora sessões de antes do último marco de balanceamento por padrão — a explicação
+  // completa mora no aviso global (PatchAnnouncementBanner), não repetida aqui.
   const patch = latestPatch();
   const postPatchSessions = useMemo(
-    () => filterByLatestPatch(mySessions, (s) => s.createdAt, includePrePatchInBestHunt),
-    [mySessions, includePrePatchInBestHunt],
+    () => filterByLatestPatch(mySessions, (s) => s.createdAt, false),
+    [mySessions],
   );
-  const prePatchCount = useMemo(
-    () => (patch ? mySessions.length - filterByLatestPatch(mySessions, (s) => s.createdAt, false).length : 0),
-    [mySessions, patch],
-  );
+  const prePatchCount = mySessions.length - postPatchSessions.length;
 
   const agg = useMemo(() => aggregateSessions(mySessions, postPatchSessions), [mySessions, postPatchSessions]);
 
@@ -165,22 +163,12 @@ function Dashboard() {
                 <div className="mt-1 text-sm text-muted-foreground">
                   {agg.bestHunt ? (
                     <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></>
+                  ) : patch && prePatchCount > 0 ? (
+                    `ainda sem ${fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões desde o ${patch.label} — assim que tiver, aparece aqui`
                   ) : (
                     `nenhuma hunt com ${fmtDuration(MIN_HUNT_DURATION_SEC)} ou mais registrados ainda`
                   )}
                 </div>
-                {patch && prePatchCount > 0 && !includePrePatchInBestHunt && (
-                  <div className="mt-1 text-[11px] text-rubi-gold">
-                    Ignorando {prePatchCount} sessão(ões) de antes do {patch.label} no Top spot —{" "}
-                    <button
-                      type="button"
-                      onClick={() => setIncludePrePatchInBestHunt(true)}
-                      className="underline decoration-dotted hover:text-foreground"
-                    >
-                      incluir mesmo assim
-                    </button>
-                  </div>
-                )}
               </div>
               <div className="grid grid-cols-2 gap-4 sm:min-w-[280px]">
                 <div>

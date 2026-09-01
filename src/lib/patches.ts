@@ -18,6 +18,8 @@ export interface BalancePatch {
   /** Data (YYYY-MM-DD) em que o marco entrou em vigor, início do dia local. */
   date: string;
   description: string;
+  /** Texto completo do aviso global (banner) mostrado uma vez por usuário/dispositivo. */
+  announcement: string;
 }
 
 export const BALANCE_PATCHES: BalancePatch[] = [
@@ -26,6 +28,12 @@ export const BALANCE_PATCHES: BalancePatch[] = [
     label: "Nerf de Gold Coin",
     date: "2026-09-01",
     description: "Redução geral na quantidade de Gold Coin (e outros itens) dropados por monstros no RubinOT.",
+    announcement:
+      "Rolou um ajuste geral na economia do RubinOT: a quantidade de Gold Coin (e outras coisas) que os " +
+      "monstros soltam mudou. Os números que o sistema media antes disso não valem mais pra comparar com hoje " +
+      "— por isso, a partir de agora, médias e rankings voltam a ser contados do zero. Nada foi apagado: as " +
+      "sessões antigas continuam salvas, disponíveis pra consulta, e você ainda pode comparar uma hunt de " +
+      "antes com uma de depois se quiser ver a diferença na prática.",
   },
 ];
 
