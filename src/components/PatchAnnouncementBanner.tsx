@@ -1,40 +1,30 @@
-import { useEffect, useState } from "react";
-import { Megaphone, X } from "lucide-react";
+import { useEffect } from "react";
+import { Megaphone, X, Check } from "lucide-react";
 import { latestPatch, formatPatchDate } from "@/lib/patches";
-
-const dismissKey = (patchId: string) => `patch-announcement-dismissed:${patchId}`;
+import {
+  usePatchAnnouncementState,
+  initPatchAnnouncement,
+  closePatchAnnouncement,
+  dismissPatchAnnouncementForever,
+} from "@/lib/patch-announcement";
 
 /**
- * Aviso único e persistente (por dispositivo) sobre o marco de balanceamento
- * mais recente — aparece em toda página autenticada até o usuário fechar.
- * Substitui os avisos pequenos que ficavam espalhados em cada tela (Ranking,
- * Comparar hunts, Meu rendimento, Dashboard); aquelas telas continuam
- * filtrando dados de antes do marco por padrão, mas sem repetir a explicação
- * inteira — ela mora só aqui agora.
+ * Aviso sobre o marco de balanceamento mais recente. Fechar (X) só recolhe
+ * pro sino no header (PatchAnnouncementBell) — continua reabrível a
+ * qualquer momento. Só "Não quero mais ver" apaga de vez (e some o sino
+ * também). Ver [[PatchAnnouncementBell]] / lib/patch-announcement.ts.
  */
 export function PatchAnnouncementBanner() {
   const patch = latestPatch();
-  const [dismissed, setDismissed] = useState(true); // começa fechado até checar o localStorage, evita flash
+  const ready = usePatchAnnouncementState((s) => s.ready);
+  const dismissed = usePatchAnnouncementState((s) => s.dismissed);
+  const open = usePatchAnnouncementState((s) => s.open);
 
   useEffect(() => {
-    if (!patch) return;
-    try {
-      setDismissed(localStorage.getItem(dismissKey(patch.id)) === "1");
-    } catch {
-      setDismissed(false);
-    }
-  }, [patch]);
+    initPatchAnnouncement();
+  }, []);
 
-  if (!patch || dismissed) return null;
-
-  const close = () => {
-    setDismissed(true);
-    try {
-      localStorage.setItem(dismissKey(patch.id), "1");
-    } catch {
-      // localStorage indisponível (ex.: aba privada) — só fecha na sessão atual.
-    }
-  };
+  if (!patch || !ready || dismissed || !open) return null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6">
@@ -48,11 +38,20 @@ export function PatchAnnouncementBanner() {
               Ajuste na economia do RubinOT — {patch.label} ({formatPatchDate(patch)})
             </p>
             <p className="mt-1 text-sm leading-relaxed text-foreground/90">{patch.announcement}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={dismissPatchAnnouncementForever}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 px-3 py-1.5 text-xs font-semibold text-rubi-gold transition-colors hover:bg-rubi-gold/20"
+              >
+                <Check className="h-3.5 w-3.5" /> Não quero mais ver, entendi o aviso
+              </button>
+            </div>
           </div>
           <button
             type="button"
-            onClick={close}
-            title="Não mostrar de novo"
+            onClick={closePatchAnnouncement}
+            title="Fechar (continua disponível no sino de avisos, no topo)"
             aria-label="Fechar aviso"
             className="flex-none rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
           >

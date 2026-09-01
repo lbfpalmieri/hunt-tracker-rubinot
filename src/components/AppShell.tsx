@@ -22,6 +22,7 @@ import rubinotLogo from "@/assets/rubinot-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";
 import { PatchAnnouncementBanner } from "./PatchAnnouncementBanner";
+import { PatchAnnouncementBell } from "./PatchAnnouncementBell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/lib/store";
 import { useLowImbuements, useLowImbuementToasts } from "@/lib/use-low-imbuements";
@@ -166,6 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex min-w-0 items-center gap-2">
+            <PatchAnnouncementBell />
             <CharacterSwitcher />
             <button
               onClick={handleSignOut}
