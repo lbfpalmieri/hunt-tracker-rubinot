@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Trophy, Search, User, Globe2, Clock, Sparkles } from "lucide-react";
+import { Trophy, Search, User, Globe2, Clock, Sparkles, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { BountyBadge } from "@/components/BountyBadge";
@@ -18,6 +18,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
+import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import {
   aggregateByHunt,
   filterByBonusInclusion,
@@ -100,6 +101,8 @@ function RankingPage() {
   const [openHunt, setOpenHunt] = useState<CompareHunt | null>(null);
   const [includeBounty, setIncludeBounty] = useState(true);
   const [includePrey, setIncludePrey] = useState(true);
+  const [includePrePatch, setIncludePrePatch] = useState(false);
+  const patch = latestPatch();
 
   const fetchCommunity = useServerFn(getCommunitySessions);
   const { data: communityData, isLoading: loadingCommunity } = useQuery({
@@ -121,18 +124,30 @@ function RankingPage() {
     [communityData],
   );
 
-  const ownHuntsAll = useMemo(
-    () => aggregateByHunt(filterByBonusInclusion(ownRaw, includeBounty, includePrey)),
+  const ownFilteredByBonus = useMemo(
+    () => filterByBonusInclusion(ownRaw, includeBounty, includePrey),
     [ownRaw, includeBounty, includePrey],
   );
-  const communityHuntsAll = useMemo(
-    () => aggregateByHunt(filterByBonusInclusion(communityRaw, includeBounty, includePrey)),
+  const communityFilteredByBonus = useMemo(
+    () => filterByBonusInclusion(communityRaw, includeBounty, includePrey),
     [communityRaw, includeBounty, includePrey],
+  );
+  const ownHuntsAll = useMemo(
+    () => aggregateByHunt(filterByLatestPatch(ownFilteredByBonus, (h) => h.createdAt, includePrePatch)),
+    [ownFilteredByBonus, includePrePatch],
+  );
+  const communityHuntsAll = useMemo(
+    () => aggregateByHunt(filterByLatestPatch(communityFilteredByBonus, (h) => h.createdAt, includePrePatch)),
+    [communityFilteredByBonus, includePrePatch],
   );
   const ownHunts = useMemo(() => ownHuntsAll.filter(isHuntValid), [ownHuntsAll]);
   const communityHunts = useMemo(() => communityHuntsAll.filter(isHuntValid), [communityHuntsAll]);
   const hiddenCount =
     tab === "own" ? ownHuntsAll.length - ownHunts.length : communityHuntsAll.length - communityHunts.length;
+  const prePatchCount = useMemo(() => {
+    const raw = tab === "own" ? ownFilteredByBonus : communityFilteredByBonus;
+    return patch ? raw.filter((h) => isPrePatch(h.createdAt, patch)).length : 0;
+  }, [tab, ownFilteredByBonus, communityFilteredByBonus, patch]);
 
   const list = tab === "own" ? ownHunts : communityHunts;
 
@@ -247,6 +262,28 @@ function RankingPage() {
         {hiddenCount > 0 &&
           ` ${hiddenCount} hunt${hiddenCount > 1 ? "s" : ""} escondida${hiddenCount > 1 ? "s" : ""} por enquanto — continue registrando sessões nela${hiddenCount > 1 ? "s" : ""}.`}
       </p>
+
+      {patch && prePatchCount > 0 && (
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 flex-none translate-y-0.5" />
+            <span>
+              <strong>{patch.label}</strong> ({formatPatchDate(patch)}) mudou quanto as hunts rendem —{" "}
+              {prePatchCount} sessão(ões) de antes disso {includePrePatch ? "estão incluídas no" : "foram tiradas do"}{" "}
+              ranking pra não misturar rendimento de antes e depois do balanceamento.
+            </span>
+          </div>
+          <label className="flex flex-none items-center gap-1.5 text-xs font-medium">
+            <input
+              type="checkbox"
+              checked={includePrePatch}
+              onChange={(e) => setIncludePrePatch(e.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+            />
+            Incluir mesmo assim
+          </label>
+        </div>
+      )}
 
       {!loading && ranked.length > 0 && (
         <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">

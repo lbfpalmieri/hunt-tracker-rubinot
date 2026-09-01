@@ -17,6 +17,7 @@ import {
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateSessions, balanceSince } from "@/lib/performance";
 import { type Period, PERIODS, periodRange, formatRange, filterByPeriod } from "@/lib/period";
+import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { huntRawXp } from "@/lib/bounty";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -34,6 +35,7 @@ import {
   Target,
   PartyPopper,
   Calendar,
+  AlertTriangle,
 } from "lucide-react";
 
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
@@ -87,17 +89,29 @@ function RendimentoPage() {
     return filterByPeriod(mySessions, (s) => s.createdAt, range);
   }, [mySessions, range]);
 
-  const agg = useMemo(() => aggregateSessions(periodSessions), [periodSessions]);
+  const isAllPeriod = period === "all";
+  const [includePrePatchOverview, setIncludePrePatchOverview] = useState(false);
+  const patch = latestPatch();
+  const prePatchCount = useMemo(
+    () => (patch && isAllPeriod ? periodSessions.filter((s) => isPrePatch(s.createdAt, patch)).length : 0),
+    [periodSessions, patch, isAllPeriod],
+  );
+  const visibleSessions = useMemo(() => {
+    if (!isAllPeriod) return periodSessions;
+    return filterByLatestPatch(periodSessions, (s) => s.createdAt, includePrePatchOverview);
+  }, [periodSessions, isAllPeriod, includePrePatchOverview]);
+
+  const agg = useMemo(() => aggregateSessions(visibleSessions), [visibleSessions]);
 
   const chartData = useMemo(
     () =>
-      [...periodSessions].reverse().map((s, i) => ({
+      [...visibleSessions].reverse().map((s, i) => ({
         i: i + 1,
         name: s.huntName,
         "Raw XP/h": Math.round((huntRawXp(s) ?? 0) / (s.hunting.durationSec / 3600 || 1)),
         "Lucro/h": Math.round(s.hunting.balance / (s.hunting.durationSec / 3600 || 1)),
       })),
-    [periodSessions],
+    [visibleSessions],
   );
 
   // --- Nível ---
@@ -333,8 +347,43 @@ function RendimentoPage() {
               ctaLabel="Importar sessão"
               ctaTo="/import"
             />
+          ) : visibleSessions.length === 0 ? (
+            <div className="card-surface p-6 text-center text-sm text-muted-foreground">
+              {periodSessions.length === 1 ? "A única sessão" : `As ${periodSessions.length} sessões`} desse
+              período {periodSessions.length === 1 ? "é" : "são"} de antes do{" "}
+              <strong className="text-rubi-gold">{patch?.label}</strong> —{" "}
+              <button
+                type="button"
+                onClick={() => setIncludePrePatchOverview(true)}
+                className="text-rubi-gold underline decoration-dotted hover:text-foreground"
+              >
+                incluir mesmo assim
+              </button>
+              .
+            </div>
           ) : (
             <>
+              {patch && prePatchCount > 0 && (
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-4 w-4 flex-none translate-y-0.5" />
+                    <span>
+                      <strong>{patch.label}</strong> ({formatPatchDate(patch)}) mudou quanto as hunts rendem —{" "}
+                      {prePatchCount} sessão(ões) de antes disso{" "}
+                      {includePrePatchOverview ? "estão incluídas nesse" : "foram tiradas desse"} resumo.
+                    </span>
+                  </div>
+                  <label className="flex flex-none items-center gap-1.5 text-xs font-medium">
+                    <input
+                      type="checkbox"
+                      checked={includePrePatchOverview}
+                      onChange={(e) => setIncludePrePatchOverview(e.target.checked)}
+                      className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+                    />
+                    Incluir mesmo assim
+                  </label>
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                   label="Raw XP / hora"

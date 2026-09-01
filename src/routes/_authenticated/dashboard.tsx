@@ -9,11 +9,12 @@ import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
 import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
 import { aggregateSessions } from "@/lib/performance";
+import { filterByLatestPatch, latestPatch } from "@/lib/patches";
 import {
   Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, Gauge,
 } from "lucide-react";
 
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 
 // Recharts é pesado: carrega depois do primeiro paint do dashboard.
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
@@ -46,7 +47,18 @@ function Dashboard() {
     [sessions, active],
   );
 
-  const agg = useMemo(() => aggregateSessions(mySessions), [mySessions]);
+  const [includePrePatchInBestHunt, setIncludePrePatchInBestHunt] = useState(false);
+  const patch = latestPatch();
+  const postPatchSessions = useMemo(
+    () => filterByLatestPatch(mySessions, (s) => s.createdAt, includePrePatchInBestHunt),
+    [mySessions, includePrePatchInBestHunt],
+  );
+  const prePatchCount = useMemo(
+    () => (patch ? mySessions.length - filterByLatestPatch(mySessions, (s) => s.createdAt, false).length : 0),
+    [mySessions, patch],
+  );
+
+  const agg = useMemo(() => aggregateSessions(mySessions, postPatchSessions), [mySessions, postPatchSessions]);
 
 
   const imbAgg = useMemo(
@@ -152,6 +164,7 @@ function Dashboard() {
                     <p><strong>Fórmula:</strong> <code>Σ (loot − supplies)</code> de cada sessão importada, exatamente como o Balance do Hunting Analyser do jogo.</p>
                     <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements — isso aparece separado como <em>Lucro líquido</em>.</p>
                     <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>, entre as que já somam pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões — evita que uma sessão curta isolada pareça o melhor spot.</p>
+                    {latestPatch() && <p>Por padrão o Top spot ignora sessões de antes do último balanceamento do servidor ({latestPatch()!.label}) — misturar rendimento de antes e depois de um nerf/buff distorceria qual spot é realmente o melhor hoje.</p>}
                   </InfoHint>
                 </div>
                 <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (agg.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
@@ -164,6 +177,18 @@ function Dashboard() {
                     `nenhuma hunt com ${fmtDuration(MIN_HUNT_DURATION_SEC)} ou mais registrados ainda`
                   )}
                 </div>
+                {patch && prePatchCount > 0 && !includePrePatchInBestHunt && (
+                  <div className="mt-1 text-[11px] text-rubi-gold">
+                    Ignorando {prePatchCount} sessão(ões) de antes do {patch.label} no Top spot —{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIncludePrePatchInBestHunt(true)}
+                      className="underline decoration-dotted hover:text-foreground"
+                    >
+                      incluir mesmo assim
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4 sm:min-w-[280px]">
                 <div>

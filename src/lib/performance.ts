@@ -20,8 +20,13 @@ export interface PerformanceAgg {
  * the Dashboard and on "Meu rendimento". Pulled out of Dashboard so both
  * pages compute the same thing — Dashboard passes every session, "Meu
  * rendimento" passes a period-filtered subset.
+ *
+ * `bestHuntSessions` (default: same as `sessions`) is the pool used just for
+ * the "Top spot" comparison — Dashboard passes a patch-filtered subset there
+ * so a pre-nerf spot can't outrank a post-nerf one, while Balance/Raw XP
+ * still sum the character's whole history.
  */
-export function aggregateSessions(sessions: HuntSession[]): PerformanceAgg {
+export function aggregateSessions(sessions: HuntSession[], bestHuntSessions: HuntSession[] = sessions): PerformanceAgg {
   if (sessions.length === 0) {
     return {
       rawXph: 0,
@@ -50,7 +55,7 @@ export function aggregateSessions(sessions: HuntSession[]): PerformanceAgg {
   const gph = totalBal / hoursTotal;
 
   const bySpot = new Map<string, { time: number; bal: number }>();
-  for (const s of sessions) {
+  for (const s of bestHuntSessions) {
     const cur = bySpot.get(s.huntName) ?? { time: 0, bal: 0 };
     cur.time += s.hunting.durationSec;
     cur.bal += s.hunting.balance;

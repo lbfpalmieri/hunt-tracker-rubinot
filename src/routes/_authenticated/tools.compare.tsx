@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown, Clock, Trophy, Sparkles } from "lucide-react";
+import { GitCompareArrows, Search, X, ArrowDown, Clock, Trophy, Sparkles, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
@@ -21,6 +21,7 @@ import {
   type CommunityRow,
   type CompareHunt,
 } from "@/lib/compare";
+import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { fmtDuration } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/tools/compare")({
@@ -53,6 +54,8 @@ function ComparePage() {
   const [selected, setSelected] = useState<CompareHunt[]>([]);
   const [includeBounty, setIncludeBounty] = useState(true);
   const [includePrey, setIncludePrey] = useState(true);
+  const [includePrePatch, setIncludePrePatch] = useState(false);
+  const patch = latestPatch();
   const compareRef = useRef<HTMLDivElement>(null);
   const scrollToCompare = () =>
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -77,43 +80,61 @@ function ComparePage() {
     [communityData],
   );
 
-  const ownHuntsAll = useMemo(
-    () => aggregateByHunt(filterByBonusInclusion(ownRaw, includeBounty, includePrey)),
+  const ownFilteredByBonus = useMemo(
+    () => filterByBonusInclusion(ownRaw, includeBounty, includePrey),
     [ownRaw, includeBounty, includePrey],
   );
-  const communityHuntsAll = useMemo(
-    () => aggregateByHunt(filterByBonusInclusion(communityRaw, includeBounty, includePrey)),
+  const communityFilteredByBonus = useMemo(
+    () => filterByBonusInclusion(communityRaw, includeBounty, includePrey),
     [communityRaw, includeBounty, includePrey],
+  );
+  const ownHuntsAll = useMemo(
+    () => aggregateByHunt(filterByLatestPatch(ownFilteredByBonus, (h) => h.createdAt, includePrePatch)),
+    [ownFilteredByBonus, includePrePatch],
+  );
+  const communityHuntsAll = useMemo(
+    () => aggregateByHunt(filterByLatestPatch(communityFilteredByBonus, (h) => h.createdAt, includePrePatch)),
+    [communityFilteredByBonus, includePrePatch],
   );
   const ownHunts = useMemo(() => ownHuntsAll.filter(isHuntValid), [ownHuntsAll]);
   const communityHunts = useMemo(() => communityHuntsAll.filter(isHuntValid), [communityHuntsAll]);
   const hiddenCount =
     (tab === "own" ? ownHuntsAll.length - ownHunts.length : communityHuntsAll.length - communityHunts.length);
+  const prePatchCount = useMemo(() => {
+    const raw = tab === "own" ? ownFilteredByBonus : communityFilteredByBonus;
+    return patch ? raw.filter((h) => isPrePatch(h.createdAt, patch)).length : 0;
+  }, [tab, ownFilteredByBonus, communityFilteredByBonus, patch]);
 
   /** Currently selected hunts (by name) that would have zero sessions left under a hypothetical filter change. */
-  const selectedThatWouldVanish = (nextIncludeBounty: boolean, nextIncludePrey: boolean) =>
+  const selectedThatWouldVanish = (nextIncludeBounty: boolean, nextIncludePrey: boolean, nextIncludePrePatch: boolean) =>
     selected.filter((sel) => {
       const raw = sel.source === "own" ? ownRaw : communityRaw;
       const stillHasSessions = raw.some(
         (h) =>
           h.huntName.trim().toLowerCase() === sel.huntName.trim().toLowerCase() &&
           (nextIncludeBounty || !h.bounty) &&
-          (nextIncludePrey || !(h.prey && h.prey.length)),
+          (nextIncludePrey || !(h.prey && h.prey.length)) &&
+          (nextIncludePrePatch || !isPrePatch(h.createdAt)),
       );
       return !stillHasSessions;
     });
 
-  const applyBonusFilter = async (kind: "bounty" | "prey", checked: boolean) => {
+  const applyBonusFilter = async (kind: "bounty" | "prey" | "prePatch", checked: boolean) => {
     const nextBounty = kind === "bounty" ? checked : includeBounty;
     const nextPrey = kind === "prey" ? checked : includePrey;
+    const nextPrePatch = kind === "prePatch" ? checked : includePrePatch;
     if (!checked) {
-      const vanishing = selectedThatWouldVanish(nextBounty, nextPrey);
+      const vanishing = selectedThatWouldVanish(nextBounty, nextPrey, nextPrePatch);
       if (vanishing.length > 0) {
         const names = vanishing.map((h) => h.huntName).join("\n");
-        const label = kind === "bounty" ? "Bounty" : "Prey";
+        const many = vanishing.length > 1;
+        const description =
+          kind === "prePatch"
+            ? `${many ? "Essas hunts só têm" : "Essa hunt só tem"} sessão(ões) de antes do ${patch?.label ?? "balanceamento"} — sem incluir esses dados, ${many ? "elas saem" : "ela sai"} da comparação:\n\n${names}\n\nRemover da comparação e voltar a esconder dados de antes do balanceamento?`
+            : `${many ? "Essas hunts só têm" : "Essa hunt só tem"} sessão(ões) com ${kind === "bounty" ? "Bounty" : "Prey"} — sem esse filtro, ${many ? "elas saem" : "ela sai"} da comparação:\n\n${names}\n\nRemover da comparação e desativar o filtro de ${kind === "bounty" ? "Bounty" : "Prey"}?`;
         const ok = await confirmDialog({
           title: "Remover hunt da comparação?",
-          description: `${vanishing.length > 1 ? "Essas hunts só têm" : "Essa hunt só tem"} sessão(ões) com ${label} — sem esse filtro, ${vanishing.length > 1 ? "elas saem" : "ela sai"} da comparação:\n\n${names}\n\nRemover da comparação e desativar o filtro de ${label}?`,
+          description,
           confirmLabel: "Remover e desativar filtro",
           cancelLabel: "Manter filtro ligado",
         });
@@ -122,7 +143,8 @@ function ComparePage() {
       }
     }
     if (kind === "bounty") setIncludeBounty(checked);
-    else setIncludePrey(checked);
+    else if (kind === "prey") setIncludePrey(checked);
+    else setIncludePrePatch(checked);
   };
 
 
@@ -229,6 +251,28 @@ function ComparePage() {
         {hiddenCount > 0 &&
           ` ${hiddenCount} hunt${hiddenCount > 1 ? "s" : ""} escondida${hiddenCount > 1 ? "s" : ""} por enquanto — continue registrando sessões nela${hiddenCount > 1 ? "s" : ""}.`}
       </p>
+
+      {patch && prePatchCount > 0 && (
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 flex-none translate-y-0.5" />
+            <span>
+              <strong>{patch.label}</strong> ({formatPatchDate(patch)}) mudou quanto as hunts rendem —{" "}
+              {prePatchCount} sessão(ões) de antes disso {includePrePatch ? "estão incluídas na" : "foram tiradas da"}{" "}
+              comparação pra não misturar rendimento de antes e depois do balanceamento.
+            </span>
+          </div>
+          <label className="flex flex-none items-center gap-1.5 text-xs font-medium">
+            <input
+              type="checkbox"
+              checked={includePrePatch}
+              onChange={(e) => applyBonusFilter("prePatch", e.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+            />
+            Incluir mesmo assim
+          </label>
+        </div>
+      )}
 
       {full && (
         <p className="mb-3 text-xs text-rubi-gold">
