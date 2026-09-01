@@ -164,9 +164,9 @@ function Dashboard() {
                   {agg.bestHunt ? (
                     <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></>
                   ) : patch && prePatchCount > 0 ? (
-                    `ainda sem ${fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões desde o ${patch.label} — assim que tiver, aparece aqui`
+                    `ainda sem dados suficientes desde o ${patch.label} — falta caçar mais um pouco`
                   ) : (
-                    `nenhuma hunt com ${fmtDuration(MIN_HUNT_DURATION_SEC)} ou mais registrados ainda`
+                    `nenhuma hunt com ${fmtDuration(MIN_HUNT_DURATION_SEC)} ou mais registrada ainda`
                   )}
                 </div>
               </div>
