@@ -332,12 +332,11 @@ function ComparePage() {
             </div>
             <CompareTable hunts={selected} pool={tab === "own" ? ownRaw : communityRaw} />
             <details className="group mt-4">
-              <summary className="cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <BookmarkCheck className="h-4 w-4 flex-none text-rubi-gold" />
-                  Salvar esta comparação com observações
-                </span>
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-rubi-gold/40 hover:text-foreground">
+                <BookmarkCheck className="h-3.5 w-3.5 flex-none text-rubi-gold" />
+                Salvar esta comparação com observações
               </summary>
+
               <div className="mt-3">
                 <SaveComparisonPanel
                   hunts={selected}
