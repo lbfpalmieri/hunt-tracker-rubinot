@@ -321,9 +321,10 @@ function SessionsComparePage() {
             </div>
             <CompareTable hunts={selected} pool={all.map((x) => x.hunt)} />
             <details className="group mt-4">
-              <summary className="cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-rubi-gold/40 hover:text-foreground">
                 Ver dados de Miscellaneous e salvar comparação
               </summary>
+
               <div className="mt-3 space-y-4">
                 <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
                 <SaveComparisonPanel hunts={selected} includeBounty includePrey />
