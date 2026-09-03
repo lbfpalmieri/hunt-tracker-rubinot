@@ -7,7 +7,6 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
-import { PatchImpactPanel } from "@/components/compare/PatchImpactPanel";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
@@ -324,22 +323,31 @@ function ComparePage() {
           </div>
         ) : (
           <>
-            <h2 className="mb-3 font-display text-xl font-bold">Comparativo ({selected.length})</h2>
-            <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">
-              <Clock className="h-4 w-4 flex-none translate-y-0.5" />
-              <span>
-                <strong>Projeção para 1 hora de caça</strong>, calculada a partir da média de todas as sessões de
-                cada hunt — os números abaixo não são o total acumulado, e sim o ritmo médio por hora.
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <h2 className="font-display text-xl font-bold">Comparativo ({selected.length})</h2>
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 flex-none text-rubi-blue" />
+                Ritmo médio projetado para 1 hora de caça
               </span>
             </div>
-            <PatchImpactPanel pool={tab === "own" ? ownRaw : communityRaw} hunts={selected} />
             <CompareTable hunts={selected} pool={tab === "own" ? ownRaw : communityRaw} />
-            <SaveComparisonPanel
-              hunts={selected}
-              includeBounty={includeBounty}
-              includePrey={includePrey}
-            />
+            <details className="group mt-4">
+              <summary className="cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <BookmarkCheck className="h-4 w-4 flex-none text-rubi-gold" />
+                  Salvar esta comparação com observações
+                </span>
+              </summary>
+              <div className="mt-3">
+                <SaveComparisonPanel
+                  hunts={selected}
+                  includeBounty={includeBounty}
+                  includePrey={includePrey}
+                />
+              </div>
+            </details>
           </>
+
         )}
       </div>
 
