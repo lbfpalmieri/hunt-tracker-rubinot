@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
+import { PatchImpactPanel } from "@/components/compare/PatchImpactPanel";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { getCommunitySessions } from "@/lib/community.functions";
@@ -332,6 +333,7 @@ function ComparePage() {
               </span>
             </div>
             <CompareTable hunts={selected} />
+            <PatchImpactPanel pool={tab === "own" ? ownRaw : communityRaw} hunts={selected} />
             <SaveComparisonPanel
               hunts={selected}
               includeBounty={includeBounty}

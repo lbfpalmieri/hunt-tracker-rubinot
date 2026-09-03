@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
+import { PatchImpactPanel } from "@/components/compare/PatchImpactPanel";
 import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 
@@ -339,6 +340,7 @@ function SessionsComparePage() {
               </div>
             )}
             <CompareTable hunts={selected} />
+            <PatchImpactPanel pool={all.map((x) => x.hunt)} hunts={selected} />
             <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
             <SaveComparisonPanel hunts={selected} includeBounty includePrey />
           </>
