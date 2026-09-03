@@ -87,6 +87,8 @@ export function patchImpactFor(
   pool: CompareHunt[],
   huntNames: string[],
   patch: BalancePatch | null = latestPatch(),
+  /** Piso de relevância; passe 0 para receber TODAS as métricas, inclusive as estáveis. */
+  minPct: number = MIN_RELEVANT_PCT,
 ): HuntPatchImpact[] {
   if (!patch) return [];
   const out: HuntPatchImpact[] = [];
@@ -110,7 +112,7 @@ export function patchImpactFor(
       const a = ratePerHour(after, metric);
       if (b == null || a == null || Math.abs(b) < 1e-9) continue;
       const pct = ((a - b) / Math.abs(b)) * 100;
-      if (Math.abs(pct) < MIN_RELEVANT_PCT) continue;
+      if (Math.abs(pct) < minPct) continue;
       deltas.push({ label: metric.label, before: b, after: a, pct, lowerIsBetter: metric.lowerIsBetter });
     }
     if (!deltas.length) continue;
@@ -139,7 +141,7 @@ export function patchDeltaIndex(
   patch: BalancePatch | null = latestPatch(),
 ): Map<string, Map<string, PatchMetricDelta>> {
   const index = new Map<string, Map<string, PatchMetricDelta>>();
-  for (const imp of patchImpactFor(pool, huntNames, patch)) {
+  for (const imp of patchImpactFor(pool, huntNames, patch, 0)) {
     const byLabel = new Map<string, PatchMetricDelta>();
     for (const d of imp.deltas) byLabel.set(d.label, d);
     index.set(imp.huntName.trim().toLowerCase(), byLabel);
