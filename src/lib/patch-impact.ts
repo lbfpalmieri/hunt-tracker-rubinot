@@ -42,11 +42,14 @@ interface MetricDef {
 }
 
 const METRICS: MetricDef[] = [
+  { label: "Raw XP (sem bounty)", value: (h) => h.rawXpHunt ?? h.rawXpTotal },
   { label: "Lucro", value: (h) => h.balance },
   { label: "Loot", value: (h) => h.loot },
   { label: "Supplies", value: (h) => h.supplies, lowerIsBetter: true },
-  { label: "Raw XP", value: (h) => h.rawXpHunt ?? h.rawXpTotal },
   { label: "Kills", value: (h) => h.killsTotal },
+  { label: "Dano causado", value: (h) => h.damageDealt },
+  { label: "Cura", value: (h) => h.healing },
+  { label: "Dano recebido", value: (h) => h.damageReceived, lowerIsBetter: true },
 ];
 
 /**
@@ -123,4 +126,23 @@ export function patchImpactFor(
   }
 
   return out;
+}
+
+/**
+ * Mesmo cálculo do painel, mas indexado por hunt + rótulo de métrica — é
+ * assim que a tabela comparativa consegue mostrar o percentual de variação
+ * pós-atualização direto na célula, sem duplicar regra de negócio.
+ */
+export function patchDeltaIndex(
+  pool: CompareHunt[],
+  huntNames: string[],
+  patch: BalancePatch | null = latestPatch(),
+): Map<string, Map<string, PatchMetricDelta>> {
+  const index = new Map<string, Map<string, PatchMetricDelta>>();
+  for (const imp of patchImpactFor(pool, huntNames, patch)) {
+    const byLabel = new Map<string, PatchMetricDelta>();
+    for (const d of imp.deltas) byLabel.set(d.label, d);
+    index.set(imp.huntName.trim().toLowerCase(), byLabel);
+  }
+  return index;
 }
