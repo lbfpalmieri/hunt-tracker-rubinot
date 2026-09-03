@@ -219,7 +219,8 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
   const patch = latestPatch();
   const [showDelta, setShowDelta] = useState(true);
   const deltaIndex = useMemo(
-    () => (pool && pool.length ? patchDeltaIndex(pool, hunts.map((h) => h.huntName), patch) : new Map()),
+    (): Map<string, Map<string, PatchMetricDelta>> =>
+      pool && pool.length ? patchDeltaIndex(pool, hunts.map((h) => h.huntName), patch) : new Map(),
     [pool, hunts, patch],
   );
   const hasDelta = deltaIndex.size > 0;

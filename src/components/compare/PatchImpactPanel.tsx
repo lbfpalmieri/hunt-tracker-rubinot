@@ -33,7 +33,7 @@ export function PatchImpactPanel({ pool, hunts }: { pool: CompareHunt[]; hunts: 
   if (!patch || impacts.length === 0) return null;
 
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-border/70 bg-surface/50">
+    <div className="mb-4 overflow-hidden rounded-2xl border border-border/70 bg-surface/50">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
