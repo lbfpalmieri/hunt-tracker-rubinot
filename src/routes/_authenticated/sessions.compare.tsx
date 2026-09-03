@@ -321,30 +321,26 @@ function SessionsComparePage() {
           </div>
         ) : (
           <>
-            <h2 className="mb-3 font-display text-xl font-bold">Comparativo ({selected.length})</h2>
-            <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 px-4 py-3 text-sm text-rubi-blue">
-              <Clock className="h-4 w-4 flex-none translate-y-0.5" />
-              <span>
-                <strong>Projeção para 1 hora de caça</strong>, calculada a partir dos números de cada sessão —
-                útil pra comparar sessões de durações diferentes de forma justa.
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <h2 className="font-display text-xl font-bold">Comparativo ({selected.length})</h2>
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 flex-none text-rubi-blue" />
+                Cada sessão projetada para 1 hora de caça
               </span>
             </div>
-            {selectionCrossesPatch && patch && (
-              <div className="mb-4 flex items-start gap-3 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-3 text-sm text-rubi-gold">
-                <AlertTriangle className="h-4 w-4 flex-none translate-y-0.5" />
-                <span>
-                  Essa comparação mistura sessões de antes e depois do <strong>{patch.label}</strong> (
-                  {formatPatchDate(patch)}) — os números não são diretamente comparáveis, já que o
-                  balanceamento do servidor mudou entre uma sessão e outra.
-                </span>
-              </div>
-            )}
-            <PatchImpactPanel pool={all.map((x) => x.hunt)} hunts={selected} />
             <CompareTable hunts={selected} pool={all.map((x) => x.hunt)} />
-            <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
-            <SaveComparisonPanel hunts={selected} includeBounty includePrey />
+            <details className="group mt-4">
+              <summary className="cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground">
+                Ver dados de Miscellaneous e salvar comparação
+              </summary>
+              <div className="mt-3 space-y-4">
+                <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
+                <SaveComparisonPanel hunts={selected} includeBounty includePrey />
+              </div>
+            </details>
           </>
         )}
+
       </div>
 
 
