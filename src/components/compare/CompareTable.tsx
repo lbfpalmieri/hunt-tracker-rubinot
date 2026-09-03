@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Globe2, User, Trophy, Zap, Scale, TrendingDown, TrendingUp } from "lucide-react";
+import { Globe2, User, Trophy, Zap, Scale, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import type { CompareHunt } from "@/lib/compare";
 import { perHour, topKills } from "@/lib/compare";
@@ -199,14 +199,19 @@ const MIN_HIGHLIGHT_PCT = 5;
  * ruim. Só aparece quando a hunt tem histórico dos dois lados do marco.
  */
 function DeltaBadge({ delta, patchLabel }: { delta: PatchMetricDelta; patchLabel: string }) {
+  const stable = Math.abs(delta.pct) < 3;
   const good = delta.lowerIsBetter ? delta.pct < 0 : delta.pct > 0;
-  const tone = good ? "text-rubi-success border-rubi-success/40 bg-rubi-success/10" : "text-rubi-danger border-rubi-danger/40 bg-rubi-danger/10";
-  const Icon = delta.pct > 0 ? TrendingUp : TrendingDown;
+  const tone = stable
+    ? "text-muted-foreground border-border/60 bg-background/40"
+    : good
+      ? "text-rubi-success border-rubi-success/40 bg-rubi-success/10"
+      : "text-rubi-danger border-rubi-danger/40 bg-rubi-danger/10";
+  const Icon = stable ? Minus : delta.pct > 0 ? TrendingUp : TrendingDown;
   const fmtV = (v: number) =>
     delta.label === "Lucro" || delta.label === "Loot" || delta.label === "Supplies" ? fmtGold(v) : fmtNum(v);
   return (
     <span
-      title={`${patchLabel}: ${fmtV(delta.before)}/h antes → ${fmtV(delta.after)}/h depois`}
+      title={`${patchLabel}: ${fmtV(delta.before)}/h antes → ${fmtV(delta.after)}/h depois${stable ? " (variação dentro da flutuação normal)" : ""}`}
       className={"mt-1 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold " + tone}
     >
       <Icon className="h-3 w-3 flex-none" />
