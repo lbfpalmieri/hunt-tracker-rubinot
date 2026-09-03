@@ -339,8 +339,8 @@ function SessionsComparePage() {
                 </span>
               </div>
             )}
-            <CompareTable hunts={selected} />
             <PatchImpactPanel pool={all.map((x) => x.hunt)} hunts={selected} />
+            <CompareTable hunts={selected} pool={all.map((x) => x.hunt)} />
             <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
             <SaveComparisonPanel hunts={selected} includeBounty includePrey />
           </>

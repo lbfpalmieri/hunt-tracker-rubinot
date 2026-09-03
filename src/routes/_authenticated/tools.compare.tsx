@@ -332,8 +332,8 @@ function ComparePage() {
                 cada hunt — os números abaixo não são o total acumulado, e sim o ritmo médio por hora.
               </span>
             </div>
-            <CompareTable hunts={selected} />
             <PatchImpactPanel pool={tab === "own" ? ownRaw : communityRaw} hunts={selected} />
+            <CompareTable hunts={selected} pool={tab === "own" ? ownRaw : communityRaw} />
             <SaveComparisonPanel
               hunts={selected}
               includeBounty={includeBounty}
