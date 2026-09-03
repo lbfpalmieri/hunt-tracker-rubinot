@@ -236,6 +236,38 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
         )}
       </div>
 
+      {scoreboard.decided > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border/60 bg-muted/20 px-4 py-2 text-xs">
+          {bestKey ? (
+            <span className="font-medium">
+              🏆 <span className="text-rubi-gold">{scoreboard.ranked[0].hunt.huntName}</span> venceu{" "}
+              {scoreboard.ranked[0].score} de {scoreboard.decided} métricas
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Empate no placar de métricas</span>
+          )}
+          <span className="flex flex-wrap items-center gap-1.5 text-muted-foreground">
+            {scoreboard.ranked.map(({ hunt, score }) => (
+              <span
+                key={hunt.key}
+                title={`${hunt.huntName}: ${score} de ${scoreboard.decided} métricas`}
+                className={
+                  "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-mono " +
+                  (hunt.key === bestKey
+                    ? "border-rubi-gold/50 text-rubi-gold"
+                    : "border-border/60")
+                }
+              >
+                #{hunts.indexOf(hunt) + 1}
+                <span className="font-semibold">{score}</span>
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
+
+
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
