@@ -1,17 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter, Calendar, AlertTriangle } from "lucide-react";
+import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter, Calendar } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
-import { PatchImpactPanel } from "@/components/compare/PatchImpactPanel";
 import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 
 import { useAppStore, useHydrated } from "@/lib/store";
 import { MAX_COMPARE, fromOwnSession, type CompareHunt } from "@/lib/compare";
-import { formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { fmtDate } from "@/lib/format";
 import {
   type Period,
@@ -118,13 +116,6 @@ function SessionsComparePage() {
     () => selected.map((h) => ({ key: h.key, label: h.huntName, sub: fmtDate(h.createdAt) })),
     [selected],
   );
-  const patch = latestPatch();
-  const selectionCrossesPatch = useMemo(() => {
-    if (!patch || selected.length < 2) return false;
-    const pre = selected.some((h) => isPrePatch(h.createdAt, patch));
-    const post = selected.some((h) => !isPrePatch(h.createdAt, patch));
-    return pre && post;
-  }, [selected, patch]);
 
   const toggle = (h: CompareHunt) =>
     setSelected((prev) => {
