@@ -188,7 +188,7 @@ function ComparePage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/tools/comparisons"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-3 py-1.5 text-sm font-semibold text-rubi-gold"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-rubi-blue/40 hover:text-foreground"
           >
             <BookmarkCheck className="h-4 w-4" /> Comparações salvas
           </Link>
@@ -331,20 +331,11 @@ function ComparePage() {
               </span>
             </div>
             <CompareTable hunts={selected} pool={tab === "own" ? ownRaw : communityRaw} />
-            <details className="group mt-4">
-              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-rubi-gold/40 hover:text-foreground">
-                <BookmarkCheck className="h-3.5 w-3.5 flex-none text-rubi-gold" />
-                Salvar esta comparação com observações
-              </summary>
-
-              <div className="mt-3">
-                <SaveComparisonPanel
-                  hunts={selected}
-                  includeBounty={includeBounty}
-                  includePrey={includePrey}
-                />
-              </div>
-            </details>
+            <SaveComparisonPanel
+              hunts={selected}
+              includeBounty={includeBounty}
+              includePrey={includePrey}
+            />
           </>
 
         )}

@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Globe2, User, Percent, TrendingDown, TrendingUp, Minus, History } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Globe2, User, Percent, TrendingDown, TrendingUp, History, ChevronsRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CompareHunt } from "@/lib/compare";
 import { perHour, topKills } from "@/lib/compare";
 import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import { BountyBadge } from "@/components/BountyBadge";
-import { patchDeltaIndex, type PatchMetricDelta } from "@/lib/patch-impact";
+import { patchDeltaIndex, MIN_RELEVANT_PCT, type PatchMetricDelta } from "@/lib/patch-impact";
 import { formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 
 type Better = "high" | "low" | "none";
@@ -145,30 +145,25 @@ function isAmbiguousName(h: CompareHunt, hunts: CompareHunt[]): boolean {
 
 /**
  * Selo de variação pós-atualização, exibido só quando o usuário liga o botão
- * de porcentagem. Quando a mudança é pequena o selo fica neutro e mostra "≈"
- * em vez de um sinal — um "+0,4%" cinza ao lado de um número vermelho (que
- * significa outra coisa: pior entre as hunts) só confundia a leitura.
+ * de porcentagem. Só renderiza pra variações relevantes (ver `deltaFor` mais
+ * abaixo, que já filtra pelo piso de MIN_RELEVANT_PCT) — um "≈0%" cinza em
+ * toda métrica que não mudou nada era ruído puro, não informação.
  */
 function DeltaBadge({ delta, patchLabel }: { delta: PatchMetricDelta; patchLabel: string }) {
-  const stable = Math.abs(delta.pct) < 3;
   const good = delta.lowerIsBetter ? delta.pct < 0 : delta.pct > 0;
-  const tone = stable
-    ? "text-muted-foreground border-border/60"
-    : good
-      ? "text-rubi-success border-rubi-success/40"
-      : "text-rubi-danger border-rubi-danger/40";
-  const Icon = stable ? Minus : delta.pct > 0 ? TrendingUp : TrendingDown;
+  const tone = good ? "text-rubi-success border-rubi-success/40" : "text-rubi-danger border-rubi-danger/40";
+  const Icon = delta.pct > 0 ? TrendingUp : TrendingDown;
   const fmtV = (v: number) =>
     delta.label === "Lucro" || delta.label === "Loot" || delta.label === "Supplies" ? fmtGold(v) : fmtNum(v);
   const abs = Math.abs(delta.pct);
   const num = (abs >= 10 ? Math.round(abs) : Number(abs.toFixed(1))).toLocaleString("pt-BR");
   return (
     <span
-      title={`${patchLabel}: ${fmtV(delta.before)}/h antes → ${fmtV(delta.after)}/h depois${stable ? " (dentro da flutuação normal)" : ""}`}
+      title={`${patchLabel}: ${fmtV(delta.before)}/h antes → ${fmtV(delta.after)}/h depois`}
       className={"mt-1 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold " + tone}
     >
       <Icon className="h-3 w-3 flex-none" />
-      {stable ? `≈${num}%` : `${delta.pct > 0 ? "+" : "−"}${num}%`}
+      {`${delta.pct > 0 ? "+" : "−"}${num}%`}
     </span>
   );
 }
@@ -182,8 +177,12 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
     [pool, hunts, patch],
   );
   const hasDelta = deltaIndex.size > 0;
-  const deltaFor = (h: CompareHunt, label: string) =>
-    showDelta ? deltaIndex.get(h.huntName.trim().toLowerCase())?.get(label) ?? null : null;
+  const deltaFor = (h: CompareHunt, label: string) => {
+    if (!showDelta) return null;
+    const delta = deltaIndex.get(h.huntName.trim().toLowerCase())?.get(label);
+    // Abaixo do piso de relevância é flutuação normal, não efeito do balanceamento — não vale um selo.
+    return delta && Math.abs(delta.pct) >= MIN_RELEVANT_PCT ? delta : null;
+  };
 
   /** Placar compacto: quantas métricas com vencedor claro cada hunt ganhou. */
   const scoreboard = useMemo(() => {
@@ -203,6 +202,23 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
   }, [hunts]);
   const bestKey = scoreboard.bestKey;
 
+  // No celular a tabela quase sempre não cabe inteira — sem essa pista, a segunda
+  // hunt fica escondida fora da tela e parece que só existe uma coluna pra ver.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => setCanScrollRight(el.scrollWidth - el.clientWidth - el.scrollLeft > 8);
+    update();
+    el.addEventListener("scroll", update);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [hunts]);
 
   return (
     <div className="card-surface overflow-hidden">
@@ -240,8 +256,14 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border/60 bg-muted/20 px-4 py-2 text-xs">
           {bestKey ? (
             <span className="font-medium">
-              🏆 <span className="text-rubi-gold">{scoreboard.ranked[0].hunt.huntName}</span> venceu{" "}
-              {scoreboard.ranked[0].score} de {scoreboard.decided} métricas
+              🏆{" "}
+              <span className="text-rubi-gold">
+                {scoreboard.ranked[0].hunt.huntName}
+                {isAmbiguousName(scoreboard.ranked[0].hunt, hunts) && (
+                  <span className="font-normal"> ({fmtDate(scoreboard.ranked[0].hunt.createdAt)})</span>
+                )}
+              </span>{" "}
+              venceu {scoreboard.ranked[0].score} de {scoreboard.decided} métricas
             </span>
           ) : (
             <span className="text-muted-foreground">Empate no placar de métricas</span>
@@ -268,7 +290,8 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
 
 
 
-      <div className="overflow-x-auto">
+      <div className="relative">
+        <div ref={scrollRef} className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border/60">
@@ -354,6 +377,12 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
             ))}
           </tbody>
         </table>
+        </div>
+        {canScrollRight && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex w-16 items-center justify-end bg-gradient-to-l from-card to-transparent pr-1.5">
+            <ChevronsRight className="h-4 w-4 flex-none animate-pulse text-muted-foreground" />
+          </div>
+        )}
       </div>
 
       <div className="border-t border-border/60 px-4 py-2 text-xs text-muted-foreground">

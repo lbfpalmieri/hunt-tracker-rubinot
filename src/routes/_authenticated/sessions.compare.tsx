@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter, Calendar } from "lucide-react";
+import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter, Calendar, FlaskConical } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
@@ -54,6 +54,7 @@ function SessionsComparePage() {
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
+  const [showMisc, setShowMisc] = useState(false);
   const compareRef = useRef<HTMLDivElement>(null);
   const scrollToCompare = () =>
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -320,16 +321,28 @@ function SessionsComparePage() {
               </span>
             </div>
             <CompareTable hunts={selected} pool={all.map((x) => x.hunt)} />
-            <details className="group mt-4">
-              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-rubi-gold/40 hover:text-foreground">
-                Ver dados de Miscellaneous e salvar comparação
-              </summary>
 
-              <div className="mt-3 space-y-4">
+            <button
+              type="button"
+              onClick={() => setShowMisc((v) => !v)}
+              aria-pressed={showMisc}
+              className={
+                "mt-4 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors " +
+                (showMisc
+                  ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                  : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+              }
+            >
+              <FlaskConical className="h-3.5 w-3.5 flex-none" />
+              {showMisc ? "Esconder Misc Data" : "Ver Misc Data (charm, imbuement, item upgrade)"}
+            </button>
+            {showMisc && (
+              <div className="mt-3">
                 <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
-                <SaveComparisonPanel hunts={selected} includeBounty includePrey />
               </div>
-            </details>
+            )}
+
+            <SaveComparisonPanel hunts={selected} includeBounty includePrey />
           </>
         )}
 
