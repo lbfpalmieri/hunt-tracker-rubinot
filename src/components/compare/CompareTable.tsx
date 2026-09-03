@@ -185,19 +185,24 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
   const deltaFor = (h: CompareHunt, label: string) =>
     showDelta ? deltaIndex.get(h.huntName.trim().toLowerCase())?.get(label) ?? null : null;
 
-  /** Melhor geral: quem venceu mais métricas com vencedor claro. Sem configuração. */
-  const bestKey = useMemo(() => {
+  /** Placar compacto: quantas métricas com vencedor claro cada hunt ganhou. */
+  const scoreboard = useMemo(() => {
     const scores = new Map<string, number>(hunts.map((h) => [h.key, 0]));
+    let decided = 0;
     for (const row of SCORABLE_ROWS) {
       const w = winnersOf(row, hunts);
       if (w.size !== 1) continue;
+      decided++;
       for (const key of w) scores.set(key, (scores.get(key) ?? 0) + 1);
     }
-    const ranked = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
-    if (ranked.length < 2 || ranked[0][1] === 0) return null;
-    if (ranked[0][1] === ranked[1][1]) return null;
-    return ranked[0][0];
+    const ranked = hunts
+      .map((h) => ({ hunt: h, score: scores.get(h.key) ?? 0 }))
+      .sort((a, b) => b.score - a.score);
+    const tie = ranked.length > 1 && ranked[0].score === ranked[1].score;
+    return { ranked, decided, bestKey: !tie && ranked.length > 1 && ranked[0].score > 0 ? ranked[0].hunt.key : null };
   }, [hunts]);
+  const bestKey = scoreboard.bestKey;
+
 
   return (
     <div className="card-surface overflow-hidden">
