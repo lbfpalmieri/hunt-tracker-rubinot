@@ -327,10 +327,10 @@ function SessionsComparePage() {
               onClick={() => setShowMisc((v) => !v)}
               aria-pressed={showMisc}
               className={
-                "mt-4 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors " +
+                "mt-4 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition-all " +
                 (showMisc
-                  ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
-                  : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+                  ? "border-rubi-blue bg-rubi-blue text-primary-foreground shadow-glow-blue"
+                  : "border-border bg-muted/40 text-foreground hover:border-rubi-blue/50 hover:bg-rubi-blue/10")
               }
             >
               <FlaskConical className="h-3.5 w-3.5 flex-none" />

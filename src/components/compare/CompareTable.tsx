@@ -34,6 +34,9 @@ type Better = "high" | "low" | "none";
 interface Row {
   label: string;
   icon: LucideIcon;
+  /** Cor do ícone e do fundinho atrás dele — dá identidade própria pra cada métrica. */
+  iconColor: string;
+  iconBg: string;
   better: Better;
   /** Numeric value used for the best/worst highlight. Null = sem dado. */
   value: (h: CompareHunt) => number | null;
@@ -48,6 +51,8 @@ const ROWS: Row[] = [
   {
     label: "Raw XP (sem bounty)",
     icon: Zap,
+    iconColor: "text-sky-400",
+    iconBg: "bg-sky-400/15",
     better: "high",
     value: (h) => perHour(h.rawXpHunt, h.durationSec),
     render: (h) => {
@@ -59,6 +64,8 @@ const ROWS: Row[] = [
   {
     label: "Lucro",
     icon: Coins,
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-400/15",
     better: "high",
     value: (h) => perHour(h.balance, h.durationSec),
     render: (h) => fmtGold(perHour(h.balance, h.durationSec) ?? 0),
@@ -68,6 +75,8 @@ const ROWS: Row[] = [
   {
     label: "Loot",
     icon: Package,
+    iconColor: "text-yellow-400",
+    iconBg: "bg-yellow-400/15",
     better: "high",
     value: (h) => perHour(h.loot, h.durationSec),
     render: (h) => fmtGold(perHour(h.loot, h.durationSec) ?? 0),
@@ -77,6 +86,8 @@ const ROWS: Row[] = [
   {
     label: "Supplies",
     icon: ShoppingBag,
+    iconColor: "text-rose-400",
+    iconBg: "bg-rose-400/15",
     better: "low",
     value: (h) => perHour(h.supplies, h.durationSec),
     render: (h) => fmtGold(perHour(h.supplies, h.durationSec) ?? 0),
@@ -85,6 +96,8 @@ const ROWS: Row[] = [
   {
     label: "Kills",
     icon: Swords,
+    iconColor: "text-fuchsia-400",
+    iconBg: "bg-fuchsia-400/15",
     better: "high",
     value: (h) => perHour(h.killsTotal, h.durationSec),
     render: (h) => fmtNum(perHour(h.killsTotal, h.durationSec) ?? 0),
@@ -92,6 +105,8 @@ const ROWS: Row[] = [
   {
     label: "Dano causado",
     icon: Flame,
+    iconColor: "text-orange-400",
+    iconBg: "bg-orange-400/15",
     better: "high",
     value: (h) => perHour(h.damageDealt, h.durationSec),
     render: (h) => fmtNum(perHour(h.damageDealt, h.durationSec) ?? 0),
@@ -100,6 +115,8 @@ const ROWS: Row[] = [
   {
     label: "Cura",
     icon: HeartPulse,
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-400/15",
     better: "none",
     value: (h) => perHour(h.healing, h.durationSec),
     render: (h) => fmtNum(perHour(h.healing, h.durationSec) ?? 0),
@@ -107,6 +124,8 @@ const ROWS: Row[] = [
   {
     label: "Dano recebido",
     icon: Shield,
+    iconColor: "text-cyan-400",
+    iconBg: "bg-cyan-400/15",
     better: "low",
     value: (h) => perHour(h.damageReceived, h.durationSec),
     render: (h) => {
@@ -118,6 +137,8 @@ const ROWS: Row[] = [
   {
     label: "Top 3 monstros",
     icon: Skull,
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-400/15",
     better: "none",
     value: () => null,
     render: (h) => {
@@ -331,35 +352,64 @@ function PatchSpotlight({
   );
 }
 
-function FighterChip({
+/**
+ * Card de resultado por hunt dentro do hero — nome e placar juntos no mesmo
+ * lugar (antes eram dois elementos separados: chip com #N lá em cima, pill
+ * com #N + score lá embaixo — difícil de casar um com o outro). Cada card
+ * já é a "identidade" da hunt: ícone da origem, nome, e a barrinha de quantas
+ * métricas ela levou.
+ */
+function FighterCard({
   hunt,
-  index,
   isBest,
   ambiguous,
+  score,
+  decided,
 }: {
   hunt: CompareHunt;
-  index: number;
   isBest: boolean;
   ambiguous: boolean;
+  score: number | null;
+  decided: number;
 }) {
+  const pct = decided > 0 && score != null ? Math.round((score / decided) * 100) : null;
   return (
     <div
       className={
-        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors " +
+        "rounded-xl border p-3 transition-colors " +
         (isBest ? "border-rubi-gold bg-rubi-gold/10 shadow-glow-gold" : "border-border/60 bg-muted/10")
       }
     >
-      {isBest && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
-      <span className="rounded bg-rubi-blue/20 px-1.5 py-0.5 font-mono text-[10px] text-rubi-blue">
-        #{index + 1}
-      </span>
-      {hunt.source === "community" ? (
-        <Globe2 className="h-3.5 w-3.5 flex-none text-rubi-blue" />
-      ) : (
-        <User className="h-3.5 w-3.5 flex-none text-rubi-gold" />
+      <div className="flex items-center gap-1.5">
+        {isBest && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
+        {hunt.source === "community" ? (
+          <Globe2 className="h-3.5 w-3.5 flex-none text-rubi-blue" />
+        ) : (
+          <User className="h-3.5 w-3.5 flex-none text-rubi-gold" />
+        )}
+        <span className="min-w-0 truncate font-display text-sm font-semibold">{hunt.huntName}</span>
+      </div>
+      <div className="mt-0.5 text-xs text-muted-foreground">
+        {ambiguous ? fmtDate(hunt.createdAt) : `${hunt.charName} · ${hunt.vocation}`}
+      </div>
+      {pct != null && (
+        <div className="mt-2.5">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>
+              {score} de {decided} métricas
+            </span>
+            <span className={"font-mono font-semibold " + (isBest ? "text-rubi-gold" : "text-muted-foreground")}>
+              {pct}%
+            </span>
+          </div>
+          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted-foreground/15">
+            <div
+              className={"h-full rounded-full " + (isBest ? "bg-rubi-gold" : "bg-rubi-blue/50")}
+              style={{ width: `${Math.max(4, pct)}%` }}
+            />
+          </div>
+        </div>
       )}
-      <span className="font-display text-sm font-semibold">{hunt.huntName}</span>
-      {ambiguous && <span className="text-xs font-normal text-muted-foreground">{fmtDate(hunt.createdAt)}</span>}
     </div>
   );
 }
@@ -379,7 +429,7 @@ function DeltaBadge({ delta, patchLabel }: { delta: PatchMetricDelta; patchLabel
   return (
     <span
       title={`${patchLabel}: ${fmtV(delta.before)}/h antes → ${fmtV(delta.after)}/h depois`}
-      className={"mt-1 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold " + tone}
+      className={"inline-flex flex-none items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold " + tone}
     >
       <Icon className="h-3 w-3 flex-none" />
       {`${delta.pct > 0 ? "+" : "−"}${fmtPct(Math.abs(delta.pct))}%`}
@@ -482,36 +532,19 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
             <GitCompareArrows className="h-3.5 w-3.5" /> Resultado do comparativo
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {hunts.map((h, i) => (
-              <FighterChip
+          <p className="mt-2 max-w-2xl font-display text-lg font-semibold leading-snug sm:text-xl">{verdictText}</p>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {hunts.map((h) => (
+              <FighterCard
                 key={h.key}
                 hunt={h}
-                index={i}
                 isBest={bestKey === h.key}
                 ambiguous={isAmbiguousName(h, hunts)}
+                score={scoreboard.decided > 0 ? (scoreboard.ranked.find((r) => r.hunt.key === h.key)?.score ?? 0) : null}
+                decided={scoreboard.decided}
               />
             ))}
           </div>
-          <p className="mt-4 max-w-2xl font-display text-lg font-semibold leading-snug sm:text-xl">{verdictText}</p>
-          {scoreboard.decided > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              {scoreboard.ranked.map(({ hunt, score }) => (
-                <span
-                  key={hunt.key}
-                  title={`${hunt.huntName}: ${score} de ${scoreboard.decided} métricas`}
-                  className={
-                    "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs font-mono " +
-                    (hunt.key === bestKey ? "border-rubi-gold/50 text-rubi-gold" : "border-border/60 text-muted-foreground")
-                  }
-                >
-                  #{hunts.indexOf(hunt) + 1}
-                  <span className="font-semibold">{score}</span>
-                  <span className="opacity-60">/{scoreboard.decided}</span>
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -539,12 +572,12 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
                   : `Nenhuma hunt selecionada tem histórico suficiente dos dois lados de ${formatPatchDate(patch)}.`
               }
               className={
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors " +
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition-all " +
                 (!hasDelta
-                  ? "cursor-not-allowed border-border/50 text-muted-foreground/50"
+                  ? "cursor-not-allowed border-border/50 bg-muted/20 text-muted-foreground/50"
                   : showDelta
-                    ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
-                    : "border-border/60 text-muted-foreground hover:border-rubi-gold/40")
+                    ? "border-rubi-gold bg-rubi-gold text-background shadow-glow-gold"
+                    : "border-border bg-muted/40 text-foreground hover:border-rubi-gold/50 hover:bg-rubi-gold/10")
               }
             >
               <Percent className="h-3.5 w-3.5 flex-none" />
@@ -626,8 +659,10 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
                 {ROWS.map((row) => (
                   <tr key={row.label} className="border-b border-border/40 last:border-0">
                     <th className="sticky left-0 z-10 bg-card px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <span className="inline-flex items-center gap-1.5">
-                        <row.icon className="h-3.5 w-3.5 flex-none text-muted-foreground/70" />
+                      <span className="inline-flex items-center gap-2">
+                        <span className={"flex h-6 w-6 flex-none items-center justify-center rounded-md " + row.iconBg}>
+                          <row.icon className={"h-3.5 w-3.5 " + row.iconColor} />
+                        </span>
                         {row.label}
                       </span>
                     </th>
@@ -637,7 +672,10 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
                       const barWidth = barWidthFor(row, hunts, h);
                       return (
                         <td key={h.key} className="px-4 py-2.5 align-top">
-                          <div className={"font-mono " + toneFor(row, hunts, h)}>{row.render(h)}</div>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className={"font-mono " + toneFor(row, hunts, h)}>{row.render(h)}</span>
+                            {delta && patch && <DeltaBadge delta={delta} patchLabel={patch.label} />}
+                          </div>
                           {barWidth != null && (
                             <div className="mt-1.5 h-1 w-full max-w-[110px] overflow-hidden rounded-full bg-muted-foreground/15">
                               <div
@@ -646,7 +684,6 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
                               />
                             </div>
                           )}
-                          {delta && patch && <DeltaBadge delta={delta} patchLabel={patch.label} />}
                           {mark && (
                             <div
                               title={row.prey ? preyMarkTitle(h.prey, row.prey) : undefined}
