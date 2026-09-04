@@ -54,7 +54,7 @@ function SessionsComparePage() {
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
-  const [showMisc, setShowMisc] = useState(false);
+  const [showMisc, setShowMisc] = useState(true);
   const compareRef = useRef<HTMLDivElement>(null);
   const scrollToCompare = () =>
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -320,7 +320,7 @@ function SessionsComparePage() {
                 Cada sessão projetada para 1 hora de caça
               </span>
             </div>
-            <CompareTable hunts={selected} pool={all.map((x) => x.hunt)} />
+            <CompareTable hunts={selected} />
 
             <button
               type="button"

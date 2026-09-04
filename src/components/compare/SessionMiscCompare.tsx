@@ -2,6 +2,7 @@ import { FlaskConical } from "lucide-react";
 import type { HuntSession } from "@/lib/store";
 import type { MiscData } from "@/lib/parser";
 import { fmtNum } from "@/lib/format";
+import { PositionBadge, fmtPct } from "@/components/compare/shared";
 
 interface Col {
   key: string;
@@ -38,29 +39,50 @@ function MiscSection({ title, rows, cols }: { title: string; rows: MiscRow[]; co
             <th className="sticky left-0 z-10 bg-card px-4 py-2.5 text-left text-xs uppercase tracking-wider text-muted-foreground">
               {title}
             </th>
-            {cols.map((c) => (
+            {cols.map((c, i) => (
               <th key={c.key} className="px-4 py-2.5 text-left align-top">
-                <div className="truncate text-xs font-semibold" title={c.label}>{c.label}</div>
-                <div className="text-[11px] font-normal text-muted-foreground">{c.sub}</div>
+                <div className="flex items-center gap-1.5">
+                  <PositionBadge index={i} />
+                  <div className="min-w-0 truncate text-xs font-semibold" title={c.label}>{c.label}</div>
+                </div>
+                <div className="mt-0.5 text-[11px] font-normal text-muted-foreground">{c.sub}</div>
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => {
-            const max = Math.max(...row.values);
+            const positives = row.values.filter((v) => v > 0);
+            const max = positives.length ? Math.max(...positives) : 0;
             return (
               <tr key={row.name} className="border-b border-border/40 last:border-0">
                 <th className="sticky left-0 z-10 bg-card px-4 py-2 text-left text-xs font-medium text-muted-foreground">
                   {row.name}
                 </th>
-                {row.values.map((v, i) => (
-                  <td key={cols[i].key} className="px-4 py-2 align-top">
-                    <span className={"font-mono " + (v > 0 && v === max ? "font-semibold text-rubi-gold" : "text-muted-foreground")}>
-                      {v > 0 ? fmtNum(v) : "—"}
-                    </span>
-                  </td>
-                ))}
+                {row.values.map((v, i) => {
+                  const isMax = v > 0 && v === max && positives.length > 1;
+                  const showDiff = v > 0 && positives.length > 1 && v !== max;
+                  const diff = showDiff ? v - max : 0;
+                  const pct = showDiff && max > 0 ? (Math.abs(diff) / max) * 100 : null;
+                  return (
+                    <td key={cols[i].key} className="px-4 py-2 align-top">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className={"font-mono " + (isMax ? "font-semibold text-rubi-gold" : "text-muted-foreground")}>
+                          {v > 0 ? fmtNum(v) : "—"}
+                        </span>
+                        {showDiff && (
+                          <span
+                            title={`Comparado ao maior valor da linha: −${fmtNum(Math.abs(diff))}${pct != null ? ` (−${fmtPct(pct)}%)` : ""}`}
+                            className="inline-flex flex-none items-center gap-1 rounded-full border border-border/50 bg-muted/30 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                          >
+                            −{fmtNum(Math.abs(diff))}
+                            {pct != null && ` (−${fmtPct(pct)}%)`}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}

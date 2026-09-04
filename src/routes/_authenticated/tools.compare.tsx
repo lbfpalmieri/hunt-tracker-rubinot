@@ -330,7 +330,7 @@ function ComparePage() {
                 Ritmo médio projetado para 1 hora de caça
               </span>
             </div>
-            <CompareTable hunts={selected} pool={tab === "own" ? ownRaw : communityRaw} />
+            <CompareTable hunts={selected} />
             <SaveComparisonPanel
               hunts={selected}
               includeBounty={includeBounty}

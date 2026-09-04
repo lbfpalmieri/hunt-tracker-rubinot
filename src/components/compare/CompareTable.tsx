@@ -2,8 +2,6 @@ import { Link } from "@tanstack/react-router";
 import {
   Globe2,
   User,
-  Percent,
-  TrendingDown,
   TrendingUp,
   History,
   ChevronsRight,
@@ -26,8 +24,8 @@ import { perHour, topKills } from "@/lib/compare";
 import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import { BountyBadge } from "@/components/BountyBadge";
-import { patchDeltaIndex, patchImpactFor, MIN_RELEVANT_PCT, type PatchMetricDelta } from "@/lib/patch-impact";
-import { formatPatchDate, isPrePatch, latestPatch, type BalancePatch } from "@/lib/patches";
+import { formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
+import { PositionBadge, fmtPct } from "@/components/compare/shared";
 
 type Better = "high" | "low" | "none";
 
@@ -232,8 +230,6 @@ function isAmbiguousName(h: CompareHunt, hunts: CompareHunt[]): boolean {
 
 const fmtRowValue = (row: Row, v: number) => (row.gold ? fmtGold(v) : fmtNum(v));
 
-const fmtPct = (pct: number) => (pct >= 10 ? Math.round(pct) : Number(pct.toFixed(1))).toLocaleString("pt-BR");
-
 const GAP_MIN_PCT = 5;
 
 interface Gap {
@@ -280,10 +276,11 @@ function biggestGap(hunts: CompareHunt[]): Gap | null {
  * Nomes de hunt costumam ser longos e parecidos entre si (ex.: "Darashia -
  * Ferumbras Plague -1" vs. "Darashia - Ferumbras Jugger Seal - 1") — enfiar
  * os dois numa frase corrida ficava ilegível. Aqui cada hunt vira sua própria
- * linha (nome à esquerda, valor à direita), como um mini-placar, então dá pra
- * comparar sem precisar "separar" os nomes dentro do texto.
+ * linha (posição colorida + nome à esquerda, valor à direita), como um
+ * mini-placar, então dá pra comparar sem precisar "separar" os nomes dentro
+ * do texto.
  */
-function GapSpotlight({ gap }: { gap: Gap }) {
+function GapSpotlight({ gap, bestIndex, worstIndex }: { gap: Gap; bestIndex: number; worstIndex: number }) {
   const Icon = gap.row.icon;
   return (
     <div className="card-surface relative overflow-hidden p-4">
@@ -297,16 +294,22 @@ function GapSpotlight({ gap }: { gap: Gap }) {
         </div>
         <div className="mt-3 space-y-1.5">
           <div className="flex items-center justify-between gap-3">
-            <span className="min-w-0 truncate text-sm font-semibold text-rubi-gold" title={gap.best.huntName}>
-              {gap.best.huntName}
+            <span className="flex min-w-0 items-center gap-1.5">
+              <PositionBadge index={bestIndex} />
+              <span className="min-w-0 truncate text-sm font-semibold text-rubi-gold" title={gap.best.huntName}>
+                {gap.best.huntName}
+              </span>
             </span>
             <span className="flex-none font-mono text-sm font-semibold text-rubi-success">
               {fmtRowValue(gap.row, gap.bestValue)}/h
             </span>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="min-w-0 truncate text-sm text-muted-foreground" title={gap.worst.huntName}>
-              {gap.worst.huntName}
+            <span className="flex min-w-0 items-center gap-1.5">
+              <PositionBadge index={worstIndex} />
+              <span className="min-w-0 truncate text-sm text-muted-foreground" title={gap.worst.huntName}>
+                {gap.worst.huntName}
+              </span>
             </span>
             <span className="flex-none font-mono text-sm text-muted-foreground">
               {fmtRowValue(gap.row, gap.worstValue)}/h
@@ -322,66 +325,22 @@ function GapSpotlight({ gap }: { gap: Gap }) {
   );
 }
 
-function PatchSpotlight({
-  patch,
-  huntName,
-  delta,
-}: {
-  patch: BalancePatch;
-  huntName: string;
-  delta: PatchMetricDelta;
-}) {
-  const good = delta.lowerIsBetter ? delta.pct < 0 : delta.pct > 0;
-  const Icon = delta.pct > 0 ? TrendingUp : TrendingDown;
-  const tone = good ? "border-rubi-success/40 bg-rubi-success/10 text-rubi-success" : "border-rubi-danger/40 bg-rubi-danger/10 text-rubi-danger";
-  const fmtV = (v: number) =>
-    delta.label === "Lucro" || delta.label === "Loot" || delta.label === "Supplies" ? fmtGold(v) : fmtNum(v);
-  return (
-    <div className="card-surface relative overflow-hidden p-4">
-      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rubi-gold/10 blur-2xl" />
-      <div className="relative">
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg bg-rubi-gold/15 text-rubi-gold">
-            <History className="h-3.5 w-3.5" />
-          </span>
-          <span className="min-w-0 truncate">
-            Efeito do {patch.label} · {delta.label}
-          </span>
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="min-w-0 truncate text-sm font-semibold" title={huntName}>
-            {huntName}
-          </span>
-          <span
-            className={"inline-flex flex-none items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold " + tone}
-          >
-            <Icon className="h-3 w-3 flex-none" />
-            {fmtPct(Math.abs(delta.pct))}%
-          </span>
-        </div>
-        <div className="mt-1.5 text-xs text-muted-foreground">
-          {good ? "Melhorou" : "Piorou"} desde {formatPatchDate(patch)} — {fmtV(delta.before)} → {fmtV(delta.after)}/h
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /**
- * Card de resultado por hunt dentro do hero — nome e placar juntos no mesmo
- * lugar (antes eram dois elementos separados: chip com #N lá em cima, pill
- * com #N + score lá embaixo — difícil de casar um com o outro). Cada card
- * já é a "identidade" da hunt: ícone da origem, nome, e a barrinha de quantas
- * métricas ela levou.
+ * Card de resultado por hunt dentro do hero — posição, nome e placar juntos
+ * no mesmo lugar. A mesma cor de #N usada aqui, no cabeçalho da tabela e no
+ * card de maior diferença ajuda a "casar" as hunts entre os diferentes
+ * blocos da tela, mesmo quando duas têm o mesmo nome.
  */
 function FighterCard({
   hunt,
+  index,
   isBest,
   ambiguous,
   score,
   decided,
 }: {
   hunt: CompareHunt;
+  index: number;
   isBest: boolean;
   ambiguous: boolean;
   score: number | null;
@@ -396,6 +355,7 @@ function FighterCard({
       }
     >
       <div className="flex items-center gap-1.5">
+        <PositionBadge index={index} />
         {isBest && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
         {hunt.source === "community" ? (
           <Globe2 className="h-3.5 w-3.5 flex-none text-rubi-blue" />
@@ -404,7 +364,7 @@ function FighterCard({
         )}
         <span className="min-w-0 truncate font-display text-sm font-semibold">{hunt.huntName}</span>
       </div>
-      <div className="mt-0.5 text-xs text-muted-foreground">
+      <div className="mt-1 text-xs text-muted-foreground">
         {ambiguous ? fmtDate(hunt.createdAt) : `${hunt.charName} · ${hunt.vocation}`}
       </div>
       {pct != null && (
@@ -430,58 +390,46 @@ function FighterCard({
 }
 
 /**
- * Selo de variação pós-atualização, exibido só quando o usuário liga o botão
- * de porcentagem. Só renderiza pra variações relevantes (ver `deltaFor` mais
- * abaixo, que já filtra pelo piso de MIN_RELEVANT_PCT) — um "≈0%" cinza em
- * toda métrica que não mudou nada era ruído puro, não informação.
+ * Selo padrão de diferença — número absoluto e percentual, sempre visível
+ * (não é mais um recurso amarrado a um patch específico: são muitas
+ * atualizações ao longo do tempo, então o jeito certo é a comparação entre
+ * as hunts selecionadas ser sempre exibida, de forma genérica). Mostra
+ * quanto essa hunt fica atrás da melhor da linha em valor absoluto E em %
+ * juntos — ex.: uma fez 100 de dano/h, a outra 70 de dano/h, o selo mostra
+ * "−30 (−30%)" na de 70. A própria melhor não ganha selo (ela é a
+ * referência). Sem piso de relevância: mesmo diferenças pequenas aparecem.
  */
-function DeltaBadge({ delta, patchLabel }: { delta: PatchMetricDelta; patchLabel: string }) {
-  const good = delta.lowerIsBetter ? delta.pct < 0 : delta.pct > 0;
-  const tone = good ? "text-rubi-success border-rubi-success/40" : "text-rubi-danger border-rubi-danger/40";
-  const Icon = delta.pct > 0 ? TrendingUp : TrendingDown;
-  const fmtV = (v: number) =>
-    delta.label === "Lucro" || delta.label === "Loot" || delta.label === "Supplies" ? fmtGold(v) : fmtNum(v);
+function DiffBadge({ row, hunts, h }: { row: Row; hunts: CompareHunt[]; h: CompareHunt }) {
+  if (row.better === "none" || hunts.length < 2) return null;
+  const values = hunts.map(row.value).filter((v): v is number => v != null);
+  if (values.length < 2) return null;
+  const v = row.value(h);
+  if (v == null) return null;
+  const best = row.better === "high" ? Math.max(...values) : Math.min(...values);
+  const worst = row.better === "high" ? Math.min(...values) : Math.max(...values);
+  if (v === best) return null;
+  const diff = v - best;
+  const sign = diff > 0 ? "+" : "−";
+  const absDiffFmt = fmtRowValue(row, Math.abs(diff));
+  const pct = Math.abs(best) > 1e-9 ? (Math.abs(diff) / Math.abs(best)) * 100 : null;
+  const tone =
+    v === worst
+      ? "border-rubi-danger/40 bg-rubi-danger/10 text-rubi-danger"
+      : "border-border/50 bg-muted/30 text-muted-foreground";
   return (
     <span
-      title={`${patchLabel}: ${fmtV(delta.before)}/h antes → ${fmtV(delta.after)}/h depois`}
+      title={`Comparado à melhor desta métrica: ${sign}${absDiffFmt}${pct != null ? ` (${sign}${fmtPct(pct)}%)` : ""}`}
       className={"inline-flex flex-none items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold " + tone}
     >
-      <Icon className="h-3 w-3 flex-none" />
-      {`${delta.pct > 0 ? "+" : "−"}${fmtPct(Math.abs(delta.pct))}%`}
+      {sign}
+      {absDiffFmt}
+      {pct != null && ` (${sign}${fmtPct(pct)}%)`}
     </span>
   );
 }
 
-export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: CompareHunt[] }) {
+export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
   const patch = latestPatch();
-  const [showDelta, setShowDelta] = useState(false);
-  const deltaIndex = useMemo(
-    (): Map<string, Map<string, PatchMetricDelta>> =>
-      pool && pool.length ? patchDeltaIndex(pool, hunts.map((h) => h.huntName), patch) : new Map(),
-    [pool, hunts, patch],
-  );
-  const hasDelta = deltaIndex.size > 0;
-  const deltaFor = (h: CompareHunt, label: string) => {
-    if (!showDelta) return null;
-    const delta = deltaIndex.get(h.huntName.trim().toLowerCase())?.get(label);
-    // Abaixo do piso de relevância é flutuação normal, não efeito do balanceamento — não vale um selo.
-    return delta && Math.abs(delta.pct) >= MIN_RELEVANT_PCT ? delta : null;
-  };
-
-  /** Manchete automática do efeito do patch: a maior variação encontrada, com o quê/quanto/desde quando. */
-  const patchImpacts = useMemo(
-    () => (pool && pool.length && patch ? patchImpactFor(pool, hunts.map((h) => h.huntName), patch) : []),
-    [pool, hunts, patch],
-  );
-  const topPatchDelta = useMemo(() => {
-    let top: { huntName: string; delta: PatchMetricDelta } | null = null;
-    for (const imp of patchImpacts) {
-      for (const d of imp.deltas) {
-        if (!top || Math.abs(d.pct) > Math.abs(top.delta.pct)) top = { huntName: imp.huntName, delta: d };
-      }
-    }
-    return top;
-  }, [patchImpacts]);
 
   /** Placar compacto: quantas métricas com vencedor claro cada hunt ganhou. */
   const scoreboard = useMemo(() => {
@@ -502,6 +450,8 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
   const bestKey = scoreboard.bestKey;
 
   const gap = useMemo(() => biggestGap(hunts), [hunts]);
+  const gapBestIndex = gap ? hunts.findIndex((h) => h.key === gap.best.key) : -1;
+  const gapWorstIndex = gap ? hunts.findIndex((h) => h.key === gap.worst.key) : -1;
 
   /** Frase de veredito em português claro — o resumo que substitui "ler a tabela inteira pra entender o que rolou". */
   const verdictText = useMemo(() => {
@@ -548,10 +498,11 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
           </div>
           <p className="mt-2 max-w-2xl font-display text-lg font-semibold leading-snug sm:text-xl">{verdictText}</p>
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {hunts.map((h) => (
+            {hunts.map((h, i) => (
               <FighterCard
                 key={h.key}
                 hunt={h}
+                index={i}
                 isBest={bestKey === h.key}
                 ambiguous={isAmbiguousName(h, hunts)}
                 score={scoreboard.decided > 0 ? (scoreboard.ranked.find((r) => r.hunt.key === h.key)?.score ?? 0) : null}
@@ -562,51 +513,14 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
         </div>
       </div>
 
-      {(gap || topPatchDelta) && (
-        <div className={"grid gap-3 " + (gap && topPatchDelta ? "sm:grid-cols-2" : "")}>
-          {gap && <GapSpotlight gap={gap} />}
-          {topPatchDelta && patch && (
-            <PatchSpotlight patch={patch} huntName={topPatchDelta.huntName} delta={topPatchDelta.delta} />
-          )}
-        </div>
+      {gap && gapBestIndex >= 0 && gapWorstIndex >= 0 && (
+        <GapSpotlight gap={gap} bestIndex={gapBestIndex} worstIndex={gapWorstIndex} />
       )}
 
       <div className="card-surface overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Por hora de caça</div>
-          {patch && (
-            <button
-              type="button"
-              onClick={() => setShowDelta((v) => !v)}
-              aria-pressed={showDelta}
-              disabled={!hasDelta}
-              title={
-                hasDelta
-                  ? `Mostra, em cada métrica, quanto o ritmo por hora mudou depois do ${patch.label} (${formatPatchDate(patch)}).`
-                  : `Nenhuma hunt selecionada tem histórico suficiente dos dois lados de ${formatPatchDate(patch)}.`
-              }
-              className={
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition-all " +
-                (!hasDelta
-                  ? "cursor-not-allowed border-border/50 bg-muted/20 text-muted-foreground/50"
-                  : showDelta
-                    ? "border-rubi-gold bg-rubi-gold text-background shadow-glow-gold"
-                    : "border-border bg-muted/40 text-foreground hover:border-rubi-gold/50 hover:bg-rubi-gold/10")
-              }
-            >
-              <Percent className="h-3.5 w-3.5 flex-none" />
-              Variação desde o {patch.label}
-            </button>
-          )}
+        <div className="border-b border-border/60 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Por hora de caça
         </div>
-
-        {showDelta && hasDelta && patch && (
-          <div className="border-b border-border/60 bg-rubi-gold/5 px-4 py-2 text-xs text-muted-foreground">
-            Comparando o ritmo por hora de antes e depois do{" "}
-            <span className="font-medium text-foreground">{patch.label}</span> ({formatPatchDate(patch)}) — variações
-            abaixo de {MIN_RELEVANT_PCT}% não aparecem, são flutuação normal.
-          </div>
-        )}
 
         <div className="relative">
           <div ref={scrollRef} className="overflow-x-auto">
@@ -622,9 +536,7 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
                     return (
                       <th key={h.key} className="px-4 py-3 text-left align-top">
                         <div className="flex items-center gap-1.5">
-                          <span className="rounded bg-rubi-blue/20 px-1.5 py-0.5 font-mono text-[10px] text-rubi-blue">
-                            #{i + 1}
-                          </span>
+                          <PositionBadge index={i} />
                           {h.source === "community" ? (
                             <Globe2 className="h-3.5 w-3.5 flex-none text-rubi-blue" />
                           ) : (
@@ -647,7 +559,7 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
                             </span>
                           )}
                         </div>
-                        <div className="mt-0.5 text-xs font-normal text-muted-foreground">
+                        <div className="mt-1 text-xs font-normal text-muted-foreground">
                           {h.charName} · {h.vocation}
                         </div>
                         <div className="text-xs font-normal text-muted-foreground">
@@ -682,13 +594,12 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
                     </th>
                     {hunts.map((h) => {
                       const mark = row.prey ? preyMarkLabel(h.prey, row.prey) : null;
-                      const delta = deltaFor(h, row.label);
                       const barWidth = barWidthFor(row, hunts, h);
                       return (
                         <td key={h.key} className="px-4 py-2.5 align-top">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className={"font-mono " + toneFor(row, hunts, h)}>{row.render(h)}</span>
-                            {delta && patch && <DeltaBadge delta={delta} patchLabel={patch.label} />}
+                            <DiffBadge row={row} hunts={hunts} h={h} />
                           </div>
                           {barWidth != null && (
                             <div className="mt-1.5 h-1 w-full max-w-[110px] overflow-hidden rounded-full bg-muted-foreground/15">
@@ -723,8 +634,9 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
 
         <div className="border-t border-border/60 px-4 py-2 text-xs text-muted-foreground">
           <span className="font-semibold text-rubi-success">Verde</span> = melhor ·{" "}
-          <span className="font-semibold text-rubi-danger">vermelho</span> = pior · barra = proporção em relação ao maior
-          valor da linha · dourado = bônus de Prey.
+          <span className="font-semibold text-rubi-danger">vermelho</span> = pior · selo cinza/vermelho = diferença
+          (valor e %) pra melhor da linha · barra = proporção em relação ao maior valor da linha · dourado = bônus de
+          Prey.
         </div>
       </div>
     </div>
