@@ -276,29 +276,46 @@ function biggestGap(hunts: CompareHunt[]): Gap | null {
   return top;
 }
 
+/**
+ * Nomes de hunt costumam ser longos e parecidos entre si (ex.: "Darashia -
+ * Ferumbras Plague -1" vs. "Darashia - Ferumbras Jugger Seal - 1") — enfiar
+ * os dois numa frase corrida ficava ilegível. Aqui cada hunt vira sua própria
+ * linha (nome à esquerda, valor à direita), como um mini-placar, então dá pra
+ * comparar sem precisar "separar" os nomes dentro do texto.
+ */
 function GapSpotlight({ gap }: { gap: Gap }) {
   const Icon = gap.row.icon;
   return (
     <div className="card-surface relative overflow-hidden p-4">
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rubi-blue/10 blur-2xl" />
-      <div className="relative flex items-start gap-3">
-        <div className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-rubi-blue/15 text-rubi-blue">
-          <Icon className="h-4 w-4" />
+      <div className="relative">
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg bg-rubi-blue/15 text-rubi-blue">
+            <Icon className="h-3.5 w-3.5" />
+          </span>
+          <span className="min-w-0 truncate">Maior diferença encontrada · {gap.row.label}</span>
         </div>
-        <div className="min-w-0">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Maior diferença encontrada
-          </div>
-          <p className="mt-1 text-sm leading-snug">
-            Em <span className="font-semibold">{gap.row.label}</span>,{" "}
-            <span className="font-semibold text-rubi-gold">{gap.best.huntName}</span> ficou{" "}
-            <span className="font-mono font-semibold text-rubi-success">{fmtPct(gap.pct)}%</span>{" "}
-            {gap.row.better === "low" ? "menor" : "maior"} que{" "}
-            <span className="font-semibold">{gap.worst.huntName}</span>{" "}
-            <span className="text-muted-foreground">
-              ({fmtRowValue(gap.row, gap.bestValue)} vs {fmtRowValue(gap.row, gap.worstValue)}/h)
+        <div className="mt-3 space-y-1.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="min-w-0 truncate text-sm font-semibold text-rubi-gold" title={gap.best.huntName}>
+              {gap.best.huntName}
             </span>
-          </p>
+            <span className="flex-none font-mono text-sm font-semibold text-rubi-success">
+              {fmtRowValue(gap.row, gap.bestValue)}/h
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="min-w-0 truncate text-sm text-muted-foreground" title={gap.worst.huntName}>
+              {gap.worst.huntName}
+            </span>
+            <span className="flex-none font-mono text-sm text-muted-foreground">
+              {fmtRowValue(gap.row, gap.worstValue)}/h
+            </span>
+          </div>
+        </div>
+        <div className="mt-2.5 inline-flex items-center gap-1 rounded-full border border-rubi-success/40 bg-rubi-success/10 px-2 py-0.5 text-xs font-semibold text-rubi-success">
+          <TrendingUp className="h-3 w-3 flex-none" />
+          {fmtPct(gap.pct)}% {gap.row.better === "low" ? "menor" : "maior"}
         </div>
       </div>
     </div>
@@ -316,36 +333,34 @@ function PatchSpotlight({
 }) {
   const good = delta.lowerIsBetter ? delta.pct < 0 : delta.pct > 0;
   const Icon = delta.pct > 0 ? TrendingUp : TrendingDown;
+  const tone = good ? "border-rubi-success/40 bg-rubi-success/10 text-rubi-success" : "border-rubi-danger/40 bg-rubi-danger/10 text-rubi-danger";
   const fmtV = (v: number) =>
     delta.label === "Lucro" || delta.label === "Loot" || delta.label === "Supplies" ? fmtGold(v) : fmtNum(v);
   return (
     <div className="card-surface relative overflow-hidden p-4">
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rubi-gold/10 blur-2xl" />
-      <div className="relative flex items-start gap-3">
-        <div className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-rubi-gold/15 text-rubi-gold">
-          <History className="h-4 w-4" />
+      <div className="relative">
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg bg-rubi-gold/15 text-rubi-gold">
+            <History className="h-3.5 w-3.5" />
+          </span>
+          <span className="min-w-0 truncate">
+            Efeito do {patch.label} · {delta.label}
+          </span>
         </div>
-        <div className="min-w-0">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Efeito do {patch.label}
-          </div>
-          <p className="mt-1 text-sm leading-snug">
-            Em <span className="font-semibold">{huntName}</span>, <span className="font-semibold">{delta.label}</span>{" "}
-            por hora {good ? "melhorou" : "piorou"}{" "}
-            <span
-              className={
-                "inline-flex items-center gap-0.5 font-mono font-semibold " +
-                (good ? "text-rubi-success" : "text-rubi-danger")
-              }
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {fmtPct(Math.abs(delta.pct))}%
-            </span>{" "}
-            desde {formatPatchDate(patch)}{" "}
-            <span className="text-muted-foreground">
-              ({fmtV(delta.before)} → {fmtV(delta.after)}/h)
-            </span>
-          </p>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <span className="min-w-0 truncate text-sm font-semibold" title={huntName}>
+            {huntName}
+          </span>
+          <span
+            className={"inline-flex flex-none items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold " + tone}
+          >
+            <Icon className="h-3 w-3 flex-none" />
+            {fmtPct(Math.abs(delta.pct))}%
+          </span>
+        </div>
+        <div className="mt-1.5 text-xs text-muted-foreground">
+          {good ? "Melhorou" : "Piorou"} desde {formatPatchDate(patch)} — {fmtV(delta.before)} → {fmtV(delta.after)}/h
         </div>
       </div>
     </div>
@@ -497,12 +512,11 @@ export function CompareTable({ hunts, pool }: { hunts: CompareHunt[]; pool?: Com
       return `Empate técnico: nenhuma hunt dominou a maioria das ${scoreboard.decided} métrica${scoreboard.decided > 1 ? "s" : ""} comparadas.`;
     }
     const winner = scoreboard.ranked[0];
-    const base = `${winner.hunt.huntName} levou a melhor, vencendo ${winner.score} de ${scoreboard.decided} métricas comparadas`;
-    if (gap && gap.best.key === winner.hunt.key) {
-      return `${base} — o maior salto foi em ${gap.row.label.toLowerCase()}, ${fmtPct(gap.pct)}% ${gap.row.better === "low" ? "menor" : "maior"} que ${gap.worst.huntName}.`;
-    }
-    return `${base}.`;
-  }, [scoreboard, bestKey, gap]);
+    // O nome da 2ª hunt fica de fora de propósito: nomes de hunt costumam ser longos e
+    // parecidos, e enfiar dois numa frase corrida vira sopa de letrinhas — o card
+    // "Maior diferença encontrada" logo abaixo já mostra essa comparação com clareza.
+    return `${winner.hunt.huntName} levou a melhor, vencendo ${winner.score} de ${scoreboard.decided} métricas comparadas.`;
+  }, [scoreboard, bestKey]);
 
   // No celular a tabela quase sempre não cabe inteira — sem essa pista, a segunda
   // hunt fica escondida fora da tela e parece que só existe uma coluna pra ver.
