@@ -39,6 +39,7 @@ function Dashboard() {
   const characters = useAppStore((s) => s.characters);
   const sessions = useAppStore((s) => s.sessions);
   const imbuements = useAppStore((s) => s.imbuements);
+  const expenses = useAppStore((s) => s.expenses);
   const activeId = useAppStore((s) => s.activeCharacterId);
 
 
@@ -64,7 +65,12 @@ function Dashboard() {
     () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
     [imbuements, sessions, active],
   );
-  const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0);
+  const myExpenses = useMemo(
+    () => (active ? expenses.filter((e) => e.characterId === active.id) : []),
+    [expenses, active],
+  );
+  const totalSpentOnPurchases = useMemo(() => myExpenses.reduce((a, e) => a + e.amount, 0), [myExpenses]);
+  const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0) - totalSpentOnPurchases;
 
 
 
@@ -152,7 +158,7 @@ function Dashboard() {
                   Balance acumulado
                   <InfoHint title="Balance acumulado" description="Soma bruta do saldo de todas as sessões deste personagem.">
                     <p><strong>Fórmula:</strong> <code>Σ (loot − supplies)</code> de cada sessão importada, exatamente como o Balance do Hunting Analyser do jogo.</p>
-                    <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements — isso aparece separado como <em>Lucro líquido</em>.</p>
+                    <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements nem gastos registrados — isso aparece separado como <em>Líquido</em>.</p>
                     <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>, entre as que já somam pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões — evita que uma sessão curta isolada pareça o melhor spot.</p>
                     {latestPatch() && <p>Por padrão o Top spot ignora sessões de antes do último balanceamento do servidor ({latestPatch()!.label}) — misturar rendimento de antes e depois de um nerf/buff distorceria qual spot é realmente o melhor hoje.</p>}
                   </InfoHint>
@@ -176,13 +182,15 @@ function Dashboard() {
                   <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(agg.totalTime)}</div>
                   <div className="text-[11px] text-muted-foreground">{mySessions.length} sessões</div>
                 </div>
-                {imbAgg && imbAgg.rows.some((r) => r.active) && (
+                {((imbAgg && imbAgg.rows.some((r) => r.active)) || totalSpentOnPurchases > 0) && (
                   <div>
                     <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Líquido</div>
                     <div className={"mt-1 font-display text-lg font-semibold " + (netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
                       {fmtGold(netBalance)}
                     </div>
-                    <div className="text-[11px] text-muted-foreground">após imbuements</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      após imbuements{totalSpentOnPurchases > 0 ? " e gastos" : ""}
+                    </div>
                   </div>
                 )}
               </div>

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateSessions, balanceSince } from "@/lib/performance";
+import { aggregateImbuements } from "@/lib/imbuements";
 import { type Period, PERIODS, periodRange, formatRange, filterByPeriod } from "@/lib/period";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { huntRawXp } from "@/lib/bounty";
@@ -36,6 +37,7 @@ import {
   PartyPopper,
   Calendar,
   AlertTriangle,
+  Receipt,
 } from "lucide-react";
 
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
@@ -63,14 +65,18 @@ function RendimentoPage() {
   const sessions = useAppStore((s) => s.sessions);
   const levelSnapshots = useAppStore((s) => s.levelSnapshots);
   const goals = useAppStore((s) => s.goals);
+  const imbuements = useAppStore((s) => s.imbuements);
+  const expenses = useAppStore((s) => s.expenses);
   const activeId = useAppStore((s) => s.activeCharacterId);
   const addLevelSnapshot = useAppStore((s) => s.addLevelSnapshot);
   const removeLevelSnapshot = useAppStore((s) => s.removeLevelSnapshot);
   const addGoal = useAppStore((s) => s.addGoal);
   const removeGoal = useAppStore((s) => s.removeGoal);
+  const addExpense = useAppStore((s) => s.addExpense);
+  const removeExpense = useAppStore((s) => s.removeExpense);
 
   const active = characters.find((c) => c.id === activeId) ?? null;
-  const [tab, setTab] = useState<"overview" | "level" | "goals">("overview");
+  const [tab, setTab] = useState<"overview" | "level" | "goals" | "expenses">("overview");
   const [period, setPeriod] = useState<Period>("week");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -221,6 +227,65 @@ function RendimentoPage() {
     }
   };
 
+  // --- Gastos ---
+  const myExpenses = useMemo(
+    () => (active ? expenses.filter((e) => e.characterId === active.id) : []),
+    [expenses, active],
+  );
+  const totalExpenses = useMemo(() => myExpenses.reduce((a, e) => a + e.amount, 0), [myExpenses]);
+  // Saldo estimado depois de imbuements e gastos — mesma conta do "Líquido" do Dashboard,
+  // pra confirmar que o gasto registrado realmente corrige a divergência.
+  const lifetimeAgg = useMemo(() => aggregateSessions(mySessions), [mySessions]);
+  const imbAgg = useMemo(
+    () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
+    [imbuements, sessions, active],
+  );
+  const netBalance = lifetimeAgg.balance - (imbAgg?.totalSpent ?? 0) - totalExpenses;
+
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [expenseDesc, setExpenseDesc] = useState("");
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [savingExpense, setSavingExpense] = useState(false);
+  const [expenseError, setExpenseError] = useState<string | null>(null);
+
+  const openExpenseDialog = () => {
+    setExpenseDesc("");
+    setExpenseAmount("");
+    setExpenseError(null);
+    setExpenseDialogOpen(true);
+  };
+
+  const expenseValue = Number(expenseAmount.replace(/[.,\s]/g, ""));
+  const expenseReady = expenseDesc.trim().length > 0 && Number.isFinite(expenseValue) && expenseValue > 0;
+
+  const handleAddExpense = async () => {
+    if (!active || !expenseReady) return;
+    setSavingExpense(true);
+    setExpenseError(null);
+    try {
+      await addExpense({
+        characterId: active.id,
+        description: expenseDesc.trim(),
+        amount: Math.round(expenseValue),
+      });
+      setExpenseDialogOpen(false);
+    } catch (e) {
+      setExpenseError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingExpense(false);
+    }
+  };
+
+  const handleRemoveExpense = async (id: string, description: string) => {
+    const ok = await confirmDialog({ description: `Remover o gasto "${description}"?`, tone: "danger" });
+    if (!ok) return;
+    try {
+      await removeExpense(id);
+    } catch (e) {
+      toast.error("Falha ao remover", { description: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
   if (!hydrated) {
     return (
       <AppShell>
@@ -263,6 +328,7 @@ function RendimentoPage() {
             { value: "overview", label: "Visão geral", icon: TrendingUp },
             { value: "level", label: "Nível", icon: Swords },
             { value: "goals", label: "Objetivos", icon: Target },
+            { value: "expenses", label: "Gastos", icon: Receipt },
           ] as const
         ).map((t) => (
           <button
@@ -645,6 +711,129 @@ function RendimentoPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-gold px-4 py-2 text-sm font-semibold text-background hover:opacity-90 disabled:opacity-60"
                 >
                   {savingGoal ? "Salvando..." : "Criar objetivo"}
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
+
+      {tab === "expenses" && (
+        <>
+          <div className="card-surface relative overflow-hidden p-6 sm:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-rubi-danger/10 blur-3xl" />
+            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Total gasto</div>
+                <div className="mt-2 font-display text-5xl font-bold tracking-tight text-rubi-danger">
+                  {fmtGold(totalExpenses)}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {myExpenses.length === 0
+                    ? "Nenhum gasto registrado ainda"
+                    : `${myExpenses.length} registro${myExpenses.length === 1 ? "" : "s"}`}
+                  {" · "}Saldo após imbuements e gastos:{" "}
+                  <span className={"font-semibold " + (netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
+                    {fmtGold(netBalance)}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={openExpenseDialog}
+                className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-rubi-danger px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90 sm:self-auto"
+              >
+                <Plus className="h-4 w-4" /> Registrar gasto
+              </button>
+            </div>
+          </div>
+
+          {myExpenses.length === 0 ? (
+            <EmptyState
+              icon={Receipt}
+              title="Nenhum gasto registrado ainda"
+              description='Comprou algo dentro do jogo com o gold acumulado? Registre aqui — descrição, valor e data ficam salvos, e o saldo mostrado no Dashboard passa a considerar isso.'
+            />
+          ) : (
+            <div className="card-surface mt-6 p-5">
+              <h2 className="mb-3 text-base font-semibold">Histórico de gastos</h2>
+              <ul className="space-y-1.5">
+                {myExpenses.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 basis-full truncate sm:basis-auto sm:flex-1" title={e.description}>
+                      {e.description}
+                    </span>
+                    <span className="flex-none font-mono font-semibold text-rubi-danger">−{fmtGold(e.amount)}</span>
+                    <span className="flex-none text-xs text-muted-foreground">{fmtDate(e.createdAt)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExpense(e.id, e.description)}
+                      className="flex-none rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+                      aria-label="Remover"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <Dialog open={expenseDialogOpen} onOpenChange={(o) => !savingExpense && setExpenseDialogOpen(o)}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Registrar gasto</DialogTitle>
+                <DialogDescription>
+                  Uma compra paga com o gold acumulado, fora do fluxo de hunts — ex.: um item comprado no mercado.
+                </DialogDescription>
+              </DialogHeader>
+              <label className="block">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">O que foi</span>
+                <input
+                  autoFocus
+                  value={expenseDesc}
+                  onChange={(e) => setExpenseDesc(e.target.value)}
+                  placeholder="Ex: Falcon Mace comprada no mercado"
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor (gold)</span>
+                <input
+                  inputMode="numeric"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddExpense();
+                  }}
+                  placeholder="Ex: 15000000"
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                />
+              </label>
+              {expenseError && (
+                <p className="rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
+                  {expenseError}
+                </p>
+              )}
+              <DialogFooter className="gap-2 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExpenseDialogOpen(false)}
+                  disabled={savingExpense}
+                  className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddExpense}
+                  disabled={savingExpense || !expenseReady}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-danger px-4 py-2 text-sm font-semibold text-background hover:opacity-90 disabled:opacity-60"
+                >
+                  {savingExpense ? "Salvando..." : "Registrar"}
                 </button>
               </DialogFooter>
             </DialogContent>

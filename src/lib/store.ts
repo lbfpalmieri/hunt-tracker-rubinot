@@ -72,6 +72,20 @@ export interface Goal {
   createdAt: string;
 }
 
+/**
+ * Compra dentro do jogo paga com o gold acumulado (fora do fluxo de
+ * hunts/imbuements) — ex.: comprou um item raro no mercado. Registrar aqui
+ * explica a divergência entre o Balance calculado pelas hunts e o gold que
+ * o personagem realmente tem guardado.
+ */
+export interface Expense {
+  id: string;
+  characterId: string;
+  description: string;
+  amount: number;
+  createdAt: string;
+}
+
 interface State {
   characters: Character[];
   sessions: HuntSession[];
@@ -79,6 +93,7 @@ interface State {
   imbuements: Imbuement[];
   levelSnapshots: LevelSnapshot[];
   goals: Goal[];
+  expenses: Expense[];
   activeCharacterId: string | null;
   loaded: boolean;
   loading: boolean;
@@ -101,6 +116,8 @@ interface State {
   removeLevelSnapshot: (id: string) => Promise<void>;
   addGoal: (g: Omit<Goal, "id" | "createdAt">) => Promise<Goal>;
   removeGoal: (id: string) => Promise<void>;
+  addExpense: (e: Omit<Expense, "id" | "createdAt">) => Promise<Expense>;
+  removeExpense: (id: string) => Promise<void>;
 }
 
 
@@ -126,6 +143,7 @@ export const useAppStore = create<State>()((set, get) => ({
   imbuements: [],
   levelSnapshots: [],
   goals: [],
+  expenses: [],
   activeCharacterId: null,
   loaded: false,
   loading: false,
@@ -140,6 +158,7 @@ export const useAppStore = create<State>()((set, get) => ({
       imbuements: [],
       levelSnapshots: [],
       goals: [],
+      expenses: [],
       activeCharacterId: null,
       loaded: false,
       loading: false,
@@ -185,6 +204,16 @@ export const useAppStore = create<State>()((set, get) => ({
         console.error("[rendimento] level_snapshots/goals indisponíveis (migration ainda não aplicada?)", e);
         levelRes = { data: [], error: null };
         goalRes = { data: [], error: null };
+      }
+
+      // Mesma lógica defensiva: histórico de gastos é aditivo, não pode derrubar o resto do app.
+      let expenseRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
+      try {
+        expenseRes = await db.from("expenses").select("*").order("created_at", { ascending: false });
+        if (expenseRes.error) throw expenseRes.error;
+      } catch (e) {
+        console.error("[gastos] tabela expenses indisponível (migration ainda não aplicada?)", e);
+        expenseRes = { data: [], error: null };
       }
 
       const characters: Character[] = (charRes.data ?? []).map((c: any) => ({
@@ -241,6 +270,13 @@ export const useAppStore = create<State>()((set, get) => ({
         imageUrl: g.image_url ?? null,
         createdAt: g.created_at,
       }));
+      const expenses: Expense[] = (expenseRes.data ?? []).map((e: any) => ({
+        id: e.id,
+        characterId: e.character_id,
+        description: e.description,
+        amount: Number(e.amount ?? 0),
+        createdAt: e.created_at,
+      }));
       const prevActive = get().activeCharacterId;
       set({
         characters,
@@ -249,6 +285,7 @@ export const useAppStore = create<State>()((set, get) => ({
         imbuements,
         levelSnapshots,
         goals,
+        expenses,
         loaded: true,
         loading: false,
         activeCharacterId:
@@ -317,6 +354,7 @@ export const useAppStore = create<State>()((set, get) => ({
       imbuements: s.imbuements.filter((i) => i.characterId !== id),
       levelSnapshots: s.levelSnapshots.filter((l) => l.characterId !== id),
       goals: s.goals.filter((g) => g.characterId !== id),
+      expenses: s.expenses.filter((e) => e.characterId !== id),
       activeCharacterId: s.activeCharacterId === id ? null : s.activeCharacterId,
     }));
   },
@@ -556,6 +594,38 @@ export const useAppStore = create<State>()((set, get) => ({
     const { error } = await db.from("goals").delete().eq("id", id);
     if (error) throw error;
     set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
+  },
+
+  addExpense: async (input) => {
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
+    if (!uid) throw new Error("Not signed in");
+    const { data, error } = await db
+      .from("expenses")
+      .insert({
+        user_id: uid,
+        character_id: input.characterId,
+        description: input.description,
+        amount: input.amount,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const created: Expense = {
+      id: data.id,
+      characterId: data.character_id,
+      description: data.description,
+      amount: Number(data.amount ?? 0),
+      createdAt: data.created_at,
+    };
+    set((s) => ({ expenses: [created, ...s.expenses] }));
+    return created;
+  },
+
+  removeExpense: async (id) => {
+    const { error } = await db.from("expenses").delete().eq("id", id);
+    if (error) throw error;
+    set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) }));
   },
 }));
 
