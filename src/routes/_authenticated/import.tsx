@@ -31,6 +31,7 @@ import {
   Trash2,
   MapPin,
   X,
+  Swords,
 } from "lucide-react";
 import { PasteImageBox, blobToCompressedImage } from "@/components/PasteImage";
 import {
@@ -42,6 +43,8 @@ import {
 } from "@/lib/bounty";
 import { PreyPicker } from "@/components/PreyPicker";
 import type { PreySlot } from "@/lib/prey";
+import { LevelQuickAdd } from "@/components/LevelQuickAdd";
+import { currentLevel } from "@/lib/level";
 
 
 
@@ -65,6 +68,7 @@ function ImportPage() {
   const activeId = useAppStore((s) => s.activeCharacterId);
   const hunts = useAppStore((s) => s.hunts);
   const sessions = useAppStore((s) => s.sessions);
+  const levelSnapshots = useAppStore((s) => s.levelSnapshots);
   const addSession = useAppStore((s) => s.addSession);
   const addHunt = useAppStore((s) => s.addHunt);
 
@@ -91,6 +95,7 @@ function ImportPage() {
 
   const effectiveCharId = activeId || characters[0]?.id || "";
   const activeChar = characters.find((c) => c.id === effectiveCharId);
+  const activeCharLevel = currentLevel(levelSnapshots, effectiveCharId);
   const charHunts = useMemo(
     () => hunts.filter((h) => h.characterId === effectiveCharId),
     [hunts, effectiveCharId],
@@ -503,6 +508,31 @@ function ImportPage() {
                 </span>
               )}
             </div>
+
+            {activeChar && (
+              <div
+                className={
+                  "mb-4 rounded-xl border p-3 " +
+                  (activeCharLevel == null
+                    ? "border-rubi-gold/40 bg-rubi-gold/[0.05]"
+                    : "border-border/60 bg-background/30")
+                }
+              >
+                <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <Swords className="h-3.5 w-3.5 text-rubi-blue" />
+                  Level de {activeChar.name} (opcional)
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {activeCharLevel == null
+                    ? "Ainda não registramos o level desse personagem — preencha aqui, sem precisar ir em Meu rendimento."
+                    : `Registrado: Level ${activeCharLevel}. Atualize aqui rapidinho depois dessa sessão.`}
+                </p>
+                <div className="mt-2">
+                  <LevelQuickAdd characterId={effectiveCharId} currentLevel={activeCharLevel} />
+                </div>
+              </div>
+            )}
+
             <div>
               <span className="flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-wider text-rubi-gold">
                 <MapPin className="h-3.5 w-3.5" />

@@ -2,11 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { ChevronDown, Plus, UserCircle2 } from "lucide-react";
 import { useState } from "react";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { currentLevel } from "@/lib/level";
+import { LevelBadge } from "./LevelBadge";
 
 export function CharacterSwitcher() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
   const activeId = useAppStore((s) => s.activeCharacterId);
+  const levelSnapshots = useAppStore((s) => s.levelSnapshots);
   const setActive = useAppStore((s) => s.setActive);
   const [open, setOpen] = useState(false);
 
@@ -37,6 +40,7 @@ export function CharacterSwitcher() {
       >
         <UserCircle2 className="h-4 w-4 shrink-0 text-rubi-blue" />
         <span className="max-w-[92px] truncate sm:max-w-[140px]">{active?.name ?? "Selecionar"}</span>
+        {active && <LevelBadge level={currentLevel(levelSnapshots, active.id)} className="hidden sm:inline-flex" />}
         <ChevronDown className="h-3.5 w-3.5 opacity-60" />
       </button>
 
@@ -59,7 +63,10 @@ export function CharacterSwitcher() {
                 >
                   <UserCircle2 className="mt-0.5 h-5 w-5 text-rubi-blue" />
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{c.name}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-medium">{c.name}</span>
+                      <LevelBadge level={currentLevel(levelSnapshots, c.id)} />
+                    </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {c.vocation} · {c.world}
                     </div>

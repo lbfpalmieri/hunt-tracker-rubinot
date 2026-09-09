@@ -12,10 +12,12 @@ import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
 import { aggregateSessions } from "@/lib/performance";
 import { filterByLatestPatch, latestPatch } from "@/lib/patches";
 import {
-  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet,
+  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, X,
 } from "lucide-react";
+import { currentLevel } from "@/lib/level";
+import { LevelQuickAdd } from "@/components/LevelQuickAdd";
 
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 // Recharts é pesado: carrega depois do primeiro paint do dashboard.
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
@@ -40,10 +42,34 @@ function Dashboard() {
   const sessions = useAppStore((s) => s.sessions);
   const imbuements = useAppStore((s) => s.imbuements);
   const expenses = useAppStore((s) => s.expenses);
+  const levelSnapshots = useAppStore((s) => s.levelSnapshots);
   const activeId = useAppStore((s) => s.activeCharacterId);
 
 
   const active = characters.find((c) => c.id === activeId) ?? null;
+  const activeCharLevel = active ? currentLevel(levelSnapshots, active.id) : null;
+
+  // Aviso de level ausente — dispensa por personagem, guardado localmente. Pega
+  // principalmente quem usa o app desde antes dessa opção existir e talvez nem
+  // tenha visto que dava pra registrar.
+  const [levelNudgeDismissed, setLevelNudgeDismissed] = useState(true);
+  useEffect(() => {
+    if (!active) return;
+    try {
+      setLevelNudgeDismissed(localStorage.getItem(`level-nudge-dismissed:${active.id}`) === "1");
+    } catch {
+      setLevelNudgeDismissed(false);
+    }
+  }, [active]);
+  const dismissLevelNudge = () => {
+    setLevelNudgeDismissed(true);
+    if (!active) return;
+    try {
+      localStorage.setItem(`level-nudge-dismissed:${active.id}`, "1");
+    } catch {
+      // sem localStorage, o aviso só fica dispensado nesta sessão
+    }
+  };
   const mySessions = useMemo(
     () => (active ? sessions.filter((s) => s.characterId === active.id) : []),
     [sessions, active],
@@ -122,6 +148,32 @@ function Dashboard() {
         </div>
 
       </div>
+
+      {hydrated && active && mySessions.length > 0 && activeCharLevel == null && !levelNudgeDismissed && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-rubi-gold/40 bg-rubi-gold/[0.06] p-4">
+          <Swords className="mt-0.5 h-5 w-5 flex-none text-rubi-gold" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-rubi-gold">
+              Ainda não registramos o level de {active.name}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              É opcional, mas ajuda a acompanhar sua evolução em Meu rendimento — se você usa o app desde antes
+              dessa opção existir, talvez nem tenha visto ainda. Registre aqui ou na próxima sessão que importar.
+            </p>
+            <div className="mt-2.5">
+              <LevelQuickAdd characterId={active.id} currentLevel={null} onSaved={dismissLevelNudge} />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={dismissLevelNudge}
+            aria-label="Dispensar aviso"
+            className="flex-none rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {!hydrated ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

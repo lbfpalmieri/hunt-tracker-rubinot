@@ -15,6 +15,8 @@ import {
 import { useEffect, useState } from "react";
 import { blobToCompressedImage } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
+import { currentLevel } from "@/lib/level";
+import { LevelBadge } from "@/components/LevelBadge";
 
 
 export const Route = createFileRoute("/_authenticated/characters")({
@@ -42,6 +44,7 @@ function CharactersPage() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
   const sessions = useAppStore((s) => s.sessions);
+  const levelSnapshots = useAppStore((s) => s.levelSnapshots);
   const activeId = useAppStore((s) => s.activeCharacterId);
   const addCharacter = useAppStore((s) => s.addCharacter);
   const updateCharacter = useAppStore((s) => s.updateCharacter);
@@ -254,9 +257,9 @@ function CharactersPage() {
                 return (
                   <li
                     key={c.id}
-                    className="card-surface flex items-center justify-between gap-3 p-4"
+                    className="card-surface flex flex-wrap items-center justify-between gap-3 p-4"
                   >
-                    <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:flex-1">
                       <div className="flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-full bg-rubi-blue-soft text-rubi-blue">
                         {c.outfitUrl ? (
                           <img
@@ -271,6 +274,7 @@ function CharactersPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="truncate font-display font-semibold">{c.name}</span>
+                          <LevelBadge level={currentLevel(levelSnapshots, c.id)} />
                           {isActive && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-rubi-gold/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
                               <Star className="h-3 w-3" /> ativo
@@ -283,7 +287,7 @@ function CharactersPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                       <button
                         type="button"
                         onClick={() => setPasteTarget(c.id)}
