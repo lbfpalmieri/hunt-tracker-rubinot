@@ -161,7 +161,9 @@ function Dashboard() {
               dessa opção existir, talvez nem tenha visto ainda. Registre aqui ou na próxima sessão que importar.
             </p>
             <div className="mt-2.5">
-              <LevelQuickAdd characterId={active.id} currentLevel={null} onSaved={dismissLevelNudge} />
+              {/* key força remontar ao trocar de personagem — evita salvar um level digitado
+                  pra um personagem no registro de outro depois de uma troca. */}
+              <LevelQuickAdd key={active.id} characterId={active.id} currentLevel={null} onSaved={dismissLevelNudge} />
             </div>
           </div>
           <button

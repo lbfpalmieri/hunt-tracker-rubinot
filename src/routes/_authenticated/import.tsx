@@ -528,7 +528,9 @@ function ImportPage() {
                     : `Registrado: Level ${activeCharLevel}. Atualize aqui rapidinho depois dessa sessão.`}
                 </p>
                 <div className="mt-2">
-                  <LevelQuickAdd characterId={effectiveCharId} currentLevel={activeCharLevel} />
+                  {/* key força remontar ao trocar de personagem — sem isso o input ficava com o
+                      valor (e o level) do personagem anterior mesmo depois da troca. */}
+                  <LevelQuickAdd key={effectiveCharId} characterId={effectiveCharId} currentLevel={activeCharLevel} />
                 </div>
               </div>
             )}
