@@ -14,6 +14,7 @@ import {
   Trophy,
   Gauge,
   BookmarkCheck,
+  Users,
 
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -37,6 +38,7 @@ const nav = [
 
 const moreNav = [
   { to: "/rendimento", label: "Meu rendimento", icon: Gauge },
+  { to: "/overview", label: "Todos os personagens", icon: Users },
   { to: "/imbuements", label: "Imbuements", icon: Sparkles },
   { to: "/tools/monster-calculator", label: "Calculadora de monstros/h", icon: Calculator },
   { to: "/tools/compare", label: "Comparar hunts", icon: GitCompareArrows },

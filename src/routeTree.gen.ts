@@ -9,62 +9,43 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
-import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
-import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
-import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
+import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
+import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
+import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
-import { Route as AuthenticatedToolsRankingRouteImport } from './routes/_authenticated/tools.ranking'
-import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
-import { Route as AuthenticatedToolsComparisonsRouteImport } from './routes/_authenticated/tools.comparisons'
-import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authenticated/tools.compare'
-import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_authenticated/sessions.compare'
-import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
+import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
+import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_authenticated/sessions.compare'
+import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authenticated/tools.compare'
+import { Route as AuthenticatedToolsComparisonsRouteImport } from './routes/_authenticated/tools.comparisons'
+import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
+import { Route as AuthenticatedToolsRankingRouteImport } from './routes/_authenticated/tools.ranking'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRendimentoRoute = AuthenticatedRendimentoRouteImport.update({
-  id: '/rendimento',
-  path: '/rendimento',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedImbuementsRoute = AuthenticatedImbuementsRouteImport.update({
-  id: '/imbuements',
-  path: '/imbuements',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
@@ -72,9 +53,34 @@ const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
   path: '/characters',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImbuementsRoute = AuthenticatedImbuementsRouteImport.update({
+  id: '/imbuements',
+  path: '/imbuements',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRendimentoRoute = AuthenticatedRendimentoRouteImport.update({
+  id: '/rendimento',
+  path: '/rendimento',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCommunityIndexRoute =
@@ -83,16 +89,27 @@ const AuthenticatedCommunityIndexRoute =
     path: '/community/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedToolsRankingRoute =
-  AuthenticatedToolsRankingRouteImport.update({
-    id: '/tools/ranking',
-    path: '/tools/ranking',
+const AuthenticatedCommunityIdRoute =
+  AuthenticatedCommunityIdRouteImport.update({
+    id: '/community/$id',
+    path: '/community/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedToolsMonsterCalculatorRoute =
-  AuthenticatedToolsMonsterCalculatorRouteImport.update({
-    id: '/tools/monster-calculator',
-    path: '/tools/monster-calculator',
+const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedSessionsRoute,
+} as any)
+const AuthenticatedSessionsCompareRoute =
+  AuthenticatedSessionsCompareRouteImport.update({
+    id: '/compare',
+    path: '/compare',
+    getParentRoute: () => AuthenticatedSessionsRoute,
+  } as any)
+const AuthenticatedToolsCompareRoute =
+  AuthenticatedToolsCompareRouteImport.update({
+    id: '/tools/compare',
+    path: '/tools/compare',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedToolsComparisonsRoute =
@@ -101,27 +118,16 @@ const AuthenticatedToolsComparisonsRoute =
     path: '/tools/comparisons',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedToolsCompareRoute =
-  AuthenticatedToolsCompareRouteImport.update({
-    id: '/tools/compare',
-    path: '/tools/compare',
+const AuthenticatedToolsMonsterCalculatorRoute =
+  AuthenticatedToolsMonsterCalculatorRouteImport.update({
+    id: '/tools/monster-calculator',
+    path: '/tools/monster-calculator',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSessionsCompareRoute =
-  AuthenticatedSessionsCompareRouteImport.update({
-    id: '/compare',
-    path: '/compare',
-    getParentRoute: () => AuthenticatedSessionsRoute,
-  } as any)
-const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedSessionsRoute,
-} as any)
-const AuthenticatedCommunityIdRoute =
-  AuthenticatedCommunityIdRouteImport.update({
-    id: '/community/$id',
-    path: '/community/$id',
+const AuthenticatedToolsRankingRoute =
+  AuthenticatedToolsRankingRouteImport.update({
+    id: '/tools/ranking',
+    path: '/tools/ranking',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
+  '/overview': typeof AuthenticatedOverviewRoute
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
+  '/overview': typeof AuthenticatedOverviewRoute
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/community/$id': typeof AuthenticatedCommunityIdRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
+  '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/rendimento': typeof AuthenticatedRendimentoRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/imbuements'
     | '/import'
+    | '/overview'
     | '/rendimento'
     | '/sessions'
     | '/community/$id'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/imbuements'
     | '/import'
+    | '/overview'
     | '/rendimento'
     | '/sessions'
     | '/community/$id'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/imbuements'
     | '/_authenticated/import'
+    | '/_authenticated/overview'
     | '/_authenticated/rendimento'
     | '/_authenticated/sessions'
     | '/_authenticated/community/$id'
@@ -253,11 +265,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -267,46 +279,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/sessions': {
-      id: '/_authenticated/sessions'
-      path: '/sessions'
-      fullPath: '/sessions'
-      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rendimento': {
-      id: '/_authenticated/rendimento'
-      path: '/rendimento'
-      fullPath: '/rendimento'
-      preLoaderRoute: typeof AuthenticatedRendimentoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/import': {
-      id: '/_authenticated/import'
-      path: '/import'
-      fullPath: '/import'
-      preLoaderRoute: typeof AuthenticatedImportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/imbuements': {
-      id: '/_authenticated/imbuements'
-      path: '/imbuements'
-      fullPath: '/imbuements'
-      preLoaderRoute: typeof AuthenticatedImbuementsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/about': {
+      id: '/_authenticated/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AuthenticatedAboutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/characters': {
@@ -316,11 +300,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCharactersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/about': {
-      id: '/_authenticated/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AuthenticatedAboutRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/imbuements': {
+      id: '/_authenticated/imbuements'
+      path: '/imbuements'
+      fullPath: '/imbuements'
+      preLoaderRoute: typeof AuthenticatedImbuementsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/import': {
+      id: '/_authenticated/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof AuthenticatedImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/overview': {
+      id: '/_authenticated/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof AuthenticatedOverviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rendimento': {
+      id: '/_authenticated/rendimento'
+      path: '/rendimento'
+      fullPath: '/rendimento'
+      preLoaderRoute: typeof AuthenticatedRendimentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sessions': {
+      id: '/_authenticated/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/community/': {
@@ -330,18 +349,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/ranking': {
-      id: '/_authenticated/tools/ranking'
-      path: '/tools/ranking'
-      fullPath: '/tools/ranking'
-      preLoaderRoute: typeof AuthenticatedToolsRankingRouteImport
+    '/_authenticated/community/$id': {
+      id: '/_authenticated/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof AuthenticatedCommunityIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/monster-calculator': {
-      id: '/_authenticated/tools/monster-calculator'
-      path: '/tools/monster-calculator'
-      fullPath: '/tools/monster-calculator'
-      preLoaderRoute: typeof AuthenticatedToolsMonsterCalculatorRouteImport
+    '/_authenticated/sessions/$id': {
+      id: '/_authenticated/sessions/$id'
+      path: '/$id'
+      fullPath: '/sessions/$id'
+      preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
+      parentRoute: typeof AuthenticatedSessionsRoute
+    }
+    '/_authenticated/sessions/compare': {
+      id: '/_authenticated/sessions/compare'
+      path: '/compare'
+      fullPath: '/sessions/compare'
+      preLoaderRoute: typeof AuthenticatedSessionsCompareRouteImport
+      parentRoute: typeof AuthenticatedSessionsRoute
+    }
+    '/_authenticated/tools/compare': {
+      id: '/_authenticated/tools/compare'
+      path: '/tools/compare'
+      fullPath: '/tools/compare'
+      preLoaderRoute: typeof AuthenticatedToolsCompareRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tools/comparisons': {
@@ -351,32 +384,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToolsComparisonsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/compare': {
-      id: '/_authenticated/tools/compare'
-      path: '/tools/compare'
-      fullPath: '/tools/compare'
-      preLoaderRoute: typeof AuthenticatedToolsCompareRouteImport
+    '/_authenticated/tools/monster-calculator': {
+      id: '/_authenticated/tools/monster-calculator'
+      path: '/tools/monster-calculator'
+      fullPath: '/tools/monster-calculator'
+      preLoaderRoute: typeof AuthenticatedToolsMonsterCalculatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/sessions/compare': {
-      id: '/_authenticated/sessions/compare'
-      path: '/compare'
-      fullPath: '/sessions/compare'
-      preLoaderRoute: typeof AuthenticatedSessionsCompareRouteImport
-      parentRoute: typeof AuthenticatedSessionsRoute
-    }
-    '/_authenticated/sessions/$id': {
-      id: '/_authenticated/sessions/$id'
-      path: '/$id'
-      fullPath: '/sessions/$id'
-      preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
-      parentRoute: typeof AuthenticatedSessionsRoute
-    }
-    '/_authenticated/community/$id': {
-      id: '/_authenticated/community/$id'
-      path: '/community/$id'
-      fullPath: '/community/$id'
-      preLoaderRoute: typeof AuthenticatedCommunityIdRouteImport
+    '/_authenticated/tools/ranking': {
+      id: '/_authenticated/tools/ranking'
+      path: '/tools/ranking'
+      fullPath: '/tools/ranking'
+      preLoaderRoute: typeof AuthenticatedToolsRankingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -403,6 +422,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
+  AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedRendimentoRoute: typeof AuthenticatedRendimentoRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
@@ -419,6 +439,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
+  AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedRendimentoRoute: AuthenticatedRendimentoRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
