@@ -156,7 +156,7 @@ function OverviewPage() {
             {totals.netBalance !== totals.balance && (
               <div>
                 <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Líquido
+                  Balance atual
                 </div>
                 <div
                   className={
@@ -207,7 +207,7 @@ function OverviewPage() {
                   Balance total
                 </th>
                 <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  Líquido
+                  Balance atual
                 </th>
                 <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
                   Lucro/h médio
@@ -308,7 +308,7 @@ function OverviewPage() {
         <p>
           <strong className="text-foreground">Balance total</strong> é a soma bruta de todas as sessões (
           <code>loot − supplies</code>), igual ao "Balance acumulado" do Dashboard de cada personagem.{" "}
-          <strong className="text-foreground">Líquido</strong> já desconta imbuements consumidos e gastos
+          <strong className="text-foreground">Balance atual</strong> já desconta imbuements consumidos e gastos
           registrados em Meu rendimento. Personagens sem sessão ainda aparecem no comparativo, mas ficam de fora
           do destaque verde.
         </p>

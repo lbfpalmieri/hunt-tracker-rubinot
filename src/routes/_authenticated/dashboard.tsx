@@ -96,7 +96,10 @@ function Dashboard() {
     [expenses, active],
   );
   const totalSpentOnPurchases = useMemo(() => myExpenses.reduce((a, e) => a + e.amount, 0), [myExpenses]);
-  const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0) - totalSpentOnPurchases;
+  const deducted = (imbAgg?.totalSpent ?? 0) + totalSpentOnPurchases;
+  const netBalance = agg.balance - deducted;
+  // "Balance atual" só faz sentido quando há algo descontando do acumulado.
+  const hasDeductions = deducted > 0;
 
 
 
@@ -212,7 +215,7 @@ function Dashboard() {
                   Balance acumulado
                   <InfoHint title="Balance acumulado" description="Soma bruta do saldo de todas as sessões deste personagem.">
                     <p><strong>Fórmula:</strong> <code>Σ (loot − supplies)</code> de cada sessão importada, exatamente como o Balance do Hunting Analyser do jogo.</p>
-                    <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements nem gastos registrados — isso aparece separado como <em>Líquido</em>.</p>
+                    <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements nem gastos registrados — o valor já com esses descontos aparece logo abaixo como <em>Balance atual</em>.</p>
                     <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>, entre as que já somam pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões — evita que uma sessão curta isolada pareça o melhor spot.</p>
                     {latestPatch() && <p>Por padrão o Top spot ignora sessões de antes do último balanceamento do servidor ({latestPatch()!.label}) — misturar rendimento de antes e depois de um nerf/buff distorceria qual spot é realmente o melhor hoje.</p>}
                   </InfoHint>
@@ -220,6 +223,24 @@ function Dashboard() {
                 <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (agg.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
                   {fmtGold(agg.balance)}
                 </div>
+                {hasDeductions && (
+                  <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Balance atual
+                    </span>
+                    <span
+                      className={
+                        "font-display text-2xl font-semibold " +
+                        (netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")
+                      }
+                    >
+                      {fmtGold(netBalance)}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      após {fmtGold(deducted)} de imbuements{totalSpentOnPurchases > 0 ? " e gastos" : ""}
+                    </span>
+                  </div>
+                )}
                 <div className="mt-1 text-sm text-muted-foreground">
                   {agg.bestHunt ? (
                     <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></>
@@ -236,14 +257,20 @@ function Dashboard() {
                   <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(agg.totalTime)}</div>
                   <div className="text-[11px] text-muted-foreground">{mySessions.length} sessões</div>
                 </div>
-                {((imbAgg && imbAgg.rows.some((r) => r.active)) || totalSpentOnPurchases > 0) && (
+                {hasDeductions && (
                   <div>
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Líquido</div>
-                    <div className={"mt-1 font-display text-lg font-semibold " + (netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
-                      {fmtGold(netBalance)}
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Descontado
+                    </div>
+                    <div className="mt-1 font-display text-lg font-semibold text-rubi-danger">
+                      −{fmtGold(deducted)}
                     </div>
                     <div className="text-[11px] text-muted-foreground">
-                      após imbuements{totalSpentOnPurchases > 0 ? " e gastos" : ""}
+                      {(imbAgg?.totalSpent ?? 0) > 0 && totalSpentOnPurchases > 0
+                        ? "imbuements + gastos"
+                        : totalSpentOnPurchases > 0
+                          ? "gastos registrados"
+                          : "imbuements consumidos"}
                     </div>
                   </div>
                 )}
