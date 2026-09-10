@@ -96,10 +96,7 @@ function Dashboard() {
     [expenses, active],
   );
   const totalSpentOnPurchases = useMemo(() => myExpenses.reduce((a, e) => a + e.amount, 0), [myExpenses]);
-  const deducted = (imbAgg?.totalSpent ?? 0) + totalSpentOnPurchases;
-  const netBalance = agg.balance - deducted;
-  // "Balance atual" só faz sentido quando há algo descontando do acumulado.
-  const hasDeductions = deducted > 0;
+  const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0) - totalSpentOnPurchases;
 
 
 
@@ -212,35 +209,17 @@ function Dashboard() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                   <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
-                  Balance acumulado
-                  <InfoHint title="Balance acumulado" description="Soma bruta do saldo de todas as sessões deste personagem.">
-                    <p><strong>Fórmula:</strong> <code>Σ (loot − supplies)</code> de cada sessão importada, exatamente como o Balance do Hunting Analyser do jogo.</p>
-                    <p>Considera apenas as sessões do <strong>personagem ativo</strong>. Não desconta imbuements nem gastos registrados — o valor já com esses descontos aparece logo abaixo como <em>Balance atual</em>.</p>
-                    <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>, entre as que já somam pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões — evita que uma sessão curta isolada pareça o melhor spot.</p>
-                    {latestPatch() && <p>Por padrão o Top spot ignora sessões de antes do último balanceamento do servidor ({latestPatch()!.label}) — misturar rendimento de antes e depois de um nerf/buff distorceria qual spot é realmente o melhor hoje.</p>}
+                  Saldo atual
+                  <InfoHint title="Saldo atual" description="Quanto de gold o personagem ativo tem, hoje.">
+                    <p>Soma do balance de todas as sessões, já <strong>descontando</strong> imbuements consumidos e gastos registrados.</p>
+                    <p>O balance bruto (sem descontos), o detalhe do que foi gasto e a evolução no tempo ficam em <strong>Meu rendimento</strong>.</p>
+                    <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>, entre as que já somam pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões.</p>
+                    {latestPatch() && <p>O Top spot ignora sessões de antes do último balanceamento do servidor ({latestPatch()!.label}).</p>}
                   </InfoHint>
                 </div>
-                <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (agg.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
-                  {fmtGold(agg.balance)}
+                <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (netBalance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
+                  {fmtGold(netBalance)}
                 </div>
-                {hasDeductions && (
-                  <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Balance atual
-                    </span>
-                    <span
-                      className={
-                        "font-display text-2xl font-semibold " +
-                        (netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")
-                      }
-                    >
-                      {fmtGold(netBalance)}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      após {fmtGold(deducted)} de imbuements{totalSpentOnPurchases > 0 ? " e gastos" : ""}
-                    </span>
-                  </div>
-                )}
                 <div className="mt-1 text-sm text-muted-foreground">
                   {agg.bestHunt ? (
                     <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></>
@@ -251,29 +230,10 @@ function Dashboard() {
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 sm:min-w-[280px]">
-                <div>
-                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tempo</div>
-                  <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(agg.totalTime)}</div>
-                  <div className="text-[11px] text-muted-foreground">{mySessions.length} sessões</div>
-                </div>
-                {hasDeductions && (
-                  <div>
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Descontado
-                    </div>
-                    <div className="mt-1 font-display text-lg font-semibold text-rubi-danger">
-                      −{fmtGold(deducted)}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {(imbAgg?.totalSpent ?? 0) > 0 && totalSpentOnPurchases > 0
-                        ? "imbuements + gastos"
-                        : totalSpentOnPurchases > 0
-                          ? "gastos registrados"
-                          : "imbuements consumidos"}
-                    </div>
-                  </div>
-                )}
+              <div className="flex-none">
+                <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tempo jogado</div>
+                <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(agg.totalTime)}</div>
+                <div className="text-[11px] text-muted-foreground">{mySessions.length} sessões</div>
               </div>
             </div>
           </div>
@@ -316,21 +276,14 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-gold">
               <Coins className="h-3.5 w-3.5" /> Ouro
-              <InfoHint title="Ouro" description="Lucro bruto e balance acumulado.">
-                <p><strong>Balance bruto:</strong> <code>Σ (loot − supplies)</code> de cada sessão. Não desconta imbuements.</p>
-                <p><strong>Lucro / hora (média):</strong> <code>Balance bruto ÷ horas totais</code>. Média ponderada pelo tempo — igual a rodar todas as suas hunts como uma só e dividir pelo tempo real.</p>
+              <InfoHint title="Ouro" description="Ritmo de lucro das hunts.">
+                <p><strong>Lucro / hora (média):</strong> <code>Σ (loot − supplies) ÷ horas totais</code>. Média ponderada pelo tempo — igual a rodar todas as suas hunts como uma só e dividir pelo tempo real. Não desconta imbuements nem gastos.</p>
                 <p>Pode ficar negativo se você gastou mais em supplies do que fez em loot.</p>
+                <p>O balance acumulado sem descontos e a evolução no tempo ficam em <strong>Meu rendimento</strong>.</p>
               </InfoHint>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatCard label="Lucro / hora (média)" value={fmtGold(agg.gph)} hint="gold bruto por hora" icon={Coins} accent="gold" />
-              <StatCard
-                label="Balance bruto"
-                value={fmtGold(agg.balance)}
-                hint="antes dos imbuements"
-                icon={Wallet}
-                accent={agg.balance >= 0 ? "success" : "danger"}
-              />
+            <div className="grid grid-cols-1 gap-4">
+              <StatCard label="Lucro / hora (média)" value={fmtGold(agg.gph)} hint="gold bruto por hora, sem descontar imbuements/gastos" icon={Coins} accent="gold" />
             </div>
           </div>
 
@@ -342,7 +295,7 @@ function Dashboard() {
                   <p>Todo imbuement dura <strong>{IMB_DURATION_HOURS}h</strong> de caça no jogo. O custo total é <code>preço do tier + Gold Token</code>.</p>
                   <p><strong>Custo / hora (ativo):</strong> <code>Σ (custo total ÷ {IMB_DURATION_HOURS}h)</code> de cada imbuement ainda ativo. É quanto você "queima" de gold por hora enquanto está com os imbuements ligados.</p>
                   <p><strong>Consumido:</strong> para cada imbuement, somamos as horas caçadas <em>depois</em> do registro (até o limite das horas restantes informadas) e multiplicamos por <code>custo/hora</code>. Sessões anteriores ao registro não amortizam nada — por isso pode aparecer 0.</p>
-                  <p><strong>Lucro líquido:</strong> <code>Balance bruto − Consumido</code>.</p>
+                  <p><strong>Saldo atual:</strong> <code>balance das sessões − imbuements consumidos − gastos registrados</code>.</p>
                   <p><strong>Projeção líquida / h:</strong> <code>Lucro/h médio − Custo/h ativo</code>. Se ficar positivo, o imbuement se paga; negativo, custa mais do que rende.</p>
                 </InfoHint>
               </div>
@@ -362,9 +315,9 @@ function Dashboard() {
                   accent="muted"
                 />
                 <StatCard
-                  label="Lucro líquido"
+                  label="Saldo atual"
                   value={fmtGold(netBalance)}
-                  hint="balance − imbuements consumidos"
+                  hint="balance − imbuements consumidos e gastos"
                   icon={Wallet}
                   accent={netBalance >= 0 ? "success" : "danger"}
                 />
