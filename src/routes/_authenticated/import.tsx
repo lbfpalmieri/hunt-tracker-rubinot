@@ -89,6 +89,7 @@ function ImportPage() {
   const [hasPrey, setHasPrey] = useState(false);
   const [prey, setPrey] = useState<PreySlot[] | null>(null);
   const [preyValid, setPreyValid] = useState(true);
+  const [notes, setNotes] = useState("");
   const bountyReady = !hasBounty || Boolean(bountyDifficulty && bountyTier && !bountyXpInvalid);
   const preyReady = !hasPrey || preyValid;
 
@@ -322,6 +323,7 @@ function ImportPage() {
             ? { difficulty: bountyDifficulty, tier: bountyTier, xp: bountyXp }
             : null,
         prey: hasPrey ? prey : null,
+        notes: notes.trim() || null,
       });
 
       navigate({ to: "/sessions/$id", params: { id: created.id } });
@@ -827,6 +829,17 @@ function ImportPage() {
                   />
                 </div>
               )}
+            </div>
+
+            <div className="mt-4">
+              <label className="text-xs font-medium text-muted-foreground">Observação (opcional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ex: testei essa build de runas, rendeu bem no prey de dano"
+                rows={2}
+                className="mt-1 w-full resize-none rounded-lg border border-border bg-input px-3 py-2 text-sm placeholder:text-muted-foreground/60"
+              />
             </div>
 
             <button

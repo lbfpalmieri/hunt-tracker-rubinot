@@ -32,6 +32,8 @@ export interface HuntSession {
   isPublic: boolean;
   bounty: BountyInfo | null;
   prey: PreySlot[] | null;
+  /** Observação livre do usuário sobre a sessão — sempre privada, nunca exposta na Comunidade. */
+  notes: string | null;
 }
 
 
@@ -105,8 +107,8 @@ interface State {
   removeCharacter: (id: string) => Promise<void>;
   addHunt: (characterId: string, name: string) => Promise<Hunt>;
   removeHunt: (id: string) => Promise<void>;
-  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty" | "prey"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null }) => Promise<HuntSession>;
-  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null }) => Promise<void>;
+  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty" | "prey" | "notes"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null }) => Promise<HuntSession>;
+  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null }) => Promise<void>;
   removeSession: (id: string) => Promise<void>;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
@@ -237,6 +239,7 @@ export const useAppStore = create<State>()((set, get) => ({
         isPublic: s.is_public ?? true,
         bounty: rowBounty(s),
         prey: normalizePrey(s.prey),
+        notes: s.notes ?? null,
       }));
 
       const hunts: Hunt[] = (huntRes.data ?? []).map((h: any) => ({
@@ -436,6 +439,7 @@ export const useAppStore = create<State>()((set, get) => ({
         bounty_tier: input.bounty?.tier ?? null,
         bounty_xp: input.bounty?.xp ?? null,
         prey: input.prey ?? null,
+        notes: input.notes?.trim() || null,
       })
       .select()
       .single();
@@ -452,6 +456,7 @@ export const useAppStore = create<State>()((set, get) => ({
       isPublic: data.is_public ?? true,
       bounty: rowBounty(data),
       prey: normalizePrey(data.prey),
+      notes: data.notes ?? null,
     };
     set((s) => ({ sessions: [created, ...s.sessions] }));
     return created;
@@ -467,6 +472,7 @@ export const useAppStore = create<State>()((set, get) => ({
       dbPatch.bounty_xp = patch.bounty?.xp ?? null;
     }
     if (patch.prey !== undefined) dbPatch.prey = patch.prey ?? null;
+    if (patch.notes !== undefined) dbPatch.notes = patch.notes?.trim() || null;
     if (Object.keys(dbPatch).length === 0) return;
     const { error } = await db.from("hunt_sessions").update(dbPatch).eq("id", id);
     if (error) throw error;

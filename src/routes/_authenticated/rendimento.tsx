@@ -244,19 +244,42 @@ function RendimentoPage() {
 
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [expenseDesc, setExpenseDesc] = useState("");
+  // Duas formas de preencher o mesmo campo — nunca as duas ao mesmo tempo, senão
+  // fica ambíguo qual valer. "amount" = já sei quanto gastei; "balance" = não sei,
+  // mas sei o balance atual do personagem no jogo, e o sistema calcula a diferença.
+  const [expenseMode, setExpenseMode] = useState<"amount" | "balance">("amount");
   const [expenseAmount, setExpenseAmount] = useState("");
+  const [expenseGameBalance, setExpenseGameBalance] = useState("");
   const [savingExpense, setSavingExpense] = useState(false);
   const [expenseError, setExpenseError] = useState<string | null>(null);
 
   const openExpenseDialog = () => {
     setExpenseDesc("");
+    setExpenseMode("amount");
     setExpenseAmount("");
+    setExpenseGameBalance("");
     setExpenseError(null);
     setExpenseDialogOpen(true);
   };
 
+  const switchExpenseMode = (mode: "amount" | "balance") => {
+    setExpenseMode(mode);
+    setExpenseAmount("");
+    setExpenseGameBalance("");
+    setExpenseError(null);
+  };
+
   const expenseValue = Number(expenseAmount.replace(/[.,\s]/g, ""));
-  const expenseReady = expenseDesc.trim().length > 0 && Number.isFinite(expenseValue) && expenseValue > 0;
+  const gameBalanceValue = Number(expenseGameBalance.replace(/[.,\s]/g, ""));
+  // Quanto o sistema calcula de balance hoje pra esse personagem MENOS o que o jogo
+  // realmente mostra = o gasto "escondido" que ainda não tinha sido registrado.
+  const impliedFromBalance = netBalance - gameBalanceValue;
+  const finalAmount = expenseMode === "amount" ? expenseValue : impliedFromBalance;
+  const expenseReady =
+    expenseDesc.trim().length > 0 &&
+    (expenseMode === "amount"
+      ? Number.isFinite(expenseValue) && expenseValue > 0
+      : expenseGameBalance.trim().length > 0 && Number.isFinite(gameBalanceValue) && impliedFromBalance > 0);
 
   const handleAddExpense = async () => {
     if (!active || !expenseReady) return;
@@ -266,7 +289,7 @@ function RendimentoPage() {
       await addExpense({
         characterId: active.id,
         description: expenseDesc.trim(),
-        amount: Math.round(expenseValue),
+        amount: Math.round(finalAmount),
       });
       setExpenseDialogOpen(false);
     } catch (e) {
@@ -800,19 +823,87 @@ function RendimentoPage() {
                   className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
                 />
               </label>
-              <label className="block">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor (gold)</span>
-                <input
-                  inputMode="numeric"
-                  value={expenseAmount}
-                  onChange={(e) => setExpenseAmount(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddExpense();
-                  }}
-                  placeholder="Ex: 15000000"
-                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                />
-              </label>
+              <div>
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Como você quer informar
+                </span>
+                <div className="mt-1.5 flex rounded-lg border border-border p-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => switchExpenseMode("amount")}
+                    className={
+                      "flex-1 rounded-md px-2 py-1.5 font-medium transition-colors " +
+                      (expenseMode === "amount"
+                        ? "bg-rubi-danger/15 text-rubi-danger"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    Sei quanto gastei
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchExpenseMode("balance")}
+                    className={
+                      "flex-1 rounded-md px-2 py-1.5 font-medium transition-colors " +
+                      (expenseMode === "balance"
+                        ? "bg-rubi-danger/15 text-rubi-danger"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    Só sei meu balance atual
+                  </button>
+                </div>
+              </div>
+
+              {expenseMode === "amount" ? (
+                <label className="block">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Valor gasto (gold)
+                  </span>
+                  <input
+                    inputMode="numeric"
+                    value={expenseAmount}
+                    onChange={(e) => setExpenseAmount(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddExpense();
+                    }}
+                    placeholder="Ex: 15000000"
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                  />
+                </label>
+              ) : (
+                <label className="block">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Balance atual no jogo (gold)
+                  </span>
+                  <input
+                    inputMode="numeric"
+                    value={expenseGameBalance}
+                    onChange={(e) => setExpenseGameBalance(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddExpense();
+                    }}
+                    placeholder="Ex: 160000000"
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                  />
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    Hoje o sistema calcula <strong className="text-foreground">{fmtGold(netBalance)}</strong> de
+                    balance pra {active?.name} — a diferença pro que você digitar vira o gasto registrado.
+                  </p>
+                  {expenseGameBalance.trim().length > 0 && Number.isFinite(gameBalanceValue) && (
+                    <p
+                      className={
+                        "mt-1.5 text-xs font-semibold " +
+                        (impliedFromBalance > 0 ? "text-rubi-danger" : "text-muted-foreground")
+                      }
+                    >
+                      {impliedFromBalance > 0
+                        ? `Isso representa um gasto de ${fmtGold(impliedFromBalance)}.`
+                        : "Esse balance é maior ou igual ao que o sistema já calcula — nada a registrar aqui."}
+                    </p>
+                  )}
+                </label>
+              )}
               {expenseError && (
                 <p className="rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
                   {expenseError}

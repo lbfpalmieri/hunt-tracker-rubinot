@@ -6,7 +6,7 @@ import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
-import { ScrollText, Search, Filter, ChevronRight, GitCompareArrows } from "lucide-react";
+import { ScrollText, Search, Filter, ChevronRight, GitCompareArrows, StickyNote } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
@@ -148,6 +148,11 @@ function SessionsList() {
                         <span className="truncate font-display text-base font-semibold">{s.huntName}</span>
                         {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
                         {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
+                        {s.notes && (
+                          <span title={s.notes} className="flex-none text-rubi-gold">
+                            <StickyNote className="h-3.5 w-3.5" />
+                          </span>
+                        )}
                       </div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
                         {charName(s.characterId)} · {fmtDate(s.createdAt)} · {fmtDuration(s.hunting.durationSec)}

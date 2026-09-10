@@ -9,11 +9,12 @@ import { BountyBadge } from "@/components/BountyBadge";
 import { BountyEditor } from "@/components/BountyEditor";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
+import { SessionNotesEditor } from "@/components/SessionNotesEditor";
 import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
 
 import { Sparkles } from "lucide-react";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -283,6 +284,21 @@ function SessionDetail() {
           creatures={h.kills.slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
           value={session.prey}
           onSave={(next) => updateSession(session.id, { prey: next })}
+        />
+      </div>
+
+      {/* Observação livre */}
+      <div className="card-surface mt-6 p-5">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold">
+          <StickyNote className="h-4 w-4 text-rubi-gold" /> Observação
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Uma anotação livre sobre essa sessão — sempre privada, nunca aparece na Comunidade.
+        </p>
+        <SessionNotesEditor
+          key={session.id}
+          value={session.notes}
+          onSave={(next) => updateSession(session.id, { notes: next })}
         />
       </div>
 
