@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
+import { errorMessage } from "@/lib/errors";
 import logo from "@/assets/dragon-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
@@ -44,9 +45,7 @@ function AuthPage() {
       redirect_uri: window.location.origin + "/auth",
     });
     if (result.error) {
-      setError(
-        result.error instanceof Error ? result.error.message : String(result.error),
-      );
+      setError(errorMessage(result.error));
       setLoading(false);
       return;
     }

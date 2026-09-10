@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ClipboardPaste, ImageIcon, X } from "lucide-react";
+import { errorMessage } from "@/lib/errors";
 
 export async function compressImage(dataUrl: string, maxDim = 640, quality = 0.8): Promise<string> {
   const img = new Image();
@@ -76,7 +77,7 @@ export function PasteImageBox({
           setFlash(true);
           setTimeout(() => setFlash(false), 1200);
         } catch (err) {
-          setError(err instanceof Error ? err.message : "Falha ao colar imagem");
+          setError(errorMessage(err));
         }
         return;
       }

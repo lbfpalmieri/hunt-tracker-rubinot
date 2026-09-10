@@ -44,6 +44,7 @@ import {
 import { PreyPicker } from "@/components/PreyPicker";
 import type { PreySlot } from "@/lib/prey";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
+import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
 
 
@@ -328,7 +329,7 @@ function ImportPage() {
 
       navigate({ to: "/sessions/$id", params: { id: created.id } });
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : String(e));
+      setSaveError(errorMessage(e));
       setSaving(false);
     }
   };

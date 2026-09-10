@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { errorMessage } from "@/lib/errors";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { InfoHint } from "@/components/InfoHint";
@@ -155,7 +156,7 @@ function RendimentoPage() {
       setLevelDialogOpen(false);
       setLevelInput("");
     } catch (e) {
-      setLevelError(e instanceof Error ? e.message : String(e));
+      setLevelError(errorMessage(e));
     } finally {
       setSavingLevel(false);
     }
@@ -167,7 +168,7 @@ function RendimentoPage() {
     try {
       await removeLevelSnapshot(id);
     } catch (e) {
-      toast.error("Falha ao remover", { description: e instanceof Error ? e.message : String(e) });
+      toast.error("Falha ao remover", { description: errorMessage(e) });
     }
   };
 
@@ -211,7 +212,7 @@ function RendimentoPage() {
       });
       setGoalDialogOpen(false);
     } catch (e) {
-      setGoalError(e instanceof Error ? e.message : String(e));
+      setGoalError(errorMessage(e));
     } finally {
       setSavingGoal(false);
     }
@@ -223,7 +224,7 @@ function RendimentoPage() {
     try {
       await removeGoal(id);
     } catch (e) {
-      toast.error("Falha ao remover", { description: e instanceof Error ? e.message : String(e) });
+      toast.error("Falha ao remover", { description: errorMessage(e) });
     }
   };
 
@@ -293,7 +294,7 @@ function RendimentoPage() {
       });
       setExpenseDialogOpen(false);
     } catch (e) {
-      setExpenseError(e instanceof Error ? e.message : String(e));
+      setExpenseError(errorMessage(e));
     } finally {
       setSavingExpense(false);
     }
@@ -305,7 +306,7 @@ function RendimentoPage() {
     try {
       await removeExpense(id);
     } catch (e) {
-      toast.error("Falha ao remover", { description: e instanceof Error ? e.message : String(e) });
+      toast.error("Falha ao remover", { description: errorMessage(e) });
     }
   };
 

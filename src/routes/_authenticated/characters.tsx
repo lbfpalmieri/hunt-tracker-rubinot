@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { blobToCompressedImage } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
+import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
 import { LevelBadge } from "@/components/LevelBadge";
 
@@ -77,7 +78,7 @@ function CharactersPage() {
       setWorld("");
       setOutfitUrl(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -109,7 +110,7 @@ function CharactersPage() {
             setPasteFlash(pasteTarget);
             setTimeout(() => setPasteFlash(null), 1200);
           } catch (err) {
-            setError(err instanceof Error ? err.message : "Falha ao colar imagem");
+            setError(errorMessage(err));
           }
           return;
         }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Swords } from "lucide-react";
 import { useAppStore } from "@/lib/store";
+import { errorMessage } from "@/lib/errors";
 
 /**
  * Registro rápido de level, sem precisar ir até Meu rendimento — usado tanto
@@ -36,7 +37,7 @@ export function LevelQuickAdd({
       onSaved?.(parsed);
       setTimeout(() => setSaved(false), 2200);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
