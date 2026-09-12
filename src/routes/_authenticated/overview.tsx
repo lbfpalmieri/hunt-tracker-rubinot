@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { Users, Coins, Clock, ScrollText, Wallet, Trophy, UserCircle2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Users, Coins, ScrollText, Wallet, Trophy, UserCircle2, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
@@ -8,6 +8,21 @@ import { LevelBadge } from "@/components/LevelBadge";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { buildAccountOverview, type CharacterOverview } from "@/lib/account-overview";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
+
+type CompareMetric = "net" | "balance" | "gph" | "rawXph" | "time";
+
+const COMPARE_METRICS: {
+  value: CompareMetric;
+  label: string;
+  get: (r: CharacterOverview) => number;
+  fmt: (v: number) => string;
+}[] = [
+  { value: "net", label: "Saldo atual", get: (r) => r.netBalance, fmt: fmtGold },
+  { value: "balance", label: "Balance total", get: (r) => r.agg.balance, fmt: fmtGold },
+  { value: "gph", label: "Lucro/h médio", get: (r) => r.agg.gph, fmt: fmtGold },
+  { value: "rawXph", label: "Raw XP/h médio", get: (r) => r.agg.rawXph, fmt: fmtNum },
+  { value: "time", label: "Tempo jogado", get: (r) => r.agg.totalTime, fmt: fmtDuration },
+];
 
 export const Route = createFileRoute("/_authenticated/overview")({
   head: () => ({
@@ -62,7 +77,6 @@ function OverviewPage() {
 
   const totals = useMemo(
     () => ({
-      balance: overview.reduce((a, r) => a + r.agg.balance, 0),
       netBalance: overview.reduce((a, r) => a + r.netBalance, 0),
       time: overview.reduce((a, r) => a + r.agg.totalTime, 0),
       sessions: overview.reduce((a, r) => a + r.agg.sessionCount, 0),
@@ -71,10 +85,32 @@ function OverviewPage() {
     [overview],
   );
 
-  const timeRanked = useMemo(
-    () => [...overview].filter((r) => r.agg.totalTime > 0).sort((a, b) => b.agg.totalTime - a.agg.totalTime),
-    [overview],
-  );
+  // Personagens com dado suficiente pra entrar no comparativo — sem sessão não tem o que comparar.
+  const withData = useMemo(() => overview.filter((r) => r.agg.sessionCount > 0), [overview]);
+
+  const [compareMetric, setCompareMetric] = useState<CompareMetric>("net");
+  // null = nenhuma seleção manual ainda feita — usa todos por padrão.
+  const [compareSelected, setCompareSelected] = useState<Set<string> | null>(null);
+  const selectedIds = compareSelected ?? new Set(withData.map((r) => r.character.id));
+  const toggleCompare = (id: string) => {
+    setCompareSelected((prev) => {
+      const base = new Set(prev ?? withData.map((r) => r.character.id));
+      if (base.has(id)) base.delete(id);
+      else base.add(id);
+      return base;
+    });
+  };
+
+  const metricDef = COMPARE_METRICS.find((m) => m.value === compareMetric)!;
+  const compareRows = useMemo(() => {
+    const rows = withData.filter((r) => selectedIds.has(r.character.id));
+    const maxAbs = Math.max(1, ...rows.map((r) => Math.abs(metricDef.get(r))));
+    return rows
+      .map((r) => ({ r, value: metricDef.get(r) }))
+      .sort((a, b) => b.value - a.value)
+      .map(({ r, value }) => ({ r, value, pct: (Math.max(0, value) / maxAbs) * 100 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [withData, compareSelected, metricDef]);
 
   if (!hydrated) {
     return (
@@ -122,7 +158,7 @@ function OverviewPage() {
         </div>
       )}
 
-      {/* Hero: total combinado da conta */}
+      {/* Hero: saldo atual combinado da conta — mesmo padrão do Dashboard de cada personagem. */}
       <div className="card-surface relative overflow-hidden p-6 sm:p-8">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-rubi-gold/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-rubi-blue/10 blur-3xl" />
@@ -130,45 +166,27 @@ function OverviewPage() {
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
               <Coins className="h-3.5 w-3.5 text-rubi-gold" />
-              Balance global da conta
+              Saldo atual
             </div>
             <div
               className={
                 "mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " +
-                (totals.balance >= 0 ? "text-gradient-brand" : "text-rubi-danger")
+                (totals.netBalance >= 0 ? "text-gradient-brand" : "text-rubi-danger")
               }
             >
-              {fmtGold(totals.balance)}
+              {fmtGold(totals.netBalance)}
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              Somando todas as sessões de {characters.length}{" "}
-              {characters.length === 1 ? "personagem" : "personagens"}
+              Somando {characters.length} {characters.length === 1 ? "personagem" : "personagens"}, já descontando
+              imbuements consumidos e gastos registrados de cada um
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:min-w-[280px]">
-            <div>
-              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Tempo total jogado
-              </div>
-              <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(totals.time)}</div>
-              <div className="text-[11px] text-muted-foreground">{totals.sessions} sessões</div>
+          <div className="flex-none">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Tempo total jogado
             </div>
-            {totals.netBalance !== totals.balance && (
-              <div>
-                <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Saldo atual
-                </div>
-                <div
-                  className={
-                    "mt-1 font-display text-lg font-semibold " +
-                    (totals.netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")
-                  }
-                >
-                  {fmtGold(totals.netBalance)}
-                </div>
-                <div className="text-[11px] text-muted-foreground">após imbuements e gastos</div>
-              </div>
-            )}
+            <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(totals.time)}</div>
+            <div className="text-[11px] text-muted-foreground">{totals.sessions} sessões</div>
           </div>
         </div>
       </div>
@@ -270,36 +288,83 @@ function OverviewPage() {
         </div>
       </div>
 
-      {/* Tempo jogado por personagem */}
-      {timeRanked.length > 1 && (
+      {/* Comparar personagens */}
+      {withData.length > 1 && (
         <div className="card-surface mt-6 p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-base font-semibold">
-            <Clock className="h-4 w-4 text-rubi-blue" /> Tempo jogado por personagem
-          </h2>
-          <div className="space-y-3">
-            {timeRanked.map((r) => {
-              const pct = totals.time > 0 ? (r.agg.totalTime / totals.time) * 100 : 0;
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <BarChart3 className="h-4 w-4 text-rubi-blue" /> Comparar personagens
+            </h2>
+            <div className="flex flex-wrap gap-1.5">
+              {COMPARE_METRICS.map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setCompareMetric(m.value)}
+                  className={
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                    (compareMetric === m.value
+                      ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                      : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+                  }
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-1.5">
+            {withData.map((r) => {
+              const active = selectedIds.has(r.character.id);
               return (
+                <button
+                  key={r.character.id}
+                  type="button"
+                  onClick={() => toggleCompare(r.character.id)}
+                  className={
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
+                    (active
+                      ? "border-rubi-gold bg-rubi-gold/10 text-rubi-gold"
+                      : "border-border/60 text-muted-foreground/70 hover:border-rubi-gold/40")
+                  }
+                >
+                  {r.character.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {compareRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Selecione ao menos um personagem pra comparar.</p>
+          ) : (
+            <div className="space-y-3">
+              {compareRows.map(({ r, value, pct }) => (
                 <div key={r.character.id}>
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="flex min-w-0 items-center gap-1.5">
                       <span className="min-w-0 truncate font-medium">{r.character.name}</span>
                       <LevelBadge level={r.level} />
                     </span>
-                    <span className="flex-none font-mono text-xs text-muted-foreground">
-                      {fmtDuration(r.agg.totalTime)} · {Math.round(pct)}%
+                    <span
+                      className={
+                        "flex-none font-mono text-xs " +
+                        (value < 0 ? "text-rubi-danger" : "text-muted-foreground")
+                      }
+                    >
+                      {metricDef.fmt(value)}
                     </span>
                   </div>
                   <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted-foreground/15">
                     <div
-                      className="h-full rounded-full bg-rubi-blue"
-                      style={{ width: `${Math.max(2, pct)}%` }}
+                      className={"h-full rounded-full " + (value < 0 ? "bg-rubi-danger" : "bg-rubi-blue")}
+                      style={{ width: `${value <= 0 ? 0 : Math.max(2, pct)}%` }}
                     />
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
