@@ -6,13 +6,14 @@ import { InfoHint } from "@/components/InfoHint";
 import { RendimentoNudge } from "@/components/RendimentoNudge";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
+import { totalXpLost } from "@/lib/deaths";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
 import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
 import { aggregateSessions } from "@/lib/performance";
 import { filterByLatestPatch, latestPatch } from "@/lib/patches";
 import {
-  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, X,
+  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, X, Skull,
 } from "lucide-react";
 import { currentLevel } from "@/lib/level";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
@@ -42,6 +43,7 @@ function Dashboard() {
   const sessions = useAppStore((s) => s.sessions);
   const imbuements = useAppStore((s) => s.imbuements);
   const expenses = useAppStore((s) => s.expenses);
+  const deaths = useAppStore((s) => s.deaths);
   const levelSnapshots = useAppStore((s) => s.levelSnapshots);
   const activeId = useAppStore((s) => s.activeCharacterId);
 
@@ -97,6 +99,13 @@ function Dashboard() {
   );
   const totalSpentOnPurchases = useMemo(() => myExpenses.reduce((a, e) => a + e.amount, 0), [myExpenses]);
   const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0) - totalSpentOnPurchases;
+
+  const myDeaths = useMemo(
+    () => (active ? deaths.filter((d) => d.characterId === active.id) : []),
+    [deaths, active],
+  );
+  const deathsXpLost = useMemo(() => (active ? totalXpLost(deaths, active.id) : 0), [deaths, active]);
+  const netRawXp = agg.totalRawXp - deathsXpLost;
 
 
 
@@ -242,14 +251,15 @@ function Dashboard() {
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-blue">
               <Zap className="h-3.5 w-3.5" /> Experiência
-              <InfoHint title="Experiência" description="Como a Raw XP/h e a Raw XP total são calculadas.">
+              <InfoHint title="Experiência" description="Como a Raw XP/h, a Raw XP total e a XP líquida são calculadas.">
                 <p><strong>Raw XP total:</strong> <code>Σ rawXp</code> de cada sessão (é o <em>Raw XP Gain</em> do Hunting Analyser — valor bruto, sem bônus de stamina/XP boost/evento).</p>
                 <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas caçadas consideradas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
                 <p><strong>Bounty Task:</strong> quando você marca uma sessão como tendo bônus de Bounty e informa a XP do bônus, ela é descontada da Raw XP. Se o valor não for informado, a sessão fica fora das médias de Raw XP.</p>
                 <p>A <em>XP com bônus</em> (<code>XP Gain</code>) aparece como valor secundário — ela varia conforme os bônus ativos, por isso a Raw XP é a referência principal.</p>
+                <p><strong>XP líquida:</strong> <code>Raw XP total − XP perdida em mortes</code>. Toda morte no Tibia desconta XP (10% flat até o level 23, uma fórmula do level 24+ em diante — reduzida por promoted e bênçãos). Registre suas mortes em <strong>Meu rendimento → Mortes</strong> pra esse número aparecer aqui.</p>
               </InfoHint>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className={"grid grid-cols-1 gap-4 " + (myDeaths.length > 0 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
               <StatCard
                 label="Raw XP / hora (média)"
                 value={fmtNum(agg.rawXph)}
@@ -268,6 +278,15 @@ function Dashboard() {
                 icon={TrendingUp}
                 accent="blue"
               />
+              {myDeaths.length > 0 && (
+                <StatCard
+                  label="Raw XP líquida"
+                  value={fmtNum(netRawXp)}
+                  hint={`${fmtNum(deathsXpLost)} perdidos em ${myDeaths.length} morte${myDeaths.length === 1 ? "" : "s"}`}
+                  icon={Skull}
+                  accent={netRawXp >= 0 ? "blue" : "danger"}
+                />
+              )}
             </div>
 
           </div>

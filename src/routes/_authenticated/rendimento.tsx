@@ -20,7 +20,8 @@ import { aggregateSessions, balanceSince } from "@/lib/performance";
 import { aggregateImbuements } from "@/lib/imbuements";
 import { type Period, PERIODS, periodRange, formatRange, filterByPeriod } from "@/lib/period";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
-import { huntRawXp } from "@/lib/bounty";
+import { huntRawXp, parseXpAmount } from "@/lib/bounty";
+import { MAX_BLESSINGS, computeDeathXpLoss, deathReduction, fractionalLevel, totalXpLost } from "@/lib/deaths";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { confirmDialog } from "@/lib/confirm-dialog";
 import { useCountUp } from "@/lib/use-count-up";
@@ -39,6 +40,7 @@ import {
   Calendar,
   AlertTriangle,
   Receipt,
+  Skull,
 } from "lucide-react";
 
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
@@ -68,6 +70,7 @@ function RendimentoPage() {
   const goals = useAppStore((s) => s.goals);
   const imbuements = useAppStore((s) => s.imbuements);
   const expenses = useAppStore((s) => s.expenses);
+  const deaths = useAppStore((s) => s.deaths);
   const activeId = useAppStore((s) => s.activeCharacterId);
   const addLevelSnapshot = useAppStore((s) => s.addLevelSnapshot);
   const removeLevelSnapshot = useAppStore((s) => s.removeLevelSnapshot);
@@ -75,9 +78,11 @@ function RendimentoPage() {
   const removeGoal = useAppStore((s) => s.removeGoal);
   const addExpense = useAppStore((s) => s.addExpense);
   const removeExpense = useAppStore((s) => s.removeExpense);
+  const addDeath = useAppStore((s) => s.addDeath);
+  const removeDeath = useAppStore((s) => s.removeDeath);
 
   const active = characters.find((c) => c.id === activeId) ?? null;
-  const [tab, setTab] = useState<"overview" | "level" | "goals" | "expenses">("overview");
+  const [tab, setTab] = useState<"overview" | "level" | "goals" | "expenses" | "deaths">("overview");
   const [period, setPeriod] = useState<Period>("week");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -310,6 +315,88 @@ function RendimentoPage() {
     }
   };
 
+  // --- Mortes ---
+  const myDeaths = useMemo(
+    () => (active ? deaths.filter((d) => d.characterId === active.id) : []),
+    [deaths, active],
+  );
+  const totalXpLostValue = useMemo(
+    () => (active ? totalXpLost(deaths, active.id) : 0),
+    [deaths, active],
+  );
+  // "Raw XP total" já existe (lifetimeAgg, calculado acima pros Gastos) — só falta descontar as mortes.
+  const netRawXp = lifetimeAgg.totalRawXp - totalXpLostValue;
+
+  const [deathDialogOpen, setDeathDialogOpen] = useState(false);
+  const [deathMode, setDeathMode] = useState<"formula" | "amount">("formula");
+  const [deathLevel, setDeathLevel] = useState("");
+  const [deathXpToNext, setDeathXpToNext] = useState("");
+  const [deathBlessings, setDeathBlessings] = useState(0);
+  const [deathPromoted, setDeathPromoted] = useState(false);
+  const [deathAmount, setDeathAmount] = useState("");
+  const [deathNote, setDeathNote] = useState("");
+  const [savingDeath, setSavingDeath] = useState(false);
+  const [deathError, setDeathError] = useState<string | null>(null);
+
+  const openDeathDialog = () => {
+    setDeathMode("formula");
+    setDeathLevel(currentLevel ? String(currentLevel.level) : "");
+    setDeathXpToNext("");
+    setDeathBlessings(0);
+    setDeathPromoted(false);
+    setDeathAmount("");
+    setDeathNote("");
+    setDeathError(null);
+    setDeathDialogOpen(true);
+  };
+
+  const deathLevelNum = Number(deathLevel.trim().replace(",", "."));
+  const deathXpToNextNum = deathXpToNext.trim() ? parseXpAmount(deathXpToNext) : null;
+  const deathEffectiveLevel =
+    Number.isFinite(deathLevelNum) && deathLevelNum > 0 ? fractionalLevel(deathLevelNum, deathXpToNextNum) : null;
+  const formulaXpLoss =
+    deathEffectiveLevel != null
+      ? computeDeathXpLoss({ level: deathEffectiveLevel, blessings: deathBlessings, promoted: deathPromoted })
+      : null;
+  const amountXpLoss = deathAmount.trim() ? parseXpAmount(deathAmount) : null;
+  const finalXpLoss = deathMode === "formula" ? formulaXpLoss : amountXpLoss;
+  const deathReady =
+    Number.isFinite(deathLevelNum) &&
+    deathLevelNum > 0 &&
+    finalXpLoss != null &&
+    finalXpLoss > 0;
+
+  const handleAddDeath = async () => {
+    if (!active || !deathReady || finalXpLoss == null) return;
+    setSavingDeath(true);
+    setDeathError(null);
+    try {
+      await addDeath({
+        characterId: active.id,
+        level: Math.round(deathLevelNum * 100) / 100,
+        blessings: deathMode === "formula" ? deathBlessings : 0,
+        promoted: deathMode === "formula" ? deathPromoted : false,
+        xpLost: Math.round(finalXpLoss),
+        note: deathNote.trim() || null,
+      });
+      setDeathDialogOpen(false);
+    } catch (e) {
+      setDeathError(errorMessage(e));
+    } finally {
+      setSavingDeath(false);
+    }
+  };
+
+  const handleRemoveDeath = async (id: string) => {
+    const ok = await confirmDialog({ description: "Remover esse registro de morte?", tone: "danger" });
+    if (!ok) return;
+    try {
+      await removeDeath(id);
+    } catch (e) {
+      toast.error("Falha ao remover", { description: errorMessage(e) });
+    }
+  };
+
   if (!hydrated) {
     return (
       <AppShell>
@@ -353,6 +440,7 @@ function RendimentoPage() {
             { value: "level", label: "Nível", icon: Swords },
             { value: "goals", label: "Objetivos", icon: Target },
             { value: "expenses", label: "Gastos", icon: Receipt },
+            { value: "deaths", label: "Mortes", icon: Skull },
           ] as const
         ).map((t) => (
           <button
@@ -926,6 +1014,266 @@ function RendimentoPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-danger px-4 py-2 text-sm font-semibold text-background hover:opacity-90 disabled:opacity-60"
                 >
                   {savingExpense ? "Salvando..." : "Registrar"}
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
+
+      {tab === "deaths" && (
+        <>
+          <div className="card-surface relative overflow-hidden p-6 sm:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-rubi-danger/10 blur-3xl" />
+            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  <Skull className="h-3.5 w-3.5 text-rubi-danger" />
+                  XP perdida em mortes
+                  <InfoHint title="Perda de XP na morte" description="Como o Tibia calcula quanto de XP você perde ao morrer.">
+                    <p>
+                      Até o <strong>level 23</strong>: perde <strong>10%</strong> flat de todo o XP acumulado. Do{" "}
+                      <strong>level 24</strong> em diante:{" "}
+                      <code>((level+50)/100) × 50×(level²−5×level+8)</code> pontos de XP — fórmula oficial do Tibia.
+                    </p>
+                    <p>
+                      Essa perda-base é reduzida por <strong>personagem promoted (−30%)</strong> e{" "}
+                      <strong>cada bênção ativa (−8%, até 7)</strong>. Com tudo ativo o teto é <strong>−86%</strong> —
+                      confirmado no próprio painel de Blessings do RubinOT.
+                    </p>
+                    <p>
+                      Quanto mais preciso o level (com decimais), mais exata a conta. Se souber quanto de XP falta
+                      pro próximo level (o jogo mostra esse valor), informe — o sistema deriva o decimal certinho
+                      sozinho. Sem isso, só o level inteiro já funciona, só que um pouco menos preciso.
+                    </p>
+                    <p>Já sabe o valor exato que perdeu? Dá pra digitar direto, sem precisar de level/bênçãos.</p>
+                    <p>
+                      <strong>Raw XP líquida:</strong> <code>Raw XP total − XP perdida em mortes</code> — mesmo
+                      espírito do Saldo atual do gold, só que pra experiência.
+                    </p>
+                  </InfoHint>
+                </div>
+                <div className="mt-2 font-display text-4xl font-bold tracking-tight text-rubi-danger sm:text-5xl">
+                  {fmtNum(totalXpLostValue)}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {myDeaths.length === 0
+                    ? "Nenhuma morte registrada ainda"
+                    : `${myDeaths.length} morte${myDeaths.length === 1 ? "" : "s"} registrada${myDeaths.length === 1 ? "" : "s"}`}
+                  {" · "}Raw XP líquida: <span className="font-semibold text-foreground">{fmtNum(netRawXp)}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={openDeathDialog}
+                className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-rubi-danger px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90 sm:self-auto"
+              >
+                <Plus className="h-4 w-4" /> Registrar morte
+              </button>
+            </div>
+          </div>
+
+          {myDeaths.length === 0 ? (
+            <EmptyState
+              icon={Skull}
+              title="Nenhuma morte registrada ainda"
+              description="Morreu numa hunt? Registre aqui pra ver a Raw XP líquida de verdade — o Raw XP total já descontando o que a morte tirou."
+            />
+          ) : (
+            <div className="card-surface mt-6 p-5">
+              <h2 className="mb-3 text-base font-semibold">Histórico de mortes</h2>
+              <ul className="space-y-1.5">
+                {myDeaths.map((d) => (
+                  <li
+                    key={d.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
+                  >
+                    <span className="flex-none font-mono font-semibold">Level {d.level}</span>
+                    <span className="flex-none text-xs text-muted-foreground">
+                      {d.promoted ? "promoted" : "não promoted"} · {d.blessings} bênção{d.blessings === 1 ? "" : "s"}
+                    </span>
+                    {d.note && (
+                      <span
+                        className="min-w-0 basis-full truncate text-xs text-muted-foreground sm:basis-auto sm:flex-1"
+                        title={d.note}
+                      >
+                        {d.note}
+                      </span>
+                    )}
+                    <span className="flex-none font-mono font-semibold text-rubi-danger">−{fmtNum(d.xpLost)} xp</span>
+                    <span className="flex-none text-xs text-muted-foreground">{fmtDate(d.createdAt)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDeath(d.id)}
+                      className="flex-none rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+                      aria-label="Remover"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <Dialog open={deathDialogOpen} onOpenChange={(o) => !savingDeath && setDeathDialogOpen(o)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Registrar morte</DialogTitle>
+                <DialogDescription>
+                  Calcula a XP perdida pela fórmula oficial do Tibia, ou você informa o valor exato se já souber.
+                </DialogDescription>
+              </DialogHeader>
+
+              <label className="block">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Level no momento da morte
+                </span>
+                <input
+                  autoFocus
+                  inputMode="decimal"
+                  value={deathLevel}
+                  onChange={(e) => setDeathLevel(e.target.value)}
+                  placeholder="Ex: 245"
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                />
+              </label>
+
+              <div>
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Como você quer informar a perda
+                </span>
+                <div className="mt-1.5 flex rounded-lg border border-border p-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setDeathMode("formula")}
+                    className={
+                      "flex-1 rounded-md px-2 py-1.5 font-medium transition-colors " +
+                      (deathMode === "formula"
+                        ? "bg-rubi-danger/15 text-rubi-danger"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    Calcular pela fórmula
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeathMode("amount")}
+                    className={
+                      "flex-1 rounded-md px-2 py-1.5 font-medium transition-colors " +
+                      (deathMode === "amount"
+                        ? "bg-rubi-danger/15 text-rubi-danger"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    Sei quanto perdi
+                  </button>
+                </div>
+              </div>
+
+              {deathMode === "formula" ? (
+                <>
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      XP faltando pro próximo level <span className="opacity-60">(opcional, deixa mais preciso)</span>
+                    </span>
+                    <input
+                      inputMode="numeric"
+                      value={deathXpToNext}
+                      onChange={(e) => setDeathXpToNext(e.target.value)}
+                      placeholder="Ex: 1.2kk"
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                    />
+                  </label>
+
+                  <div>
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Bênçãos ativas
+                    </span>
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {Array.from({ length: MAX_BLESSINGS + 1 }, (_, n) => n).map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setDeathBlessings(n)}
+                          className={
+                            "h-8 w-8 rounded-md border text-xs font-semibold transition-colors " +
+                            (deathBlessings === n
+                              ? "border-rubi-danger bg-rubi-danger/15 text-rubi-danger"
+                              : "border-border/60 text-muted-foreground hover:border-rubi-danger/40")
+                          }
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={deathPromoted}
+                      onChange={(e) => setDeathPromoted(e.target.checked)}
+                      className="h-4 w-4 accent-[var(--rubi-danger)]"
+                    />
+                    Personagem promoted
+                  </label>
+
+                  {deathEffectiveLevel != null && formulaXpLoss != null && (
+                    <p className="rounded-lg border border-rubi-danger/30 bg-rubi-danger/5 p-2.5 text-xs text-muted-foreground">
+                      Perda estimada: <strong className="text-rubi-danger">{fmtNum(formulaXpLoss)} XP</strong>
+                      {" "}({Math.round(deathReduction(deathBlessings, deathPromoted) * 100)}% de redução sobre a
+                      perda-base)
+                    </p>
+                  )}
+                </>
+              ) : (
+                <label className="block">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">XP perdida</span>
+                  <input
+                    inputMode="numeric"
+                    value={deathAmount}
+                    onChange={(e) => setDeathAmount(e.target.value)}
+                    placeholder="Ex: 2.5kk"
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                  />
+                </label>
+              )}
+
+              <label className="block">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Observação <span className="opacity-60">(opcional)</span>
+                </span>
+                <input
+                  value={deathNote}
+                  onChange={(e) => setDeathNote(e.target.value)}
+                  placeholder="Ex: morri pra um boss no Rotten Blade"
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                />
+              </label>
+
+              {deathError && (
+                <p className="rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
+                  {deathError}
+                </p>
+              )}
+
+              <DialogFooter className="gap-2 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeathDialogOpen(false)}
+                  disabled={savingDeath}
+                  className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddDeath}
+                  disabled={savingDeath || !deathReady}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-danger px-4 py-2 text-sm font-semibold text-background hover:opacity-90 disabled:opacity-60"
+                >
+                  {savingDeath ? "Salvando..." : "Registrar"}
                 </button>
               </DialogFooter>
             </DialogContent>

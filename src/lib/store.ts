@@ -88,6 +88,22 @@ export interface Expense {
   createdAt: string;
 }
 
+/**
+ * Morte registrada — level, bênçãos e promoted no momento, mais a XP perdida
+ * (calculada pela fórmula oficial do Tibia ou informada direto). Descontada do
+ * "Raw XP total" pra chegar na "XP líquida" de cada personagem.
+ */
+export interface Death {
+  id: string;
+  characterId: string;
+  level: number;
+  blessings: number;
+  promoted: boolean;
+  xpLost: number;
+  note: string | null;
+  createdAt: string;
+}
+
 interface State {
   characters: Character[];
   sessions: HuntSession[];
@@ -96,6 +112,7 @@ interface State {
   levelSnapshots: LevelSnapshot[];
   goals: Goal[];
   expenses: Expense[];
+  deaths: Death[];
   activeCharacterId: string | null;
   loaded: boolean;
   loading: boolean;
@@ -120,6 +137,8 @@ interface State {
   removeGoal: (id: string) => Promise<void>;
   addExpense: (e: Omit<Expense, "id" | "createdAt">) => Promise<Expense>;
   removeExpense: (id: string) => Promise<void>;
+  addDeath: (d: Omit<Death, "id" | "createdAt">) => Promise<Death>;
+  removeDeath: (id: string) => Promise<void>;
 }
 
 
@@ -146,6 +165,7 @@ export const useAppStore = create<State>()((set, get) => ({
   levelSnapshots: [],
   goals: [],
   expenses: [],
+  deaths: [],
   activeCharacterId: null,
   loaded: false,
   loading: false,
@@ -161,6 +181,7 @@ export const useAppStore = create<State>()((set, get) => ({
       levelSnapshots: [],
       goals: [],
       expenses: [],
+      deaths: [],
       activeCharacterId: null,
       loaded: false,
       loading: false,
@@ -216,6 +237,16 @@ export const useAppStore = create<State>()((set, get) => ({
       } catch (e) {
         console.error("[gastos] tabela expenses indisponível (migration ainda não aplicada?)", e);
         expenseRes = { data: [], error: null };
+      }
+
+      // Idem pro histórico de mortes.
+      let deathRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
+      try {
+        deathRes = await db.from("deaths").select("*").order("created_at", { ascending: false });
+        if (deathRes.error) throw deathRes.error;
+      } catch (e) {
+        console.error("[mortes] tabela deaths indisponível (migration ainda não aplicada?)", e);
+        deathRes = { data: [], error: null };
       }
 
       const characters: Character[] = (charRes.data ?? []).map((c: any) => ({
@@ -280,6 +311,16 @@ export const useAppStore = create<State>()((set, get) => ({
         amount: Number(e.amount ?? 0),
         createdAt: e.created_at,
       }));
+      const deaths: Death[] = (deathRes.data ?? []).map((d: any) => ({
+        id: d.id,
+        characterId: d.character_id,
+        level: Number(d.level ?? 0),
+        blessings: Number(d.blessings ?? 0),
+        promoted: Boolean(d.promoted),
+        xpLost: Number(d.xp_lost ?? 0),
+        note: d.note ?? null,
+        createdAt: d.created_at,
+      }));
       const prevActive = get().activeCharacterId;
       set({
         characters,
@@ -289,6 +330,7 @@ export const useAppStore = create<State>()((set, get) => ({
         levelSnapshots,
         goals,
         expenses,
+        deaths,
         loaded: true,
         loading: false,
         activeCharacterId:
@@ -358,6 +400,7 @@ export const useAppStore = create<State>()((set, get) => ({
       levelSnapshots: s.levelSnapshots.filter((l) => l.characterId !== id),
       goals: s.goals.filter((g) => g.characterId !== id),
       expenses: s.expenses.filter((e) => e.characterId !== id),
+      deaths: s.deaths.filter((d) => d.characterId !== id),
       activeCharacterId: s.activeCharacterId === id ? null : s.activeCharacterId,
     }));
   },
@@ -632,6 +675,44 @@ export const useAppStore = create<State>()((set, get) => ({
     const { error } = await db.from("expenses").delete().eq("id", id);
     if (error) throw error;
     set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) }));
+  },
+
+  addDeath: async (input) => {
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
+    if (!uid) throw new Error("Not signed in");
+    const { data, error } = await db
+      .from("deaths")
+      .insert({
+        user_id: uid,
+        character_id: input.characterId,
+        level: input.level,
+        blessings: input.blessings,
+        promoted: input.promoted,
+        xp_lost: input.xpLost,
+        note: input.note,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const created: Death = {
+      id: data.id,
+      characterId: data.character_id,
+      level: Number(data.level ?? 0),
+      blessings: Number(data.blessings ?? 0),
+      promoted: Boolean(data.promoted),
+      xpLost: Number(data.xp_lost ?? 0),
+      note: data.note ?? null,
+      createdAt: data.created_at,
+    };
+    set((s) => ({ deaths: [created, ...s.deaths] }));
+    return created;
+  },
+
+  removeDeath: async (id) => {
+    const { error } = await db.from("deaths").delete().eq("id", id);
+    if (error) throw error;
+    set((s) => ({ deaths: s.deaths.filter((d) => d.id !== id) }));
   },
 }));
 
