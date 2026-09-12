@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -373,6 +373,7 @@ function RendimentoPage() {
     try {
       await addDeath({
         characterId: active.id,
+        sessionId: null,
         level: Math.round(deathLevelNum * 100) / 100,
         blessings: deathMode === "formula" ? deathBlessings : 0,
         promoted: deathMode === "formula" ? deathPromoted : false,
@@ -1099,6 +1100,15 @@ function RendimentoPage() {
                       >
                         {d.note}
                       </span>
+                    )}
+                    {d.sessionId && (
+                      <Link
+                        to="/sessions/$id"
+                        params={{ id: d.sessionId }}
+                        className="flex-none text-xs text-rubi-blue underline decoration-dotted hover:text-foreground"
+                      >
+                        ver sessão
+                      </Link>
                     )}
                     <span className="flex-none font-mono font-semibold text-rubi-danger">−{fmtNum(d.xpLost)} xp</span>
                     <span className="flex-none text-xs text-muted-foreground">{fmtDate(d.createdAt)}</span>

@@ -116,10 +116,14 @@ export function parseHunting(text: string): HuntingData {
       endedAt: rangeMatch?.[2]?.trim() ?? null,
     }),
 
-    rawXp: toNum(get(/Raw XP Gain:\s*([\d.,]+)/)),
-    xpGain: toNum(get(/(?<!Raw )XP Gain:\s*([\d.,]+)/)),
-    xpPerHour: toNum(get(/(?<!Raw )XP\/h:\s*([\d.,]+)/)),
-    rawXpPerHour: toNum(get(/Raw XP\/h:\s*([\d.,]+)/)),
+    // "-?" é essencial aqui: quando o jogador morre durante a sessão, o Hunting
+    // Analyser mistura a XP perdida na morte com a ganha caçando, e esses
+    // valores podem vir negativos (ex.: "Raw XP Gain: -1.234.567"). Sem o sinal,
+    // o regex simplesmente não casava e a sessão virava silenciosamente 0.
+    rawXp: toNum(get(/Raw XP Gain:\s*(-?[\d.,]+)/)),
+    xpGain: toNum(get(/(?<!Raw )XP Gain:\s*(-?[\d.,]+)/)),
+    xpPerHour: toNum(get(/(?<!Raw )XP\/h:\s*(-?[\d.,]+)/)),
+    rawXpPerHour: toNum(get(/Raw XP\/h:\s*(-?[\d.,]+)/)),
     loot: toNum(get(/^Loot:\s*([\d.,]+)/m)),
     supplies: toNum(get(/Supplies:\s*([\d.,]+)/)),
     balance: (() => {

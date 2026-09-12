@@ -92,10 +92,17 @@ export interface Expense {
  * Morte registrada — level, bênçãos e promoted no momento, mais a XP perdida
  * (calculada pela fórmula oficial do Tibia ou informada direto). Descontada do
  * "Raw XP total" pra chegar na "XP líquida" de cada personagem.
+ *
+ * `sessionId` liga a morte à sessão de hunt em que ela aconteceu, quando
+ * registrada direto na importação (o Hunting Analyser mistura a XP da morte
+ * com a da caçada — a sessão já é salva com a Raw XP corrigida somando essa
+ * perda de volta, então o vínculo aqui é só pra rastreabilidade/exibição).
+ * Null pra mortes registradas soltas, sem sessão associada.
  */
 export interface Death {
   id: string;
   characterId: string;
+  sessionId: string | null;
   level: number;
   blessings: number;
   promoted: boolean;
@@ -314,6 +321,7 @@ export const useAppStore = create<State>()((set, get) => ({
       const deaths: Death[] = (deathRes.data ?? []).map((d: any) => ({
         id: d.id,
         characterId: d.character_id,
+        sessionId: d.session_id ?? null,
         level: Number(d.level ?? 0),
         blessings: Number(d.blessings ?? 0),
         promoted: Boolean(d.promoted),
@@ -686,6 +694,7 @@ export const useAppStore = create<State>()((set, get) => ({
       .insert({
         user_id: uid,
         character_id: input.characterId,
+        session_id: input.sessionId,
         level: input.level,
         blessings: input.blessings,
         promoted: input.promoted,
@@ -698,6 +707,7 @@ export const useAppStore = create<State>()((set, get) => ({
     const created: Death = {
       id: data.id,
       characterId: data.character_id,
+      sessionId: data.session_id ?? null,
       level: Number(data.level ?? 0),
       blessings: Number(data.blessings ?? 0),
       promoted: Boolean(data.promoted),

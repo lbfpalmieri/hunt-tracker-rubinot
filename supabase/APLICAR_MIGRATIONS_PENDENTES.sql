@@ -5,6 +5,7 @@
 --  tabela nova. Este arquivo é 100% idempotente (seguro rodar de novo, não
 --  quebra nada se já tiver sido aplicado). Consolida:
 --    - supabase/migrations/20260912120000_...  (tabela deaths)
+--    - supabase/migrations/20260912130000_...  (coluna session_id em deaths)
 -- ============================================================================
 
 -- 1) Tabela de mortes ---------------------------------------------------------
@@ -33,5 +34,8 @@ CREATE POLICY "Users manage own deaths" ON public.deaths
 CREATE INDEX IF NOT EXISTS deaths_character_idx
   ON public.deaths (character_id, created_at DESC);
 
--- 2) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
+-- 2) Liga a morte à sessão em que aconteceu (registro direto na importação) --
+ALTER TABLE public.deaths ADD COLUMN IF NOT EXISTS session_id uuid REFERENCES public.hunt_sessions(id) ON DELETE SET NULL;
+
+-- 3) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
 NOTIFY pgrst, 'reload schema';
