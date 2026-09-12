@@ -6,6 +6,7 @@
 --  quebra nada se já tiver sido aplicado). Consolida:
 --    - supabase/migrations/20260912120000_...  (tabela deaths)
 --    - supabase/migrations/20260912130000_...  (coluna session_id em deaths)
+--    - supabase/migrations/20260912140000_...  (level aceita null em deaths)
 -- ============================================================================
 
 -- 1) Tabela de mortes ---------------------------------------------------------
@@ -37,5 +38,10 @@ CREATE INDEX IF NOT EXISTS deaths_character_idx
 -- 2) Liga a morte à sessão em que aconteceu (registro direto na importação) --
 ALTER TABLE public.deaths ADD COLUMN IF NOT EXISTS session_id uuid REFERENCES public.hunt_sessions(id) ON DELETE SET NULL;
 
--- 3) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
+-- 3) Level vira opcional (detecção automática pode não saber o level ainda) --
+ALTER TABLE public.deaths ALTER COLUMN level DROP NOT NULL;
+ALTER TABLE public.deaths DROP CONSTRAINT IF EXISTS deaths_level_check;
+ALTER TABLE public.deaths ADD CONSTRAINT deaths_level_check CHECK (level IS NULL OR level > 0);
+
+-- 4) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
 NOTIFY pgrst, 'reload schema';

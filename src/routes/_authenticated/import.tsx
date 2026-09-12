@@ -47,7 +47,6 @@ import type { PreySlot } from "@/lib/prey";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
 import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
-import { MAX_BLESSINGS, computeDeathXpLoss, fractionalLevel } from "@/lib/deaths";
 
 
 
@@ -98,23 +97,14 @@ function ImportPage() {
   const preyReady = !hasPrey || preyValid;
 
   // O Hunting Analyser mistura a XP perdida na morte com a XP ganha caçando —
-  // se o jogador morreu durante a sessão, a Raw XP do bloco fica menor (às
-  // vezes negativa). Calculamos a perda pela mesma fórmula da aba Mortes e
-  // somamos de volta na sessão salva, pra não distorcer a Raw XP/h desse spot.
-  const [hasDeath, setHasDeath] = useState(false);
-  const [deathLevel, setDeathLevel] = useState("");
-  const [deathXpToNext, setDeathXpToNext] = useState("");
-  const [deathBlessings, setDeathBlessings] = useState(0);
-  const [deathPromoted, setDeathPromoted] = useState(false);
-  const deathLevelNum = Number(deathLevel.trim().replace(",", "."));
-  const deathXpToNextNum = deathXpToNext.trim() ? parseXpAmount(deathXpToNext) : null;
-  const deathEffectiveLevel =
-    Number.isFinite(deathLevelNum) && deathLevelNum > 0 ? fractionalLevel(deathLevelNum, deathXpToNextNum) : null;
-  const deathXpLoss =
-    deathEffectiveLevel != null
-      ? computeDeathXpLoss({ level: deathEffectiveLevel, blessings: deathBlessings, promoted: deathPromoted })
-      : null;
-  const deathReady = !hasDeath || (deathXpLoss != null && deathXpLoss > 0);
+  // se o jogador morreu durante a sessão, a Raw XP do bloco fica negativa. Em
+  // vez de pedir level/bênçãos pra recalcular, usamos direto o valor negativo
+  // observado (é o dado mais confiável que existe: veio do próprio jogo) —
+  // ver `detectedDeathLoss` mais abaixo, perto de onde `parsed` já existe.
+  const [deathOptOut, setDeathOptOut] = useState(false);
+  // Nova colagem — não deixa uma escolha de "não foi morte" de uma sessão
+  // anterior grudar sem querer numa sessão diferente.
+  useEffect(() => setDeathOptOut(false), [huntingText]);
 
 
   const effectiveCharId = activeId || characters[0]?.id || "";
@@ -320,8 +310,16 @@ function ImportPage() {
   const huntingMessage = !parsed.hunting
     ? "Não reconheci esse bloco. Copie o Hunt Analyser completo do jogo."
     : "Duração não identificada. O texto precisa incluir \"Session data: From ... to ...\" e \"Session length\".";
+
+  // Raw XP negativa normalmente só acontece por um motivo: uma morte durante a
+  // sessão. O valor observado já É a perda líquida — não precisa pedir level,
+  // bênçãos ou promoted pra recalcular nada, é só usar o número que veio do jogo.
+  const detectedDeathLoss =
+    parsed.hunting && parsed.hunting.rawXp < 0 ? Math.abs(parsed.hunting.rawXp) : null;
+  const willRegisterDeath = detectedDeathLoss != null && !deathOptOut;
+
   const canSave = Boolean(
-    parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady && deathReady,
+    parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady,
   );
 
   const [saving, setSaving] = useState(false);
@@ -333,13 +331,12 @@ function ImportPage() {
     try {
       // Idempotent by name — reuses the existing hunt row if one already matches.
       await addHunt(effectiveCharId, selectedHuntName);
-      // Se teve morte, a Raw XP/XP com bônus do bloco colado vêm com a perda já
-      // descontada — soma de volta antes de salvar, pra sessão refletir só a
-      // performance de caça (a perda em si fica registrada à parte, em Mortes).
-      const correctedHunting =
-        hasDeath && deathXpLoss != null
-          ? { ...parsed.hunting, rawXp: parsed.hunting.rawXp + deathXpLoss, xpGain: parsed.hunting.xpGain + deathXpLoss }
-          : parsed.hunting;
+      // Não dá pra separar quanto da Raw XP negativa foi caça e quanto foi a
+      // morte — zeramos essa sessão pros fins de Raw XP/h (nem soma nem
+      // subtrai a média do spot) e a perda em si vira um registro à parte.
+      const correctedHunting = willRegisterDeath
+        ? { ...parsed.hunting, rawXp: Math.max(0, parsed.hunting.rawXp), xpGain: Math.max(0, parsed.hunting.xpGain) }
+        : parsed.hunting;
       const created = await addSession({
         characterId: effectiveCharId,
         huntName: selectedHuntName,
@@ -356,16 +353,16 @@ function ImportPage() {
         notes: notes.trim() || null,
       });
 
-      if (hasDeath && deathXpLoss != null && deathEffectiveLevel != null) {
+      if (willRegisterDeath && detectedDeathLoss != null) {
         try {
           await addDeath({
             characterId: effectiveCharId,
             sessionId: created.id,
-            level: Math.round(deathLevelNum * 100) / 100,
-            blessings: deathBlessings,
-            promoted: deathPromoted,
-            xpLost: Math.round(deathXpLoss),
-            note: `Morte durante a hunt "${selectedHuntName}"`,
+            level: currentLevel(levelSnapshots, effectiveCharId),
+            blessings: 0,
+            promoted: false,
+            xpLost: Math.round(detectedDeathLoss),
+            note: `Detectada automaticamente na hunt "${selectedHuntName}" (Raw XP negativa no Hunting Analyser)`,
           });
         } catch (e) {
           // A sessão já foi salva — a morte é só um complemento, não bloqueia o fluxo.
@@ -538,23 +535,43 @@ function ImportPage() {
                   positive={parsed.hunting.balance >= 0}
                 />
                 <PreviewRow label="Kills" value={fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} />
-                {hasDeath && deathXpLoss != null && (
-                  <PreviewRow label="Raw XP de caça (corrigida)" value={fmtNum(parsed.hunting.rawXp + deathXpLoss)} />
-                )}
               </dl>
 
-              {parsed.hunting.rawXp < 0 && !hasDeath && (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rubi-danger/40 bg-rubi-danger/5 p-2.5 text-xs text-rubi-danger">
-                  <span className="flex items-center gap-1.5">
-                    <Skull className="h-3.5 w-3.5" /> Raw XP negativo — normalmente indica uma morte durante a sessão.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setHasDeath(true)}
-                    className="flex-none rounded-md border border-rubi-danger/50 px-2 py-1 font-semibold hover:bg-rubi-danger/10"
-                  >
-                    Registrar morte
-                  </button>
+              {detectedDeathLoss != null && (
+                <div
+                  className={
+                    "mt-3 rounded-lg border p-2.5 text-xs " +
+                    (willRegisterDeath
+                      ? "border-rubi-danger/40 bg-rubi-danger/5 text-rubi-danger"
+                      : "border-border/60 bg-background/40 text-muted-foreground")
+                  }
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5">
+                      <Skull className="h-3.5 w-3.5 flex-none" />
+                      {willRegisterDeath ? (
+                        <>
+                          Detectamos uma morte nesta sessão: <strong>{fmtNum(detectedDeathLoss)} XP</strong> perdida,
+                          registrada automaticamente.
+                        </>
+                      ) : (
+                        "Essa morte não vai ser registrada nesta sessão."
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDeathOptOut((v) => !v)}
+                      className="flex-none rounded-md border px-2 py-1 font-semibold opacity-80 hover:opacity-100"
+                    >
+                      {willRegisterDeath ? "Não foi uma morte" : "Foi uma morte, registrar"}
+                    </button>
+                  </div>
+                  {willRegisterDeath && (
+                    <p className="mt-1.5 opacity-80">
+                      A Raw XP dessa sessão fica zerada (não dá pra saber quanto foi caça e quanto foi a morte) — a
+                      perda em si fica registrada em <strong className="text-foreground">Meu rendimento → Mortes</strong>.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -896,94 +913,6 @@ function ImportPage() {
                     value={null}
                     onChange={(next, valid) => { setPrey(next); setPreyValid(valid); }}
                   />
-                </div>
-              )}
-            </div>
-
-            <div className="mt-3 rounded-xl border border-rubi-danger/30 bg-rubi-danger/[0.04] p-3">
-              <label className="flex items-start gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={hasDeath}
-                  onChange={(e) => setHasDeath(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[var(--rubi-danger)]"
-                />
-                <span className="flex items-center gap-1.5">
-                  <Skull className="h-3.5 w-3.5 text-rubi-danger" />
-                  Eu <b className="text-foreground">morri</b> durante esta sessão
-                </span>
-              </label>
-
-              {hasDeath && (
-                <div className="mt-3 space-y-3">
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Level no momento da morte
-                    </label>
-                    <input
-                      inputMode="decimal"
-                      value={deathLevel}
-                      onChange={(e) => setDeathLevel(e.target.value)}
-                      placeholder="Ex: 245"
-                      className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      XP faltando pro próximo level <span className="opacity-60">(opcional, deixa mais preciso)</span>
-                    </label>
-                    <input
-                      inputMode="numeric"
-                      value={deathXpToNext}
-                      onChange={(e) => setDeathXpToNext(e.target.value)}
-                      placeholder="Ex: 1.2kk"
-                      className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Bênçãos ativas
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {Array.from({ length: MAX_BLESSINGS + 1 }, (_, n) => n).map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setDeathBlessings(n)}
-                          className={
-                            "h-8 w-8 rounded-md border text-xs font-semibold transition-colors " +
-                            (deathBlessings === n
-                              ? "border-rubi-danger bg-rubi-danger/15 text-rubi-danger"
-                              : "border-border/60 text-muted-foreground hover:border-rubi-danger/40")
-                          }
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={deathPromoted}
-                      onChange={(e) => setDeathPromoted(e.target.checked)}
-                      className="h-4 w-4 accent-[var(--rubi-danger)]"
-                    />
-                    Personagem promoted
-                  </label>
-
-                  {deathXpLoss != null ? (
-                    <p className="rounded-lg border border-rubi-danger/30 bg-rubi-danger/5 p-2 text-[11px] text-muted-foreground">
-                      Perda estimada: <strong className="text-rubi-danger">{fmtNum(deathXpLoss)} XP</strong> — a Raw
-                      XP dessa sessão é corrigida somando esse valor de volta, pra não distorcer a Raw XP/h desse
-                      spot. A perda em si fica registrada em <strong className="text-foreground">Meu rendimento → Mortes</strong>.
-                    </p>
-                  ) : (
-                    <p className="text-[11px] text-rubi-danger">Informe o level pra calcular a perda.</p>
-                  )}
                 </div>
               )}
             </div>

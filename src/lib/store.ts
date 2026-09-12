@@ -89,21 +89,25 @@ export interface Expense {
 }
 
 /**
- * Morte registrada — level, bênçãos e promoted no momento, mais a XP perdida
- * (calculada pela fórmula oficial do Tibia ou informada direto). Descontada do
- * "Raw XP total" pra chegar na "XP líquida" de cada personagem.
+ * Morte registrada — XP perdida (calculada pela fórmula oficial do Tibia,
+ * informada direto, ou detectada automaticamente pela Raw XP negativa do
+ * Hunting Analyser). Descontada do "Raw XP total" pra chegar na "XP líquida"
+ * de cada personagem.
  *
  * `sessionId` liga a morte à sessão de hunt em que ela aconteceu, quando
  * registrada direto na importação (o Hunting Analyser mistura a XP da morte
- * com a da caçada — a sessão já é salva com a Raw XP corrigida somando essa
- * perda de volta, então o vínculo aqui é só pra rastreabilidade/exibição).
- * Null pra mortes registradas soltas, sem sessão associada.
+ * com a da caçada — a sessão já é salva com a Raw XP zerada nesse caso, já
+ * que não dá pra separar quanto foi caça e quanto foi perda). Null pra mortes
+ * registradas soltas, sem sessão associada.
+ *
+ * `level` fica null quando a morte foi detectada automaticamente na
+ * importação e o level do personagem ainda não era conhecido.
  */
 export interface Death {
   id: string;
   characterId: string;
   sessionId: string | null;
-  level: number;
+  level: number | null;
   blessings: number;
   promoted: boolean;
   xpLost: number;
@@ -322,7 +326,7 @@ export const useAppStore = create<State>()((set, get) => ({
         id: d.id,
         characterId: d.character_id,
         sessionId: d.session_id ?? null,
-        level: Number(d.level ?? 0),
+        level: d.level == null ? null : Number(d.level),
         blessings: Number(d.blessings ?? 0),
         promoted: Boolean(d.promoted),
         xpLost: Number(d.xp_lost ?? 0),
@@ -708,7 +712,7 @@ export const useAppStore = create<State>()((set, get) => ({
       id: data.id,
       characterId: data.character_id,
       sessionId: data.session_id ?? null,
-      level: Number(data.level ?? 0),
+      level: data.level == null ? null : Number(data.level),
       blessings: Number(data.blessings ?? 0),
       promoted: Boolean(data.promoted),
       xpLost: Number(data.xp_lost ?? 0),

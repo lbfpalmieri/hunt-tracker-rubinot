@@ -1089,10 +1089,17 @@ function RendimentoPage() {
                     key={d.id}
                     className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
                   >
-                    <span className="flex-none font-mono font-semibold">Level {d.level}</span>
-                    <span className="flex-none text-xs text-muted-foreground">
-                      {d.promoted ? "promoted" : "não promoted"} · {d.blessings} bênção{d.blessings === 1 ? "" : "s"}
-                    </span>
+                    {d.level != null ? (
+                      <>
+                        <span className="flex-none font-mono font-semibold">Level {d.level}</span>
+                        <span className="flex-none text-xs text-muted-foreground">
+                          {d.promoted ? "promoted" : "não promoted"} · {d.blessings} bênção
+                          {d.blessings === 1 ? "" : "s"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="flex-none text-xs text-muted-foreground">Detectada automaticamente</span>
+                    )}
                     {d.note && (
                       <span
                         className="min-w-0 basis-full truncate text-xs text-muted-foreground sm:basis-auto sm:flex-1"
