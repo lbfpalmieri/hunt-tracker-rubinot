@@ -23,8 +23,3 @@ export const GEAR_SLOTS: GearSlot[] = [
 ];
 
 export const MAX_IMBUEMENTS_PER_ITEM = 3;
-
-export function getGearSlot(id: string | null | undefined): GearSlot | null {
-  if (!id) return null;
-  return GEAR_SLOTS.find((s) => s.id === id) ?? null;
-}

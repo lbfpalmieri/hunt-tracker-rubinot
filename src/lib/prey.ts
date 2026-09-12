@@ -29,24 +29,11 @@ export function preyBonusLabel(b: string): string {
   return PREY_BONUSES.find((x) => x.value === b)?.label ?? b;
 }
 
-export function preyBonusEmoji(b: string): string {
-  return PREY_BONUSES.find((x) => x.value === b)?.emoji ?? "";
-}
-
 /** Short human label, e.g. "XP Bonus 40% (Ingol)". */
 export function preySlotLabel(slot: { bonus: string; pct?: number | null; creature?: string | null }): string {
   const pct = slot.pct != null ? ` ${slot.pct}%` : "";
   const creature = slot.creature ? ` (${slot.creature})` : "";
   return `${preyBonusLabel(slot.bonus)}${pct}${creature}`;
-}
-
-/** Accepts "40", "40%", "40,5". Returns null when empty/invalid. */
-export function parsePct(raw: string): number | null {
-  const s = raw.trim().replace("%", "").replace(",", ".");
-  if (!s) return null;
-  const n = Number(s);
-  if (!Number.isFinite(n) || n < 0 || n > 100) return null;
-  return Math.round(n * 10) / 10;
 }
 
 /** Normalizes whatever came from the database into a clean slot list. */

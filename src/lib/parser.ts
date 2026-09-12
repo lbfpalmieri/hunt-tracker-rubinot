@@ -241,15 +241,3 @@ export function parseMiscellaneous(text: string): MiscData {
   };
 }
 
-export function splitCombinedInput(text: string): {
-  hunting: string;
-  damage: string;
-  misc: string;
-} {
-  // Heuristic split — users can paste all three blocks separated by blank lines or headers.
-  const miscStart = String.raw`\n\s*(?:Charm(?:\s+Data)?|Imbuement(?:\s+Data)?|Item Upgrade)\s*:?`;
-  const hunting = new RegExp(String.raw`Session data:[\s\S]*?(?=(?:\n\s*Received Damage|${miscStart}|$))`).exec(text)?.[0] ?? "";
-  const damage = new RegExp(String.raw`Received Damage[\s\S]*?(?=(?:${miscStart}|\n\s*Session:|$))`).exec(text)?.[0] ?? "";
-  const misc = new RegExp(String.raw`(?:^|\n)(?:-\s*)?Session:[\s\S]*?(?:Charm(?:\s+Data)?|Imbuement(?:\s+Data)?|Item Upgrade)\s*:?[\s\S]*$`, "i").exec(text)?.[0] ?? "";
-  return { hunting: hunting.trim(), damage: damage.trim(), misc: misc.trim() };
-}

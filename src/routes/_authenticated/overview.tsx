@@ -307,10 +307,10 @@ function OverviewPage() {
         <Wallet className="mt-0.5 h-4 w-4 flex-none text-rubi-blue" />
         <p>
           <strong className="text-foreground">Balance total</strong> é a soma bruta de todas as sessões (
-          <code>loot − supplies</code>), igual ao "Balance acumulado" do Dashboard de cada personagem.{" "}
-          <strong className="text-foreground">Saldo atual</strong> já desconta imbuements consumidos e gastos
-          registrados em Meu rendimento. Personagens sem sessão ainda aparecem no comparativo, mas ficam de fora
-          do destaque verde.
+          <code>loot − supplies</code>), sem descontar nada — o mesmo número que aparece em Meu rendimento de cada
+          personagem. <strong className="text-foreground">Saldo atual</strong> já desconta imbuements consumidos e
+          gastos registrados. Personagens sem sessão ainda aparecem no comparativo, mas ficam de fora do destaque
+          verde.
         </p>
       </div>
     </AppShell>
