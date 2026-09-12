@@ -327,8 +327,11 @@ function RendimentoPage() {
   // "Raw XP total" já existe (lifetimeAgg, calculado acima pros Gastos) — só falta descontar as mortes.
   const netRawXp = lifetimeAgg.totalRawXp - totalXpLostValue;
 
+  // Padrão é "sei quanto perdi" (você viu o valor no jogo, digita e pronto — nem
+  // precisa do level). "Calcular pela fórmula" fica escondido atrás de um link,
+  // só pra quem realmente não sabe o valor e quer que o sistema estime.
   const [deathDialogOpen, setDeathDialogOpen] = useState(false);
-  const [deathMode, setDeathMode] = useState<"formula" | "amount">("formula");
+  const [deathMode, setDeathMode] = useState<"amount" | "formula">("amount");
   const [deathLevel, setDeathLevel] = useState("");
   const [deathXpToNext, setDeathXpToNext] = useState("");
   const [deathBlessings, setDeathBlessings] = useState(0);
@@ -339,7 +342,7 @@ function RendimentoPage() {
   const [deathError, setDeathError] = useState<string | null>(null);
 
   const openDeathDialog = () => {
-    setDeathMode("formula");
+    setDeathMode("amount");
     setDeathLevel(currentLevel ? String(currentLevel.level) : "");
     setDeathXpToNext("");
     setDeathBlessings(0);
@@ -351,20 +354,19 @@ function RendimentoPage() {
   };
 
   const deathLevelNum = Number(deathLevel.trim().replace(",", "."));
+  const deathLevelValid = Number.isFinite(deathLevelNum) && deathLevelNum > 0;
   const deathXpToNextNum = deathXpToNext.trim() ? parseXpAmount(deathXpToNext) : null;
-  const deathEffectiveLevel =
-    Number.isFinite(deathLevelNum) && deathLevelNum > 0 ? fractionalLevel(deathLevelNum, deathXpToNextNum) : null;
+  const deathEffectiveLevel = deathLevelValid ? fractionalLevel(deathLevelNum, deathXpToNextNum) : null;
   const formulaXpLoss =
     deathEffectiveLevel != null
       ? computeDeathXpLoss({ level: deathEffectiveLevel, blessings: deathBlessings, promoted: deathPromoted })
       : null;
   const amountXpLoss = deathAmount.trim() ? parseXpAmount(deathAmount) : null;
   const finalXpLoss = deathMode === "formula" ? formulaXpLoss : amountXpLoss;
+  // No modo "sei quanto perdi" o level é só um detalhe opcional pro histórico —
+  // só vira obrigatório no modo fórmula, onde é o que alimenta o cálculo.
   const deathReady =
-    Number.isFinite(deathLevelNum) &&
-    deathLevelNum > 0 &&
-    finalXpLoss != null &&
-    finalXpLoss > 0;
+    finalXpLoss != null && finalXpLoss > 0 && (deathMode === "amount" || deathLevelValid);
 
   const handleAddDeath = async () => {
     if (!active || !deathReady || finalXpLoss == null) return;
@@ -374,7 +376,7 @@ function RendimentoPage() {
       await addDeath({
         characterId: active.id,
         sessionId: null,
-        level: Math.round(deathLevelNum * 100) / 100,
+        level: deathLevelValid ? Math.round(deathLevelNum * 100) / 100 : null,
         blessings: deathMode === "formula" ? deathBlessings : 0,
         promoted: deathMode === "formula" ? deathPromoted : false,
         xpLost: Math.round(finalXpLoss),
@@ -1138,58 +1140,68 @@ function RendimentoPage() {
               <DialogHeader>
                 <DialogTitle>Registrar morte</DialogTitle>
                 <DialogDescription>
-                  Calcula a XP perdida pela fórmula oficial do Tibia, ou você informa o valor exato se já souber.
+                  {deathMode === "amount"
+                    ? "Viu quanto de XP perdeu? É só digitar."
+                    : "Sem o valor exato? O sistema calcula pela fórmula oficial do Tibia."}
                 </DialogDescription>
               </DialogHeader>
 
-              <label className="block">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Level no momento da morte
-                </span>
-                <input
-                  autoFocus
-                  inputMode="decimal"
-                  value={deathLevel}
-                  onChange={(e) => setDeathLevel(e.target.value)}
-                  placeholder="Ex: 245"
-                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                />
-              </label>
+              {deathMode === "amount" ? (
+                <>
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      XP perdida
+                    </span>
+                    <input
+                      autoFocus
+                      inputMode="numeric"
+                      value={deathAmount}
+                      onChange={(e) => setDeathAmount(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddDeath();
+                      }}
+                      placeholder="Ex: 2.5kk"
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                    />
+                  </label>
 
-              <div>
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Como você quer informar a perda
-                </span>
-                <div className="mt-1.5 flex rounded-lg border border-border p-1 text-xs">
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Level <span className="opacity-60">(opcional)</span>
+                    </span>
+                    <input
+                      inputMode="decimal"
+                      value={deathLevel}
+                      onChange={(e) => setDeathLevel(e.target.value)}
+                      placeholder="Ex: 245"
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                    />
+                  </label>
+
                   <button
                     type="button"
                     onClick={() => setDeathMode("formula")}
-                    className={
-                      "flex-1 rounded-md px-2 py-1.5 font-medium transition-colors " +
-                      (deathMode === "formula"
-                        ? "bg-rubi-danger/15 text-rubi-danger"
-                        : "text-muted-foreground hover:text-foreground")
-                    }
+                    className="text-left text-xs text-rubi-blue underline decoration-dotted hover:text-foreground"
                   >
-                    Calcular pela fórmula
+                    Não sabe o valor exato? Calcular pela fórmula
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeathMode("amount")}
-                    className={
-                      "flex-1 rounded-md px-2 py-1.5 font-medium transition-colors " +
-                      (deathMode === "amount"
-                        ? "bg-rubi-danger/15 text-rubi-danger"
-                        : "text-muted-foreground hover:text-foreground")
-                    }
-                  >
-                    Sei quanto perdi
-                  </button>
-                </div>
-              </div>
-
-              {deathMode === "formula" ? (
+                </>
+              ) : (
                 <>
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Level no momento da morte
+                    </span>
+                    <input
+                      autoFocus
+                      inputMode="decimal"
+                      value={deathLevel}
+                      onChange={(e) => setDeathLevel(e.target.value)}
+                      placeholder="Ex: 245"
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
+                    />
+                  </label>
+
                   <label className="block">
                     <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       XP faltando pro próximo level <span className="opacity-60">(opcional, deixa mais preciso)</span>
@@ -1243,18 +1255,15 @@ function RendimentoPage() {
                       perda-base)
                     </p>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => setDeathMode("amount")}
+                    className="text-left text-xs text-rubi-blue underline decoration-dotted hover:text-foreground"
+                  >
+                    ← Já sei o valor exato
+                  </button>
                 </>
-              ) : (
-                <label className="block">
-                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">XP perdida</span>
-                  <input
-                    inputMode="numeric"
-                    value={deathAmount}
-                    onChange={(e) => setDeathAmount(e.target.value)}
-                    placeholder="Ex: 2.5kk"
-                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                  />
-                </label>
               )}
 
               <label className="block">
