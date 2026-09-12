@@ -21,7 +21,8 @@ import { aggregateImbuements } from "@/lib/imbuements";
 import { type Period, PERIODS, periodRange, formatRange, filterByPeriod } from "@/lib/period";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { huntRawXp, parseXpAmount } from "@/lib/bounty";
-import { MAX_BLESSINGS, computeDeathXpLoss, deathReduction, fractionalLevel, totalXpLost } from "@/lib/deaths";
+import { totalXpLost } from "@/lib/deaths";
+import { parseHunting } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { confirmDialog } from "@/lib/confirm-dialog";
 import { useCountUp } from "@/lib/use-count-up";
@@ -327,46 +328,39 @@ function RendimentoPage() {
   // "Raw XP total" já existe (lifetimeAgg, calculado acima pros Gastos) — só falta descontar as mortes.
   const netRawXp = lifetimeAgg.totalRawXp - totalXpLostValue;
 
-  // Padrão é "sei quanto perdi" (você viu o valor no jogo, digita e pronto — nem
-  // precisa do level). "Calcular pela fórmula" fica escondido atrás de um link,
-  // só pra quem realmente não sabe o valor e quer que o sistema estime.
+  // O próprio Tibia já desconta bênçãos/promotion na hora de calcular a perda —
+  // não precisamos recalcular nada. Padrão é colar o Hunting Analyser (a mesma
+  // detecção usada na importação); "sei o valor" fica de reserva pra quem não
+  // tem o texto à mão (ex.: uma morte antiga, sem print salvo).
   const [deathDialogOpen, setDeathDialogOpen] = useState(false);
-  const [deathMode, setDeathMode] = useState<"amount" | "formula">("amount");
-  const [deathLevel, setDeathLevel] = useState("");
-  const [deathXpToNext, setDeathXpToNext] = useState("");
-  const [deathBlessings, setDeathBlessings] = useState(0);
-  const [deathPromoted, setDeathPromoted] = useState(false);
+  const [deathMode, setDeathMode] = useState<"paste" | "amount">("paste");
+  const [deathPasteText, setDeathPasteText] = useState("");
   const [deathAmount, setDeathAmount] = useState("");
   const [deathNote, setDeathNote] = useState("");
   const [savingDeath, setSavingDeath] = useState(false);
   const [deathError, setDeathError] = useState<string | null>(null);
 
   const openDeathDialog = () => {
-    setDeathMode("amount");
-    setDeathLevel(currentLevel ? String(currentLevel.level) : "");
-    setDeathXpToNext("");
-    setDeathBlessings(0);
-    setDeathPromoted(false);
+    setDeathMode("paste");
+    setDeathPasteText("");
     setDeathAmount("");
     setDeathNote("");
     setDeathError(null);
     setDeathDialogOpen(true);
   };
 
-  const deathLevelNum = Number(deathLevel.trim().replace(",", "."));
-  const deathLevelValid = Number.isFinite(deathLevelNum) && deathLevelNum > 0;
-  const deathXpToNextNum = deathXpToNext.trim() ? parseXpAmount(deathXpToNext) : null;
-  const deathEffectiveLevel = deathLevelValid ? fractionalLevel(deathLevelNum, deathXpToNextNum) : null;
-  const formulaXpLoss =
-    deathEffectiveLevel != null
-      ? computeDeathXpLoss({ level: deathEffectiveLevel, blessings: deathBlessings, promoted: deathPromoted })
-      : null;
+  const detectedFromPaste = useMemo(() => {
+    if (!deathPasteText.trim()) return null;
+    try {
+      const h = parseHunting(deathPasteText);
+      return h.rawXp < 0 ? Math.abs(h.rawXp) : null;
+    } catch {
+      return null;
+    }
+  }, [deathPasteText]);
   const amountXpLoss = deathAmount.trim() ? parseXpAmount(deathAmount) : null;
-  const finalXpLoss = deathMode === "formula" ? formulaXpLoss : amountXpLoss;
-  // No modo "sei quanto perdi" o level é só um detalhe opcional pro histórico —
-  // só vira obrigatório no modo fórmula, onde é o que alimenta o cálculo.
-  const deathReady =
-    finalXpLoss != null && finalXpLoss > 0 && (deathMode === "amount" || deathLevelValid);
+  const finalXpLoss = deathMode === "paste" ? detectedFromPaste : amountXpLoss;
+  const deathReady = finalXpLoss != null && finalXpLoss > 0;
 
   const handleAddDeath = async () => {
     if (!active || !deathReady || finalXpLoss == null) return;
@@ -376,11 +370,11 @@ function RendimentoPage() {
       await addDeath({
         characterId: active.id,
         sessionId: null,
-        level: deathLevelValid ? Math.round(deathLevelNum * 100) / 100 : null,
-        blessings: deathMode === "formula" ? deathBlessings : 0,
-        promoted: deathMode === "formula" ? deathPromoted : false,
+        level: currentLevel?.level ?? null,
+        blessings: 0,
+        promoted: false,
         xpLost: Math.round(finalXpLoss),
-        note: deathNote.trim() || null,
+        note: deathNote.trim() || (deathMode === "paste" ? "Detectada a partir do Hunting Analyser colado" : null),
       });
       setDeathDialogOpen(false);
     } catch (e) {
@@ -1033,23 +1027,22 @@ function RendimentoPage() {
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                   <Skull className="h-3.5 w-3.5 text-rubi-danger" />
                   XP perdida em mortes
-                  <InfoHint title="Perda de XP na morte" description="Como o Tibia calcula quanto de XP você perde ao morrer.">
+                  <InfoHint title="Perda de XP na morte" description="Como o sistema descobre quanto de XP você perdeu.">
                     <p>
-                      Até o <strong>level 23</strong>: perde <strong>10%</strong> flat de todo o XP acumulado. Do{" "}
-                      <strong>level 24</strong> em diante:{" "}
-                      <code>((level+50)/100) × 50×(level²−5×level+8)</code> pontos de XP — fórmula oficial do Tibia.
+                      O próprio Tibia já calcula sua perda de XP na morte considerando <strong>bênçãos</strong> e{" "}
+                      <strong>promotion</strong> — a gente não precisa saber mais nada sobre isso, só ler esse número
+                      direto do <strong>Hunting Analyser</strong> (quando você morre, ele fecha negativo).
                     </p>
                     <p>
-                      Essa perda-base é reduzida por <strong>personagem promoted (−30%)</strong> e{" "}
-                      <strong>cada bênção ativa (−8%, até 7)</strong>. Com tudo ativo o teto é <strong>−86%</strong> —
-                      confirmado no próprio painel de Blessings do RubinOT.
+                      <strong>Importante:</strong> cole o Hunting Analyser logo depois de morrer, antes de caçar
+                      mais. Se você continuar a sessão e recuperar XP, o Raw XP pode voltar a ficar positivo — e aí
+                      não tem como o sistema saber que houve uma morte no meio do caminho.
                     </p>
                     <p>
-                      Quanto mais preciso o level (com decimais), mais exata a conta. Se souber quanto de XP falta
-                      pro próximo level (o jogo mostra esse valor), informe — o sistema deriva o decimal certinho
-                      sozinho. Sem isso, só o level inteiro já funciona, só que um pouco menos preciso.
+                      Ao importar uma sessão inteira (em <strong>Nova sessão</strong>), isso já é detectado
+                      automaticamente. Aqui você pode colar o mesmo texto separadamente, sem precisar importar a
+                      sessão — por exemplo, se morreu num boss e quer registrar só isso.
                     </p>
-                    <p>Já sabe o valor exato que perdeu? Dá pra digitar direto, sem precisar de level/bênçãos.</p>
                     <p>
                       <strong>Raw XP líquida:</strong> <code>Raw XP total − XP perdida em mortes</code> — mesmo
                       espírito do Saldo atual do gold, só que pra experiência.
@@ -1091,16 +1084,8 @@ function RendimentoPage() {
                     key={d.id}
                     className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
                   >
-                    {d.level != null ? (
-                      <>
-                        <span className="flex-none font-mono font-semibold">Level {d.level}</span>
-                        <span className="flex-none text-xs text-muted-foreground">
-                          {d.promoted ? "promoted" : "não promoted"} · {d.blessings} bênção
-                          {d.blessings === 1 ? "" : "s"}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="flex-none text-xs text-muted-foreground">Detectada automaticamente</span>
+                    {d.level != null && (
+                      <span className="flex-none font-mono font-semibold">Level {d.level}</span>
                     )}
                     {d.note && (
                       <span
@@ -1140,13 +1125,49 @@ function RendimentoPage() {
               <DialogHeader>
                 <DialogTitle>Registrar morte</DialogTitle>
                 <DialogDescription>
-                  {deathMode === "amount"
-                    ? "Viu quanto de XP perdeu? É só digitar."
-                    : "Sem o valor exato? O sistema calcula pela fórmula oficial do Tibia."}
+                  {deathMode === "paste"
+                    ? "Cole o Hunting Analyser de logo depois que você morreu — o jogo já calcula sua perda de XP, a gente só lê esse número."
+                    : "Já sabe o valor exato que perdeu? Digite direto."}
                 </DialogDescription>
               </DialogHeader>
 
-              {deathMode === "amount" ? (
+              {deathMode === "paste" ? (
+                <>
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Hunting Analyser
+                    </span>
+                    <textarea
+                      autoFocus
+                      value={deathPasteText}
+                      onChange={(e) => setDeathPasteText(e.target.value)}
+                      placeholder="Cole aqui o texto do Hunting Analyser"
+                      rows={5}
+                      className="mt-2 w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-rubi-danger"
+                    />
+                  </label>
+
+                  {deathPasteText.trim().length === 0 ? null : detectedFromPaste != null ? (
+                    <p className="rounded-lg border border-rubi-danger/30 bg-rubi-danger/5 p-2.5 text-xs text-muted-foreground">
+                      Detectamos <strong className="text-rubi-danger">{fmtNum(detectedFromPaste)} XP</strong> perdida
+                      nesse texto.
+                    </p>
+                  ) : (
+                    <p className="rounded-lg border border-border/60 bg-background/40 p-2.5 text-xs text-muted-foreground">
+                      Não encontramos XP negativa nesse texto. Confira se colou o Hunting Analyser certo, e se colou
+                      logo após a morte — antes de caçar mais e a XP voltar a ficar positiva.
+                    </p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setDeathMode("amount")}
+                    className="text-left text-xs text-rubi-blue underline decoration-dotted hover:text-foreground"
+                  >
+                    Não tem o Hunting Analyser? Informar o valor manualmente
+                  </button>
+                </>
+              ) : (
                 <>
                   <label className="block">
                     <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -1165,103 +1186,12 @@ function RendimentoPage() {
                     />
                   </label>
 
-                  <label className="block">
-                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Level <span className="opacity-60">(opcional)</span>
-                    </span>
-                    <input
-                      inputMode="decimal"
-                      value={deathLevel}
-                      onChange={(e) => setDeathLevel(e.target.value)}
-                      placeholder="Ex: 245"
-                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                    />
-                  </label>
-
                   <button
                     type="button"
-                    onClick={() => setDeathMode("formula")}
+                    onClick={() => setDeathMode("paste")}
                     className="text-left text-xs text-rubi-blue underline decoration-dotted hover:text-foreground"
                   >
-                    Não sabe o valor exato? Calcular pela fórmula
-                  </button>
-                </>
-              ) : (
-                <>
-                  <label className="block">
-                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Level no momento da morte
-                    </span>
-                    <input
-                      autoFocus
-                      inputMode="decimal"
-                      value={deathLevel}
-                      onChange={(e) => setDeathLevel(e.target.value)}
-                      placeholder="Ex: 245"
-                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      XP faltando pro próximo level <span className="opacity-60">(opcional, deixa mais preciso)</span>
-                    </span>
-                    <input
-                      inputMode="numeric"
-                      value={deathXpToNext}
-                      onChange={(e) => setDeathXpToNext(e.target.value)}
-                      placeholder="Ex: 1.2kk"
-                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
-                    />
-                  </label>
-
-                  <div>
-                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Bênçãos ativas
-                    </span>
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {Array.from({ length: MAX_BLESSINGS + 1 }, (_, n) => n).map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setDeathBlessings(n)}
-                          className={
-                            "h-8 w-8 rounded-md border text-xs font-semibold transition-colors " +
-                            (deathBlessings === n
-                              ? "border-rubi-danger bg-rubi-danger/15 text-rubi-danger"
-                              : "border-border/60 text-muted-foreground hover:border-rubi-danger/40")
-                          }
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={deathPromoted}
-                      onChange={(e) => setDeathPromoted(e.target.checked)}
-                      className="h-4 w-4 accent-[var(--rubi-danger)]"
-                    />
-                    Personagem promoted
-                  </label>
-
-                  {deathEffectiveLevel != null && formulaXpLoss != null && (
-                    <p className="rounded-lg border border-rubi-danger/30 bg-rubi-danger/5 p-2.5 text-xs text-muted-foreground">
-                      Perda estimada: <strong className="text-rubi-danger">{fmtNum(formulaXpLoss)} XP</strong>
-                      {" "}({Math.round(deathReduction(deathBlessings, deathPromoted) * 100)}% de redução sobre a
-                      perda-base)
-                    </p>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setDeathMode("amount")}
-                    className="text-left text-xs text-rubi-blue underline decoration-dotted hover:text-foreground"
-                  >
-                    ← Já sei o valor exato
+                    ← Colar o Hunting Analyser
                   </button>
                 </>
               )}

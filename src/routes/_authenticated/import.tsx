@@ -471,6 +471,11 @@ function ImportPage() {
           <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">V</kbd> em
           qualquer lugar da tela — o sistema identifica o bloco e encaixa no lugar certo.
         </p>
+        <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
+          <Skull className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-danger/70" />
+          Se você morreu durante a hunt, cole o Hunting Analyser logo em seguida — antes de caçar mais, senão a
+          Raw XP pode voltar a ficar positiva e o sistema não consegue detectar a morte.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

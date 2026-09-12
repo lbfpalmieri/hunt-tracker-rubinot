@@ -256,7 +256,7 @@ function Dashboard() {
                 <p><strong>Raw XP / hora (média):</strong> <code>Raw XP total ÷ horas caçadas consideradas</code>. Média ponderada pelo tempo, então hunts longas pesam mais que curtas.</p>
                 <p><strong>Bounty Task:</strong> quando você marca uma sessão como tendo bônus de Bounty e informa a XP do bônus, ela é descontada da Raw XP. Se o valor não for informado, a sessão fica fora das médias de Raw XP.</p>
                 <p>A <em>XP com bônus</em> (<code>XP Gain</code>) aparece como valor secundário — ela varia conforme os bônus ativos, por isso a Raw XP é a referência principal.</p>
-                <p><strong>XP líquida:</strong> <code>Raw XP total − XP perdida em mortes</code>. Toda morte no Tibia desconta XP (10% flat até o level 23, uma fórmula do level 24+ em diante — reduzida por promoted e bênçãos). Registre suas mortes em <strong>Meu rendimento → Mortes</strong> pra esse número aparecer aqui.</p>
+                <p><strong>XP líquida:</strong> <code>Raw XP total − XP perdida em mortes</code>. Quando você morre, o Hunting Analyser fecha com Raw XP negativa (o jogo já desconta bênçãos e promotion nesse número) — o sistema detecta isso sozinho ao importar, ou você cola o mesmo texto em <strong>Meu rendimento → Mortes</strong> pra registrar uma morte separadamente.</p>
               </InfoHint>
             </div>
             <div className={"grid grid-cols-1 gap-4 " + (myDeaths.length > 0 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
