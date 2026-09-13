@@ -21,7 +21,7 @@ import { aggregateImbuements } from "@/lib/imbuements";
 import { type Period, PERIODS, periodRange, formatRange, filterByPeriod } from "@/lib/period";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { huntRawXp, parseXpAmount } from "@/lib/bounty";
-import { totalXpLost } from "@/lib/deaths";
+import { detectDeathLoss, totalXpLost } from "@/lib/deaths";
 import { parseHunting } from "@/lib/parser";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -352,8 +352,7 @@ function RendimentoPage() {
   const detectedFromPaste = useMemo(() => {
     if (!deathPasteText.trim()) return null;
     try {
-      const h = parseHunting(deathPasteText);
-      return h.rawXp < 0 ? Math.abs(h.rawXp) : null;
+      return detectDeathLoss(parseHunting(deathPasteText));
     } catch {
       return null;
     }

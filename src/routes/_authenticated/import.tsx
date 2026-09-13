@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { parseHunting, parseDamage, parseMiscellaneous } from "@/lib/parser";
+import { detectDeathLoss } from "@/lib/deaths";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { Crown } from "lucide-react";
@@ -311,11 +312,10 @@ function ImportPage() {
     ? "Não reconheci esse bloco. Copie o Hunt Analyser completo do jogo."
     : "Duração não identificada. O texto precisa incluir \"Session data: From ... to ...\" e \"Session length\".";
 
-  // Raw XP negativa normalmente só acontece por um motivo: uma morte durante a
-  // sessão. O valor observado já É a perda líquida — não precisa pedir level,
-  // bênçãos ou promoted pra recalcular nada, é só usar o número que veio do jogo.
-  const detectedDeathLoss =
-    parsed.hunting && parsed.hunting.rawXp < 0 ? Math.abs(parsed.hunting.rawXp) : null;
+  // Raw XP ou XP com bônus negativa normalmente só acontece por um motivo: uma
+  // morte durante a sessão. O valor observado já É a perda líquida — não
+  // precisa pedir level, bênçãos ou promoted pra recalcular nada.
+  const detectedDeathLoss = parsed.hunting ? detectDeathLoss(parsed.hunting) : null;
   const willRegisterDeath = detectedDeathLoss != null && !deathOptOut;
 
   const canSave = Boolean(
@@ -331,11 +331,18 @@ function ImportPage() {
     try {
       // Idempotent by name — reuses the existing hunt row if one already matches.
       await addHunt(effectiveCharId, selectedHuntName);
-      // Não dá pra separar quanto da Raw XP negativa foi caça e quanto foi a
-      // morte — zeramos essa sessão pros fins de Raw XP/h (nem soma nem
-      // subtrai a média do spot) e a perda em si vira um registro à parte.
+      // Não dá pra separar quanto foi caça e quanto foi a morte no campo que
+      // fechou negativo — zeramos só esse(s) campo(s) pros fins de Raw XP/h
+      // (nem soma nem subtrai a média do spot; o outro campo, se já positivo,
+      // fica intacto) e a perda em si vira um registro à parte.
       const correctedHunting = willRegisterDeath
-        ? { ...parsed.hunting, rawXp: Math.max(0, parsed.hunting.rawXp), xpGain: Math.max(0, parsed.hunting.xpGain) }
+        ? {
+            ...parsed.hunting,
+            rawXp: Math.max(0, parsed.hunting.rawXp),
+            xpGain: Math.max(0, parsed.hunting.xpGain),
+            rawXpPerHour: Math.max(0, parsed.hunting.rawXpPerHour),
+            xpPerHour: Math.max(0, parsed.hunting.xpPerHour),
+          }
         : parsed.hunting;
       const created = await addSession({
         characterId: effectiveCharId,
@@ -362,7 +369,7 @@ function ImportPage() {
             blessings: 0,
             promoted: false,
             xpLost: Math.round(detectedDeathLoss),
-            note: `Detectada automaticamente na hunt "${selectedHuntName}" (Raw XP negativa no Hunting Analyser)`,
+            note: `Detectada automaticamente na hunt "${selectedHuntName}" (XP negativa no Hunting Analyser)`,
           });
         } catch (e) {
           // A sessão já foi salva — a morte é só um complemento, não bloqueia o fluxo.
@@ -573,8 +580,9 @@ function ImportPage() {
                   </div>
                   {willRegisterDeath && (
                     <p className="mt-1.5 opacity-80">
-                      A Raw XP dessa sessão fica zerada (não dá pra saber quanto foi caça e quanto foi a morte) — a
-                      perda em si fica registrada em <strong className="text-foreground">Meu rendimento → Mortes</strong>.
+                      O valor que ficou negativo é zerado nessa sessão (não dá pra saber quanto foi caça e quanto
+                      foi a morte) — a perda em si fica registrada em{" "}
+                      <strong className="text-foreground">Meu rendimento → Mortes</strong>.
                     </p>
                   )}
                 </div>
