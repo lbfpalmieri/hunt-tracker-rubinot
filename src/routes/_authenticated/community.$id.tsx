@@ -84,7 +84,8 @@ function SessionView({ session }: { session: any }) {
           {session.prey && <PreyBadge prey={session.prey} detailed />}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          {session.charName} · {session.vocation} · {fmtDate(session.createdAt)}
+          {session.charName} · {session.vocation}
+          {session.level != null ? ` · Lvl ${fmtNum(session.level)}` : ""} · {fmtDate(session.createdAt)}
         </p>
       </div>
 

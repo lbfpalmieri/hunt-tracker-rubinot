@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveDurationSec, type HuntingData, type DamageData, type MiscData } from "./parser";
 import type { BountyInfo, BountyDifficulty, BountyTier } from "./bounty";
 import { normalizePrey, type PreySlot } from "./prey";
+import { currentLevel } from "./level";
 
 /** Repara sessões antigas salvas sem duração, derivando do intervalo/miscellaneous. */
 const withDuration = (h: HuntingData, misc: MiscData | null): HuntingData => ({
@@ -477,6 +478,10 @@ export const useAppStore = create<State>()((set, get) => ({
       }
     }
     if (!char?.name) throw new Error("Personagem não encontrado — recarregue a página e tente novamente.");
+    // Level do personagem "agora" (no momento do save), usado só para a Comunidade
+    // calcular a média de level por spot — nunca exposto na sessão privada do usuário.
+    // Level 0/inexistente fica null para não distorcer a média.
+    const lvlNow = currentLevel(get().levelSnapshots, input.characterId);
     const { data, error } = await db
       .from("hunt_sessions")
       .insert({
@@ -490,6 +495,7 @@ export const useAppStore = create<State>()((set, get) => ({
         is_public: input.isPublic ?? true,
         char_name: char?.name ?? null,
         char_vocation: char?.vocation ?? null,
+        char_level: lvlNow && lvlNow > 0 ? lvlNow : null,
         bounty_difficulty: input.bounty?.difficulty ?? null,
         bounty_tier: input.bounty?.tier ?? null,
         bounty_xp: input.bounty?.xp ?? null,

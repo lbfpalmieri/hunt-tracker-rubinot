@@ -1,12 +1,12 @@
 -- ============================================================================
---  MIGRATION PENDENTE — rodar UMA VEZ no SQL Editor do Supabase / Lovable
+--  MIGRATIONS PENDENTES — rodar UMA VEZ no SQL Editor do Supabase / Lovable
 -- ============================================================================
---  A feature "Mortes" (débito de XP em Meu rendimento/Dashboard) precisa desta
---  tabela nova. Este arquivo é 100% idempotente (seguro rodar de novo, não
---  quebra nada se já tiver sido aplicado). Consolida:
+--  Este arquivo é 100% idempotente (seguro rodar de novo, não quebra nada se
+--  algum bloco já tiver sido aplicado). Consolida:
 --    - supabase/migrations/20260912120000_...  (tabela deaths)
 --    - supabase/migrations/20260912130000_...  (coluna session_id em deaths)
 --    - supabase/migrations/20260912140000_...  (level aceita null em deaths)
+--    - supabase/migrations/20260914120000_...  (char_level em hunt_sessions)
 -- ============================================================================
 
 -- 1) Tabela de mortes ---------------------------------------------------------
@@ -43,5 +43,13 @@ ALTER TABLE public.deaths ALTER COLUMN level DROP NOT NULL;
 ALTER TABLE public.deaths DROP CONSTRAINT IF EXISTS deaths_level_check;
 ALTER TABLE public.deaths ADD CONSTRAINT deaths_level_check CHECK (level IS NULL OR level > 0);
 
--- 4) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
+-- 4) Level do personagem no momento do save, em hunt_sessions -----------------
+--    Usado "por baixo dos panos" pela Comunidade para calcular a média de
+--    level que frequenta cada spot. Null fica de fora da média (não entra
+--    como "level 0").
+ALTER TABLE public.hunt_sessions ADD COLUMN IF NOT EXISTS char_level integer;
+ALTER TABLE public.hunt_sessions DROP CONSTRAINT IF EXISTS hunt_sessions_char_level_check;
+ALTER TABLE public.hunt_sessions ADD CONSTRAINT hunt_sessions_char_level_check CHECK (char_level IS NULL OR char_level > 0);
+
+-- 5) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
 NOTIFY pgrst, 'reload schema';

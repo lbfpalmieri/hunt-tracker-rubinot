@@ -182,6 +182,8 @@ function CommunityPage() {
 
         balance: number;
         kills: number;
+        levelSum: number;
+        levelCount: number;
       }
     >();
     for (const s of sessions) {
@@ -199,6 +201,8 @@ function CommunityPage() {
           rawHours: 0,
           balance: 0,
           kills: 0,
+          levelSum: 0,
+          levelCount: 0,
         };
       cur.count += 1;
       cur.hours += s.durationSec / 3600;
@@ -210,6 +214,12 @@ function CommunityPage() {
       }
       cur.balance += s.balance;
       cur.kills += s.kills.reduce((a, k) => a + k.count, 0);
+      // Level é opcional (sessões antigas ou sem level registrado): entra na
+      // média só quando existe, pra não puxar o número pra baixo à toa.
+      if (s.level != null) {
+        cur.levelSum += s.level;
+        cur.levelCount += 1;
+      }
       map.set(key, cur);
     }
     const list = [...map.values()].map((h) => ({
@@ -218,6 +228,7 @@ function CommunityPage() {
       rawXpPerHour: h.rawHours > 0 ? h.rawXp / h.rawHours : 0,
       goldPerHour: h.hours > 0 ? h.balance / h.hours : 0,
       killsPerHour: h.hours > 0 ? h.kills / h.hours : 0,
+      avgLevel: h.levelCount > 0 ? Math.round(h.levelSum / h.levelCount) : null,
     }));
     list.sort((a, b) => {
       if (sort === "xph") return b.rawXpPerHour - a.rawXpPerHour;
@@ -607,9 +618,16 @@ function CommunityPage() {
             >
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
-                <span className="flex-none rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
-                  {h.vocation}
-                </span>
+                <div className="flex flex-none flex-col items-end gap-1">
+                  <span className="rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
+                    {h.vocation}
+                  </span>
+                  {h.avgLevel != null && (
+                    <span className="rounded-full bg-rubi-gold-soft px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                      ~Lvl {fmtNum(h.avgLevel)}
+                    </span>
+                  )}
+                </div>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {h.count} sessão(ões) · {fmtDuration(Math.round(h.hours * 3600))} registradas
@@ -648,7 +666,8 @@ function CommunityPage() {
                       {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                     </div>
                     <div className="truncate text-xs text-muted-foreground">
-                      {s.charName} · {s.vocation} · {fmtDate(s.createdAt)}
+                      {s.charName} · {s.vocation}
+                      {s.level != null ? ` · Lvl ${fmtNum(s.level)}` : ""} · {fmtDate(s.createdAt)}
                     </div>
                   </div>
                 </div>
@@ -674,7 +693,11 @@ function CommunityPage() {
               {openHuntData
                 ? `${openHuntData.meta.vocation} · ${openHuntData.meta.count} sessão(ões) · média ${fmtNum(
                     Math.round(openHuntData.meta.killsPerHour),
-                  )} kills/h`
+                  )} kills/h${
+                    openHuntData.meta.avgLevel != null
+                      ? ` · level médio ~${fmtNum(openHuntData.meta.avgLevel)}`
+                      : ""
+                  }`
                 : ""}
             </DialogDescription>
           </DialogHeader>
@@ -696,6 +719,11 @@ function CommunityPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-semibold">{s.charName}</span>
+                      {s.level != null && (
+                        <span className="flex-none rounded-full bg-rubi-gold-soft px-1.5 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                          Lvl {fmtNum(s.level)}
+                        </span>
+                      )}
                       {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
                       {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                     </div>
