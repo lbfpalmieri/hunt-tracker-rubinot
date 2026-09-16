@@ -26,6 +26,7 @@ import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
 import { BountyBadge } from "@/components/BountyBadge";
 import { formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { PositionBadge, fmtPct } from "@/components/compare/shared";
+import { GameIcon } from "@/components/GameIcon";
 
 type Better = "high" | "low" | "none";
 
@@ -145,7 +146,8 @@ const ROWS: Row[] = [
       return (
         <span className="inline-flex flex-col gap-0.5 text-xs">
           {top.map((k) => (
-            <span key={k.name}>
+            <span key={k.name} className="inline-flex items-center gap-1">
+              <GameIcon name={k.name} size={14} className="flex-none" />
               {k.name}{" "}
               <span className="font-mono text-rubi-gold">
                 ×{fmtNum(perHour(k.count, h.durationSec) ?? 0)}

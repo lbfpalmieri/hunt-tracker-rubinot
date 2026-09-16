@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
+import { GameIcon } from "@/components/GameIcon";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtNum, fmtDuration } from "@/lib/format";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -187,10 +188,11 @@ function MonsterCalculatorPage() {
                         }}
                         onMouseEnter={() => setHighlight(i)}
                         className={
-                          "cursor-pointer px-3 py-2 text-sm " +
+                          "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm " +
                           (i === highlight ? "bg-accent text-foreground" : "text-muted-foreground")
                         }
                       >
+                        <GameIcon name={m} size={20} className="flex-none" />
                         {m}
                       </li>
                     ))}
@@ -244,7 +246,7 @@ function MonsterCalculatorPage() {
           {best && (
             <div className="card-surface mb-4 flex items-start gap-4 border-rubi-gold/40 p-5">
               <div className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-rubi-gold/15 text-rubi-gold">
-                <Target className="h-6 w-6" />
+                <GameIcon name={monster} size={32} fallback={<Target className="h-6 w-6" />} />
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-medium uppercase tracking-wider text-rubi-gold">Hunt recomendada</div>

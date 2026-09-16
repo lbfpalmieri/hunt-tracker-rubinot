@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Trophy, Search, User, Globe2, Clock, Sparkles, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { GameIcon } from "@/components/GameIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
@@ -416,7 +417,11 @@ function RankingPage() {
                 <div className="mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">Top 3 monstros/h</div>
                 <div className="flex flex-wrap gap-2 text-xs">
                   {topKills(openHunt, 3).map((k) => (
-                    <span key={k.name} className="rounded-full border border-border/60 bg-background/40 px-2.5 py-1">
+                    <span
+                      key={k.name}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-1"
+                    >
+                      <GameIcon name={k.name} size={16} className="flex-none" />
                       {k.name}{" "}
                       <span className="font-mono font-semibold text-rubi-gold">
                         ×{fmtNum(perHour(k.count, openHunt.durationSec) ?? 0)}
