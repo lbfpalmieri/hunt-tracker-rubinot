@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
+import { GameIcon } from "@/components/GameIcon";
 import { getCommunitySession } from "@/lib/community.functions";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
@@ -175,9 +176,10 @@ function SessionView({ session }: { session: any }) {
                 .map((k) => (
                   <div
                     key={k.name}
-                    className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
+                    className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
                   >
-                    <span className="truncate">{k.name}</span>
+                    <GameIcon name={k.name} size={24} className="flex-none" fallback={<Skull className="h-5 w-5 flex-none text-muted-foreground/50" />} />
+                    <span className="min-w-0 flex-1 truncate">{k.name}</span>
                     <div className="ml-2 flex flex-none flex-col items-end">
                       <span className="font-mono font-semibold text-rubi-blue">×{fmtNum(Number(k.count))}</span>
                       <span className="font-mono text-[10px] text-muted-foreground">
@@ -234,10 +236,11 @@ function SessionView({ session }: { session: any }) {
               .map((it) => (
                 <div
                   key={it.name}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
+                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
                 >
-                  <span className="truncate">{it.name}</span>
-                  <span className="ml-2 font-mono font-semibold text-rubi-gold">×{fmtNum(Number(it.count))}</span>
+                  <GameIcon name={it.name} size={24} className="flex-none" fallback={<Package className="h-5 w-5 flex-none text-muted-foreground/50" />} />
+                  <span className="min-w-0 flex-1 truncate">{it.name}</span>
+                  <span className="ml-2 flex-none font-mono font-semibold text-rubi-gold">×{fmtNum(Number(it.count))}</span>
                 </div>
               ))}
           </div>

@@ -10,6 +10,7 @@ import { BountyEditor } from "@/components/BountyEditor";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
 import { SessionNotesEditor } from "@/components/SessionNotesEditor";
+import { GameIcon } from "@/components/GameIcon";
 import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
 
 import { Sparkles } from "lucide-react";
@@ -278,10 +279,11 @@ function SessionDetail() {
               .map((it) => (
                 <div
                   key={it.name}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
+                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
                 >
-                  <span className="truncate">{it.name}</span>
-                  <span className="ml-2 font-mono font-semibold text-rubi-gold">×{fmtNum(it.count)}</span>
+                  <GameIcon name={it.name} size={24} className="flex-none" fallback={<Package className="h-5 w-5 flex-none text-muted-foreground/50" />} />
+                  <span className="min-w-0 flex-1 truncate">{it.name}</span>
+                  <span className="ml-2 flex-none font-mono font-semibold text-rubi-gold">×{fmtNum(it.count)}</span>
                 </div>
               ))}
           </div>
