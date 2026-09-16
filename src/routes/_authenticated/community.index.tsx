@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
+import { GameIcon } from "@/components/GameIcon";
 import {
   getCommunitySessions,
   getCommunityMonsters,
@@ -425,6 +426,7 @@ function CommunityPage() {
             onSelect={setMonster}
             options={monsterOptions}
             placeholder="Ex: choking fear"
+            showMonsterIcons
           />
 
           <label className="block">
@@ -818,6 +820,7 @@ function AutocompleteFilter({
   onSelect,
   options,
   placeholder,
+  showMonsterIcons = false,
 }: {
   label: string;
   icon: LucideIcon;
@@ -826,6 +829,8 @@ function AutocompleteFilter({
   onSelect: (v: string) => void;
   options: string[];
   placeholder: string;
+  /** true no filtro de Monstro — mostra o sprite de cada sugestão da lista. */
+  showMonsterIcons?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -893,10 +898,11 @@ function AutocompleteFilter({
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => pick(m)}
                 className={
-                  "block w-full px-3 py-1.5 text-left text-sm " +
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm " +
                   (i === highlight ? "bg-rubi-blue-soft text-rubi-blue" : "text-foreground")
                 }
               >
+                {showMonsterIcons && <GameIcon name={m} size={20} className="flex-none" />}
                 {m}
               </button>
             </li>

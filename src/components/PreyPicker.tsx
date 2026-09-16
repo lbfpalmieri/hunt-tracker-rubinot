@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { DEFAULT_PREY_PCT, PREY_BONUSES, type PreyBonus, type PreySlot } from "@/lib/prey";
+import { GameIcon } from "@/components/GameIcon";
 
 const MAX_SLOTS = 3;
 
@@ -73,7 +74,10 @@ export function PreyPicker({
             key={creature}
             className="flex flex-col items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 p-3"
           >
-            <span className="text-base font-semibold text-rubi-gold drop-shadow-sm">{creature}</span>
+            <span className="inline-flex items-center gap-2 text-base font-semibold text-rubi-gold drop-shadow-sm">
+              <GameIcon name={creature} size={28} className="flex-none" />
+              {creature}
+            </span>
             <div className="flex flex-wrap justify-center gap-1.5">
               {PREY_BONUSES.map((b) => {
                 const k = keyOf(creature, b.value);

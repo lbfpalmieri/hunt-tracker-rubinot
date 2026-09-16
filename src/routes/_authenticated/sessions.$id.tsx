@@ -208,7 +208,9 @@ function SessionDetail() {
         <div className="card-surface p-5 lg:col-span-2">
           <h2 className="mb-1 text-base font-semibold">Monstros mortos</h2>
           <p className="mb-3 text-xs text-muted-foreground">Passe o mouse na barra para ver o ritmo por hora.</p>
-          <div className="h-64 w-full">
+          {/* Altura cresce com o nº de espécies — com o ícone maior, uma altura fixa
+              espremia demais as barras quando a hunt tinha muitas espécies diferentes. */}
+          <div className="w-full" style={{ height: Math.max(224, killsData.length * 42) }}>
             <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />}>
               <KillsChart data={killsData} />
             </Suspense>

@@ -19,7 +19,7 @@ function MonsterTick({ x, y, payload }: YAxisTickContentProps) {
   return (
     <g transform={`translate(${x},${y})`}>
       {iconUrl && (
-        <image href={iconUrl} x={-152} y={-12} width={24} height={24} style={{ imageRendering: "pixelated" }} />
+        <image href={iconUrl} x={-156} y={-14} width={28} height={28} style={{ imageRendering: "pixelated" }} />
       )}
       <text x={-122} y={4} textAnchor="start" fontSize={11} fill="var(--muted-foreground)">
         {name}
