@@ -1,12 +1,16 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
+import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
+import { aggregateByHunt, fromOwnSession, perHour } from "@/lib/compare";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
-import { ScrollText, Search, Filter, ChevronRight, GitCompareArrows, StickyNote } from "lucide-react";
+import {
+  ScrollText, Search, Filter, ChevronRight, GitCompareArrows, StickyNote, Layers, LayoutDashboard,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
@@ -38,6 +42,8 @@ function SessionsList() {
   const [q, setQ] = useState("");
   const [filterChar, setFilterChar] = useState<string>(activeId ?? "all");
   const [sort, setSort] = useState<"recent" | "gph" | "xph" | "duration">("recent");
+  const [view, setView] = useState<"sessions" | "hunts">("sessions");
+  const [dashboardHuntName, setDashboardHuntName] = useState<string | null>(null);
 
   const visible = useMemo(() => {
     let list = sessions.slice();
@@ -59,6 +65,30 @@ function SessionsList() {
 
   const charName = (id: string) => characters.find((c) => c.id === id)?.name ?? "—";
 
+  /** Sessões cruas (respeitando o filtro de personagem) convertidas pra CompareHunt — base da aba Hunts. */
+  const compareRows = useMemo(() => {
+    let list = sessions;
+    if (filterChar !== "all") list = list.filter((s) => s.characterId === filterChar);
+    return list.map((s) => {
+      const c = characters.find((x) => x.id === s.characterId);
+      return fromOwnSession(s, c?.name ?? "—", c?.vocation ?? "—");
+    });
+  }, [sessions, filterChar, characters]);
+
+  /** Uma hunt por card, com a MÉDIA de todas as sessões dela — o dashboard filtra/detalha depois. */
+  const huntsList = useMemo(() => {
+    const aggregated = aggregateByHunt(compareRows);
+    const needle = q.trim().toLowerCase();
+    const filtered = needle ? aggregated.filter((h) => h.huntName.toLowerCase().includes(needle)) : aggregated;
+    return filtered.slice().sort((a, b) => (b.sessionCount ?? 1) - (a.sessionCount ?? 1));
+  }, [compareRows, q]);
+
+  /** Sessões cruas da hunt aberta no dashboard — o próprio dialog agrega e filtra por Bounty/Prey. */
+  const dashboardSessions = useMemo(() => {
+    if (!dashboardHuntName) return [];
+    return compareRows.filter((s) => s.huntName.trim().toLowerCase() === dashboardHuntName.trim().toLowerCase());
+  }, [dashboardHuntName, compareRows]);
+
   if (!hydrated) {
     return (
       <AppShell>
@@ -75,7 +105,9 @@ function SessionsList() {
           <h1 className="mt-1 font-display text-3xl font-bold">Sessões</h1>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{visible.length} resultado(s)</span>
+          <span className="text-sm text-muted-foreground">
+            {view === "sessions" ? visible.length : huntsList.length} resultado(s)
+          </span>
           {sessions.length > 0 && (
             <Link
               to="/sessions/compare"
@@ -98,6 +130,29 @@ function SessionsList() {
         />
       ) : (
         <>
+          <div className="mb-4 inline-flex rounded-lg border border-border bg-surface p-1 text-sm">
+            <button
+              type="button"
+              onClick={() => setView("sessions")}
+              className={
+                "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+                (view === "sessions" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
+              }
+            >
+              <ScrollText className="h-3.5 w-3.5" /> Sessões
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("hunts")}
+              className={
+                "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+                (view === "hunts" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
+              }
+            >
+              <Layers className="h-3.5 w-3.5" /> Hunts
+            </button>
+          </div>
+
           <div className="card-surface mb-4 flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -120,19 +175,78 @@ function SessionsList() {
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as typeof sort)}
-                className="rounded-lg border border-border bg-input px-2 py-1.5 text-sm"
-              >
-                <option value="recent">Mais recentes</option>
-                <option value="gph">Melhor Lucro/h</option>
-                <option value="xph">Melhor Raw XP/h</option>
-                <option value="duration">Maior duração</option>
-              </select>
+              {view === "sessions" && (
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as typeof sort)}
+                  className="rounded-lg border border-border bg-input px-2 py-1.5 text-sm"
+                >
+                  <option value="recent">Mais recentes</option>
+                  <option value="gph">Melhor Lucro/h</option>
+                  <option value="xph">Melhor Raw XP/h</option>
+                  <option value="duration">Maior duração</option>
+                </select>
+              )}
             </div>
           </div>
 
+          {view === "hunts" ? (
+            huntsList.length === 0 ? (
+              <p className="card-surface p-6 text-center text-sm text-muted-foreground">
+                Nenhuma hunt encontrada com esse filtro.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {huntsList.map((h) => (
+                  <div key={h.key} className="card-surface p-5 transition-colors hover:border-rubi-blue/50">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
+                      <span className="flex-none rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
+                        {h.vocation}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {h.charName} · {(h.sessionCount ?? 1) === 1 ? "1 sessão" : `${h.sessionCount} sessões`} ·{" "}
+                      {fmtDuration(h.totalDurationSec ?? h.durationSec)} registradas
+                    </p>
+                    <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+                      <MiniStat
+                        label="Raw XP/h"
+                        value={fmtNum(perHour(h.rawXpHunt, h.durationSec) ?? 0)}
+                        tone="blue"
+                      />
+                      <MiniStat
+                        label="Lucro/h"
+                        value={fmtGold(perHour(h.balance, h.durationSec) ?? 0)}
+                        tone={(perHour(h.balance, h.durationSec) ?? 0) >= 0 ? "success" : "danger"}
+                      />
+                      <MiniStat
+                        label="Kills/h"
+                        value={fmtNum(perHour(h.killsTotal, h.durationSec) ?? 0)}
+                        tone="gold"
+                      />
+                    </dl>
+                    <div className="mt-3 flex items-center gap-2 border-t border-border/60 pt-3 text-xs font-medium">
+                      <button
+                        type="button"
+                        onClick={() => { setQ(h.huntName); setView("sessions"); }}
+                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-border/60 py-1.5 text-muted-foreground transition-colors hover:border-rubi-blue/50 hover:text-rubi-blue"
+                      >
+                        Sessões <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDashboardHuntName(h.huntName)}
+                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-rubi-gold/40 bg-rubi-gold-soft py-1.5 text-rubi-gold transition-colors hover:border-rubi-gold"
+                      >
+                        <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
           <ul className="space-y-2">
             {visible.map((s) => {
               const gph = s.hunting.balance / (s.hunting.durationSec / 3600 || 1);
@@ -178,6 +292,13 @@ function SessionsList() {
               );
             })}
           </ul>
+          )}
+
+          <HuntDashboardDialog
+            sessions={dashboardSessions}
+            open={!!dashboardHuntName}
+            onOpenChange={(o) => { if (!o) setDashboardHuntName(null); }}
+          />
         </>
       )}
     </AppShell>

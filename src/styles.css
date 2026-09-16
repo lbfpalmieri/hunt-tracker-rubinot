@@ -109,6 +109,29 @@
     color: var(--foreground);
   }
 
+  /* Scrollbar temática — o padrão do navegador (barra branca) destoava do
+     resto do app em qualquer lugar com overflow-y (diálogos, listas longas). */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-muted-foreground);
+  }
+
   /* Subtle background grid */
   body {
     background-image:
