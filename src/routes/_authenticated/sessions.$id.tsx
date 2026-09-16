@@ -11,17 +11,19 @@ import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
 import { SessionNotesEditor } from "@/components/SessionNotesEditor";
 import { GameIcon } from "@/components/GameIcon";
+import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
+import { aggregateByHunt, fromOwnSession } from "@/lib/compare";
 
 import { Sparkles } from "lucide-react";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
 
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 
 // Recharts é pesado: carrega depois do primeiro paint da sessão.
 const KillsChart = lazy(() => import("@/components/charts/KillsChart"));
@@ -54,6 +56,21 @@ function SessionDetail() {
 
   const session = sessions.find((s) => s.id === id);
   const char = session ? characters.find((c) => c.id === session.characterId) : null;
+
+  const [showDashboard, setShowDashboard] = useState(false);
+  /** Médias de todas as MINHAS sessões com esse mesmo nome de hunt (qualquer personagem) — mesma agregação do Ranking. */
+  const huntDashboard = useMemo(() => {
+    if (!session) return null;
+    const rows = sessions.filter(
+      (s) => s.huntName.trim().toLowerCase() === session.huntName.trim().toLowerCase(),
+    );
+    if (!rows.length) return null;
+    const compareRows = rows.map((r) => {
+      const c = characters.find((x) => x.id === r.characterId);
+      return fromOwnSession(r, c?.name ?? "—", c?.vocation ?? "—");
+    });
+    return aggregateByHunt(compareRows)[0] ?? null;
+  }, [session, sessions, characters]);
 
   if (!hydrated) {
     return (
@@ -116,19 +133,31 @@ function SessionDetail() {
             {h.startedAt && h.endedAt ? `${h.startedAt} → ${h.endedAt}` : fmtDuration(h.durationSec)}
           </p>
         </div>
-        <button
-          onClick={async () => {
-            const ok = await confirmDialog({ description: "Excluir esta sessão?", tone: "danger" });
-            if (ok) {
-              await removeSession(session.id);
-              navigate({ to: "/sessions" });
-            }
-          }}
-          className="inline-flex items-center gap-2 self-start rounded-lg border border-rubi-danger/40 px-3 py-2 text-sm text-rubi-danger hover:bg-rubi-danger/10 sm:self-auto"
-        >
-          <Trash2 className="h-4 w-4" /> Excluir
-        </button>
+        <div className="flex flex-none items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setShowDashboard(true)}
+            disabled={!huntDashboard}
+            title={huntDashboard ? undefined : "Só esta sessão registrada nessa hunt até agora"}
+            className="inline-flex items-center gap-2 rounded-lg border border-rubi-gold/40 bg-rubi-gold-soft px-3 py-2 text-sm font-semibold text-rubi-gold hover:border-rubi-gold disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <LayoutDashboard className="h-4 w-4" /> Dashboard da hunt
+          </button>
+          <button
+            onClick={async () => {
+              const ok = await confirmDialog({ description: "Excluir esta sessão?", tone: "danger" });
+              if (ok) {
+                await removeSession(session.id);
+                navigate({ to: "/sessions" });
+              }
+            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-rubi-danger/40 px-3 py-2 text-sm text-rubi-danger hover:bg-rubi-danger/10"
+          >
+            <Trash2 className="h-4 w-4" /> Excluir
+          </button>
+        </div>
       </div>
+
+      <HuntDashboardDialog hunt={huntDashboard} open={showDashboard} onOpenChange={setShowDashboard} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />

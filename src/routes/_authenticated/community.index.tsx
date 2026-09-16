@@ -6,11 +6,13 @@ import { AppShell } from "@/components/AppShell";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import { GameIcon } from "@/components/GameIcon";
+import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import {
   getCommunitySessions,
   getCommunityMonsters,
   getCommunityStats,
 } from "@/lib/community.functions";
+import { aggregateByHunt, fromCommunityRow, type CommunityRow } from "@/lib/compare";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
   Dialog,
@@ -27,6 +29,7 @@ import {
   Zap,
   Coins,
   LayoutList,
+  LayoutDashboard,
   Layers,
   Calculator,
   Target,
@@ -80,6 +83,7 @@ function CommunityPage() {
   const [view, setView] = useState<"hunts" | "sessions" | "calc">("hunts");
   const [quantity, setQuantity] = useState<number>(400);
   const [openHunt, setOpenHunt] = useState<string | null>(null);
+  const [dashboardHunt, setDashboardHunt] = useState<string | null>(null);
 
   const fetchSessions = useServerFn(getCommunitySessions);
   const fetchMonsters = useServerFn(getCommunityMonsters);
@@ -267,6 +271,14 @@ function CommunityPage() {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return { meta, list };
   }, [openHunt, hunts, sessions]);
+
+  /** Médias por hora da hunt aberta no dashboard — mesma agregação usada no Ranking (compare.ts). */
+  const dashboardHuntData = useMemo(() => {
+    if (!dashboardHunt) return null;
+    const rows = sessions.filter((s) => `${s.huntName.toLowerCase()}__${s.vocation}` === dashboardHunt);
+    if (!rows.length) return null;
+    return aggregateByHunt(rows.map((r) => fromCommunityRow(r as CommunityRow)))[0] ?? null;
+  }, [dashboardHunt, sessions]);
 
   /** Community benchmark for the selected monster, grouped by hunt. */
   const calcRows = useMemo(() => {
@@ -612,12 +624,7 @@ function CommunityPage() {
       ) : view === "hunts" ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {hunts.map((h) => (
-            <button
-              key={h.key}
-              type="button"
-              onClick={() => setOpenHunt(h.key)}
-              className="card-surface p-5 text-left transition-colors hover:border-rubi-blue/50"
-            >
+            <div key={h.key} className="card-surface p-5 transition-colors hover:border-rubi-blue/50">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
                 <div className="flex flex-none flex-col items-end gap-1">
@@ -639,10 +646,23 @@ function CommunityPage() {
                 <Metric label="Lucro/h" value={fmtGold(h.goldPerHour)} tone={h.goldPerHour >= 0 ? "success" : "danger"} />
                 <Metric label="Kills/h" value={fmtNum(Math.round(h.killsPerHour))} tone="gold" />
               </dl>
-              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-rubi-blue">
-                Ver histórico de sessões <ChevronRight className="h-3.5 w-3.5" />
+              <div className="mt-3 flex items-center gap-2 border-t border-border/60 pt-3 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => setOpenHunt(h.key)}
+                  className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-border/60 py-1.5 text-muted-foreground transition-colors hover:border-rubi-blue/50 hover:text-rubi-blue"
+                >
+                  Sessões <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDashboardHunt(h.key)}
+                  className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-rubi-gold/40 bg-rubi-gold-soft py-1.5 text-rubi-gold transition-colors hover:border-rubi-gold"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+                </button>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       ) : (
@@ -745,6 +765,12 @@ function CommunityPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <HuntDashboardDialog
+        hunt={dashboardHuntData}
+        open={!!dashboardHunt}
+        onOpenChange={(o) => { if (!o) setDashboardHunt(null); }}
+      />
     </AppShell>
 
   );
