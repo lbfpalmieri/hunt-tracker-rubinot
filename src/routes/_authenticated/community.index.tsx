@@ -7,6 +7,7 @@ import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import { GameIcon } from "@/components/GameIcon";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
+import { Pagination } from "@/components/Pagination";
 import {
   getCommunitySessions,
   getCommunityMonsters,
@@ -74,6 +75,9 @@ const VOCATIONS: { name: string; image: string }[] = [
 
 type Sort = "recent" | "xph" | "gph" | "killsh";
 
+const HUNTS_PAGE_SIZE = 12;
+const SESSIONS_PAGE_SIZE = 20;
+
 function CommunityPage() {
   const [vocation, setVocation] = useState<string>("");
   const [huntQuery, setHuntQuery] = useState("");
@@ -84,6 +88,7 @@ function CommunityPage() {
   const [quantity, setQuantity] = useState<number>(400);
   const [openHunt, setOpenHunt] = useState<string | null>(null);
   const [dashboardHunt, setDashboardHunt] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const fetchSessions = useServerFn(getCommunitySessions);
   const fetchMonsters = useServerFn(getCommunityMonsters);
@@ -94,6 +99,12 @@ function CommunityPage() {
     const t = setTimeout(() => setHuntTerm(huntQuery.trim()), 300);
     return () => clearTimeout(t);
   }, [huntQuery]);
+
+  // Muda filtro/ordenação/aba → volta pra página 1 (senão o usuário pode
+  // ficar "preso" numa página que não existe mais pro novo resultado).
+  useEffect(() => {
+    setPage(1);
+  }, [vocation, huntTerm, monster, sort, view]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["community", vocation, huntTerm, monster],
@@ -260,6 +271,20 @@ function CommunityPage() {
     });
     return list;
   }, [sessions, sort]);
+
+  // Antes disso as duas listas cresciam sem limite (uma resposta de até 400
+  // sessões, tudo renderizado de uma vez) — agora cada view pagina por conta
+  // própria em cima do array já filtrado/ordenado.
+  const huntsTotalPages = Math.max(1, Math.ceil(hunts.length / HUNTS_PAGE_SIZE));
+  const pagedHunts = useMemo(
+    () => hunts.slice((page - 1) * HUNTS_PAGE_SIZE, page * HUNTS_PAGE_SIZE),
+    [hunts, page],
+  );
+  const sessionsTotalPages = Math.max(1, Math.ceil(sortedSessions.length / SESSIONS_PAGE_SIZE));
+  const pagedSessions = useMemo(
+    () => sortedSessions.slice((page - 1) * SESSIONS_PAGE_SIZE, page * SESSIONS_PAGE_SIZE),
+    [sortedSessions, page],
+  );
 
   /** Sessions of the hunt opened in the drill-down modal. */
   const openHuntData = useMemo(() => {
@@ -621,8 +646,9 @@ function CommunityPage() {
           </div>
         )
       ) : view === "hunts" ? (
+        <>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {hunts.map((h) => (
+          {pagedHunts.map((h) => (
             <div key={h.key} className="card-surface p-5 transition-colors hover:border-rubi-blue/50">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
@@ -664,10 +690,12 @@ function CommunityPage() {
             </div>
           ))}
         </div>
+        <Pagination page={page} totalPages={huntsTotalPages} onPageChange={setPage} />
+        </>
       ) : (
-
+        <>
         <div className="space-y-2">
-          {sortedSessions.map((s) => {
+          {pagedSessions.map((s) => {
             const kills = s.kills.reduce((a, k) => a + k.count, 0);
             return (
               <Link
@@ -677,9 +705,7 @@ function CommunityPage() {
                 className="card-surface flex flex-col gap-3 p-4 transition-colors hover:border-rubi-blue/50 sm:flex-row sm:items-center"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-rubi-blue-soft font-display text-sm font-bold text-rubi-blue">
-                    {s.charName.slice(0, 2).toUpperCase()}
-                  </div>
+                  <SessionAvatar session={s} className="h-10 w-10" textClassName="text-sm" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-semibold">{s.huntName}</span>
@@ -702,6 +728,8 @@ function CommunityPage() {
             );
           })}
         </div>
+        <Pagination page={page} totalPages={sessionsTotalPages} onPageChange={setPage} />
+        </>
       )}
 
       <Dialog open={!!openHunt} onOpenChange={(o) => { if (!o) setOpenHunt(null); }}>
@@ -734,9 +762,7 @@ function CommunityPage() {
                   onClick={() => setOpenHunt(null)}
                   className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:border-rubi-blue/50"
                 >
-                  <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-rubi-blue-soft font-display text-xs font-bold text-rubi-blue">
-                    {s.charName.slice(0, 2).toUpperCase()}
-                  </div>
+                  <SessionAvatar session={s} className="h-9 w-9" textClassName="text-xs" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-semibold">{s.charName}</span>
@@ -827,6 +853,40 @@ function Metric({
     <div>
       <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</dt>
       <dd className={"font-mono text-sm font-semibold " + color}>{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * Avatar de uma sessão pública: o print de equipamento que o jogador colou
+ * (mais informativo que iniciais), senão a imagem da vocação, senão as
+ * iniciais do nome como último recurso.
+ */
+function SessionAvatar({
+  session,
+  className = "h-10 w-10",
+  textClassName = "text-sm",
+}: {
+  session: { gearUrl?: string | null; vocation: string; charName: string };
+  className?: string;
+  textClassName?: string;
+}) {
+  const vocImg = VOCATIONS.find((v) => v.name === session.vocation)?.image;
+  const src = session.gearUrl || vocImg;
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        className={`${className} flex-none rounded-full border border-border/60 object-cover object-top`}
+      />
+    );
+  }
+  return (
+    <div
+      className={`flex ${className} flex-none items-center justify-center rounded-full bg-rubi-blue-soft font-display ${textClassName} font-bold text-rubi-blue`}
+    >
+      {session.charName.slice(0, 2).toUpperCase()}
     </div>
   );
 }
