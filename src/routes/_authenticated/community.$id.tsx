@@ -2,9 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
+import { StatCard } from "@/components/StatCard";
 import { getCommunitySession } from "@/lib/community.functions";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
-import { ArrowLeft, Coins, Globe2, Shield, Skull, Timer, Zap, Trophy } from "lucide-react";
+import {
+  ArrowLeft, Coins, Globe2, Heart, Package, Shield, ShoppingCart, Skull, Swords, Timer, Zap, Trophy,
+} from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import { bountyLabel } from "@/lib/bounty";
@@ -71,6 +74,16 @@ function SessionView({ session }: { session: any }) {
   const totalKills = kills.reduce((a, k) => a + Number(k.count || 0), 0);
   const hours = durationSec / 3600 || 1;
   const rawXp = Number(h.rawXp ?? 0) || Number(h.xpGain ?? 0);
+  // rawXp costuma ser 0 quando a hunt não teve bônus de sessão — nesse caso
+  // o /h também é lido de xpPerHour, igual ao valor total já fazia.
+  const rawXpPerHour = Number(h.rawXp ?? 0) ? Number(h.rawXpPerHour ?? 0) : Number(h.xpPerHour ?? 0);
+  const balance = Number(h.balance ?? 0);
+  const gph = balance / hours;
+  const killsPerHour = totalKills / hours;
+  const loot = Number(h.loot ?? 0);
+  const supplies = Number(h.supplies ?? 0);
+  const damage = Number(h.damage ?? 0);
+  const healing = Number(h.healing ?? 0);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lootedItems: { name: string; count: number }[] = (h.lootedItems ?? []) as any[];
 
@@ -90,10 +103,11 @@ function SessionView({ session }: { session: any }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Duração" value={fmtDuration(durationSec)} icon={Timer} />
-        <Stat
-          label={session.bounty ? "Raw XP ganha (com bounty)" : "Raw XP ganha"}
+        <StatCard label="Duração" value={fmtDuration(durationSec)} icon={Timer} accent="muted" />
+        <StatCard
+          label={session.bounty ? "Raw XP (com bounty)" : "Raw XP"}
           value={fmtNum(rawXp)}
+          perHour={fmtNum(rawXpPerHour)}
           hint={
             session.bounty
               ? session.bounty.xp != null
@@ -102,22 +116,47 @@ function SessionView({ session }: { session: any }) {
               : `XP com bônus: ${fmtNum(Number(h.xpGain ?? 0))}`
           }
           icon={session.bounty ? Trophy : Zap}
-          tone={session.bounty ? "gold" : "blue"}
+          accent={session.bounty ? "gold" : "blue"}
         />
-
-        <Stat
-          label="Balance"
-          value={fmtGold(Number(h.balance ?? 0))}
-          hint={`Loot ${fmtGold(Number(h.loot ?? 0))} · Supplies ${fmtGold(Number(h.supplies ?? 0))}`}
+        <StatCard
+          label="Lucro"
+          value={fmtGold(balance)}
+          perHour={fmtGold(gph)}
           icon={Coins}
-          tone={Number(h.balance ?? 0) >= 0 ? "success" : "danger"}
+          accent={gph >= 0 ? "success" : "danger"}
         />
-        <Stat
+        <StatCard
           label="Kills"
           value={fmtNum(totalKills)}
-          hint={`${Math.round(totalKills / hours)} kills/h`}
+          perHour={fmtNum(killsPerHour)}
+          hint={`${kills.length} espécies`}
           icon={Skull}
-          tone="gold"
+          accent="gold"
+        />
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Loot" value={fmtGold(loot)} perHour={fmtGold(loot / hours)} icon={Package} accent="gold" />
+        <StatCard
+          label="Supplies"
+          value={fmtGold(supplies)}
+          perHour={fmtGold(supplies / hours)}
+          icon={ShoppingCart}
+          accent="danger"
+        />
+        <StatCard
+          label="Dano causado"
+          value={fmtNum(damage)}
+          perHour={fmtNum(Number(h.damagePerHour ?? 0))}
+          icon={Swords}
+          accent="blue"
+        />
+        <StatCard
+          label="Cura"
+          value={fmtNum(healing)}
+          perHour={fmtNum(Number(h.healingPerHour ?? 0))}
+          icon={Heart}
+          accent="success"
         />
       </div>
 
@@ -208,41 +247,6 @@ function SessionView({ session }: { session: any }) {
   );
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-  icon: Icon,
-  tone = "muted",
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: any;
-  tone?: "blue" | "gold" | "success" | "danger" | "muted";
-}) {
-  const color =
-    tone === "blue"
-      ? "text-rubi-blue"
-      : tone === "gold"
-        ? "text-rubi-gold"
-        : tone === "success"
-          ? "text-rubi-success"
-          : tone === "danger"
-            ? "text-rubi-danger"
-            : "text-foreground";
-  return (
-    <div className="card-surface p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
-        <Icon className={"h-4 w-4 " + color} />
-      </div>
-      <div className={"mt-1 font-display text-xl font-bold " + color}>{value}</div>
-      {hint && <div className="mt-0.5 text-xs text-muted-foreground">{hint}</div>}
-    </div>
-  );
-}
 
 function MiscBlock({
   title,

@@ -14,7 +14,7 @@ import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
 
 import { Sparkles } from "lucide-react";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -87,6 +87,11 @@ function SessionDetail() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
     .map((k) => ({ ...k, perHour: k.count / hours }));
+  // rawXp costuma ser 0 quando a hunt não teve nenhum bônus de sessão — nesse
+  // caso o total (e o /h) é lido de xpGain, igual ao card já fazia antes.
+  const rawXpPerHour = h.rawXp ? h.rawXpPerHour : h.xpPerHour;
+  const lootPerHour = h.loot / hours;
+  const suppliesPerHour = h.supplies / hours;
 
   return (
     <AppShell>
@@ -127,8 +132,9 @@ function SessionDetail() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />
         <StatCard
-          label={session.bounty ? "Raw XP ganha (com bounty)" : "Raw XP ganha"}
+          label={session.bounty ? "Raw XP (com bounty)" : "Raw XP"}
           value={fmtNum(h.rawXp || h.xpGain)}
+          perHour={fmtNum(rawXpPerHour)}
           mark={preyMarkLabel(session.prey, "xp")}
           markTitle={preyMarkTitle(session.prey, "xp")}
           hint={
@@ -141,21 +147,20 @@ function SessionDetail() {
           icon={session.bounty ? Trophy : Zap}
           accent={session.bounty ? "gold" : "blue"}
         />
-
-
         <StatCard
-          label="Lucro/h"
-          value={fmtGold(gph)}
+          label="Lucro"
+          value={fmtGold(h.balance)}
+          perHour={fmtGold(gph)}
           mark={preyMarkLabel(session.prey, "loot")}
           markTitle={preyMarkTitle(session.prey, "loot")}
-          hint={`Balance: ${fmtGold(h.balance)}`}
           icon={Coins}
           accent={gph >= 0 ? "success" : "danger"}
         />
         <StatCard
           label="Kills"
           value={fmtNum(totalKills)}
-          hint={`${h.kills.length} espécies · ${fmtNum(killsPerHour)}/h`}
+          perHour={fmtNum(killsPerHour)}
+          hint={`${h.kills.length} espécies`}
           icon={Skull}
           accent="gold"
         />
@@ -165,20 +170,35 @@ function SessionDetail() {
         <StatCard
           label="Loot"
           value={fmtGold(h.loot)}
+          perHour={fmtGold(lootPerHour)}
+          icon={Package}
           accent="gold"
           mark={preyMarkLabel(session.prey, "loot")}
           markTitle={preyMarkTitle(session.prey, "loot")}
         />
-        <StatCard label="Supplies" value={fmtGold(h.supplies)} accent="danger" />
         <StatCard
-          label="Dano/h"
-          value={fmtNum(h.damagePerHour)}
+          label="Supplies"
+          value={fmtGold(h.supplies)}
+          perHour={fmtGold(suppliesPerHour)}
+          icon={ShoppingCart}
+          accent="danger"
+        />
+        <StatCard
+          label="Dano causado"
+          value={fmtNum(h.damage)}
+          perHour={fmtNum(h.damagePerHour)}
           icon={Swords}
           accent="blue"
           mark={preyMarkLabel(session.prey, "damage")}
           markTitle={preyMarkTitle(session.prey, "damage")}
         />
-        <StatCard label="Healing/h" value={fmtNum(h.healingPerHour)} icon={Heart} accent="success" />
+        <StatCard
+          label="Cura"
+          value={fmtNum(h.healing)}
+          perHour={fmtNum(h.healingPerHour)}
+          icon={Heart}
+          accent="success"
+        />
       </div>
 
 

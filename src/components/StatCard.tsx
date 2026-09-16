@@ -4,6 +4,12 @@ import type { ReactNode } from "react";
 interface Props {
   label: string;
   value: ReactNode;
+  /**
+   * Ritmo por hora do mesmo valor, mostrado como um selo ao lado — ex. `value`
+   * é o total da sessão e `perHour` é "quanto isso dá por hora". Padrão único
+   * pra todo card de sessão não confundir "total" com "por hora".
+   */
+  perHour?: ReactNode;
   hint?: ReactNode;
   icon?: LucideIcon;
   accent?: "blue" | "gold" | "success" | "danger" | "muted";
@@ -20,7 +26,7 @@ const accentClass: Record<NonNullable<Props["accent"]>, string> = {
   muted: "text-muted-foreground",
 };
 
-export function StatCard({ label, value, hint, icon: Icon, accent = "blue", mark, markTitle }: Props) {
+export function StatCard({ label, value, perHour, hint, icon: Icon, accent = "blue", mark, markTitle }: Props) {
   return (
     <div
       className={
@@ -42,8 +48,15 @@ export function StatCard({ label, value, hint, icon: Icon, accent = "blue", mark
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {label}
           </div>
-          <div className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            {value}
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {value}
+            </span>
+            {perHour != null && (
+              <span className="inline-flex items-center rounded-full bg-accent/70 px-2 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
+                {perHour}/h
+              </span>
+            )}
           </div>
           {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
         </div>
