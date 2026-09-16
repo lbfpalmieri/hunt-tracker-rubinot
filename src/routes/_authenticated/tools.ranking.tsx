@@ -71,7 +71,7 @@ function RankingPage() {
   const [metric, setMetric] = useState<Metric>("gph");
   const [q, setQ] = useState("");
   const [vocation, setVocation] = useState("");
-  const [openHunt, setOpenHunt] = useState<CompareHunt | null>(null);
+  const [openHuntName, setOpenHuntName] = useState<string | null>(null);
   const [includeBounty, setIncludeBounty] = useState(true);
   const [includePrey, setIncludePrey] = useState(true);
   const [includePrePatch, setIncludePrePatch] = useState(false);
@@ -135,6 +135,13 @@ function RankingPage() {
   }, [list, q, metric]);
 
   const loading = tab === "own" ? !hydrated : loadingCommunity;
+
+  /** Sessões cruas (sem filtro de bônus da página) da hunt aberta no dashboard — o dialog filtra/agrega por conta própria. */
+  const dialogSessions = useMemo(() => {
+    if (!openHuntName) return [];
+    const raw = tab === "own" ? ownRaw : communityRaw;
+    return raw.filter((s) => s.huntName.trim().toLowerCase() === openHuntName.trim().toLowerCase());
+  }, [openHuntName, tab, ownRaw, communityRaw]);
 
   return (
     <AppShell>
@@ -323,7 +330,7 @@ function RankingPage() {
               <li key={h.key}>
                 <button
                   type="button"
-                  onClick={() => setOpenHunt(h)}
+                  onClick={() => setOpenHuntName(h.huntName)}
                   className="card-surface flex w-full items-center gap-3 p-3 text-left transition-colors hover:border-rubi-blue/60"
                   title="Clique para ver o resumo dessa hunt, projetado para 1 hora de caça"
                 >
@@ -336,9 +343,9 @@ function RankingPage() {
       )}
 
       <HuntDashboardDialog
-        hunt={openHunt}
-        open={!!openHunt}
-        onOpenChange={(o) => { if (!o) setOpenHunt(null); }}
+        sessions={dialogSessions}
+        open={!!openHuntName}
+        onOpenChange={(o) => { if (!o) setOpenHuntName(null); }}
       />
     </AppShell>
   );

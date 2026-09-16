@@ -12,7 +12,7 @@ import {
   getCommunityMonsters,
   getCommunityStats,
 } from "@/lib/community.functions";
-import { aggregateByHunt, fromCommunityRow, type CommunityRow } from "@/lib/compare";
+import { fromCommunityRow, type CommunityRow } from "@/lib/compare";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
   Dialog,
@@ -272,12 +272,11 @@ function CommunityPage() {
     return { meta, list };
   }, [openHunt, hunts, sessions]);
 
-  /** Médias por hora da hunt aberta no dashboard — mesma agregação usada no Ranking (compare.ts). */
-  const dashboardHuntData = useMemo(() => {
-    if (!dashboardHunt) return null;
+  /** Sessões cruas da hunt aberta no dashboard — o próprio dialog agrega (e filtra por Bounty/Prey). */
+  const dashboardSessions = useMemo(() => {
+    if (!dashboardHunt) return [];
     const rows = sessions.filter((s) => `${s.huntName.toLowerCase()}__${s.vocation}` === dashboardHunt);
-    if (!rows.length) return null;
-    return aggregateByHunt(rows.map((r) => fromCommunityRow(r as CommunityRow)))[0] ?? null;
+    return rows.map((r) => fromCommunityRow(r as CommunityRow));
   }, [dashboardHunt, sessions]);
 
   /** Community benchmark for the selected monster, grouped by hunt. */
@@ -767,7 +766,7 @@ function CommunityPage() {
       </Dialog>
 
       <HuntDashboardDialog
-        hunt={dashboardHuntData}
+        sessions={dashboardSessions}
         open={!!dashboardHunt}
         onOpenChange={(o) => { if (!o) setDashboardHunt(null); }}
       />

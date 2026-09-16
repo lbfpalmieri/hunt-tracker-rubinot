@@ -13,7 +13,7 @@ import { SessionNotesEditor } from "@/components/SessionNotesEditor";
 import { GameIcon } from "@/components/GameIcon";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
-import { aggregateByHunt, fromOwnSession } from "@/lib/compare";
+import { fromOwnSession } from "@/lib/compare";
 
 import { Sparkles } from "lucide-react";
 import {
@@ -58,18 +58,16 @@ function SessionDetail() {
   const char = session ? characters.find((c) => c.id === session.characterId) : null;
 
   const [showDashboard, setShowDashboard] = useState(false);
-  /** Médias de todas as MINHAS sessões com esse mesmo nome de hunt (qualquer personagem) — mesma agregação do Ranking. */
-  const huntDashboard = useMemo(() => {
-    if (!session) return null;
+  /** Sessões cruas de todas as MINHAS sessões com esse mesmo nome de hunt (qualquer personagem) — o dialog agrega. */
+  const huntDashboardSessions = useMemo(() => {
+    if (!session) return [];
     const rows = sessions.filter(
       (s) => s.huntName.trim().toLowerCase() === session.huntName.trim().toLowerCase(),
     );
-    if (!rows.length) return null;
-    const compareRows = rows.map((r) => {
+    return rows.map((r) => {
       const c = characters.find((x) => x.id === r.characterId);
       return fromOwnSession(r, c?.name ?? "—", c?.vocation ?? "—");
     });
-    return aggregateByHunt(compareRows)[0] ?? null;
   }, [session, sessions, characters]);
 
   if (!hydrated) {
@@ -136,9 +134,7 @@ function SessionDetail() {
         <div className="flex flex-none items-center gap-2 self-start sm:self-auto">
           <button
             onClick={() => setShowDashboard(true)}
-            disabled={!huntDashboard}
-            title={huntDashboard ? undefined : "Só esta sessão registrada nessa hunt até agora"}
-            className="inline-flex items-center gap-2 rounded-lg border border-rubi-gold/40 bg-rubi-gold-soft px-3 py-2 text-sm font-semibold text-rubi-gold hover:border-rubi-gold disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-lg border border-rubi-gold/40 bg-rubi-gold-soft px-3 py-2 text-sm font-semibold text-rubi-gold hover:border-rubi-gold"
           >
             <LayoutDashboard className="h-4 w-4" /> Dashboard da hunt
           </button>
@@ -157,7 +153,7 @@ function SessionDetail() {
         </div>
       </div>
 
-      <HuntDashboardDialog hunt={huntDashboard} open={showDashboard} onOpenChange={setShowDashboard} />
+      <HuntDashboardDialog sessions={huntDashboardSessions} open={showDashboard} onOpenChange={setShowDashboard} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />

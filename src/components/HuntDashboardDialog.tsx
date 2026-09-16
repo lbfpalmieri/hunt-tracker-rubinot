@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -5,11 +6,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ShieldAlert, Skull } from "lucide-react";
+import { ShieldAlert, Skull, Trophy, Sparkles } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
 import { GameIcon } from "@/components/GameIcon";
 import { fmtGold, fmtNum } from "@/lib/format";
-import { perHour, topKills, type CompareHunt } from "@/lib/compare";
+import { aggregateByHunt, filterByBonusInclusion, perHour, topKills, type CompareHunt } from "@/lib/compare";
 import { preyMarkLabel, preyMarkTitle, PREY_BONUSES, type PreyBonus } from "@/lib/prey";
 import { damageElementInfo } from "@/lib/damage-elements";
 
@@ -39,63 +40,119 @@ export const HUNT_DASHBOARD_ROWS: Row[] = [
 ];
 
 /**
- * Dashboard da hunt: médias por hora de todas as sessões dela (compare.ts já
- * faz a agregação — aqui é só a apresentação). Usado pelo Ranking, pela
- * Comunidade e pela parte privada, sempre com o mesmo componente pra não
- * ficarem diferentes entre si.
+ * Dashboard da hunt: médias por hora de todas as sessões dela. Recebe as
+ * sessões CRUAS (uma por sessão real, sem agregar) e agrega por conta
+ * própria em cima do filtro de Bounty/Prey — assim os checkboxes ficam
+ * dentro do próprio dashboard, funcionando igual em qualquer lugar que o
+ * abra (Ranking, Comunidade, parte privada), sem duplicar a lógica.
+ *
+ * Por padrão os dois ficam DESMARCADOS: a hunt vem "limpa" (sem bônus),
+ * que é o cenário mais comum de caça e o que o jogador provavelmente quer
+ * comparar. Quem quiser ver o efeito de Prey/Bounty na média marca.
  */
 export function HuntDashboardDialog({
-  hunt,
+  sessions,
   open,
   onOpenChange,
   topMonsters = 5,
 }: {
-  hunt: CompareHunt | null;
+  /** Todas as sessões (uma por sessão real) da MESMA hunt — o componente agrega. */
+  sessions: CompareHunt[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   topMonsters?: number;
 }) {
+  const [includeBounty, setIncludeBounty] = useState(false);
+  const [includePrey, setIncludePrey] = useState(false);
+
+  const filtered = useMemo(
+    () => filterByBonusInclusion(sessions, includeBounty, includePrey),
+    [sessions, includeBounty, includePrey],
+  );
+  const hunt = useMemo(() => aggregateByHunt(filtered)[0] ?? null, [filtered]);
+  const huntName = sessions[0]?.huntName ?? "";
+  const hasBonusSessions = sessions.some((s) => s.bounty || (s.prey && s.prey.length > 0));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-        {hunt && (
+        {sessions.length > 0 && (
           <>
             <DialogHeader>
-              <DialogTitle className="font-display">{hunt.huntName}</DialogTitle>
+              <DialogTitle className="font-display">{huntName}</DialogTitle>
               <DialogDescription>
-                {hunt.charName} · {hunt.vocation} ·{" "}
-                {(hunt.sessionCount ?? 1) === 1 ? (
-                  <>baseado em <strong className="text-foreground">1 sessão</strong></>
+                {hunt ? (
+                  <>
+                    {hunt.charName} · {hunt.vocation} ·{" "}
+                    {(hunt.sessionCount ?? 1) === 1 ? (
+                      <>baseado em <strong className="text-foreground">1 sessão</strong></>
+                    ) : (
+                      <>média de <strong className="text-foreground">{hunt.sessionCount}</strong> sessões</>
+                    )}{" "}
+                    · projetado para 1 hora de caça
+                  </>
                 ) : (
-                  <>média de <strong className="text-foreground">{hunt.sessionCount}</strong> sessões</>
-                )}{" "}
-                · projetado para 1 hora de caça
+                  "Nenhuma sessão com esse filtro"
+                )}
               </DialogDescription>
             </DialogHeader>
 
-            {(hunt.bounty || (hunt.prey && hunt.prey.length > 0)) && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {hunt.bounty && <BountyBadge bounty={hunt.bounty} showXp />}
-                {hunt.prey && hunt.prey.length > 0 && (
-                  <>
-                    <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
-                      Prey em {hunt.preySessions ?? 0}/{hunt.sessionCount ?? 1} sessões
-                    </span>
-                    {/* Resumo por tipo de bônus — sem enumerar cada criatura, que numa hunt de
-                        muitas sessões virava uma parede de selos repetidos e confusa. */}
-                    {PREY_BONUSES.filter((b) => hunt.prey!.some((s) => s.bonus === b.value)).map((b) => (
-                      <span
-                        key={b.value}
-                        title={b.hint}
-                        className="rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue"
-                      >
-                        {b.emoji} {b.label}
-                      </span>
-                    ))}
-                  </>
-                )}
+            {hasBonusSessions && (
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-muted/10 px-3 py-2 text-xs">
+                <label className="flex items-center gap-1.5 text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={includeBounty}
+                    onChange={(e) => setIncludeBounty(e.target.checked)}
+                    className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+                  />
+                  <Trophy className="h-3.5 w-3.5 text-rubi-gold" /> Incluir Bounty
+                </label>
+                <label className="flex items-center gap-1.5 text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={includePrey}
+                    onChange={(e) => setIncludePrey(e.target.checked)}
+                    className="h-3.5 w-3.5 accent-[var(--rubi-blue)]"
+                  />
+                  <Sparkles className="h-3.5 w-3.5 text-rubi-blue" /> Incluir Prey
+                </label>
+                <span className="text-[11px] text-muted-foreground/80">
+                  Por padrão só entram sessões sem bônus na média.
+                </span>
               </div>
             )}
+
+            {!hunt ? (
+              <p className="rounded-lg border border-dashed border-border/60 px-3 py-6 text-center text-sm text-muted-foreground">
+                Nenhuma sessão "limpa" dessa hunt ainda — marque Bounty e/ou Prey acima pra ver a média
+                com esses bônus.
+              </p>
+            ) : (
+              <>
+                {(hunt.bounty || (hunt.prey && hunt.prey.length > 0)) && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {hunt.bounty && <BountyBadge bounty={hunt.bounty} showXp />}
+                    {hunt.prey && hunt.prey.length > 0 && (
+                      <>
+                        <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                          Prey em {hunt.preySessions ?? 0}/{hunt.sessionCount ?? 1} sessões
+                        </span>
+                        {/* Resumo por tipo de bônus — sem enumerar cada criatura, que numa hunt de
+                            muitas sessões virava uma parede de selos repetidos e confusa. */}
+                        {PREY_BONUSES.filter((b) => hunt.prey!.some((s) => s.bonus === b.value)).map((b) => (
+                          <span
+                            key={b.value}
+                            title={b.hint}
+                            className="rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue"
+                          >
+                            {b.emoji} {b.label}
+                          </span>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
 
             <dl className="grid grid-cols-2 gap-3 text-sm">
               {HUNT_DASHBOARD_ROWS.map((row) => {
@@ -204,6 +261,8 @@ export function HuntDashboardDialog({
                 {topKills(hunt, topMonsters).length === 0 && <span className="text-muted-foreground">—</span>}
               </div>
             </div>
+              </>
+            )}
           </>
         )}
       </DialogContent>
