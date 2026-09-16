@@ -71,12 +71,30 @@ function md5(input: string): string {
   return [...out].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** MediaWiki canonicaliza o nome do arquivo: 1ª letra maiúscula, espaço vira "_". */
+/** Preposições/artigos que a wiki mantém em minúsculo no Title Case, exceto quando são a 1ª palavra (ex.: "Wand_of_Starstorm.gif", não "Wand_Of_Starstorm.gif"). */
+const TITLE_CASE_MINOR_WORDS = new Set(["of", "the", "a", "an", "and", "in", "on", "for", "to"]);
+
+/**
+ * MediaWiki canonicaliza o nome do arquivo: cada palavra com a 1ª letra
+ * maiúscula (Title Case), espaço vira "_". Isso importa porque os itens
+ * saem do Loot Statistics do Tibia todos em minúsculo ("platinum coin"),
+ * diferente dos monstros, que já vêm em Title Case do Killed Monsters
+ * ("Cave Chimera") — sem isso, todo item com mais de uma palavra
+ * ("platinum coin", "violet crystal shard"...) gerava um hash errado e
+ * caía sempre no fallback.
+ */
 function wikiFileBase(name: string): string {
   const trimmed = name.trim().replace(/\s+/g, " ");
   if (!trimmed) return "";
-  const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-  return capitalized.replace(/ /g, "_");
+  const titled = trimmed
+    .split(" ")
+    .map((word, i) => {
+      if (!word) return word;
+      if (i > 0 && TITLE_CASE_MINOR_WORDS.has(word.toLowerCase())) return word.toLowerCase();
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+  return titled.replace(/ /g, "_");
 }
 
 export type GameIconExt = "gif" | "png";

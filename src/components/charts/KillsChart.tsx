@@ -19,7 +19,7 @@ function MonsterTick({ x, y, payload }: YAxisTickContentProps) {
   return (
     <g transform={`translate(${x},${y})`}>
       {iconUrl && (
-        <image href={iconUrl} x={-146} y={-9} width={18} height={18} style={{ imageRendering: "pixelated" }} />
+        <image href={iconUrl} x={-152} y={-12} width={24} height={24} style={{ imageRendering: "pixelated" }} />
       )}
       <text x={-122} y={4} textAnchor="start" fontSize={11} fill="var(--muted-foreground)">
         {name}
@@ -32,10 +32,10 @@ function MonsterTick({ x, y, payload }: YAxisTickContentProps) {
 export default function KillsChart({ data }: { data: KillPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
+      <BarChart data={data} layout="vertical" margin={{ left: 24 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
         <XAxis type="number" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
-        <YAxis dataKey="name" type="category" width={150} tick={MonsterTick} />
+        <YAxis dataKey="name" type="category" width={160} tick={MonsterTick} />
         <Tooltip
           cursor={{ fill: "var(--rubi-blue-soft)" }}
           contentStyle={{
