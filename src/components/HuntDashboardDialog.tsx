@@ -5,13 +5,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Skull } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
-import { PreyBadge } from "@/components/PreyBadge";
 import { GameIcon } from "@/components/GameIcon";
 import { fmtGold, fmtNum } from "@/lib/format";
 import { perHour, topKills, type CompareHunt } from "@/lib/compare";
-import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
+import { preyMarkLabel, preyMarkTitle, PREY_BONUSES, type PreyBonus } from "@/lib/prey";
 import { damageElementInfo } from "@/lib/damage-elements";
 
 interface Row {
@@ -74,14 +73,26 @@ export function HuntDashboardDialog({
               </DialogDescription>
             </DialogHeader>
 
-            {(hunt.bounty || hunt.prey) && (
+            {(hunt.bounty || (hunt.prey && hunt.prey.length > 0)) && (
               <div className="flex flex-wrap items-center gap-1.5">
                 {hunt.bounty && <BountyBadge bounty={hunt.bounty} showXp />}
-                {hunt.prey && <PreyBadge prey={hunt.prey} detailed />}
-                {(hunt.preySessions ?? 0) > 0 && (
-                  <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
-                    Prey em {hunt.preySessions}/{hunt.sessionCount} sessões
-                  </span>
+                {hunt.prey && hunt.prey.length > 0 && (
+                  <>
+                    <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                      Prey em {hunt.preySessions ?? 0}/{hunt.sessionCount ?? 1} sessões
+                    </span>
+                    {/* Resumo por tipo de bônus — sem enumerar cada criatura, que numa hunt de
+                        muitas sessões virava uma parede de selos repetidos e confusa. */}
+                    {PREY_BONUSES.filter((b) => hunt.prey!.some((s) => s.bonus === b.value)).map((b) => (
+                      <span
+                        key={b.value}
+                        title={b.hint}
+                        className="rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue"
+                      >
+                        {b.emoji} {b.label}
+                      </span>
+                    ))}
+                  </>
                 )}
               </div>
             )}
@@ -138,6 +149,37 @@ export function HuntDashboardDialog({
                       </span>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {hunt.damageSources.length > 0 && (
+              <div>
+                <div className="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+                  <Skull className="h-3.5 w-3.5" /> Quem mais causa dano
+                </div>
+                {(() => {
+                  const top = hunt.damageSources[0];
+                  return (
+                    <div className="mb-2 flex items-center gap-2 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 px-3 py-2 text-sm">
+                      <GameIcon name={top.name} size={22} className="flex-none" fallback={<Skull className="h-5 w-5 flex-none text-rubi-danger" />} />
+                      <span>
+                        <strong className="text-foreground">{top.name}</strong> é quem mais te machuca —{" "}
+                        {Math.round(top.pct)}% do dano recebido nessa hunt
+                      </span>
+                    </div>
+                  );
+                })()}
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  {hunt.damageSources.slice(1, 6).map((s) => (
+                    <span
+                      key={s.name}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-1"
+                    >
+                      <GameIcon name={s.name} size={16} className="flex-none" />
+                      {s.name} <span className="font-mono font-semibold text-rubi-blue">{Math.round(s.pct)}%</span>
+                    </span>
+                  ))}
                 </div>
               </div>
             )}

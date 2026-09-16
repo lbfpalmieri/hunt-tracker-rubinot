@@ -98,6 +98,12 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
           type: String(t.type),
           pct: Number(t.pct) || 0,
         })),
+        // % de dano recebido por monstro — mesma ressalva, usado no dashboard da hunt.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        damageTakenSources: ((r.damage?.damageSources ?? []) as any[]).map((s) => ({
+          name: String(s.source),
+          pct: Number(s.pct) || 0,
+        })),
       })),
       error: null as string | null,
     };

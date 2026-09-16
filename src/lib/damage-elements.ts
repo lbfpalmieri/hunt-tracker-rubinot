@@ -35,3 +35,14 @@ export function damageElementInfo(raw: string): DamageElementInfo {
   const key = normalizeKey(raw);
   return DAMAGE_ELEMENTS[key] ?? { key, label: raw, emoji: FALLBACK.emoji };
 }
+
+/**
+ * true só pros ~11 elementos conhecidos. Usado pra separar "Damage Types"
+ * (elemento) de "Damage Sources" (nome de monstro) — sessões salvas antes do
+ * fix do parser (colon no cabeçalho quebrava o corte da seção) têm os dois
+ * misturados no mesmo array, então filtramos aqui em vez de confiar cegamente
+ * no que já foi salvo.
+ */
+export function isKnownDamageElement(raw: string): boolean {
+  return normalizeKey(raw) in DAMAGE_ELEMENTS;
+}

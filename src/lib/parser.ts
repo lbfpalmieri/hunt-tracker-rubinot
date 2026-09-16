@@ -145,8 +145,12 @@ export function parseDamage(text: string): DamageData {
   const max = toNum(text.match(/Max-DPS:\s*([\d.,]+)/)?.[1] ?? "0");
 
   const parseSection = (header: string) => {
+    // O boundary que marca "próxima seção" precisa aceitar o ":" no fim do
+    // cabeçalho (ex.: "Damage Sources:") — sem isso, a captura de "Damage
+    // Types" não parava aí e engolia os monstros de "Damage Sources" junto,
+    // misturando elemento com nome de monstro no mesmo array.
     const block = text.match(
-      new RegExp(`${header}\\s*([\\s\\S]*?)(?:\\n\\s*[A-Z][\\w -]+\\n|$)`),
+      new RegExp(`${header}\\s*([\\s\\S]*?)(?:\\n\\s*[A-Z][\\w -]+:?\\s*\\n|$)`),
     );
     const out: { name: string; value: number; pct: number }[] = [];
     if (!block) return out;

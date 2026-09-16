@@ -1,6 +1,7 @@
 import type { HuntSession } from "./store";
 import { huntRawXp, type BountyInfo } from "./bounty";
 import { normalizePrey, type PreySlot } from "./prey";
+import { isKnownDamageElement } from "./damage-elements";
 
 export type CompareSource = "own" | "community";
 
@@ -28,6 +29,8 @@ export interface CompareHunt {
   damageReceived: number | null;
   /** % de dano recebido por elemento ("physical", "fire"...) — média quando a hunt agrega várias sessões. */
   damageTypes: { type: string; pct: number }[];
+  /** % de dano recebido por monstro ("quem mais te machuca") — mesma ideia, mas por criatura. */
+  damageSources: { name: string; pct: number }[];
   bounty: BountyInfo | null;
   prey: PreySlot[] | null;
   /** Quantas sessões formam esta hunt (1 = sessão única). */
@@ -44,8 +47,31 @@ const hoursOf = (durationSec: number) => durationSec / 3600 || 1;
 export const perHour = (value: number | null, durationSec: number): number | null =>
   value == null ? null : value / hoursOf(durationSec);
 
+/**
+ * Separa o array bruto de "Damage Types" em elemento de verdade (physical,
+ * fire...) e o que sobrar (nome de monstro — sessões salvas antes do fix do
+ * parser têm isso misturado ali, ver damage-elements.ts). Junta o resto com
+ * o que já veio corretamente em "Damage Sources".
+ */
+function splitDamageBreakdown(
+  rawTypes: { type: string; pct: number }[],
+  officialSources: { name: string; pct: number }[],
+): { types: { type: string; pct: number }[]; sources: { name: string; pct: number }[] } {
+  const types: { type: string; pct: number }[] = [];
+  const strayAsSources: { name: string; pct: number }[] = [];
+  for (const t of rawTypes) {
+    if (isKnownDamageElement(t.type)) types.push(t);
+    else strayAsSources.push({ name: t.type, pct: t.pct });
+  }
+  return { types, sources: [...officialSources, ...strayAsSources] };
+}
+
 export function fromOwnSession(s: HuntSession, charName: string, vocation: string): CompareHunt {
   const kills = s.hunting.kills ?? [];
+  const { types: damageTypes, sources: damageSources } = splitDamageBreakdown(
+    (s.damage?.damageTypes ?? []).map((t) => ({ type: t.type, pct: Number(t.pct) || 0 })),
+    (s.damage?.damageSources ?? []).map((src) => ({ name: src.source, pct: Number(src.pct) || 0 })),
+  );
   return {
     key: `own:${s.id}`,
     id: s.id,
@@ -66,7 +92,8 @@ export function fromOwnSession(s: HuntSession, charName: string, vocation: strin
     damageDealt: Number(s.hunting.damage ?? 0),
     healing: Number(s.hunting.healing ?? 0),
     damageReceived: s.damage ? Number(s.damage.totalReceived ?? 0) : null,
-    damageTypes: (s.damage?.damageTypes ?? []).map((t) => ({ type: t.type, pct: Number(t.pct) || 0 })),
+    damageTypes,
+    damageSources,
     bounty: s.bounty,
     prey: s.prey,
   };
@@ -90,6 +117,8 @@ export interface CommunityRow {
   kills: { name: string; count: number }[];
   /** % de dano recebido por elemento — só existe quando a sessão tem o Damage Taken (nem toda sessão pública tem). */
   damageTakenTypes?: { type: string; pct: number }[];
+  /** % de dano recebido por monstro — mesma ressalva do campo acima. */
+  damageTakenSources?: { name: string; pct: number }[];
   bounty: { difficulty: string; tier: string; xp: number | null } | null;
   prey: unknown;
 }
@@ -104,6 +133,10 @@ export function fromCommunityRow(r: CommunityRow): CompareHunt {
     : null;
   const rawXpTotal = Number(r.rawXp || r.xpGain || 0);
   const rawXpHunt = !bounty ? rawXpTotal : bounty.xp == null ? null : Math.max(0, rawXpTotal - bounty.xp);
+  const { types: damageTypes, sources: damageSources } = splitDamageBreakdown(
+    r.damageTakenTypes ?? [],
+    r.damageTakenSources ?? [],
+  );
   return {
     key: `community:${r.id}`,
     id: r.id,
@@ -124,7 +157,8 @@ export function fromCommunityRow(r: CommunityRow): CompareHunt {
     damageDealt: Number(r.damage ?? 0),
     healing: Number(r.healing ?? 0),
     damageReceived: null,
-    damageTypes: (r.damageTakenTypes ?? []).map((t) => ({ type: t.type, pct: Number(t.pct) || 0 })),
+    damageTypes,
+    damageSources,
     bounty,
     prey: normalizePrey(r.prey),
   };
@@ -208,6 +242,19 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
       (a, b) => b.pct - a.pct,
     );
 
+    // Mesma lógica pra "quem causa mais dano" (por monstro).
+    const sourcePcts = new Map<string, number[]>();
+    for (const s of group) {
+      for (const src of s.damageSources) {
+        const arr = sourcePcts.get(src.name) ?? [];
+        arr.push(src.pct);
+        sourcePcts.set(src.name, arr);
+      }
+    }
+    const damageSources = Array.from(sourcePcts, ([name, pcts]) => ({ name, pct: avg(pcts) })).sort(
+      (a, b) => b.pct - a.pct,
+    );
+
     const chars = uniq(group.map((s) => s.charName));
     const vocs = uniq(group.map((s) => s.vocation));
     const preySlots = group.flatMap((s) => s.prey ?? []);
@@ -237,6 +284,7 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
       healing: avg(group.map((s) => s.healing)),
       damageReceived: avgOrNull(group.map((s) => s.damageReceived)),
       damageTypes,
+      damageSources,
       bounty: null,
       prey: preySlots.length ? preySlots : null,
       sessionCount: group.length,
