@@ -6,7 +6,7 @@ import { normalizePrey } from "./prey";
 
 /** Columns that are safe to expose publicly. Never include user_id/character_id. */
 const LIST_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, char_level, gear_url, hunting, damage, bounty_difficulty, bounty_tier, bounty_xp, prey";
+  "id, created_at, hunt_name, char_name, char_vocation, char_level, hunting, damage, bounty_difficulty, bounty_tier, bounty_xp, prey";
 const DETAIL_COLUMNS =
   "id, created_at, hunt_name, char_name, char_vocation, char_level, gear_url, hunting, damage, misc, bounty_difficulty, bounty_tier, bounty_xp, prey";
 
@@ -71,7 +71,6 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
         charName: (r.char_name ?? "Anônimo") as string,
         vocation: (r.char_vocation ?? "—") as string,
         level: r.char_level == null ? null : Number(r.char_level),
-        gearUrl: (r.gear_url ?? null) as string | null,
         durationSec: resolveDurationSec(r.hunting ?? {}, r.misc?.sessionSec ?? null),
         xpGain: Number(r.hunting?.xpGain ?? 0),
         rawXp: Number(r.hunting?.rawXp ?? 0),

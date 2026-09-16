@@ -14,6 +14,7 @@ import {
   getCommunityStats,
 } from "@/lib/community.functions";
 import { fromCommunityRow, type CommunityRow } from "@/lib/compare";
+import { VOCATION_PORTRAITS } from "@/lib/vocation-images";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
   Dialog,
@@ -867,12 +868,11 @@ function SessionAvatar({
   className = "h-10 w-10",
   textClassName = "text-sm",
 }: {
-  session: { gearUrl?: string | null; vocation: string; charName: string };
+  session: { vocation: string; charName: string };
   className?: string;
   textClassName?: string;
 }) {
-  const vocImg = VOCATIONS.find((v) => v.name === session.vocation)?.image;
-  const src = session.gearUrl || vocImg;
+  const src = VOCATION_PORTRAITS[session.vocation];
   if (src) {
     return (
       <img
