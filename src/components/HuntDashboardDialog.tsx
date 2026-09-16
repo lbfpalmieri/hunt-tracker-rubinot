@@ -5,12 +5,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { ShieldAlert } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import { GameIcon } from "@/components/GameIcon";
 import { fmtGold, fmtNum } from "@/lib/format";
 import { perHour, topKills, type CompareHunt } from "@/lib/compare";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
+import { damageElementInfo } from "@/lib/damage-elements";
 
 interface Row {
   label: string;
@@ -104,6 +106,41 @@ export function HuntDashboardDialog({
                 );
               })}
             </dl>
+
+            {hunt.damageTypes.length > 0 && (
+              <div>
+                <div className="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+                  <ShieldAlert className="h-3.5 w-3.5" /> Dano recebido por elemento
+                </div>
+                {(() => {
+                  const top = hunt.damageTypes[0];
+                  const info = damageElementInfo(top.type);
+                  return (
+                    <div className="mb-2 flex items-center gap-2 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 px-3 py-2 text-sm">
+                      <span className="text-lg leading-none">{info.emoji}</span>
+                      <span>
+                        <strong className="text-foreground">Fique de olho em {info.label}</strong> —{" "}
+                        {Math.round(top.pct)}% do dano recebido nessa hunt vem daí
+                      </span>
+                    </div>
+                  );
+                })()}
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  {hunt.damageTypes.slice(0, 6).map((t) => {
+                    const info = damageElementInfo(t.type);
+                    return (
+                      <span
+                        key={t.type}
+                        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-1"
+                      >
+                        <span>{info.emoji}</span> {info.label}{" "}
+                        <span className="font-mono font-semibold text-rubi-blue">{Math.round(t.pct)}%</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div>
               <div className="mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">

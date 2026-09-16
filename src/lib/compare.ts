@@ -26,6 +26,8 @@ export interface CompareHunt {
   damageDealt: number;
   healing: number;
   damageReceived: number | null;
+  /** % de dano recebido por elemento ("physical", "fire"...) — média quando a hunt agrega várias sessões. */
+  damageTypes: { type: string; pct: number }[];
   bounty: BountyInfo | null;
   prey: PreySlot[] | null;
   /** Quantas sessões formam esta hunt (1 = sessão única). */
@@ -64,6 +66,7 @@ export function fromOwnSession(s: HuntSession, charName: string, vocation: strin
     damageDealt: Number(s.hunting.damage ?? 0),
     healing: Number(s.hunting.healing ?? 0),
     damageReceived: s.damage ? Number(s.damage.totalReceived ?? 0) : null,
+    damageTypes: (s.damage?.damageTypes ?? []).map((t) => ({ type: t.type, pct: Number(t.pct) || 0 })),
     bounty: s.bounty,
     prey: s.prey,
   };
@@ -85,6 +88,8 @@ export interface CommunityRow {
   damage?: number;
   healing?: number;
   kills: { name: string; count: number }[];
+  /** % de dano recebido por elemento — só existe quando a sessão tem o Damage Taken (nem toda sessão pública tem). */
+  damageTakenTypes?: { type: string; pct: number }[];
   bounty: { difficulty: string; tier: string; xp: number | null } | null;
   prey: unknown;
 }
@@ -119,6 +124,7 @@ export function fromCommunityRow(r: CommunityRow): CompareHunt {
     damageDealt: Number(r.damage ?? 0),
     healing: Number(r.healing ?? 0),
     damageReceived: null,
+    damageTypes: (r.damageTakenTypes ?? []).map((t) => ({ type: t.type, pct: Number(t.pct) || 0 })),
     bounty,
     prey: normalizePrey(r.prey),
   };
@@ -188,6 +194,20 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
       count: total / group.length,
     })).sort((a, b) => b.count - a.count);
 
+    // % média por elemento — só entra na média a sessão que reportou aquele
+    // elemento (sessão sem Damage Taken simplesmente não participa).
+    const typePcts = new Map<string, number[]>();
+    for (const s of group) {
+      for (const t of s.damageTypes) {
+        const arr = typePcts.get(t.type) ?? [];
+        arr.push(t.pct);
+        typePcts.set(t.type, arr);
+      }
+    }
+    const damageTypes = Array.from(typePcts, ([type, pcts]) => ({ type, pct: avg(pcts) })).sort(
+      (a, b) => b.pct - a.pct,
+    );
+
     const chars = uniq(group.map((s) => s.charName));
     const vocs = uniq(group.map((s) => s.vocation));
     const preySlots = group.flatMap((s) => s.prey ?? []);
@@ -216,6 +236,7 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
       damageDealt: avg(group.map((s) => s.damageDealt)),
       healing: avg(group.map((s) => s.healing)),
       damageReceived: avgOrNull(group.map((s) => s.damageReceived)),
+      damageTypes,
       bounty: null,
       prey: preySlots.length ? preySlots : null,
       sessionCount: group.length,

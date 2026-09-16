@@ -6,7 +6,7 @@ import { normalizePrey } from "./prey";
 
 /** Columns that are safe to expose publicly. Never include user_id/character_id. */
 const LIST_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, char_level, hunting, bounty_difficulty, bounty_tier, bounty_xp, prey";
+  "id, created_at, hunt_name, char_name, char_vocation, char_level, hunting, damage, bounty_difficulty, bounty_tier, bounty_xp, prey";
 const DETAIL_COLUMNS =
   "id, created_at, hunt_name, char_name, char_vocation, char_level, gear_url, hunting, damage, misc, bounty_difficulty, bounty_tier, bounty_xp, prey";
 
@@ -91,6 +91,12 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
         kills: ((r.hunting?.kills ?? []) as any[]).map((k) => ({
           name: String(k.name),
           count: Number(k.count) || 0,
+        })),
+        // % de dano recebido por elemento — usado pro dashboard da hunt recomendar o que se preocupar.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        damageTakenTypes: ((r.damage?.damageTypes ?? []) as any[]).map((t) => ({
+          type: String(t.type),
+          pct: Number(t.pct) || 0,
         })),
       })),
       error: null as string | null,
