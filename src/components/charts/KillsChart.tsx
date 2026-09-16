@@ -1,8 +1,10 @@
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
+import { fmtNum } from "@/lib/format";
 
-export type KillPoint = { name: string; count: number };
+/** `perHour` é opcional — só existe quando o chamador sabe a duração da sessão. */
+export type KillPoint = { name: string; count: number; perHour?: number };
 
 /** Lazy-loaded so the session detail paints before recharts is downloaded. */
 export default function KillsChart({ data }: { data: KillPoint[] }) {
@@ -24,6 +26,11 @@ export default function KillsChart({ data }: { data: KillPoint[] }) {
             border: "1px solid var(--border)",
             borderRadius: 12,
             fontSize: 12,
+          }}
+          formatter={(value, _name, item) => {
+            const perHour = (item?.payload as KillPoint | undefined)?.perHour;
+            const count = fmtNum(Number(value));
+            return [perHour != null ? `${count} (${fmtNum(perHour)}/h)` : count, "Kills"];
           }}
         />
         <Bar dataKey="count" fill="var(--rubi-blue)" radius={[0, 6, 6, 0]} isAnimationActive={false} />

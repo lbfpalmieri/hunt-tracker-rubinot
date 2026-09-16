@@ -77,10 +77,16 @@ function SessionDetail() {
   }
 
   const h = session.hunting;
-  const gph = h.balance / (h.durationSec / 3600 || 1);
+  const hours = h.durationSec / 3600 || 1;
+  const gph = h.balance / hours;
   const netRawXp = huntRawXp(session);
   const totalKills = h.kills.reduce((a, k) => a + k.count, 0);
-  const killsData = h.kills.slice().sort((a, b) => b.count - a.count).slice(0, 10);
+  const killsPerHour = totalKills / hours;
+  const killsData = h.kills
+    .slice()
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+    .map((k) => ({ ...k, perHour: k.count / hours }));
 
   return (
     <AppShell>
@@ -146,7 +152,13 @@ function SessionDetail() {
           icon={Coins}
           accent={gph >= 0 ? "success" : "danger"}
         />
-        <StatCard label="Kills" value={fmtNum(totalKills)} hint={`${h.kills.length} espécies`} icon={Skull} accent="gold" />
+        <StatCard
+          label="Kills"
+          value={fmtNum(totalKills)}
+          hint={`${h.kills.length} espécies · ${fmtNum(killsPerHour)}/h`}
+          icon={Skull}
+          accent="gold"
+        />
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -173,7 +185,8 @@ function SessionDetail() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Kills chart */}
         <div className="card-surface p-5 lg:col-span-2">
-          <h2 className="mb-4 text-base font-semibold">Monstros mortos</h2>
+          <h2 className="mb-1 text-base font-semibold">Monstros mortos</h2>
+          <p className="mb-3 text-xs text-muted-foreground">Passe o mouse na barra para ver o ritmo por hora.</p>
           <div className="h-64 w-full">
             <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />}>
               <KillsChart data={killsData} />

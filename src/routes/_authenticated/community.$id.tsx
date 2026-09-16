@@ -139,7 +139,12 @@ function SessionView({ session }: { session: any }) {
                     className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
                   >
                     <span className="truncate">{k.name}</span>
-                    <span className="ml-2 font-mono font-semibold text-rubi-blue">×{fmtNum(Number(k.count))}</span>
+                    <div className="ml-2 flex flex-none flex-col items-end">
+                      <span className="font-mono font-semibold text-rubi-blue">×{fmtNum(Number(k.count))}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {fmtNum(Number(k.count) / hours)}/h
+                      </span>
+                    </div>
                   </div>
                 ))}
             </div>
