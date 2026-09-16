@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Dialog,
   DialogContent,
@@ -6,13 +8,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ShieldAlert, Skull, Trophy, Sparkles } from "lucide-react";
+import { ShieldAlert, Skull, Trophy, Sparkles, Swords } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
 import { GameIcon } from "@/components/GameIcon";
 import { fmtGold, fmtNum } from "@/lib/format";
 import { aggregateByHunt, filterByBonusInclusion, perHour, topKills, type CompareHunt } from "@/lib/compare";
 import { preyMarkLabel, preyMarkTitle, PREY_BONUSES, type PreyBonus } from "@/lib/prey";
 import { damageElementInfo } from "@/lib/damage-elements";
+import { getMonsterWeaknesses } from "@/lib/monster-weakness.functions";
+import { rankElementsAgainstHunt } from "@/lib/monster-weakness";
 
 interface Row {
   label: string;
@@ -72,6 +76,23 @@ export function HuntDashboardDialog({
   const hunt = useMemo(() => aggregateByHunt(filtered)[0] ?? null, [filtered]);
   const huntName = sessions[0]?.huntName ?? "";
   const hasBonusSessions = sessions.some((s) => s.bounty || (s.prey && s.prey.length > 0));
+
+  // Elemento mais forte contra os monstros da hunt — busca a resistência dos
+  // monstros mais mortos na TibiaWiki. Só dispara quando o dashboard tem
+  // kills pra consultar; staleTime longo porque resistência de monstro
+  // praticamente não muda (só em update de balance do jogo oficial).
+  const weaknessNames = useMemo(() => (hunt ? hunt.kills.slice(0, 8).map((k) => k.name) : []), [hunt]);
+  const fetchWeaknesses = useServerFn(getMonsterWeaknesses);
+  const { data: weaknessData, isLoading: loadingWeakness } = useQuery({
+    queryKey: ["monster-weaknesses", weaknessNames.slice().sort().join("|")],
+    queryFn: () => fetchWeaknesses({ data: { names: weaknessNames } }),
+    enabled: weaknessNames.length > 0,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const elementRanking = useMemo(
+    () => (hunt && weaknessData ? rankElementsAgainstHunt(hunt.kills, weaknessData.weaknesses) : []),
+    [hunt, weaknessData],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -238,6 +259,55 @@ export function HuntDashboardDialog({
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {weaknessNames.length > 0 && (
+              <div>
+                <div className="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+                  <Swords className="h-3.5 w-3.5" /> Elemento mais forte contra a hunt
+                </div>
+                {loadingWeakness ? (
+                  <div className="h-14 animate-pulse rounded-lg bg-muted/20" />
+                ) : elementRanking.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Não achei dados de resistência pra esses monstros na TibiaWiki.
+                  </p>
+                ) : (
+                  <>
+                    {(() => {
+                      const top = elementRanking[0];
+                      const info = damageElementInfo(top.element);
+                      return (
+                        <div className="mb-2 flex items-center gap-2 rounded-lg border border-rubi-success/40 bg-rubi-success/10 px-3 py-2 text-sm">
+                          <span className="text-lg leading-none">{info.emoji}</span>
+                          <span>
+                            <strong className="text-foreground">{info.label}</strong> é o mais eficaz contra
+                            os monstros dessa hunt — dano médio de {Math.round(top.avgMod)}%
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    <div className="flex flex-wrap gap-1.5 text-xs">
+                      {elementRanking.slice(1, 6).map((r) => {
+                        const info = damageElementInfo(r.element);
+                        return (
+                          <span
+                            key={r.element}
+                            className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-1"
+                          >
+                            <span>{info.emoji}</span> {info.label}{" "}
+                            <span className="font-mono font-semibold text-rubi-blue">{Math.round(r.avgMod)}%</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+                      Baseado nos monstros mais mortos, com dados da TibiaWiki (Tibia oficial) — o RubinOT
+                      pode ter valores diferentes.
+                    </p>
+                  </>
+                )}
               </div>
             )}
 
