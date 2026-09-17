@@ -39,11 +39,6 @@ import {
   Users2,
   type LucideIcon,
 } from "lucide-react";
-import eliteKnightImg from "@/assets/vocations/elite-knight.png";
-import paladinImg from "@/assets/vocations/paladin.png";
-import druidImg from "@/assets/vocations/druid.png";
-import sorcererImg from "@/assets/vocations/sorcerer.png";
-import monkImg from "@/assets/vocations/monk.png";
 
 export const Route = createFileRoute("/_authenticated/community/")({
   head: () => ({
@@ -66,13 +61,7 @@ export const Route = createFileRoute("/_authenticated/community/")({
   component: CommunityPage,
 });
 
-const VOCATIONS: { name: string; image: string }[] = [
-  { name: "Elite Knight", image: eliteKnightImg },
-  { name: "Royal Paladin", image: paladinImg },
-  { name: "Elder Druid", image: druidImg },
-  { name: "Master Sorcerer", image: sorcererImg },
-  { name: "Exalted Monk", image: monkImg },
-];
+const VOCATION_NAMES = ["Elite Knight", "Royal Paladin", "Elder Druid", "Master Sorcerer", "Exalted Monk"];
 
 type Sort = "recent" | "xph" | "gph" | "killsh";
 
@@ -418,24 +407,25 @@ function CommunityPage() {
               </span>
               Todas
             </button>
-            {VOCATIONS.map((v) => (
+            {VOCATION_NAMES.map((name) => (
               <button
-                key={v.name}
+                key={name}
                 type="button"
-                onClick={() => setVocation(vocation === v.name ? "" : v.name)}
+                onClick={() => setVocation(vocation === name ? "" : name)}
                 className={
                   "inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-xs font-medium transition-colors " +
-                  (vocation === v.name
+                  (vocation === name
                     ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                     : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
                 }
               >
                 <img
-                  src={v.image}
+                  src={VOCATION_PORTRAITS[name]}
                   alt=""
-                  className="h-7 w-7 flex-none rounded-full object-cover object-top"
+                  className="h-9 w-9 flex-none"
+                  style={{ objectFit: "contain", imageRendering: "pixelated" }}
                 />
-                {v.name}
+                {name}
               </button>
             ))}
           </div>
@@ -706,7 +696,7 @@ function CommunityPage() {
                 className="card-surface flex flex-col gap-3 p-4 transition-colors hover:border-rubi-blue/50 sm:flex-row sm:items-center"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <SessionAvatar session={s} className="h-10 w-10" textClassName="text-sm" />
+                  <SessionAvatar session={s} className="h-12 w-12" textClassName="text-sm" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-semibold">{s.huntName}</span>
@@ -763,7 +753,7 @@ function CommunityPage() {
                   onClick={() => setOpenHunt(null)}
                   className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:border-rubi-blue/50"
                 >
-                  <SessionAvatar session={s} className="h-9 w-9" textClassName="text-xs" />
+                  <SessionAvatar session={s} className="h-11 w-11" textClassName="text-xs" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-semibold">{s.charName}</span>
@@ -878,7 +868,8 @@ function SessionAvatar({
       <img
         src={src}
         alt=""
-        className={`${className} flex-none rounded-full border border-border/60 object-cover object-top`}
+        className={`${className} flex-none`}
+        style={{ objectFit: "contain", imageRendering: "pixelated" }}
       />
     );
   }
