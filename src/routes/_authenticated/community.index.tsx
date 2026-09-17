@@ -396,13 +396,13 @@ function CommunityPage() {
               type="button"
               onClick={() => setVocation("")}
               className={
-                "flex h-16 w-20 flex-none flex-col items-center justify-center gap-1 rounded-lg border text-xs font-semibold transition-colors " +
+                "flex h-24 w-28 flex-none flex-col items-center justify-center gap-1.5 rounded-lg border text-sm font-semibold transition-colors " +
                 (vocation === ""
                   ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                   : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
               }
             >
-              <Users2 className="h-4 w-4" />
+              <Users2 className="h-5 w-5" />
               Todas
             </button>
             {VOCATION_NAMES.map((name) => {
@@ -415,11 +415,11 @@ function CommunityPage() {
                   onClick={() => setVocation(active ? "" : name)}
                   title={name}
                   className={
-                    "flex h-16 flex-none items-center rounded-md transition-opacity " +
+                    "flex h-24 flex-none items-center rounded-md transition-opacity " +
                     (active ? "opacity-100" : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <img src={active ? banner.selected : banner.default} alt={name} className="h-16 w-auto" />
+                  <img src={active ? banner.selected : banner.default} alt={name} className="h-24 w-auto" />
                 </button>
               );
             })}
