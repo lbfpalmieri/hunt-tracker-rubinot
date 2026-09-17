@@ -43,3 +43,17 @@ export const VOCATION_BANNERS: Record<string, { default: string; selected: strin
     selected: "https://wiki.rubinot.com/banners/vocations/monk-selected.png",
   },
 };
+
+/**
+ * Cor-tema de cada vocação (puxa das mesmas variáveis --rubi-* usadas no resto do
+ * app, exceto o roxo do Sorcerer, que reaproveita o mesmo oklch já usado em
+ * TYPE_COLORS nos gráficos de dano). Usada pra destacar o card de filtro quando
+ * uma vocação está selecionada.
+ */
+export const VOCATION_THEME: Record<string, string> = {
+  "Elite Knight": "var(--rubi-danger)",
+  "Royal Paladin": "var(--rubi-blue)",
+  "Elder Druid": "var(--rubi-success)",
+  "Master Sorcerer": "oklch(0.7 0.18 300)",
+  "Exalted Monk": "var(--rubi-gold)",
+};

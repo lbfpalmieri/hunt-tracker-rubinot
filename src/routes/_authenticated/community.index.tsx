@@ -14,7 +14,7 @@ import {
   getCommunityStats,
 } from "@/lib/community.functions";
 import { fromCommunityRow, type CommunityRow } from "@/lib/compare";
-import { VOCATION_BANNERS, VOCATION_PORTRAITS } from "@/lib/vocation-images";
+import { VOCATION_BANNERS, VOCATION_PORTRAITS, VOCATION_THEME } from "@/lib/vocation-images";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
   Dialog,
@@ -388,23 +388,35 @@ function CommunityPage() {
 
 
       {/* Filters */}
-      <div className="card-surface mb-6 space-y-4 p-4">
+      <div
+        className="card-surface mb-6 space-y-4 p-4 transition-[border-color,box-shadow]"
+        style={
+          vocation
+            ? {
+                borderColor: VOCATION_THEME[vocation],
+                boxShadow: `0 0 0 1px ${VOCATION_THEME[vocation]} inset, 0 0 28px -10px ${VOCATION_THEME[vocation]}`,
+              }
+            : undefined
+        }
+      >
         <div>
-          <span className="text-xs font-medium text-muted-foreground">Vocação</span>
-          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Vocação</span>
             <button
               type="button"
               onClick={() => setVocation("")}
               className={
-                "flex h-24 w-28 flex-none flex-col items-center justify-center gap-1.5 rounded-lg border text-sm font-semibold transition-colors " +
+                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors " +
                 (vocation === ""
                   ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                   : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
               }
             >
-              <Users2 className="h-5 w-5" />
+              <Users2 className="h-3 w-3" />
               Todas
             </button>
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
             {VOCATION_NAMES.map((name) => {
               const banner = VOCATION_BANNERS[name];
               const active = vocation === name;
@@ -415,11 +427,11 @@ function CommunityPage() {
                   onClick={() => setVocation(active ? "" : name)}
                   title={name}
                   className={
-                    "flex h-24 flex-none items-center rounded-md transition-opacity " +
+                    "flex h-20 flex-none items-center rounded-md transition-opacity " +
                     (active ? "opacity-100" : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <img src={active ? banner.selected : banner.default} alt={name} className="h-24 w-auto" />
+                  <img src={active ? banner.selected : banner.default} alt={name} className="h-20 w-auto" />
                 </button>
               );
             })}
