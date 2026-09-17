@@ -421,7 +421,7 @@ function CommunityPage() {
                     (active ? "opacity-100" : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <img src={active ? banner.selected : banner.default} alt={name} className="h-14 w-auto" />
+                  <img src={active ? banner.selected : banner.default} alt={name} className="h-20 w-auto" />
                 </button>
               );
             })}
