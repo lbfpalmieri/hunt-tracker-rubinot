@@ -391,20 +391,18 @@ function CommunityPage() {
       <div className="card-surface mb-6 space-y-4 p-4">
         <div>
           <span className="text-xs font-medium text-muted-foreground">Vocação</span>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => setVocation("")}
               className={
-                "inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-xs font-medium transition-colors " +
+                "flex h-16 w-20 flex-none flex-col items-center justify-center gap-1 rounded-lg border text-xs font-semibold transition-colors " +
                 (vocation === ""
                   ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                   : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
               }
             >
-              <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent">
-                <Users2 className="h-3.5 w-3.5" />
-              </span>
+              <Users2 className="h-4 w-4" />
               Todas
             </button>
             {VOCATION_NAMES.map((name) => {
@@ -417,11 +415,11 @@ function CommunityPage() {
                   onClick={() => setVocation(active ? "" : name)}
                   title={name}
                   className={
-                    "flex-none rounded-md transition-opacity " +
+                    "flex h-16 flex-none items-center rounded-md transition-opacity " +
                     (active ? "opacity-100" : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <img src={active ? banner.selected : banner.default} alt={name} className="h-20 w-auto" />
+                  <img src={active ? banner.selected : banner.default} alt={name} className="h-16 w-auto" />
                 </button>
               );
             })}
