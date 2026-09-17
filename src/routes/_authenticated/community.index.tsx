@@ -14,7 +14,7 @@ import {
   getCommunityStats,
 } from "@/lib/community.functions";
 import { fromCommunityRow, type CommunityRow } from "@/lib/compare";
-import { VOCATION_PORTRAITS } from "@/lib/vocation-images";
+import { VOCATION_BANNERS, VOCATION_PORTRAITS } from "@/lib/vocation-images";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
   Dialog,
@@ -407,27 +407,24 @@ function CommunityPage() {
               </span>
               Todas
             </button>
-            {VOCATION_NAMES.map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => setVocation(vocation === name ? "" : name)}
-                className={
-                  "inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-xs font-medium transition-colors " +
-                  (vocation === name
-                    ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
-                    : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
-                }
-              >
-                <img
-                  src={VOCATION_PORTRAITS[name]}
-                  alt=""
-                  className="h-9 w-9 flex-none"
-                  style={{ objectFit: "contain", imageRendering: "pixelated" }}
-                />
-                {name}
-              </button>
-            ))}
+            {VOCATION_NAMES.map((name) => {
+              const banner = VOCATION_BANNERS[name];
+              const active = vocation === name;
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setVocation(active ? "" : name)}
+                  title={name}
+                  className={
+                    "flex-none rounded-md transition-opacity " +
+                    (active ? "opacity-100" : "opacity-70 hover:opacity-100")
+                  }
+                >
+                  <img src={active ? banner.selected : banner.default} alt={name} className="h-14 w-auto" />
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -14,3 +14,32 @@ export const VOCATION_PORTRAITS: Record<string, string> = {
   "Master Sorcerer": "https://www.tibiawiki.com.br/images/6/63/Outfit_Mage_Male.gif",
   "Exalted Monk": "https://www.tibiawiki.com.br/images/9/92/Outfit_Monk_Male.gif",
 };
+
+/**
+ * Banners de vocação usados no filtro da Comunidade — vêm da própria wiki.rubinot.com
+ * (banners/vocations/<nome>.png e <nome>-selected.png), não da TibiaWiki. O nome do
+ * arquivo já segue o nome-base do outfit em inglês (knight/paladin/sorcerer/druid/monk),
+ * igual ao mapeamento usado em VOCATION_PORTRAITS.
+ */
+export const VOCATION_BANNERS: Record<string, { default: string; selected: string }> = {
+  "Elite Knight": {
+    default: "https://wiki.rubinot.com/banners/vocations/knight.png",
+    selected: "https://wiki.rubinot.com/banners/vocations/knight-selected.png",
+  },
+  "Royal Paladin": {
+    default: "https://wiki.rubinot.com/banners/vocations/paladin.png",
+    selected: "https://wiki.rubinot.com/banners/vocations/paladin-selected.png",
+  },
+  "Elder Druid": {
+    default: "https://wiki.rubinot.com/banners/vocations/druid.png",
+    selected: "https://wiki.rubinot.com/banners/vocations/druid-selected.png",
+  },
+  "Master Sorcerer": {
+    default: "https://wiki.rubinot.com/banners/vocations/sorcerer.png",
+    selected: "https://wiki.rubinot.com/banners/vocations/sorcerer-selected.png",
+  },
+  "Exalted Monk": {
+    default: "https://wiki.rubinot.com/banners/vocations/monk.png",
+    selected: "https://wiki.rubinot.com/banners/vocations/monk-selected.png",
+  },
+};
