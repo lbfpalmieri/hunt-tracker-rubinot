@@ -28,6 +28,7 @@ import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authent
 import { Route as AuthenticatedToolsComparisonsRouteImport } from './routes/_authenticated/tools.comparisons'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
 import { Route as AuthenticatedToolsRankingRouteImport } from './routes/_authenticated/tools.ranking'
+import { Route as AuthenticatedToolsRubiniCoinsRouteImport } from './routes/_authenticated/tools.rubini-coins'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -130,6 +131,12 @@ const AuthenticatedToolsRankingRoute =
     path: '/tools/ranking',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedToolsRubiniCoinsRoute =
+  AuthenticatedToolsRubiniCoinsRouteImport.update({
+    id: '/tools/rubini-coins',
+    path: '/tools/rubini-coins',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
+  '/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
   '/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesByTo {
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
   '/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
+  '/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
   '/community': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesById {
@@ -191,6 +200,7 @@ export interface FileRoutesById {
   '/_authenticated/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/_authenticated/tools/ranking': typeof AuthenticatedToolsRankingRoute
+  '/_authenticated/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
   '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRouteTypes {
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/tools/comparisons'
     | '/tools/monster-calculator'
     | '/tools/ranking'
+    | '/tools/rubini-coins'
     | '/community/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/tools/comparisons'
     | '/tools/monster-calculator'
     | '/tools/ranking'
+    | '/tools/rubini-coins'
     | '/community'
   id:
     | '__root__'
@@ -254,6 +266,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tools/comparisons'
     | '/_authenticated/tools/monster-calculator'
     | '/_authenticated/tools/ranking'
+    | '/_authenticated/tools/rubini-coins'
     | '/_authenticated/community/'
   fileRoutesById: FileRoutesById
 }
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToolsRankingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tools/rubini-coins': {
+      id: '/_authenticated/tools/rubini-coins'
+      path: '/tools/rubini-coins'
+      fullPath: '/tools/rubini-coins'
+      preLoaderRoute: typeof AuthenticatedToolsRubiniCoinsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -430,6 +450,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedToolsComparisonsRoute: typeof AuthenticatedToolsComparisonsRoute
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
   AuthenticatedToolsRankingRoute: typeof AuthenticatedToolsRankingRoute
+  AuthenticatedToolsRubiniCoinsRoute: typeof AuthenticatedToolsRubiniCoinsRoute
   AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
 }
 
@@ -448,6 +469,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedToolsMonsterCalculatorRoute:
     AuthenticatedToolsMonsterCalculatorRoute,
   AuthenticatedToolsRankingRoute: AuthenticatedToolsRankingRoute,
+  AuthenticatedToolsRubiniCoinsRoute: AuthenticatedToolsRubiniCoinsRoute,
   AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,
 }
 

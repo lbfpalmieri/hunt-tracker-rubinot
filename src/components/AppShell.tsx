@@ -15,7 +15,7 @@ import {
   Gauge,
   BookmarkCheck,
   Users,
-
+  Coins,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/dragon-logo.png.asset.json";
@@ -44,6 +44,7 @@ const moreNav = [
   { to: "/tools/compare", label: "Comparar hunts", icon: GitCompareArrows },
   { to: "/tools/ranking", label: "Ranking de hunts", icon: Trophy },
   { to: "/tools/comparisons", label: "Comparações salvas", icon: BookmarkCheck },
+  { to: "/tools/rubini-coins", label: "Calculadora de Rubini Coins", icon: Coins },
   { to: "/characters", label: "Personagens", icon: UserCircle2 },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
