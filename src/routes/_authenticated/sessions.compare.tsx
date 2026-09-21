@@ -174,12 +174,12 @@ function SessionsComparePage() {
             className="w-full rounded-lg border border-border bg-background/60 py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:flex">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <select
             value={filterChar}
             onChange={(e) => setFilterChar(e.target.value)}
-            className="rounded-lg border border-border bg-input px-2 py-1.5 text-sm"
+            className="min-w-0 rounded-lg border border-border bg-input px-2 py-2 text-sm"
           >
             <option value="all">Todos personagens</option>
             {characters.map((c) => (
@@ -350,7 +350,7 @@ function SessionsComparePage() {
 
 
       {selected.length >= 2 && (
-        <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 md:bottom-6">
+         <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 lg:bottom-6">
           <button
             type="button"
             onClick={scrollToCompare}
