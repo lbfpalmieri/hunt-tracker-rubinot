@@ -131,10 +131,10 @@ function SessionDetail() {
             {h.startedAt && h.endedAt ? `${h.startedAt} → ${h.endedAt}` : fmtDuration(h.durationSec)}
           </p>
         </div>
-        <div className="flex flex-none items-center gap-2 self-start sm:self-auto">
+        <div className="grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:w-auto sm:flex-none sm:items-center sm:self-auto">
           <button
             onClick={() => setShowDashboard(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-rubi-gold/40 bg-rubi-gold-soft px-3 py-2 text-sm font-semibold text-rubi-gold hover:border-rubi-gold"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rubi-gold/40 bg-rubi-gold-soft px-3 py-2 text-sm font-semibold text-rubi-gold hover:border-rubi-gold"
           >
             <LayoutDashboard className="h-4 w-4" /> Dashboard da hunt
           </button>
@@ -146,7 +146,7 @@ function SessionDetail() {
                 navigate({ to: "/sessions" });
               }
             }}
-            className="inline-flex items-center gap-2 rounded-lg border border-rubi-danger/40 px-3 py-2 text-sm text-rubi-danger hover:bg-rubi-danger/10"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rubi-danger/40 px-3 py-2 text-sm text-rubi-danger hover:bg-rubi-danger/10"
           >
             <Trash2 className="h-4 w-4" /> Excluir
           </button>

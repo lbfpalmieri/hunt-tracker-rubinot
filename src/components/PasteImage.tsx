@@ -105,7 +105,7 @@ export function PasteImageBox({
               type="button"
               onClick={() => onChange(null)}
               title="Remover imagem"
-              className="absolute right-2 top-2 rounded-md border border-border bg-background/80 p-1 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background/90 text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </button>

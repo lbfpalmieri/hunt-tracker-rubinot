@@ -597,7 +597,26 @@ function CommunityPage() {
               </p>
             </div>
 
-            <div className="card-surface overflow-x-auto">
+            <div className="card-surface overflow-hidden">
+              <div className="divide-y divide-border/50 sm:hidden">
+                {calcRows.map((r) => (
+                  <article key={r.key} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words font-display text-sm font-semibold">{r.huntName}</h3>
+                        <p className="text-xs text-muted-foreground">{r.vocation} · {r.sessionCount} sessões · {r.playerCount} jogadores</p>
+                      </div>
+                      <button onClick={() => setOpenHunt(r.key)} className="min-h-10 flex-none rounded-lg border border-rubi-blue/40 px-3 text-xs font-semibold text-rubi-blue">Ver</button>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                      <div><dt className="text-muted-foreground">Média /h</dt><dd className="mt-1 font-mono font-semibold text-rubi-gold">{fmtNum(Math.round(r.perHour))}</dd></div>
+                      <div><dt className="text-muted-foreground">Melhor /h</dt><dd className="mt-1 font-mono font-semibold text-rubi-success">{fmtNum(Math.round(r.bestPerHour))}</dd></div>
+                      <div><dt className="text-muted-foreground">Tempo</dt><dd className="mt-1 font-mono font-semibold text-rubi-blue">{fmtDuration(Math.round(r.estSec))}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -640,6 +659,7 @@ function CommunityPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         )
