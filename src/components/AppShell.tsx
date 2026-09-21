@@ -67,11 +67,26 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!moreOpen) return;
+    if (!window.matchMedia("(min-width: 768px)").matches) return;
     const onClick = (e: MouseEvent) => {
       if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
+  }, [moreOpen]);
+
+  useEffect(() => {
+    if (!moreOpen || window.matchMedia("(min-width: 768px)").matches) return;
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [moreOpen]);
 
   useEffect(() => {
@@ -89,9 +104,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-2.5">
+        <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-2.5 md:flex">
           <Link to="/dashboard" className="flex shrink-0 items-center">
-            <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-11 w-auto object-contain sm:h-16" />
+            <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-9 w-auto object-contain sm:h-14 md:h-16" />
           </Link>
 
 
@@ -119,6 +134,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="relative" ref={moreRef}>
               <button
                 onClick={() => setMoreOpen((v) => !v)}
+                aria-expanded={moreOpen}
+                aria-haspopup="menu"
                 className={
                   "relative inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
                   (moreActive
@@ -169,7 +186,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </nav>
 
-          <div className="ml-auto flex min-w-0 items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center justify-end gap-1 sm:gap-2">
             <PatchAnnouncementBell />
             <CharacterSwitcher />
             <button
@@ -200,7 +217,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={n.to}
                 to={n.to}
                 className={
-                  "flex min-w-0 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight transition-colors " +
+                    "flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight transition-colors " +
                   (active ? "text-rubi-blue" : "text-muted-foreground")
                 }
               >
@@ -211,8 +228,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
           <button
             onClick={() => setMoreOpen(true)}
+            aria-expanded={moreOpen}
+            aria-haspopup="dialog"
             className={
-              "relative flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight " +
+               "relative flex min-h-12 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight " +
               (moreActive ? "text-rubi-blue" : "text-muted-foreground")
             }
           >
@@ -229,9 +248,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile "Mais" sheet */}
       {moreOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Mais opções">
           <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={() => setMoreOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl border-t border-border bg-popover pb-[env(safe-area-inset-bottom)]">
+          <div className="absolute bottom-0 left-0 right-0 max-h-[min(88dvh,46rem)] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-popover pb-[env(safe-area-inset-bottom)] shadow-2xl">
             <div className="mx-auto my-3 h-1 w-10 rounded-full bg-muted" />
             {moreNav.map((n) => {
               const active = pathname === n.to || pathname.startsWith(n.to + "/");
@@ -242,8 +261,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={n.to}
                   to={n.to}
                   onClick={() => setMoreOpen(false)}
-                  className={
-                    "flex items-center gap-3 px-5 py-3.5 text-sm " +
+                   className={
+                     "flex min-h-12 items-center gap-3 px-5 py-3 text-sm " +
                     (active ? "bg-rubi-blue-soft text-rubi-blue" : "text-foreground active:bg-accent")
                   }
                 >
@@ -259,7 +278,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
             <button
               onClick={handleSignOut}
-              className="flex w-full items-center gap-3 border-t border-border px-5 py-3.5 text-sm text-muted-foreground active:bg-accent"
+               className="flex min-h-12 w-full items-center gap-3 border-t border-border px-5 py-3 text-sm text-muted-foreground active:bg-accent"
             >
               <LogOut className="h-5 w-5" />
               Sair

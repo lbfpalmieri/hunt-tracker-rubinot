@@ -33,13 +33,13 @@ export function CharacterSwitcher() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-medium hover:bg-accent sm:gap-2 sm:px-3"
+        className="inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-2 text-sm font-medium hover:bg-accent sm:min-h-11 sm:gap-2 sm:px-3"
       >
         <UserCircle2 className="h-4 w-4 shrink-0 text-rubi-blue" />
-        <span className="max-w-[92px] truncate sm:max-w-[140px]">{active?.name ?? "Selecionar"}</span>
+        <span className="max-w-[68px] truncate min-[375px]:max-w-[92px] sm:max-w-[140px]">{active?.name ?? "Selecionar"}</span>
         {active && <LevelBadge level={currentLevel(levelSnapshots, active.id)} className="hidden sm:inline-flex" />}
         <ChevronDown className="h-3.5 w-3.5 opacity-60" />
       </button>
