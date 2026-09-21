@@ -44,6 +44,95 @@ export type Database = {
         }
         Relationships: []
       }
+      deaths: {
+        Row: {
+          blessings: number
+          character_id: string
+          created_at: string
+          id: string
+          level: number | null
+          note: string | null
+          promoted: boolean
+          session_id: string | null
+          user_id: string
+          xp_lost: number
+        }
+        Insert: {
+          blessings?: number
+          character_id: string
+          created_at?: string
+          id?: string
+          level?: number | null
+          note?: string | null
+          promoted?: boolean
+          session_id?: string | null
+          user_id: string
+          xp_lost: number
+        }
+        Update: {
+          blessings?: number
+          character_id?: string
+          created_at?: string
+          id?: string
+          level?: number | null
+          note?: string | null
+          promoted?: boolean
+          session_id?: string | null
+          user_id?: string
+          xp_lost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deaths_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deaths_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "hunt_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          character_id: string
+          created_at: string
+          description: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          character_id: string
+          created_at?: string
+          description: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          character_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           character_id: string
@@ -90,6 +179,7 @@ export type Database = {
           bounty_difficulty: string | null
           bounty_tier: string | null
           bounty_xp: number | null
+          char_level: number | null
           char_name: string | null
           char_vocation: string | null
           character_id: string
@@ -101,6 +191,7 @@ export type Database = {
           id: string
           is_public: boolean
           misc: Json | null
+          notes: string | null
           prey: Json | null
           user_id: string
         }
@@ -108,6 +199,7 @@ export type Database = {
           bounty_difficulty?: string | null
           bounty_tier?: string | null
           bounty_xp?: number | null
+          char_level?: number | null
           char_name?: string | null
           char_vocation?: string | null
           character_id: string
@@ -119,6 +211,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           misc?: Json | null
+          notes?: string | null
           prey?: Json | null
           user_id: string
         }
@@ -126,6 +219,7 @@ export type Database = {
           bounty_difficulty?: string | null
           bounty_tier?: string | null
           bounty_xp?: number | null
+          char_level?: number | null
           char_name?: string | null
           char_vocation?: string | null
           character_id?: string
@@ -137,6 +231,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           misc?: Json | null
+          notes?: string | null
           prey?: Json | null
           user_id?: string
         }
@@ -257,6 +352,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rc_price_entries: {
+        Row: {
+          created_at: string
+          id: string
+          price: number
+          recorded_on: string
+          target_gold: number | null
+          user_id: string
+          world: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price: number
+          recorded_on?: string
+          target_gold?: number | null
+          user_id: string
+          world: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price?: number
+          recorded_on?: string
+          target_gold?: number | null
+          user_id?: string
+          world?: string
+        }
+        Relationships: []
       }
       saved_comparisons: {
         Row: {
