@@ -258,7 +258,7 @@ function CharactersPage() {
                 return (
                   <li
                     key={c.id}
-                    className="card-surface flex flex-wrap items-center justify-between gap-3 p-4"
+                    className="card-surface grid grid-cols-1 items-center gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto]"
                   >
                     <div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:flex-1">
                       <div className="flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-full bg-rubi-blue-soft text-rubi-blue">
@@ -288,12 +288,12 @@ function CharactersPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 sm:flex sm:w-auto">
                       <button
                         type="button"
                         onClick={() => setPasteTarget(c.id)}
                         title="Selecionar e colar (Ctrl+V) uma imagem para este personagem"
-                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-medium transition ${
+                        className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-medium transition ${
                           pasteTarget === c.id
                             ? "border-rubi-blue bg-rubi-blue/10 text-rubi-blue"
                             : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -306,7 +306,7 @@ function CharactersPage() {
                       {!isActive && (
                         <button
                           onClick={() => setActive(c.id)}
-                          className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                          className="min-h-10 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
                         >
                           Ativar
                         </button>
@@ -319,7 +319,7 @@ function CharactersPage() {
                           });
                           if (ok) await removeCharacter(c.id);
                         }}
-                        className="rounded-lg border border-rubi-danger/40 p-1.5 text-rubi-danger hover:bg-rubi-danger/10"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-rubi-danger/40 text-rubi-danger hover:bg-rubi-danger/10"
                         aria-label="Excluir"
                       >
                         <Trash2 className="h-4 w-4" />

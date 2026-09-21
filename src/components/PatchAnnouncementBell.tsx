@@ -18,7 +18,7 @@ export function PatchAnnouncementBell() {
       title={`Aviso: ${patch.label} (${formatPatchDate(patch)})`}
       aria-label="Ver aviso de balanceamento"
       className={
-        "relative flex h-9 w-9 flex-none items-center justify-center rounded-lg transition-colors " +
+        "relative flex h-10 w-10 flex-none items-center justify-center rounded-lg transition-colors sm:h-11 sm:w-11 " +
         (open ? "bg-rubi-gold-soft text-rubi-gold" : "text-muted-foreground hover:bg-accent hover:text-foreground")
       }
     >

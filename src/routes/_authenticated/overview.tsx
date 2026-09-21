@@ -214,7 +214,33 @@ function OverviewPage() {
         <div className="border-b border-border/60 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Comparativo entre personagens
         </div>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-border/50 sm:hidden">
+          {ranked.map((r) => {
+            const noData = r.agg.sessionCount === 0;
+            return (
+              <article key={r.character.id} className="p-4">
+                <div className="flex min-w-0 items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link to="/characters" className="flex min-w-0 items-center gap-1.5 font-display font-semibold hover:text-rubi-blue">
+                      <span className="truncate">{r.character.name}</span>
+                      <LevelBadge level={r.level} />
+                    </Link>
+                    <div className="truncate text-xs text-muted-foreground">{r.character.vocation} · {r.character.world}</div>
+                  </div>
+                  <span className="flex-none text-xs text-muted-foreground">{noData ? "sem sessões" : `${r.agg.sessionCount} sessões`}</span>
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <MobileMetric label="Balance total" value={noData ? "—" : fmtGold(r.agg.balance)} />
+                  <MobileMetric label="Saldo atual" value={noData ? "—" : fmtGold(r.netBalance)} />
+                  <MobileMetric label="Lucro/h médio" value={noData ? "—" : fmtGold(r.agg.gph)} />
+                  <MobileMetric label="Raw XP/h médio" value={noData ? "—" : fmtNum(r.agg.rawXph)} />
+                  <MobileMetric label="Tempo jogado" value={noData ? "—" : fmtDuration(r.agg.totalTime)} />
+                </dl>
+              </article>
+            );
+          })}
+        </div>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-border/60">
@@ -379,5 +405,14 @@ function OverviewPage() {
         </p>
       </div>
     </AppShell>
+  );
+}
+
+function MobileMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
+      <dt className="text-[10px] uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 break-words font-mono font-semibold">{value}</dd>
+    </div>
   );
 }

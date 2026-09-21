@@ -359,7 +359,28 @@ function MonsterCalculatorPage() {
                 {results.length} hunt(s) encontrada(s)
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="divide-y divide-border/50 sm:hidden">
+              {results.map((r, i) => (
+                <article key={r.huntName} className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="min-w-0 break-words font-display text-sm font-semibold">{r.huntName}</h3>
+                    {i === 0 && <span className="flex-none rounded bg-rubi-gold/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-rubi-gold">Mais rápida</span>}
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div><dt className="text-muted-foreground">Sessões</dt><dd className="mt-0.5 font-mono font-semibold">{r.sessionCount}</dd></div>
+                    <div><dt className="text-muted-foreground">Kills totais</dt><dd className="mt-0.5 font-mono font-semibold">{fmtNum(r.totalKills)}</dd></div>
+                    <div><dt className="text-muted-foreground">Média /h</dt><dd className="mt-0.5 font-mono font-semibold">{fmtNum(r.perHour)}</dd></div>
+                    <div><dt className="text-muted-foreground">Tempo estimado</dt><dd className="mt-0.5 font-mono font-semibold text-rubi-gold">{isFinite(r.estSec) ? fmtDuration(r.estSec) : "—"}</dd></div>
+                  </dl>
+                  {mode === "linked" && (
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      {r.perMonsterPerHour.map((m) => <span key={m.name} className="inline-flex items-center gap-1"><GameIcon name={m.name} size={16} /> {m.perHour > 0 ? fmtNum(m.perHour) : "—"}/h</span>)}
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto sm:block">
               <table className="w-full text-sm">
                 <thead className="text-xs uppercase tracking-wider text-muted-foreground">
                   <tr className="border-b border-border/60">

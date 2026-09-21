@@ -46,7 +46,7 @@ function RubiniCoinsPage() {
   const { data, isLoading } = useQuery({ queryKey: ["rc-prices"], queryFn: () => fetchList() });
 
   const save = useMutation({
-    mutationFn: (v: Parameters<typeof doSave>[0]["data"]) => doSave({ data: v }),
+    mutationFn: (v: SaveRcPriceInput) => doSave({ data: v }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["rc-prices"] });
       toast.success("Preço salvo no histórico");
@@ -87,6 +87,13 @@ interface CalcProps {
   onSave: (v: { world: string; price: number; targetGold: number | null; recordedOn: string }) => void;
   onDelete: (id: string) => void;
 }
+
+type SaveRcPriceInput = {
+  world: string;
+  price: number;
+  targetGold: number | null;
+  recordedOn: string;
+};
 
 export function RcCalculator({ defaultWorld, entries, loading, loadError, saving, onSave, onDelete }: CalcProps) {
   const [worldInput, setWorldInput] = useState<string | null>(null);

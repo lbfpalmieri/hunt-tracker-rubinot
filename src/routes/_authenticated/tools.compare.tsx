@@ -205,7 +205,7 @@ function ComparePage() {
       </div>
 
       <div className="card-surface mb-4 flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
-        <div className="flex flex-none gap-1 rounded-lg border border-border p-1">
+        <div className="grid flex-none grid-cols-2 gap-1 rounded-lg border border-border p-1">
           {(["own", "community"] as const).map((t) => (
             <button
               key={t}
@@ -229,7 +229,7 @@ function ComparePage() {
             className="w-full rounded-lg border border-border bg-background/60 py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <div className="flex flex-none items-center gap-3">
+        <div className="flex flex-none flex-wrap items-center gap-x-4 gap-y-2">
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <input
               type="checkbox"
@@ -250,7 +250,7 @@ function ComparePage() {
           </label>
           {patch && (
             <label
-              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              className="flex min-h-10 items-center gap-1.5 text-xs text-muted-foreground"
               title={`Sessões de antes do ${patch.label} (${formatPatchDate(patch)})`}
             >
               <input

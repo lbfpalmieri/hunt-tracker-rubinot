@@ -416,7 +416,7 @@ function CommunityPage() {
               Todas
             </button>
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+          <div className="-mx-1 mt-1.5 flex items-center gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2 sm:flex-wrap sm:gap-3 sm:overflow-visible sm:pb-0">
             {VOCATION_NAMES.map((name) => {
               const banner = VOCATION_BANNERS[name];
               const active = vocation === name;
@@ -427,11 +427,11 @@ function CommunityPage() {
                   onClick={() => setVocation(active ? "" : name)}
                   title={name}
                   className={
-                    "flex h-20 flex-none items-center rounded-md transition-opacity " +
+                    "flex h-16 flex-none items-center rounded-md transition-opacity sm:h-20 " +
                     (active ? "opacity-100" : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <img src={active ? banner.selected : banner.default} alt={name} className="h-20 w-auto" />
+                  <img src={active ? banner.selected : banner.default} alt={name} className="h-16 w-auto sm:h-20" />
                 </button>
               );
             })}
@@ -480,11 +480,11 @@ function CommunityPage() {
       </div>
 
       {/* View toggle */}
-      <div className="mb-4 inline-flex rounded-lg border border-border bg-surface p-1 text-sm">
+      <div className="mb-4 grid w-full grid-cols-3 rounded-lg border border-border bg-surface p-1 text-sm sm:inline-flex sm:w-auto">
         <button
           onClick={() => setView("hunts")}
           className={
-            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            "inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm " +
             (view === "hunts" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
           }
         >
@@ -493,7 +493,7 @@ function CommunityPage() {
         <button
           onClick={() => setView("sessions")}
           className={
-            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            "inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm " +
             (view === "sessions" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
           }
         >
@@ -502,7 +502,7 @@ function CommunityPage() {
         <button
           onClick={() => setView("calc")}
           className={
-            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            "inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm " +
             (view === "calc" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
           }
         >
@@ -597,7 +597,26 @@ function CommunityPage() {
               </p>
             </div>
 
-            <div className="card-surface overflow-x-auto">
+            <div className="card-surface overflow-hidden">
+              <div className="divide-y divide-border/50 sm:hidden">
+                {calcRows.map((r) => (
+                  <article key={r.key} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words font-display text-sm font-semibold">{r.huntName}</h3>
+                        <p className="text-xs text-muted-foreground">{r.vocation} · {r.sessionCount} sessões · {r.playerCount} jogadores</p>
+                      </div>
+                      <button onClick={() => setOpenHunt(r.key)} className="min-h-10 flex-none rounded-lg border border-rubi-blue/40 px-3 text-xs font-semibold text-rubi-blue">Ver</button>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                      <div><dt className="text-muted-foreground">Média /h</dt><dd className="mt-1 font-mono font-semibold text-rubi-gold">{fmtNum(Math.round(r.perHour))}</dd></div>
+                      <div><dt className="text-muted-foreground">Melhor /h</dt><dd className="mt-1 font-mono font-semibold text-rubi-success">{fmtNum(Math.round(r.bestPerHour))}</dd></div>
+                      <div><dt className="text-muted-foreground">Tempo</dt><dd className="mt-1 font-mono font-semibold text-rubi-blue">{fmtDuration(Math.round(r.estSec))}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -640,6 +659,7 @@ function CommunityPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         )

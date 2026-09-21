@@ -429,7 +429,7 @@ function RendimentoPage() {
         </p>
       </div>
 
-      <div className="mb-6 inline-flex rounded-lg border border-border bg-surface p-1 text-sm">
+      <div className="mb-6 grid grid-cols-3 gap-1 rounded-lg border border-border bg-surface p-1 text-sm sm:inline-flex sm:grid-cols-none">
         {(
           [
             { value: "overview", label: "Visão geral", icon: TrendingUp },
@@ -443,7 +443,7 @@ function RendimentoPage() {
             key={t.value}
             onClick={() => setTab(t.value)}
             className={
-              "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+              "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm " +
               (tab === t.value ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground hover:text-foreground")
             }
           >
@@ -456,7 +456,7 @@ function RendimentoPage() {
         <>
           <div className="mb-2 flex flex-wrap gap-1.5">
             {PERIODS.map((p) => (
-              <button
+          <button
                 key={p.value}
                 type="button"
                 onClick={() => {
@@ -477,7 +477,7 @@ function RendimentoPage() {
                     ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                     : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
                 }
-              >
+          >
                 {p.label}
               </button>
             ))}

@@ -163,12 +163,12 @@ function SessionsList() {
                 className="w-full rounded-lg border border-border bg-background/60 py-2 pl-9 pr-3 text-sm"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+            <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] sm:flex sm:items-center">
+              <Filter className="hidden h-4 w-4 text-muted-foreground min-[420px]:block" />
               <select
                 value={filterChar}
                 onChange={(e) => setFilterChar(e.target.value)}
-                className="rounded-lg border border-border bg-input px-2 py-1.5 text-sm"
+                className="min-w-0 rounded-lg border border-border bg-input px-2 py-2 text-sm"
               >
                 <option value="all">Todos personagens</option>
                 {characters.map((c) => (
@@ -179,7 +179,7 @@ function SessionsList() {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as typeof sort)}
-                  className="rounded-lg border border-border bg-input px-2 py-1.5 text-sm"
+                  className="min-w-0 rounded-lg border border-border bg-input px-2 py-2 text-sm"
                 >
                   <option value="recent">Mais recentes</option>
                   <option value="gph">Melhor Lucro/h</option>
