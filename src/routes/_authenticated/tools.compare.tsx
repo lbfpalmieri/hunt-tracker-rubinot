@@ -342,7 +342,7 @@ function ComparePage() {
       </div>
 
       {selected.length >= 2 && (
-        <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 md:bottom-6">
+        <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 lg:bottom-6">
           <button
             type="button"
             onClick={scrollToCompare}
