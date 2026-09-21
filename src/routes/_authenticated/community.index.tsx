@@ -416,7 +416,7 @@ function CommunityPage() {
               Todas
             </button>
           </div>
-          <div className="-mx-1 mt-1.5 flex items-center gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2 sm:flex-wrap sm:gap-3 sm:overflow-visible sm:pb-0">
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
             {VOCATION_NAMES.map((name) => {
               const banner = VOCATION_BANNERS[name];
               const active = vocation === name;
@@ -427,11 +427,15 @@ function CommunityPage() {
                   onClick={() => setVocation(active ? "" : name)}
                   title={name}
                   className={
-                    "flex h-16 flex-none items-center rounded-md transition-opacity sm:h-20 " +
+                    "flex h-14 min-w-0 items-center justify-center rounded-md transition-opacity sm:h-16 lg:h-20 " +
                     (active ? "opacity-100" : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <img src={active ? banner.selected : banner.default} alt={name} className="h-16 w-auto sm:h-20" />
+                  <img
+                    src={active ? banner.selected : banner.default}
+                    alt={name}
+                    className="max-h-full max-w-full object-contain"
+                  />
                 </button>
               );
             })}
