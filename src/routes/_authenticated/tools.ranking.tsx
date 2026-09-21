@@ -157,7 +157,7 @@ function RankingPage() {
       </div>
 
       <div className="card-surface mb-4 flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
-        <div className="flex flex-none gap-1 rounded-lg border border-border p-1">
+        <div className="grid flex-none grid-cols-2 gap-1 rounded-lg border border-border p-1">
           {(["own", "community"] as const).map((t) => (
             <button
               key={t}
@@ -188,7 +188,7 @@ function RankingPage() {
           <select
             value={vocation}
             onChange={(e) => setVocation(e.target.value)}
-            className="rounded-lg border border-border bg-input px-2 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-input px-2 py-2 text-sm sm:w-auto"
           >
             <option value="">Todas as vocações</option>
             {VOCATIONS.map((v) => (
@@ -202,7 +202,7 @@ function RankingPage() {
         <select
           value={metric}
           onChange={(e) => setMetric(e.target.value as Metric)}
-          className="rounded-lg border border-border bg-input px-2 py-2 text-sm"
+          className="w-full rounded-lg border border-border bg-input px-2 py-2 text-sm sm:w-auto"
         >
           {METRICS.map((m) => (
             <option key={m.value} value={m.value}>
@@ -211,7 +211,7 @@ function RankingPage() {
           ))}
         </select>
 
-        <div className="flex flex-none items-center gap-3">
+        <div className="flex flex-none flex-wrap items-center gap-x-4 gap-y-2">
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <input
               type="checkbox"

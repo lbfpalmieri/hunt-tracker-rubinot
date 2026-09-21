@@ -364,7 +364,7 @@ function FighterCard({
         ) : (
           <User className="h-3.5 w-3.5 flex-none text-rubi-gold" />
         )}
-        <span className="min-w-0 truncate font-display text-sm font-semibold">{hunt.huntName}</span>
+        <span className="min-w-0 break-words font-display text-sm font-semibold leading-snug">{hunt.huntName}</span>
       </div>
       <div className="mt-1 text-xs text-muted-foreground">
         {ambiguous ? fmtDate(hunt.createdAt) : `${hunt.charName} · ${hunt.vocation}`}
@@ -449,6 +449,38 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
     const tie = ranked.length > 1 && ranked[0].score === ranked[1].score;
     return { ranked, decided, bestKey: !tie && ranked.length > 1 && ranked[0].score > 0 ? ranked[0].hunt.key : null };
   }, [hunts]);
+
+  const renderHuntHeading = (h: CompareHunt, index: number) => {
+    const aggregated = (h.sessionCount ?? 1) > 1;
+    return (
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-start gap-1.5">
+          <PositionBadge index={index} />
+          {h.source === "community" ? (
+            <Globe2 className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-blue" />
+          ) : (
+            <User className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-gold" />
+          )}
+          {aggregated ? (
+            <span className="min-w-0 break-words font-display text-sm font-semibold leading-snug">{h.huntName}</span>
+          ) : (
+            <Link
+              to={h.source === "own" ? "/sessions/$id" : "/community/$id"}
+              params={{ id: h.id }}
+              className="min-w-0 break-words font-display text-sm font-semibold leading-snug hover:text-rubi-blue"
+            >
+              {h.huntName}
+            </Link>
+          )}
+          {bestKey === h.key && <Crown className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-gold" />}
+        </div>
+        <div className="mt-1 text-xs text-muted-foreground">{h.charName} · {h.vocation}</div>
+        <div className="text-xs text-muted-foreground">
+          {aggregated ? `Média de ${h.sessionCount} sessões` : fmtDate(h.createdAt)}
+        </div>
+      </div>
+    );
+  };
   const bestKey = scoreboard.bestKey;
 
   const gap = useMemo(() => biggestGap(hunts), [hunts]);
@@ -519,7 +551,45 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
         <GapSpotlight gap={gap} bestIndex={gapBestIndex} worstIndex={gapWorstIndex} />
       )}
 
-      <div className="card-surface overflow-hidden">
+      <div className="space-y-3 sm:hidden">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Por hora de caça</div>
+        {hunts.map((h, index) => (
+          <section key={h.key} className="card-surface overflow-hidden">
+            <div className="border-b border-border/60 p-4">{renderHuntHeading(h, index)}</div>
+            <dl className="divide-y divide-border/40">
+              {ROWS.map((row) => {
+                const mark = row.prey ? preyMarkLabel(h.prey, row.prey) : null;
+                return (
+                  <div key={row.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-4 py-3">
+                    <dt className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <span className={"flex h-7 w-7 flex-none items-center justify-center rounded-md " + row.iconBg}>
+                        <row.icon className={"h-3.5 w-3.5 " + row.iconColor} />
+                      </span>
+                      <span className="break-words">{row.label}</span>
+                    </dt>
+                    <dd className="min-w-0 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-1">
+                        <span className={"font-mono text-sm " + toneFor(row, hunts, h)}>{row.render(h)}</span>
+                        <DiffBadge row={row} hunts={hunts} h={h} />
+                      </div>
+                      {mark && (
+                        <div title={row.prey ? preyMarkTitle(h.prey, row.prey) : undefined} className="mt-1 text-[10px] font-semibold uppercase text-rubi-gold">
+                          {mark}
+                        </div>
+                      )}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </section>
+        ))}
+        <p className="px-1 text-xs text-muted-foreground">
+          <span className="font-semibold text-rubi-success">Verde</span> = melhor · <span className="font-semibold text-rubi-danger">vermelho</span> = pior.
+        </p>
+      </div>
+
+      <div className="card-surface hidden overflow-hidden sm:block">
         <div className="border-b border-border/60 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Por hora de caça
         </div>

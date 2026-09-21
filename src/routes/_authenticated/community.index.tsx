@@ -416,7 +416,7 @@ function CommunityPage() {
               Todas
             </button>
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+          <div className="-mx-1 mt-1.5 flex items-center gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2 sm:flex-wrap sm:gap-3 sm:overflow-visible sm:pb-0">
             {VOCATION_NAMES.map((name) => {
               const banner = VOCATION_BANNERS[name];
               const active = vocation === name;
@@ -427,11 +427,11 @@ function CommunityPage() {
                   onClick={() => setVocation(active ? "" : name)}
                   title={name}
                   className={
-                    "flex h-20 flex-none items-center rounded-md transition-opacity " +
+                    "flex h-16 flex-none items-center rounded-md transition-opacity sm:h-20 " +
                     (active ? "opacity-100" : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <img src={active ? banner.selected : banner.default} alt={name} className="h-20 w-auto" />
+                  <img src={active ? banner.selected : banner.default} alt={name} className="h-16 w-auto sm:h-20" />
                 </button>
               );
             })}
@@ -480,11 +480,11 @@ function CommunityPage() {
       </div>
 
       {/* View toggle */}
-      <div className="mb-4 inline-flex rounded-lg border border-border bg-surface p-1 text-sm">
+      <div className="mb-4 grid w-full grid-cols-3 rounded-lg border border-border bg-surface p-1 text-sm sm:inline-flex sm:w-auto">
         <button
           onClick={() => setView("hunts")}
           className={
-            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            "inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm " +
             (view === "hunts" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
           }
         >
@@ -493,7 +493,7 @@ function CommunityPage() {
         <button
           onClick={() => setView("sessions")}
           className={
-            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            "inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm " +
             (view === "sessions" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
           }
         >
@@ -502,7 +502,7 @@ function CommunityPage() {
         <button
           onClick={() => setView("calc")}
           className={
-            "inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium transition-colors " +
+            "inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm " +
             (view === "calc" ? "bg-rubi-blue-soft text-rubi-blue" : "text-muted-foreground")
           }
         >
