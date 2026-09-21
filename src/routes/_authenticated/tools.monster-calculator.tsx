@@ -5,15 +5,15 @@ import { GameIcon } from "@/components/GameIcon";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtNum, fmtDuration } from "@/lib/format";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Calculator, Swords, Target, Clock } from "lucide-react";
+import { Calculator, Swords, Target, Clock, Link2, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/tools/monster-calculator")({
   head: () => ({
     meta: [
-      { title: "Calculadora de Bounty Task — RubinOT Hunt Tracker" },
-      { name: "description", content: "Descubra em qual hunt você finaliza a bounty task mais rápido, baseado no histórico das suas sessões." },
-      { property: "og:title", content: "Calculadora de Bounty Task" },
-      { property: "og:description", content: "Estime o tempo para completar bounty tasks em cada hunt." },
+      { title: "Calculadora de Bounty/Linked Task — RubinOT Hunt Tracker" },
+      { name: "description", content: "Descubra em qual hunt você finaliza a bounty ou linked task mais rápido, baseado no histórico das suas sessões." },
+      { property: "og:title", content: "Calculadora de Bounty/Linked Task" },
+      { property: "og:description", content: "Estime o tempo para completar bounty e linked tasks em cada hunt." },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -27,7 +27,9 @@ function MonsterCalculatorPage() {
   const activeId = useAppStore((s) => s.activeCharacterId);
 
   const [charId, setCharId] = useState<string>("");
+  const [mode, setMode] = useState<"bounty" | "linked">("bounty");
   const [monster, setMonster] = useState<string>("");
+  const [linked, setLinked] = useState<string[]>([]);
   const [quantity, setQuantity] = useState<number>(400);
   const [showSuggest, setShowSuggest] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -57,21 +59,36 @@ function MonsterCalculatorPage() {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [charSessions]);
 
-  // Group sessions by hunt name and compute kills/h of the target monster
+  // Monstros da task: 1 na bounty, vários na linked (kills de qualquer um deles contam juntas).
+  const targets = useMemo(
+    () => (mode === "bounty" ? (monster.trim() ? [monster.trim()] : []) : linked),
+    [mode, monster, linked],
+  );
+
+  // Group sessions by hunt name and compute kills/h of the target monster(s)
   const results = useMemo(() => {
-    const needle = monster.trim().toLowerCase();
-    if (!needle) return [];
-    const byHunt = new Map<string, { totalSec: number; totalKills: number; sessionCount: number }>();
+    if (targets.length === 0) return [];
+    const needles = targets.map((t) => t.toLowerCase());
+    const byHunt = new Map<
+      string,
+      { totalSec: number; totalKills: number; sessionCount: number; perMonster: Map<string, number> }
+    >();
     for (const s of charSessions) {
-      const monsterKills = s.hunting.kills
-        .filter((k) => k.name.toLowerCase() === needle)
-        .reduce((acc, k) => acc + k.count, 0);
-      if (monsterKills <= 0) continue;
+      const sessionPer = new Map<string, number>();
+      let sessionKills = 0;
+      for (const k of s.hunting.kills) {
+        const idx = needles.indexOf(k.name.toLowerCase());
+        if (idx === -1) continue;
+        sessionPer.set(targets[idx], (sessionPer.get(targets[idx]) ?? 0) + k.count);
+        sessionKills += k.count;
+      }
+      if (sessionKills <= 0) continue;
       const key = s.huntName;
-      const cur = byHunt.get(key) ?? { totalSec: 0, totalKills: 0, sessionCount: 0 };
+      const cur = byHunt.get(key) ?? { totalSec: 0, totalKills: 0, sessionCount: 0, perMonster: new Map() };
       cur.totalSec += s.hunting.durationSec;
-      cur.totalKills += monsterKills;
+      cur.totalKills += sessionKills;
       cur.sessionCount += 1;
+      for (const [name, n] of sessionPer) cur.perMonster.set(name, (cur.perMonster.get(name) ?? 0) + n);
       byHunt.set(key, cur);
     }
     return Array.from(byHunt.entries())
@@ -86,10 +103,26 @@ function MonsterCalculatorPage() {
           totalSec: v.totalSec,
           perHour,
           estSec,
+          perMonsterPerHour: targets.map((t) => ({
+            name: t,
+            perHour: hours > 0 ? (v.perMonster.get(t) ?? 0) / hours : 0,
+          })),
         };
       })
       .sort((a, b) => a.estSec - b.estSec);
-  }, [charSessions, monster, quantity]);
+  }, [charSessions, targets, quantity]);
+
+  const pickMonster = (m: string) => {
+    if (mode === "bounty") {
+      setMonster(m);
+    } else {
+      setLinked((prev) => (prev.includes(m) ? prev : [...prev, m]));
+      setMonster("");
+    }
+    setShowSuggest(false);
+  };
+
+  const monsterLabel = targets.join(" + ");
 
   const best = results[0];
 
@@ -119,10 +152,34 @@ function MonsterCalculatorPage() {
     <AppShell>
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Ferramentas</div>
-        <h1 className="mt-1 font-display text-3xl font-bold">Calculadora de Bounty Task</h1>
+        <h1 className="mt-1 font-display text-3xl font-bold">Calculadora de Bounty / Linked Task</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Informe o monstro da bounty e a quantidade a derrotar — mostramos em qual hunt você finaliza mais rápido, com base no seu histórico.
+          {mode === "bounty"
+            ? "Informe o monstro da bounty e a quantidade a derrotar — mostramos em qual hunt você finaliza mais rápido, com base no seu histórico."
+            : "Escolha os monstros da linked task e o total de kills necessário — somamos as kills/h de todos eles em cada hunt e mostramos quantas horas você precisa."}
         </p>
+        <div className="mt-4 inline-flex rounded-lg border border-border bg-surface p-1 text-sm">
+          {([
+            ["bounty", "Bounty Task", Target],
+            ["linked", "Linked Task", Link2],
+          ] as const).map(([value, label, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => {
+                setMode(value);
+                setMonster("");
+                setShowSuggest(false);
+              }}
+              className={
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors " +
+                (mode === value ? "bg-rubi-gold/15 text-rubi-gold" : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              <Icon className="h-4 w-4" /> {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="card-surface mb-6 grid gap-4 p-5 sm:grid-cols-3">
@@ -139,12 +196,15 @@ function MonsterCalculatorPage() {
           </select>
         </div>
         <div ref={suggestRef} className="relative">
-          <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Monstro</label>
+          <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {mode === "bounty" ? "Monstro" : "Adicionar monstro"}
+          </label>
           {(() => {
             const q = monster.trim().toLowerCase();
+            const pool = mode === "linked" ? monsterOptions.filter((m) => !linked.includes(m)) : monsterOptions;
             const filtered = q
-              ? monsterOptions.filter((m) => m.toLowerCase().includes(q)).slice(0, 8)
-              : monsterOptions.slice(0, 8);
+              ? pool.filter((m) => m.toLowerCase().includes(q)).slice(0, 8)
+              : pool.slice(0, 8);
             const open = showSuggest && filtered.length > 0;
             return (
               <>
@@ -166,13 +226,12 @@ function MonsterCalculatorPage() {
                       setHighlight((h) => (h - 1 + filtered.length) % filtered.length);
                     } else if (e.key === "Enter") {
                       e.preventDefault();
-                      setMonster(filtered[highlight]);
-                      setShowSuggest(false);
+                      pickMonster(filtered[highlight]);
                     } else if (e.key === "Escape") {
                       setShowSuggest(false);
                     }
                   }}
-                  placeholder="Ex: Dragon Lord"
+                  placeholder={mode === "bounty" ? "Ex: Dragon Lord" : "Buscar e adicionar (ex: Dragon Lord)"}
                   autoComplete="off"
                   className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
                 />
@@ -183,8 +242,7 @@ function MonsterCalculatorPage() {
                         key={m}
                         onMouseDown={(e) => {
                           e.preventDefault();
-                          setMonster(m);
-                          setShowSuggest(false);
+                          pickMonster(m);
                         }}
                         onMouseEnter={() => setHighlight(i)}
                         className={
@@ -204,7 +262,7 @@ function MonsterCalculatorPage() {
         </div>
         <div>
           <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Quantidade a derrotar
+            {mode === "bounty" ? "Quantidade a derrotar" : "Total de monstros a derrotar"}
           </label>
           <input
             type="number"
@@ -227,16 +285,42 @@ function MonsterCalculatorPage() {
         </div>
       </div>
 
-      {!monster.trim() ? (
+      {mode === "linked" && linked.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {linked.map((m) => (
+            <span
+              key={m}
+              className="inline-flex items-center gap-2 rounded-full border border-rubi-gold/40 bg-rubi-gold/10 py-1 pl-2 pr-1 text-sm font-medium"
+            >
+              <GameIcon name={m} size={20} className="flex-none" />
+              {m}
+              <button
+                type="button"
+                aria-label={`Remover ${m}`}
+                onClick={() => setLinked((prev) => prev.filter((x) => x !== m))}
+                className="rounded-full p-1 text-muted-foreground hover:bg-rubi-danger/15 hover:text-rubi-danger"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {targets.length === 0 ? (
         <EmptyState
-          icon={Target}
-          title="Escolha um monstro"
-          description="Digite o nome do monstro da bounty task para ver em quais hunts você o encontra."
+          icon={mode === "bounty" ? Target : Link2}
+          title={mode === "bounty" ? "Escolha um monstro" : "Escolha os monstros da linked task"}
+          description={
+            mode === "bounty"
+              ? "Digite o nome do monstro da bounty task para ver em quais hunts você o encontra."
+              : "Busque e adicione cada monstro da linked task para ver em quais hunts você os encontra."
+          }
         />
       ) : results.length === 0 ? (
         <EmptyState
           icon={Swords}
-          title={`Nenhuma sessão com "${monster}"`}
+          title={`Nenhuma sessão com "${monsterLabel}"`}
           description="Importe pelo menos uma sessão em que esse monstro apareça para calcular a estimativa."
           ctaLabel="Nova sessão"
           ctaTo="/import"
@@ -246,13 +330,17 @@ function MonsterCalculatorPage() {
           {best && (
             <div className="card-surface mb-4 flex items-start gap-4 border-rubi-gold/40 p-5">
               <div className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-rubi-gold/15 text-rubi-gold">
-                <GameIcon name={monster} size={32} fallback={<Target className="h-6 w-6" />} />
+                {mode === "bounty" ? (
+                  <GameIcon name={monster} size={32} fallback={<Target className="h-6 w-6" />} />
+                ) : (
+                  <Link2 className="h-6 w-6" />
+                )}
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-medium uppercase tracking-wider text-rubi-gold">Hunt recomendada</div>
                 <div className="mt-1 font-display text-2xl font-bold">{best.huntName}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Estimativa para <span className="font-semibold text-foreground">{fmtNum(quantity)}× {monster}</span>:{" "}
+                  Estimativa para <span className="font-semibold text-foreground">{fmtNum(quantity)}× {monsterLabel}</span>:{" "}
                   <span className="font-semibold text-rubi-gold">
                     {isFinite(best.estSec) ? fmtDuration(best.estSec) : "—"}
                   </span>{" "}
@@ -264,7 +352,9 @@ function MonsterCalculatorPage() {
 
           <div className="card-surface overflow-hidden">
             <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
-              <div className="font-display text-sm font-semibold">Todas as hunts com "{monster}"</div>
+              <div className="font-display text-sm font-semibold">
+                {mode === "bounty" ? `Todas as hunts com "${monsterLabel}"` : "Hunts com pelo menos um dos monstros"}
+              </div>
               <div className="text-xs text-muted-foreground">
                 {results.length} hunt(s) encontrada(s)
               </div>
@@ -276,7 +366,8 @@ function MonsterCalculatorPage() {
                     <th className="px-5 py-2 text-left font-medium">Hunt</th>
                     <th className="px-5 py-2 text-right font-medium">Sessões</th>
                     <th className="px-5 py-2 text-right font-medium">Kills totais</th>
-                    <th className="px-5 py-2 text-right font-medium">Média /h</th>
+                    {mode === "linked" && <th className="px-5 py-2 text-left font-medium">Por monstro (/h)</th>}
+                    <th className="px-5 py-2 text-right font-medium">Média /h{mode === "linked" ? " (soma)" : ""}</th>
                     <th className="px-5 py-2 text-right font-medium">
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" /> Tempo estimado
@@ -297,6 +388,18 @@ function MonsterCalculatorPage() {
                       </td>
                       <td className="px-5 py-2 text-right text-muted-foreground">{r.sessionCount}</td>
                       <td className="px-5 py-2 text-right text-muted-foreground">{fmtNum(r.totalKills)}</td>
+                      {mode === "linked" && (
+                        <td className="px-5 py-2 text-xs text-muted-foreground">
+                          <div className="flex flex-wrap gap-x-3 gap-y-1">
+                            {r.perMonsterPerHour.map((m) => (
+                              <span key={m.name} className={"inline-flex items-center gap-1 " + (m.perHour > 0 ? "" : "opacity-40")}>
+                                <GameIcon name={m.name} size={16} className="flex-none" />
+                                {m.perHour > 0 ? fmtNum(m.perHour) : "—"}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      )}
                       <td className="px-5 py-2 text-right text-muted-foreground">{fmtNum(r.perHour)}</td>
                       <td className="px-5 py-2 text-right font-semibold text-rubi-gold">
                         {isFinite(r.estSec) ? fmtDuration(r.estSec) : "—"}
