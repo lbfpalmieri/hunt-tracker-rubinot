@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Plus, UserCircle2 } from "lucide-react";
+import { ChevronDown, MessageSquarePlus, Plus, UserCircle2 } from "lucide-react";
 import { useState } from "react";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { currentLevel } from "@/lib/level";
