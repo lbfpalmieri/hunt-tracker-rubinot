@@ -353,6 +353,42 @@ export type Database = {
           },
         ]
       }
+      linked_tasks_cache: {
+        Row: {
+          id: number
+          rooms: Json
+          synced_at: string
+        }
+        Insert: {
+          id?: number
+          rooms: Json
+          synced_at?: string
+        }
+        Update: {
+          id?: number
+          rooms?: Json
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      monster_weakness_cache: {
+        Row: {
+          mods: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          mods?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          mods?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rc_price_entries: {
         Row: {
           created_at: string
