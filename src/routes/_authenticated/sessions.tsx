@@ -323,6 +323,8 @@ function SessionsList() {
               );
             })}
           </ul>
+          <Pagination page={page} totalPages={sessionsTotalPages} onPageChange={setPage} />
+          </>
           )}
 
           <HuntDashboardDialog
