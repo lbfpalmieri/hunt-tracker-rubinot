@@ -111,7 +111,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-2.5 xl:flex">
           <Link to="/dashboard" className="flex shrink-0 items-center">
-            <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-9 w-auto object-contain sm:h-14 md:h-16" />
+            <img
+              src={logo.url}
+              alt="RubinOT Hunt Tracker"
+              className="h-9 w-auto max-w-[8.5rem] object-contain sm:h-14 sm:max-w-none md:h-16"
+            />
           </Link>
 
 

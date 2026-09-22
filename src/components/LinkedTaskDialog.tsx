@@ -55,6 +55,8 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
             <img
               src={task.image}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="h-12 w-12 flex-none"
               style={{ objectFit: "contain", imageRendering: "pixelated" }}
             />
@@ -89,6 +91,8 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
                     <img
                       src={c.image}
                       alt=""
+                      loading="lazy"
+                      decoding="async"
                       className="h-6 w-6 flex-none"
                       style={{ objectFit: "contain", imageRendering: "pixelated" }}
                     />

@@ -434,6 +434,8 @@ function CommunityPage() {
                   <img
                     src={active ? banner.selected : banner.default}
                     alt={name}
+                    loading="lazy"
+                    decoding="async"
                     className="max-h-full max-w-full object-contain"
                   />
                 </button>
@@ -899,6 +901,8 @@ function SessionAvatar({
       <img
         src={src}
         alt=""
+        loading="lazy"
+        decoding="async"
         className={`${className} flex-none`}
         style={{ objectFit: "contain", imageRendering: "pixelated" }}
       />

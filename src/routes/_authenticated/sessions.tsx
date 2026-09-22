@@ -12,6 +12,10 @@ import {
   ScrollText, Search, Filter, ChevronRight, GitCompareArrows, StickyNote, Layers, LayoutDashboard,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Pagination } from "@/components/Pagination";
+
+const SESSIONS_PAGE_SIZE = 20;
+const HUNTS_PAGE_SIZE = 12;
 
 export const Route = createFileRoute("/_authenticated/sessions")({
   head: () => ({
@@ -50,6 +54,12 @@ function SessionsList() {
   const [sort, setSort] = useState<"recent" | "gph" | "xph" | "duration">("recent");
   const [view, setView] = useState<"sessions" | "hunts">("sessions");
   const [dashboardHuntName, setDashboardHuntName] = useState<string | null>(null);
+  // Renderizar as centenas de sessões de uma vez travava a tela; paginamos o
+  // que aparece (os filtros/ordenação continuam rodando sobre a lista toda).
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    setPage(1);
+  }, [q, filterChar, sort, view]);
 
   const visible = useMemo(() => {
     let list = sessions.slice();
@@ -88,6 +98,18 @@ function SessionsList() {
     const filtered = needle ? aggregated.filter((h) => h.huntName.toLowerCase().includes(needle)) : aggregated;
     return filtered.slice().sort((a, b) => (b.sessionCount ?? 1) - (a.sessionCount ?? 1));
   }, [compareRows, q]);
+
+  const sessionsTotalPages = Math.max(1, Math.ceil(visible.length / SESSIONS_PAGE_SIZE));
+  const pagedSessions = useMemo(
+    () => visible.slice((page - 1) * SESSIONS_PAGE_SIZE, page * SESSIONS_PAGE_SIZE),
+    [visible, page],
+  );
+  const huntsTotalPages = Math.max(1, Math.ceil(huntsList.length / HUNTS_PAGE_SIZE));
+  const pagedHunts = useMemo(
+    () => huntsList.slice((page - 1) * HUNTS_PAGE_SIZE, page * HUNTS_PAGE_SIZE),
+    [huntsList, page],
+  );
+
 
   /** Sessões cruas da hunt aberta no dashboard — o próprio dialog agrega e filtra por Bounty/Prey. */
   const dashboardSessions = useMemo(() => {
@@ -202,8 +224,9 @@ function SessionsList() {
                 Nenhuma hunt encontrada com esse filtro.
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {huntsList.map((h) => (
+              <>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {pagedHunts.map((h) => (
                   <div key={h.key} className="card-surface p-5 transition-colors hover:border-rubi-blue/50">
                     <div className="flex items-start justify-between gap-2">
                       <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
@@ -250,11 +273,14 @@ function SessionsList() {
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+                <Pagination page={page} totalPages={huntsTotalPages} onPageChange={setPage} />
+              </>
             )
           ) : (
+          <>
           <ul className="space-y-2">
-            {visible.map((s) => {
+            {pagedSessions.map((s) => {
               const gph = s.hunting.balance / (s.hunting.durationSec / 3600 || 1);
               return (
                 <li key={s.id}>
@@ -298,6 +324,8 @@ function SessionsList() {
               );
             })}
           </ul>
+          <Pagination page={page} totalPages={sessionsTotalPages} onPageChange={setPage} />
+          </>
           )}
 
           <HuntDashboardDialog

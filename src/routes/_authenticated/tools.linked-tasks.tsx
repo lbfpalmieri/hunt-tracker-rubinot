@@ -34,6 +34,10 @@ function LinkedTasksPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["linked-tasks"],
     queryFn: () => fetchLinkedTasks(),
+    // Os dados vêm de um cache de 12h no servidor; não faz sentido refazer a
+    // chamada (lenta, vai na wiki do RubinOT) a cada visita na página.
+    staleTime: 12 * 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
   });
 
   const [roomId, setRoomId] = useState<number | "">("");
@@ -115,6 +119,8 @@ function LinkedTasksPage() {
               <img
                 src={room.image}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="h-8 w-8 flex-none"
                 style={{ objectFit: "contain", imageRendering: "pixelated" }}
               />
@@ -157,6 +163,8 @@ function LinkedTasksPage() {
               <img
                 src={task.image}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="h-12 w-12 flex-none"
                 style={{ objectFit: "contain", imageRendering: "pixelated" }}
               />
