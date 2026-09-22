@@ -11,7 +11,7 @@ import { PreyBadge } from "@/components/PreyBadge";
 import {
   ScrollText, Search, Filter, ChevronRight, GitCompareArrows, StickyNote, Layers, LayoutDashboard,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
   head: () => ({
@@ -41,6 +41,12 @@ function SessionsList() {
 
   const [q, setQ] = useState("");
   const [filterChar, setFilterChar] = useState<string>(activeId ?? "all");
+  // Trocar o personagem ativo (header) deve refletir aqui na hora, sem precisar
+  // recarregar a página — sem isso o filtro fica travado no personagem de quando
+  // a página abriu.
+  useEffect(() => {
+    setFilterChar(activeId ?? "all");
+  }, [activeId]);
   const [sort, setSort] = useState<"recent" | "gph" | "xph" | "duration">("recent");
   const [view, setView] = useState<"sessions" | "hunts">("sessions");
   const [dashboardHuntName, setDashboardHuntName] = useState<string | null>(null);

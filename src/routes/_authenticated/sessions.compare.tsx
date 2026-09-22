@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter, Calendar, FlaskConical } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
@@ -49,6 +49,11 @@ function SessionsComparePage() {
   const activeId = useAppStore((s) => s.activeCharacterId);
 
   const [filterChar, setFilterChar] = useState<string>(activeId ?? "all");
+  // Mesmo motivo do sessions.tsx: sem isso, trocar o personagem no header não
+  // reflete aqui até a página ser recarregada.
+  useEffect(() => {
+    setFilterChar(activeId ?? "all");
+  }, [activeId]);
   const [q, setQ] = useState("");
   const [period, setPeriod] = useState<Period>("all");
   const [customStart, setCustomStart] = useState("");
