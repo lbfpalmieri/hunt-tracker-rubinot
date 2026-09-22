@@ -278,6 +278,7 @@ function SessionsList() {
               </>
             )
           ) : (
+          <>
           <ul className="space-y-2">
             {pagedSessions.map((s) => {
               const gph = s.hunting.balance / (s.hunting.durationSec / 3600 || 1);
