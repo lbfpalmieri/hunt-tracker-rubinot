@@ -12,6 +12,10 @@ import {
   ScrollText, Search, Filter, ChevronRight, GitCompareArrows, StickyNote, Layers, LayoutDashboard,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Pagination } from "@/components/Pagination";
+
+const SESSIONS_PAGE_SIZE = 20;
+const HUNTS_PAGE_SIZE = 12;
 
 export const Route = createFileRoute("/_authenticated/sessions")({
   head: () => ({
