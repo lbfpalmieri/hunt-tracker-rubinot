@@ -20,6 +20,7 @@ import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
+import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
@@ -83,6 +84,11 @@ const AuthenticatedRendimentoRoute = AuthenticatedRendimentoRouteImport.update({
 const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
+  id: '/wiki',
+  path: '/wiki',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCommunityIndexRoute =
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/overview': typeof AuthenticatedOverviewRoute
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/overview': typeof AuthenticatedOverviewRoute
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/rendimento': typeof AuthenticatedRendimentoRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/sessions/compare': typeof AuthenticatedSessionsCompareRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/overview'
     | '/rendimento'
     | '/sessions'
+    | '/wiki'
     | '/community/$id'
     | '/sessions/$id'
     | '/sessions/compare'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/overview'
     | '/rendimento'
     | '/sessions'
+    | '/wiki'
     | '/community/$id'
     | '/sessions/$id'
     | '/sessions/compare'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/_authenticated/overview'
     | '/_authenticated/rendimento'
     | '/_authenticated/sessions'
+    | '/_authenticated/wiki'
     | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/sessions/compare'
@@ -366,6 +378,13 @@ declare module '@tanstack/react-router' {
       path: '/sessions'
       fullPath: '/sessions'
       preLoaderRoute: typeof AuthenticatedSessionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wiki': {
+      id: '/_authenticated/wiki'
+      path: '/wiki'
+      fullPath: '/wiki'
+      preLoaderRoute: typeof AuthenticatedWikiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/community/': {
@@ -465,6 +484,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedRendimentoRoute: typeof AuthenticatedRendimentoRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
+  AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
   AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
   AuthenticatedToolsCompareRoute: typeof AuthenticatedToolsCompareRoute
   AuthenticatedToolsComparisonsRoute: typeof AuthenticatedToolsComparisonsRoute
@@ -484,6 +504,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedRendimentoRoute: AuthenticatedRendimentoRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
+  AuthenticatedWikiRoute: AuthenticatedWikiRoute,
   AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
   AuthenticatedToolsCompareRoute: AuthenticatedToolsCompareRoute,
   AuthenticatedToolsComparisonsRoute: AuthenticatedToolsComparisonsRoute,

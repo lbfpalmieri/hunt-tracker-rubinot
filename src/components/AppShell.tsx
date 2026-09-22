@@ -17,6 +17,7 @@ import {
   Users,
   Coins,
   Link2,
+  BookOpen,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/dragon-logo.png.asset.json";
@@ -25,6 +26,7 @@ import avatar from "@/assets/channel-avatar.png.asset.json";
 import { CharacterSwitcher } from "./CharacterSwitcher";
 import { PatchAnnouncementBanner } from "./PatchAnnouncementBanner";
 import { PatchAnnouncementBell } from "./PatchAnnouncementBell";
+import { WhatsNewBell } from "./WhatsNewBell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/lib/store";
 import { useLowImbuements, useLowImbuementToasts } from "@/lib/use-low-imbuements";
@@ -47,6 +49,7 @@ const moreNav = [
   { to: "/tools/comparisons", label: "Comparações salvas", icon: BookmarkCheck },
   { to: "/tools/rubini-coins", label: "Calculadora de Rubini Coins", icon: Coins },
   { to: "/tools/linked-tasks", label: "Linked Tasks", icon: Link2 },
+  { to: "/wiki", label: "Wiki", icon: BookOpen },
   { to: "/characters", label: "Personagens", icon: UserCircle2 },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;
@@ -190,6 +193,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <div className="ml-auto flex min-w-0 items-center justify-end gap-1 sm:gap-2">
             <PatchAnnouncementBell />
+            <WhatsNewBell />
+            <Link
+              to="/wiki"
+              title="Wiki"
+              className="hidden items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex"
+            >
+              <BookOpen className="h-4 w-4 flex-none text-rubi-gold" />
+              <span className="hidden md:inline">Wiki</span>
+            </Link>
             <CharacterSwitcher />
             <button
               onClick={handleSignOut}
