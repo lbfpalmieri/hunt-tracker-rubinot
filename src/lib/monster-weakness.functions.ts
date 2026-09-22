@@ -13,19 +13,20 @@ import type { ElementMods } from "./monster-weakness";
  * da API do MediaWiki (api.php) NÃO tem bloqueio fixo — só que sob rajada de
  * requisições (vários monstros de uma vez, de vários usuários) o Cloudflare
  * deles começa a devolver 403 pra parte dos nomes, mesmo alternando qual.
- * Mitigado com dois mecanismos: 1) cache em memória do processo (resistência
- * de monstro quase nunca muda, então guardamos por dias — um "não achei"
- * guarda por bem menos tempo, pra não travar um bloqueio temporário como se
- * fosse permanente); 2) no máximo `CONCURRENCY` requisições em paralelo por
- * chamada, em vez de disparar tudo de uma vez.
+ * Mitigado com dois mecanismos: 1) cache na tabela `monster_weakness_cache`
+ * (resistência de monstro quase nunca muda, então guardamos por dias — um
+ * "não achei" guarda por bem menos tempo, pra não travar um bloqueio
+ * temporário como se fosse permanente); 2) no máximo `CONCURRENCY`
+ * requisições em paralelo por chamada, em vez de disparar tudo de uma vez.
+ * O cache é em tabela (não em memória do processo) porque o app publica pra
+ * Cloudflare Workers — memória de módulo não sobrevive de forma confiável
+ * entre requests lá, cada um pode cair numa instância diferente.
  */
 
 const WIKI_API = "https://www.tibiawiki.com.br/api.php";
 const CONCURRENCY = 3;
 const FOUND_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const NOT_FOUND_TTL_MS = 15 * 60 * 1000;
-
-const cache = new Map<string, { mods: ElementMods | null; expiresAt: number }>();
 
 /** Roda `fn` pra cada item com no máximo `limit` promessas em voo ao mesmo tempo. */
 async function mapWithConcurrency<T, R>(
@@ -108,18 +109,45 @@ async function fetchFromWiki(name: string): Promise<ElementMods | null> {
   }
 }
 
-async function fetchOne(name: string): Promise<ElementMods | null> {
-  const cached = cache.get(name);
-  if (cached && cached.expiresAt > Date.now()) return cached.mods;
-
-  const mods = await fetchFromWiki(name);
-  cache.set(name, { mods, expiresAt: Date.now() + (mods ? FOUND_TTL_MS : NOT_FOUND_TTL_MS) });
-  return mods;
-}
-
 const input = z.object({
   names: z.array(z.string().trim().min(1).max(80)).min(1).max(10),
 });
+
+/** Lê o que já está em cache pros nomes pedidos. Falha em silêncio (migration não
+ * aplicada, env sem service role etc.) — nesse caso ninguém tem cache, e todo
+ * mundo cai no caminho de buscar da wiki, igual antes desse cache existir. */
+async function readCachedWeaknesses(
+  names: string[],
+): Promise<Map<string, { mods: ElementMods | null; updated_at: string }>> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rows, error } = await (supabaseAdmin as any)
+      .from("monster_weakness_cache")
+      .select("name, mods, updated_at")
+      .in("name", names);
+    if (error || !rows) return new Map();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new Map(rows.map((r: any) => [r.name as string, r]));
+  } catch {
+    return new Map();
+  }
+}
+
+async function writeCachedWeaknesses(
+  rows: { name: string; mods: ElementMods | null }[],
+): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const updated_at = new Date().toISOString();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin as any)
+      .from("monster_weakness_cache")
+      .upsert(rows.map((r) => ({ ...r, updated_at })));
+  } catch {
+    // sem persistência dessa vez — a próxima chamada busca da wiki de novo, sem drama
+  }
+}
 
 /** { weaknesses: { "Dragon": {fire: 0, ice: 110, ...} | null } } — null quando o nome não bate com nada na wiki
  * (ou a TibiaWiki bloqueou a requisição por excesso de tráfego — ver nota no topo do arquivo). */
@@ -127,7 +155,28 @@ export const getMonsterWeaknesses = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) => input.parse(raw))
   .handler(async ({ data }) => {
     const uniqueNames = [...new Set(data.names)];
-    const mods = await mapWithConcurrency(uniqueNames, CONCURRENCY, fetchOne);
-    const entries = uniqueNames.map((name, i) => [name, mods[i]] as const);
-    return { weaknesses: Object.fromEntries(entries) as Record<string, ElementMods | null> };
+    const byName = await readCachedWeaknesses(uniqueNames);
+
+    const now = Date.now();
+    const result: Record<string, ElementMods | null> = {};
+    const stale: string[] = [];
+    for (const name of uniqueNames) {
+      const row = byName.get(name);
+      const ttl = row?.mods ? FOUND_TTL_MS : NOT_FOUND_TTL_MS;
+      if (row && now - new Date(row.updated_at).getTime() < ttl) {
+        result[name] = row.mods;
+      } else {
+        stale.push(name);
+      }
+    }
+
+    if (stale.length > 0) {
+      const fetched = await mapWithConcurrency(stale, CONCURRENCY, fetchFromWiki);
+      await writeCachedWeaknesses(stale.map((name, i) => ({ name, mods: fetched[i] })));
+      stale.forEach((name, i) => {
+        result[name] = fetched[i];
+      });
+    }
+
+    return { weaknesses: result };
   });

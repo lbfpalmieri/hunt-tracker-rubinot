@@ -22,10 +22,14 @@ import { createServerFn } from "@tanstack/react-start";
  * id/name/src = sala; tem quantity+creatures = task), o que é bem mais
  * resistente a mudanças de build do que confiar em nomes de variável.
  *
- * Cacheado em memória (processo do servidor) por LINKED_TASKS_TTL_MS. Se uma
- * atualização falhar (a wiki deles mudou de estrutura, ficou fora do ar
- * etc.), servimos o último snapshot que funcionou, marcado como `stale`, em
- * vez de quebrar a página pro usuário.
+ * Cacheado na tabela `linked_tasks_cache` (uma linha só, id=1) por
+ * LINKED_TASKS_TTL_MS — não em memória do processo, porque o app publica pra
+ * Cloudflare Workers e cada request pode cair numa instância diferente,
+ * então uma variável de módulo não sobrevive de forma confiável entre
+ * chamadas (ver rubinot-linked-tasks-scrape na memória). Se uma atualização
+ * falhar (a wiki deles mudou de estrutura, ficou fora do ar etc.), servimos
+ * o último snapshot salvo, marcado como `stale`, em vez de quebrar a página
+ * pro usuário.
  */
 
 export interface LinkedTaskCreature {
@@ -177,44 +181,59 @@ async function fetchLinkedTasksFromWiki(): Promise<LinkedTaskRoom[]> {
   }));
 }
 
-let cache: { rooms: LinkedTaskRoom[]; syncedAt: number } | null = null;
-let inFlight: Promise<LinkedTaskRoom[]> | null = null;
-
-async function getRoomsCached(): Promise<{
-  rooms: LinkedTaskRoom[];
-  syncedAt: number;
-  stale: boolean;
-  error?: string;
-}> {
-  if (cache && Date.now() - cache.syncedAt < LINKED_TASKS_TTL_MS) {
-    return { rooms: cache.rooms, syncedAt: cache.syncedAt, stale: false };
-  }
-  if (!inFlight) {
-    inFlight = fetchLinkedTasksFromWiki().finally(() => {
-      inFlight = null;
-    });
-  }
+/** Lê o snapshot salvo. Falha em silêncio (migration não aplicada ainda, env sem
+ * service role, tabela fora do ar) — nesse caso simplesmente não há cache, e a
+ * função busca direto da wiki como se o cache nunca tivesse existido. */
+async function readCachedRooms(): Promise<{ rooms: LinkedTaskRoom[]; syncedAt: string } | null> {
   try {
-    const rooms = await inFlight;
-    cache = { rooms, syncedAt: Date.now() };
-    return { rooms, syncedAt: cache.syncedAt, stale: false };
-  } catch (e) {
-    if (cache)
-      return {
-        rooms: cache.rooms,
-        syncedAt: cache.syncedAt,
-        stale: true,
-        error: (e as Error).message,
-      };
-    throw e;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from("linked_tasks_cache")
+      .select("rooms, synced_at")
+      .eq("id", 1)
+      .maybeSingle();
+    if (error || !row) return null;
+    return { rooms: row.rooms as LinkedTaskRoom[], syncedAt: row.synced_at as string };
+  } catch {
+    return null;
+  }
+}
+
+/** Salva o snapshot. Falha em silêncio pelo mesmo motivo — não persistir não deve
+ * impedir a resposta de ir pro usuário. */
+async function writeCachedRooms(rooms: LinkedTaskRoom[], syncedAt: string): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin as any)
+      .from("linked_tasks_cache")
+      .upsert({ id: 1, rooms, synced_at: syncedAt });
+  } catch {
+    // sem persistência dessa vez — a próxima chamada busca da wiki de novo, sem drama
   }
 }
 
 export const getLinkedTasks = createServerFn({ method: "GET" }).handler(async () => {
+  const cached = await readCachedRooms();
+  if (cached && Date.now() - new Date(cached.syncedAt).getTime() < LINKED_TASKS_TTL_MS) {
+    return { rooms: cached.rooms, syncedAt: cached.syncedAt, stale: false, error: null };
+  }
+
   try {
-    const { rooms, syncedAt, stale, error } = await getRoomsCached();
-    return { rooms, syncedAt: new Date(syncedAt).toISOString(), stale, error: error ?? null };
+    const rooms = await fetchLinkedTasksFromWiki();
+    const syncedAt = new Date().toISOString();
+    await writeCachedRooms(rooms, syncedAt);
+    return { rooms, syncedAt, stale: false, error: null };
   } catch (e) {
+    if (cached) {
+      return {
+        rooms: cached.rooms,
+        syncedAt: cached.syncedAt,
+        stale: true,
+        error: (e as Error).message,
+      };
+    }
     return {
       rooms: [] as LinkedTaskRoom[],
       syncedAt: null as string | null,
