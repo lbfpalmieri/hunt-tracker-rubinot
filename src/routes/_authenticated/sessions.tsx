@@ -54,6 +54,12 @@ function SessionsList() {
   const [sort, setSort] = useState<"recent" | "gph" | "xph" | "duration">("recent");
   const [view, setView] = useState<"sessions" | "hunts">("sessions");
   const [dashboardHuntName, setDashboardHuntName] = useState<string | null>(null);
+  // Renderizar as centenas de sessões de uma vez travava a tela; paginamos o
+  // que aparece (os filtros/ordenação continuam rodando sobre a lista toda).
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    setPage(1);
+  }, [q, filterChar, sort, view]);
 
   const visible = useMemo(() => {
     let list = sessions.slice();
