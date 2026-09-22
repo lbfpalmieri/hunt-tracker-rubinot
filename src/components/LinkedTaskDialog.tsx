@@ -70,20 +70,35 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
         <div className="space-y-5 pt-1">
           <Section icon={Target} label={`Criaturas (${task.creatures.length})`}>
             <div className="flex flex-wrap gap-2">
-              {task.creatures.map((c) => (
-                <span
-                  key={c.name}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface py-1 pl-1 pr-3 text-xs font-medium"
-                >
-                  <img
-                    src={c.image}
-                    alt=""
-                    className="h-6 w-6 flex-none"
-                    style={{ objectFit: "contain", imageRendering: "pixelated" }}
-                  />
-                  {c.name}
-                </span>
-              ))}
+              {task.creatures.map((c) => {
+                // undefined = nem entrou na consulta (cap de 8); null = consultou e não achou/bloqueou.
+                // Os dois casos mostram o mesmo aviso — não vale a pena diferenciar pro usuário.
+                const pending = !isLoading && !data?.weaknesses[c.name];
+                return (
+                  <span
+                    key={c.name}
+                    className={
+                      "inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-xs font-medium " +
+                      (pending
+                        ? "border-dashed border-border/50 text-muted-foreground"
+                        : "border-border/60 bg-surface")
+                    }
+                  >
+                    <img
+                      src={c.image}
+                      alt=""
+                      className="h-6 w-6 flex-none"
+                      style={{ objectFit: "contain", imageRendering: "pixelated" }}
+                    />
+                    {c.name}
+                    {pending && (
+                      <span className="text-[10px] text-muted-foreground/70">
+                        · aguarde, em desenvolvimento
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
             </div>
           </Section>
 
