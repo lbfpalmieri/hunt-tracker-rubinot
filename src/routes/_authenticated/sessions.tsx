@@ -224,7 +224,8 @@ function SessionsList() {
                 Nenhuma hunt encontrada com esse filtro.
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {pagedHunts.map((h) => (
                   <div key={h.key} className="card-surface p-5 transition-colors hover:border-rubi-blue/50">
                     <div className="flex items-start justify-between gap-2">
