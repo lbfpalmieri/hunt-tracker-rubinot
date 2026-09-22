@@ -99,6 +99,18 @@ function SessionsList() {
     return filtered.slice().sort((a, b) => (b.sessionCount ?? 1) - (a.sessionCount ?? 1));
   }, [compareRows, q]);
 
+  const sessionsTotalPages = Math.max(1, Math.ceil(visible.length / SESSIONS_PAGE_SIZE));
+  const pagedSessions = useMemo(
+    () => visible.slice((page - 1) * SESSIONS_PAGE_SIZE, page * SESSIONS_PAGE_SIZE),
+    [visible, page],
+  );
+  const huntsTotalPages = Math.max(1, Math.ceil(huntsList.length / HUNTS_PAGE_SIZE));
+  const pagedHunts = useMemo(
+    () => huntsList.slice((page - 1) * HUNTS_PAGE_SIZE, page * HUNTS_PAGE_SIZE),
+    [huntsList, page],
+  );
+
+
   /** Sessões cruas da hunt aberta no dashboard — o próprio dialog agrega e filtra por Bounty/Prey. */
   const dashboardSessions = useMemo(() => {
     if (!dashboardHuntName) return [];
