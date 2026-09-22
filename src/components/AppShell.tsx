@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!moreOpen) return;
-    if (!window.matchMedia("(min-width: 1024px)").matches) return;
+    if (!window.matchMedia("(min-width: 1280px)").matches) return;
     const onClick = (e: MouseEvent) => {
       if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false);
     };
@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [moreOpen]);
 
   useEffect(() => {
-    if (!moreOpen || window.matchMedia("(min-width: 1024px)").matches) return;
+    if (!moreOpen || window.matchMedia("(min-width: 1280px)").matches) return;
     const previousOverflow = document.body.style.overflow;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMoreOpen(false);
@@ -109,13 +109,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-2.5 lg:flex">
+        <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-2.5 xl:flex">
           <Link to="/dashboard" className="flex shrink-0 items-center">
             <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-9 w-auto object-contain sm:h-14 md:h-16" />
           </Link>
 
 
-          <nav className="ml-4 hidden items-center gap-1 lg:flex">
+          <nav className="ml-4 hidden items-center gap-1 xl:flex">
             {nav.map((n) => {
               const active = pathname === n.to || pathname.startsWith(n.to + "/");
               const Icon = n.icon;
@@ -124,7 +124,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={n.to}
                   to={n.to}
                   className={
-                    "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
+                    "inline-flex flex-none items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
                     (active
                       ? "bg-rubi-blue-soft text-rubi-blue"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground")
@@ -142,7 +142,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
                 className={
-                  "relative inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
+                  "relative inline-flex flex-none items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
                   (moreActive
                     ? "bg-rubi-blue-soft text-rubi-blue"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground")
@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               to="/wiki"
               title="Wiki"
-              className="hidden items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex"
+              className="hidden flex-none items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex"
             >
               <BookOpen className="h-4 w-4 flex-none text-rubi-gold" />
               <span className="hidden md:inline">Wiki</span>
@@ -207,7 +207,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               onClick={handleSignOut}
               title={activeCharacter ? `Sair (${activeCharacter.name})` : "Sair"}
               aria-label="Sair"
-                className="hidden items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground lg:inline-flex"
+                className="hidden flex-none items-center gap-2 whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground xl:inline-flex"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sair</span>
@@ -218,10 +218,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <PatchAnnouncementBanner />
 
-      <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:py-8 lg:pb-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:py-8 xl:pb-8">{children}</main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl xl:hidden">
         <div className="grid grid-cols-5">
           {nav.map((n) => {
             const active = pathname === n.to || pathname.startsWith(n.to + "/");
@@ -262,7 +262,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile "Mais" sheet */}
       {moreOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Mais opções">
+        <div className="fixed inset-0 z-50 xl:hidden" role="dialog" aria-modal="true" aria-label="Mais opções">
           <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={() => setMoreOpen(false)} />
           <div className="absolute bottom-0 left-0 right-0 max-h-[min(88dvh,46rem)] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-popover pb-[env(safe-area-inset-bottom)] shadow-2xl">
             <div className="mx-auto my-3 h-1 w-10 rounded-full bg-muted" />

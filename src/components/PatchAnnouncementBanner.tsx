@@ -11,20 +11,20 @@ import {
 /**
  * Aviso sobre o marco de balanceamento mais recente. Fechar (X) só recolhe
  * pro sino no header (PatchAnnouncementBell) — continua reabrível a
- * qualquer momento. Só "Não quero mais ver" apaga de vez (e some o sino
- * também). Ver [[PatchAnnouncementBell]] / lib/patch-announcement.ts.
+ * qualquer momento. "Não quero mais ver" só desliga a abertura automática e
+ * a bolinha de novidade — o sino continua no header e reabre isso aqui se a
+ * pessoa clicar de novo. Ver [[PatchAnnouncementBell]] / lib/patch-announcement.ts.
  */
 export function PatchAnnouncementBanner() {
   const patch = latestPatch();
   const ready = usePatchAnnouncementState((s) => s.ready);
-  const dismissed = usePatchAnnouncementState((s) => s.dismissed);
   const open = usePatchAnnouncementState((s) => s.open);
 
   useEffect(() => {
     initPatchAnnouncement();
   }, []);
 
-  if (!patch || !ready || dismissed || !open) return null;
+  if (!patch || !ready || !open) return null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6">

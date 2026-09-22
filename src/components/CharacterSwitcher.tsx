@@ -23,7 +23,7 @@ export function CharacterSwitcher() {
     return (
       <Link
         to="/characters"
-        className="inline-flex items-center gap-1.5 rounded-lg bg-rubi-gold px-2.5 py-2 text-sm font-semibold text-background hover:opacity-90 sm:gap-2 sm:px-3"
+        className="inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-lg bg-rubi-gold px-2.5 py-2 text-sm font-semibold text-background hover:opacity-90 sm:gap-2 sm:px-3"
       >
         <Plus className="h-4 w-4 shrink-0" />
         <span className="hidden sm:inline">Adicionar personagem</span>
@@ -33,7 +33,7 @@ export function CharacterSwitcher() {
   }
 
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0 flex-none">
       <button
         onClick={() => setOpen((v) => !v)}
         className="inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-2 text-sm font-medium hover:bg-accent sm:min-h-11 sm:gap-2 sm:px-3"

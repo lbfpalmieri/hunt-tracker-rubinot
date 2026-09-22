@@ -7,9 +7,10 @@ const seenKey = (patchId: string) => `patch-announcement-seen:${patchId}`;
 interface PatchAnnouncementState {
   /** Já leu localStorage nessa sessão de página? Evita flash antes de saber o estado real. */
   ready: boolean;
-  /** Permanente — usuário clicou "Não quero mais ver". Some o aviso E o sino. */
+  /** Permanente — usuário clicou "Não quero mais ver". Desliga a abertura automática e a
+   * bolinha do sino, mas o sino continua no header e reabre o aviso se clicado. */
   dismissed: boolean;
-  /** Banner grande visível agora (o sino sempre fica, contanto que !dismissed). */
+  /** Banner grande visível agora. */
   open: boolean;
 }
 
@@ -55,7 +56,8 @@ export function togglePatchAnnouncement() {
   useStore.setState((s) => ({ open: !s.open }));
 }
 
-/** "Não quero mais ver, entendi o aviso" — permanente, some o sino também. */
+/** "Não quero mais ver, entendi o aviso" — permanente, mas o sino continua no header
+ * (só a bolinha de novidade some) caso a pessoa queira reabrir depois. */
 export function dismissPatchAnnouncementForever() {
   const patch = latestPatch();
   useStore.setState({ open: false, dismissed: true });

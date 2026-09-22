@@ -2,14 +2,15 @@ import { Bell } from "lucide-react";
 import { latestPatch, formatPatchDate } from "@/lib/patches";
 import { usePatchAnnouncementState, togglePatchAnnouncement } from "@/lib/patch-announcement";
 
-/** Sino no header — só existe enquanto o aviso do marco mais recente não foi dispensado de vez. */
+/** Sino no header — fica fixo mesmo depois de "Não quero mais ver" (só a bolinha de novo
+ * some), pra quem dispensou sem querer ou mudar de ideia ainda conseguir abrir o aviso. */
 export function PatchAnnouncementBell() {
   const patch = latestPatch();
   const ready = usePatchAnnouncementState((s) => s.ready);
   const dismissed = usePatchAnnouncementState((s) => s.dismissed);
   const open = usePatchAnnouncementState((s) => s.open);
 
-  if (!patch || !ready || dismissed) return null;
+  if (!patch || !ready) return null;
 
   return (
     <button
@@ -23,7 +24,7 @@ export function PatchAnnouncementBell() {
       }
     >
       <Bell className="h-4 w-4" />
-      {!open && (
+      {!dismissed && !open && (
         <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rubi-gold shadow-glow-gold" />
       )}
     </button>
