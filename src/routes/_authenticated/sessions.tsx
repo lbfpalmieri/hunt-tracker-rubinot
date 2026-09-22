@@ -272,11 +272,13 @@ function SessionsList() {
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+                <Pagination page={page} totalPages={huntsTotalPages} onPageChange={setPage} />
+              </>
             )
           ) : (
           <ul className="space-y-2">
-            {visible.map((s) => {
+            {pagedSessions.map((s) => {
               const gph = s.hunting.balance / (s.hunting.durationSec / 3600 || 1);
               return (
                 <li key={s.id}>
