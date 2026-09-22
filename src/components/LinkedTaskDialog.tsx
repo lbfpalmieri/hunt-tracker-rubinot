@@ -71,9 +71,11 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
           <Section icon={Target} label={`Criaturas (${task.creatures.length})`}>
             <div className="flex flex-wrap gap-2">
               {task.creatures.map((c) => {
-                // undefined = nem entrou na consulta (cap de 8); null = consultou e não achou/bloqueou.
-                // Os dois casos mostram o mesmo aviso — não vale a pena diferenciar pro usuário.
-                const pending = !isLoading && !data?.weaknesses[c.name];
+                const hasData = !!data?.weaknesses[c.name];
+                // undefined (nem entrou na consulta, cap de 8) conta como "sem dado" mesmo
+                // sem termos consultado ainda — trata igual ao caso pendente.
+                const isPermanent = data?.permanent[c.name] ?? false;
+                const pending = !isLoading && !hasData;
                 return (
                   <span
                     key={c.name}
@@ -93,7 +95,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
                     {c.name}
                     {pending && (
                       <span className="text-[10px] text-muted-foreground/70">
-                        · aguarde, em desenvolvimento
+                        · {isPermanent ? "sem dado na TibiaWiki" : "aguarde, em desenvolvimento"}
                       </span>
                     )}
                   </span>

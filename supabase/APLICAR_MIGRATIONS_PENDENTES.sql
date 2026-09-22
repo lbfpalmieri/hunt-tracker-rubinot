@@ -9,6 +9,7 @@
 --    - supabase/migrations/20260914120000_...  (char_level em hunt_sessions)
 --    - supabase/migrations/20260920120000_...  (tabela rc_price_entries — Calculadora de Rubini Coins)
 --    - supabase/migrations/20260923120000_...  (cache compartilhado: linked_tasks_cache + monster_weakness_cache)
+--    - supabase/migrations/20260924120000_...  (coluna permanent em monster_weakness_cache)
 -- ============================================================================
 
 -- 1) Tabela de mortes ---------------------------------------------------------
@@ -112,5 +113,11 @@ DROP POLICY IF EXISTS "Authenticated users can read monster weakness cache" ON p
 CREATE POLICY "Authenticated users can read monster weakness cache" ON public.monster_weakness_cache
   FOR SELECT TO authenticated USING (true);
 
--- 7) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
+-- 7) Distingue "confirmado que não existe na TibiaWiki" (ex.: criaturas exclusivas do
+--    RubinOT) de "bloqueio temporário, tenta de novo logo" — sem isso os dois casos
+--    mostravam a mesma mensagem de "aguarde" pra UI, mesmo quando o dado nunca vai vir.
+ALTER TABLE public.monster_weakness_cache
+  ADD COLUMN IF NOT EXISTS permanent boolean NOT NULL DEFAULT false;
+
+-- 8) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
 NOTIFY pgrst, 'reload schema';

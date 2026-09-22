@@ -21,6 +21,15 @@ import type { ElementMods } from "./monster-weakness";
  * O cache é em tabela (não em memória do processo) porque o app publica pra
  * Cloudflare Workers — memória de módulo não sobrevive de forma confiável
  * entre requests lá, cada um pode cair numa instância diferente.
+ *
+ * ARMADILHA JÁ CAÍDA: nem toda página da Infobox_Criatura escreve os campos
+ * "xDmgMod" com "%" no final — "Rootthing Bug Tracker", por exemplo, tem
+ * "physicalDmgMod = 85" sem o sinal. O regex de parseResistances exigia "%"
+ * obrigatório e ignorava esses casos silenciosamente (a criatura parecia
+ * "sem dado" quando na verdade tinha, só formatado diferente). O "%" agora é
+ * opcional. Isso é bem mais comum que criatura genuinamente ausente da wiki
+ * (o cache de "permanent" abaixo existe pros casos raros que são mesmo
+ * exclusivos do RubinOT).
  */
 
 const WIKI_API = "https://www.tibiawiki.com.br/api.php";
@@ -61,10 +70,13 @@ const DMG_MOD_FIELDS: Record<string, keyof ElementMods> = {
   manadraindmgmod: "manadrain",
 };
 
-/** Extrai os campos "xDmgMod = Y%" do wikitext da Infobox_Criatura. */
+/** Extrai os campos "xDmgMod = Y%" do wikitext da Infobox_Criatura. O "%" é opcional —
+ * algumas páginas escrevem "= 85" sem o sinal, não só "= 85%" (confirmado em "Rootthing
+ * Bug Tracker": o campo existe mas SEM "%", e o regex antigo (que exigia "%") simplesmente
+ * não casava nada, fazendo a criatura parecer "sem dado" quando na verdade tinha). */
 function parseResistances(wikitext: string): ElementMods | null {
   const mods: Partial<ElementMods> = {};
-  const re = /\|\s*([a-zA-Z]+DmgMod)\s*=\s*(-?\d+(?:\.\d+)?)\s*%/g;
+  const re = /\|\s*([a-zA-Z]+DmgMod)\s*=\s*(-?\d+(?:\.\d+)?)\s*%?\s*$/gm;
   let m: RegExpExecArray | null;
   let found = false;
   while ((m = re.exec(wikitext))) {
@@ -77,7 +89,16 @@ function parseResistances(wikitext: string): ElementMods | null {
   return found ? (mods as ElementMods) : null;
 }
 
-async function fetchFromWiki(name: string): Promise<ElementMods | null> {
+interface FetchResult {
+  mods: ElementMods | null;
+  /** true = confirmado que a TibiaWiki não tem esse nome (ou a página existe mas não
+   * lista resistência) — não adianta reconsultar, provavelmente é criatura exclusiva do
+   * RubinOT. false = não deu pra checar agora (rede, timeout, bloqueio de tráfego) —
+   * vale tentar de novo em breve. */
+  permanent: boolean;
+}
+
+async function fetchFromWiki(name: string): Promise<FetchResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 6000);
   try {
@@ -94,16 +115,17 @@ async function fetchFromWiki(name: string): Promise<ElementMods | null> {
       signal: controller.signal,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RubinOTHuntTracker/1.0)" },
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { mods: null, permanent: false };
     const json = (await res.json()) as {
       query?: { pages?: { revisions?: { content?: string }[]; missing?: boolean }[] };
     };
     const page = json.query?.pages?.[0];
-    if (!page || page.missing) return null;
+    if (!page || page.missing) return { mods: null, permanent: true };
     const content = page.revisions?.[0]?.content;
-    return content ? parseResistances(content) : null;
+    const mods = content ? parseResistances(content) : null;
+    return { mods, permanent: mods === null };
   } catch {
-    return null;
+    return { mods: null, permanent: false };
   } finally {
     clearTimeout(timeout);
   }
@@ -118,13 +140,13 @@ const input = z.object({
  * mundo cai no caminho de buscar da wiki, igual antes desse cache existir. */
 async function readCachedWeaknesses(
   names: string[],
-): Promise<Map<string, { mods: ElementMods | null; updated_at: string }>> {
+): Promise<Map<string, { mods: ElementMods | null; permanent: boolean; updated_at: string }>> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: rows, error } = await (supabaseAdmin as any)
       .from("monster_weakness_cache")
-      .select("name, mods, updated_at")
+      .select("name, mods, permanent, updated_at")
       .in("name", names);
     if (error || !rows) return new Map();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,7 +157,7 @@ async function readCachedWeaknesses(
 }
 
 async function writeCachedWeaknesses(
-  rows: { name: string; mods: ElementMods | null }[],
+  rows: { name: string; mods: ElementMods | null; permanent: boolean }[],
 ): Promise<void> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -149,8 +171,11 @@ async function writeCachedWeaknesses(
   }
 }
 
-/** { weaknesses: { "Dragon": {fire: 0, ice: 110, ...} | null } } — null quando o nome não bate com nada na wiki
- * (ou a TibiaWiki bloqueou a requisição por excesso de tráfego — ver nota no topo do arquivo). */
+/** { weaknesses: { "Dragon": {...}|null }, permanent: { "Roothing X": true } }
+ * `weaknesses[nome] == null` quando não achou resistência. Nesse caso, `permanent[nome]`
+ * diz se é definitivo (a TibiaWiki não tem essa criatura ou a página não lista
+ * resistência — comum em conteúdo exclusivo do RubinOT) ou só não deu pra checar agora
+ * (bloqueio de tráfego, timeout — vale a pena tentar de novo em alguns minutos). */
 export const getMonsterWeaknesses = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) => input.parse(raw))
   .handler(async ({ data }) => {
@@ -158,13 +183,15 @@ export const getMonsterWeaknesses = createServerFn({ method: "GET" })
     const byName = await readCachedWeaknesses(uniqueNames);
 
     const now = Date.now();
-    const result: Record<string, ElementMods | null> = {};
+    const weaknesses: Record<string, ElementMods | null> = {};
+    const permanent: Record<string, boolean> = {};
     const stale: string[] = [];
     for (const name of uniqueNames) {
       const row = byName.get(name);
-      const ttl = row?.mods ? FOUND_TTL_MS : NOT_FOUND_TTL_MS;
+      const ttl = row?.mods || row?.permanent ? FOUND_TTL_MS : NOT_FOUND_TTL_MS;
       if (row && now - new Date(row.updated_at).getTime() < ttl) {
-        result[name] = row.mods;
+        weaknesses[name] = row.mods;
+        permanent[name] = row.permanent;
       } else {
         stale.push(name);
       }
@@ -172,11 +199,12 @@ export const getMonsterWeaknesses = createServerFn({ method: "GET" })
 
     if (stale.length > 0) {
       const fetched = await mapWithConcurrency(stale, CONCURRENCY, fetchFromWiki);
-      await writeCachedWeaknesses(stale.map((name, i) => ({ name, mods: fetched[i] })));
+      await writeCachedWeaknesses(stale.map((name, i) => ({ name, ...fetched[i] })));
       stale.forEach((name, i) => {
-        result[name] = fetched[i];
+        weaknesses[name] = fetched[i].mods;
+        permanent[name] = fetched[i].permanent;
       });
     }
 
-    return { weaknesses: result };
+    return { weaknesses, permanent };
   });
