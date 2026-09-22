@@ -77,9 +77,16 @@ export function CharacterSwitcher() {
             <Link
               to="/characters"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 border-t border-border px-3 py-2 text-sm font-medium text-rubi-gold hover:bg-accent"
+              className="flex min-h-11 items-center gap-2 border-t border-border px-3 py-2 text-sm font-medium text-rubi-gold hover:bg-accent"
             >
               <Plus className="h-4 w-4" /> Gerenciar personagens
+            </Link>
+            <Link
+              to="/feedback"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center gap-2 border-t border-border px-3 py-2 text-sm font-medium text-rubi-blue hover:bg-accent"
+            >
+              <MessageSquarePlus className="h-4 w-4" /> Enviar sugestão ou reportar bug
             </Link>
           </div>
         </>
