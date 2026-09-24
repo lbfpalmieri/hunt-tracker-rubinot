@@ -103,9 +103,12 @@ function SessionDetail() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
     .map((k) => ({ ...k, perHour: k.count / hours }));
-  // rawXp costuma ser 0 quando a hunt não teve nenhum bônus de sessão — nesse
-  // caso o total (e o /h) é lido de xpGain, igual ao card já fazia antes.
-  const rawXpPerHour = h.rawXp ? h.rawXpPerHour : h.xpPerHour;
+  // Todo "/h" é calculado a partir do total ÷ duração da própria sessão. O
+  // "Raw XP/h" que o analyser do jogo exporta usa outro relógio (conta tempo
+  // fora da sessão), então não batia com o total em sessões de 1h exata.
+  const rawXpPerHour = (h.rawXp || h.xpGain) / hours;
+  const damagePerHour = h.damage / hours;
+  const healingPerHour = h.healing / hours;
   const lootPerHour = h.loot / hours;
   const suppliesPerHour = h.supplies / hours;
 
@@ -212,7 +215,7 @@ function SessionDetail() {
         <StatCard
           label="Dano causado"
           value={fmtNum(h.damage)}
-          perHour={fmtNum(h.damagePerHour)}
+          perHour={fmtNum(damagePerHour)}
           icon={Swords}
           accent="blue"
           mark={preyMarkLabel(session.prey, "damage")}
@@ -221,7 +224,7 @@ function SessionDetail() {
         <StatCard
           label="Cura"
           value={fmtNum(h.healing)}
-          perHour={fmtNum(h.healingPerHour)}
+          perHour={fmtNum(healingPerHour)}
           icon={Heart}
           accent="success"
         />

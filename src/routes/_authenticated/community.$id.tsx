@@ -75,9 +75,8 @@ function SessionView({ session }: { session: any }) {
   const totalKills = kills.reduce((a, k) => a + Number(k.count || 0), 0);
   const hours = durationSec / 3600 || 1;
   const rawXp = Number(h.rawXp ?? 0) || Number(h.xpGain ?? 0);
-  // rawXp costuma ser 0 quando a hunt não teve bônus de sessão — nesse caso
-  // o /h também é lido de xpPerHour, igual ao valor total já fazia.
-  const rawXpPerHour = Number(h.rawXp ?? 0) ? Number(h.rawXpPerHour ?? 0) : Number(h.xpPerHour ?? 0);
+  // "/h" sempre = total ÷ duração da sessão (o valor /h do analyser usa outro relógio).
+  const rawXpPerHour = rawXp / hours;
   const balance = Number(h.balance ?? 0);
   const gph = balance / hours;
   const killsPerHour = totalKills / hours;
@@ -148,14 +147,14 @@ function SessionView({ session }: { session: any }) {
         <StatCard
           label="Dano causado"
           value={fmtNum(damage)}
-          perHour={fmtNum(Number(h.damagePerHour ?? 0))}
+          perHour={fmtNum(damage / hours)}
           icon={Swords}
           accent="blue"
         />
         <StatCard
           label="Cura"
           value={fmtNum(healing)}
-          perHour={fmtNum(Number(h.healingPerHour ?? 0))}
+          perHour={fmtNum(healing / hours)}
           icon={Heart}
           accent="success"
         />
