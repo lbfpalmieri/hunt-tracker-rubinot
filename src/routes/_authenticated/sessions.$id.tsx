@@ -215,7 +215,7 @@ function SessionDetail() {
         <StatCard
           label="Dano causado"
           value={fmtNum(h.damage)}
-          perHour={fmtNum(h.damagePerHour)}
+          perHour={fmtNum(damagePerHour)}
           icon={Swords}
           accent="blue"
           mark={preyMarkLabel(session.prey, "damage")}
@@ -224,7 +224,7 @@ function SessionDetail() {
         <StatCard
           label="Cura"
           value={fmtNum(h.healing)}
-          perHour={fmtNum(h.healingPerHour)}
+          perHour={fmtNum(healingPerHour)}
           icon={Heart}
           accent="success"
         />

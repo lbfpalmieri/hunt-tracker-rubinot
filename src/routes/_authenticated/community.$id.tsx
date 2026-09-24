@@ -147,14 +147,14 @@ function SessionView({ session }: { session: any }) {
         <StatCard
           label="Dano causado"
           value={fmtNum(damage)}
-          perHour={fmtNum(Number(h.damagePerHour ?? 0))}
+          perHour={fmtNum(damage / hours)}
           icon={Swords}
           accent="blue"
         />
         <StatCard
           label="Cura"
           value={fmtNum(healing)}
-          perHour={fmtNum(Number(h.healingPerHour ?? 0))}
+          perHour={fmtNum(healing / hours)}
           icon={Heart}
           accent="success"
         />
