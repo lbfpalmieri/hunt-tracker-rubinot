@@ -173,6 +173,7 @@ export type Database = {
       }
       feedback_tickets: {
         Row: {
+          attachment_path: string | null
           char_name: string | null
           created_at: string
           id: string
@@ -185,6 +186,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachment_path?: string | null
           char_name?: string | null
           created_at?: string
           id?: string
@@ -197,6 +199,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachment_path?: string | null
           char_name?: string | null
           created_at?: string
           id?: string
@@ -423,6 +426,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "level_snapshots_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      linked_task_progress: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          task_key: string
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          task_key: string
+          user_id?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          task_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linked_task_progress_character_id_fkey"
             columns: ["character_id"]
             isOneToOne: false
             referencedRelation: "characters"

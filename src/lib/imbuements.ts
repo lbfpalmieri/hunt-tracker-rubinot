@@ -72,18 +72,21 @@ export function aggregateImbuements(
   // Pra cada slot, o próximo imbuement (por data) marca quando o anterior foi substituído —
   // sem isso, um imbuement renovado continua "consumindo" as mesmas horas que o novo já está
   // contando, dobrando o custo/hora amortizado durante a sobreposição.
+  // Um item aceita vários imbuements ao mesmo tempo (tipos diferentes). Só é "substituído"
+  // quando um novo imbuement do MESMO tipo é aplicado no mesmo item (renovação).
+  const keyOf = (i: Imbuement) => `${i.gearSlot}::${i.label ?? ""}`;
   const bySlotAsc = new Map<string, Imbuement[]>();
   for (const i of mine) {
     if (!i.gearSlot) continue;
-    const arr = bySlotAsc.get(i.gearSlot) ?? [];
+    const arr = bySlotAsc.get(keyOf(i)) ?? [];
     arr.push(i);
-    bySlotAsc.set(i.gearSlot, arr);
+    bySlotAsc.set(keyOf(i), arr);
   }
   for (const arr of bySlotAsc.values()) arr.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   const supersededAtOf = (imb: Imbuement): string | null => {
     if (!imb.gearSlot) return null;
-    const arr = bySlotAsc.get(imb.gearSlot) ?? [];
+    const arr = bySlotAsc.get(keyOf(imb)) ?? [];
     const idx = arr.findIndex((x) => x.id === imb.id);
     return arr[idx + 1]?.createdAt ?? null;
   };
