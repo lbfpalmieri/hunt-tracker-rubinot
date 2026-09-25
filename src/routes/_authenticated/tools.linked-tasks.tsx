@@ -97,6 +97,7 @@ function LinkedTasksPage() {
   const roomDone = (room: LinkedTaskRoom) => roomKeys(room).filter((k) => done.has(k)).length;
   const selectedRoom = roomId === "" ? null : rooms.find((r) => r.id === roomId) ?? null;
 
+  const [bulkBusy, setBulkBusy] = useState(false);
   const toggleMany = async (keys: string[], label: string) => {
     if (!charId || bulkBusy || keys.length === 0) return;
     const allDone = keys.every((k) => done.has(k));
