@@ -137,6 +137,7 @@ export type Database = {
         Row: {
           author_id: string
           body: string
+          char_name: string | null
           created_at: string
           id: string
           is_admin: boolean
@@ -145,6 +146,7 @@ export type Database = {
         Insert: {
           author_id: string
           body: string
+          char_name?: string | null
           created_at?: string
           id?: string
           is_admin?: boolean
@@ -153,6 +155,7 @@ export type Database = {
         Update: {
           author_id?: string
           body?: string
+          char_name?: string | null
           created_at?: string
           id?: string
           is_admin?: boolean
@@ -170,6 +173,7 @@ export type Database = {
       }
       feedback_tickets: {
         Row: {
+          char_name: string | null
           created_at: string
           id: string
           kind: string
@@ -181,6 +185,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          char_name?: string | null
           created_at?: string
           id?: string
           kind?: string
@@ -192,6 +197,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          char_name?: string | null
           created_at?: string
           id?: string
           kind?: string
