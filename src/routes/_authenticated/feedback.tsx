@@ -331,11 +331,11 @@ function FeedbackPage() {
 
         <div className="space-y-3">
           {isAdmin && (
-            <div className="grid grid-cols-2 gap-2 sm:inline-flex">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setTab("mine")}
                 className={
-                  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium " +
+                  "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium sm:flex-none " +
                   (tab === "mine" ? "border-rubi-blue bg-rubi-blue/10 text-rubi-blue" : "border-border text-muted-foreground")
                 }
               >
@@ -344,7 +344,7 @@ function FeedbackPage() {
               <button
                 onClick={() => setTab("inbox")}
                 className={
-                  "relative inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium " +
+                  "relative inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium sm:flex-none " +
                   (tab === "inbox" ? "border-rubi-gold bg-rubi-gold/10 text-rubi-gold" : "border-border text-muted-foreground")
                 }
               >
@@ -354,6 +354,14 @@ function FeedbackPage() {
                     {inboxPending}
                   </span>
                 )}
+              </button>
+              <button
+                onClick={exportAll}
+                disabled={tickets.length === 0}
+                title="Baixa todos os tickets e respostas em um arquivo de texto para colar numa IA"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50 sm:flex-none"
+              >
+                <Download className="h-4 w-4" /> Exportar tudo
               </button>
             </div>
           )}
