@@ -529,15 +529,40 @@ function ImbuementsPage() {
                 máx {IMB_DURATION_HOURS}h
               </span>
             </span>
-            <input
-              inputMode="text"
-              value={hoursRemaining}
-              onChange={(e) => setHoursRemaining(e.target.value)}
-              placeholder="Ex: 12:30 ou 12.5"
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
-            />
+            {(() => {
+              const [hPart = "", mPart = ""] = hoursRemaining.includes(":")
+                ? hoursRemaining.split(":")
+                : [hoursRemaining, ""];
+              const onlyDigits = (v: string) => v.replace(/\D/g, "").slice(0, 2);
+              return (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="flex items-center rounded-lg border border-border bg-background pr-3 focus-within:border-rubi-blue">
+                    <input
+                      inputMode="numeric"
+                      value={hPart}
+                      onChange={(e) => setHoursRemaining(`${onlyDigits(e.target.value)}:${mPart}`)}
+                      placeholder="0"
+                      aria-label="Horas"
+                      className="w-full bg-transparent px-3 py-2 text-sm outline-none"
+                    />
+                    <span className="text-xs text-muted-foreground">h</span>
+                  </div>
+                  <div className="flex items-center rounded-lg border border-border bg-background pr-3 focus-within:border-rubi-blue">
+                    <input
+                      inputMode="numeric"
+                      value={mPart}
+                      onChange={(e) => setHoursRemaining(`${hPart}:${onlyDigits(e.target.value)}`)}
+                      placeholder="0"
+                      aria-label="Minutos"
+                      className="w-full bg-transparent px-3 py-2 text-sm outline-none"
+                    />
+                    <span className="text-xs text-muted-foreground">min</span>
+                  </div>
+                </div>
+              );
+            })()}
             <span className="mt-1 block text-[10px] text-muted-foreground">
-              Pode digitar no formato <strong>HH:MM</strong> (ex: 12:30) ou em horas decimais (ex: 12,5).
+              Ex: 7h 45min — como aparece no jogo.
             </span>
           </label>
 
