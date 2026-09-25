@@ -202,6 +202,42 @@ function FeedbackPage() {
     }
   };
 
+  // Exporta tudo em texto estruturado para colar numa IA organizar as melhorias.
+  const exportAll = () => {
+    const lines: string[] = [
+      "# Sugestões e bugs — RubinOT Hunt Tracker",
+      `Exportado em ${new Date().toLocaleString("pt-BR")} · ${tickets.length} ticket(s)`,
+      "",
+    ];
+    const sorted = [...tickets].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    for (const t of sorted) {
+      const meta = STATUS_META[(t.status as Status) in STATUS_META ? (t.status as Status) : "novo"];
+      lines.push(`## [${t.kind === "bug" ? "BUG" : "SUGESTÃO"}] ${t.subject}`);
+      lines.push(`- Status: ${meta.label}`);
+      lines.push(`- Autor: ${t.user_email ?? "desconhecido"}`);
+      lines.push(`- Criado: ${fmtDate(t.created_at)} · Atualizado: ${fmtDate(t.updated_at)}`);
+      lines.push("");
+      lines.push(t.message.trim());
+      const thread = messages
+        .filter((m) => m.ticket_id === t.id)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at));
+      for (const m of thread) {
+        lines.push("");
+        lines.push(`> **${m.is_admin ? "Equipe" : "Usuário"}** (${fmtDate(m.created_at)}): ${m.body.trim()}`);
+      }
+      lines.push("");
+      lines.push("---");
+      lines.push("");
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sugestoes-bugs-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppShell>
       <div className="mb-6">
