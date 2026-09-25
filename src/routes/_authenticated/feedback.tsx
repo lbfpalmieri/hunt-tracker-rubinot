@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { errorMessage } from "@/lib/errors";
 import { fmtDate } from "@/lib/format";
-import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2 } from "lucide-react";
+import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/feedback")({
   head: () => ({
@@ -202,6 +202,42 @@ function FeedbackPage() {
     }
   };
 
+  // Exporta tudo em texto estruturado para colar numa IA organizar as melhorias.
+  const exportAll = () => {
+    const lines: string[] = [
+      "# Sugestões e bugs — RubinOT Hunt Tracker",
+      `Exportado em ${new Date().toLocaleString("pt-BR")} · ${tickets.length} ticket(s)`,
+      "",
+    ];
+    const sorted = [...tickets].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    for (const t of sorted) {
+      const meta = STATUS_META[(t.status as Status) in STATUS_META ? (t.status as Status) : "novo"];
+      lines.push(`## [${t.kind === "bug" ? "BUG" : "SUGESTÃO"}] ${t.subject}`);
+      lines.push(`- Status: ${meta.label}`);
+      lines.push(`- Autor: ${t.user_email ?? "desconhecido"}`);
+      lines.push(`- Criado: ${fmtDate(t.created_at)} · Atualizado: ${fmtDate(t.updated_at)}`);
+      lines.push("");
+      lines.push(t.message.trim());
+      const thread = messages
+        .filter((m) => m.ticket_id === t.id)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at));
+      for (const m of thread) {
+        lines.push("");
+        lines.push(`> **${m.is_admin ? "Equipe" : "Usuário"}** (${fmtDate(m.created_at)}): ${m.body.trim()}`);
+      }
+      lines.push("");
+      lines.push("---");
+      lines.push("");
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sugestoes-bugs-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppShell>
       <div className="mb-6">
@@ -295,11 +331,11 @@ function FeedbackPage() {
 
         <div className="space-y-3">
           {isAdmin && (
-            <div className="grid grid-cols-2 gap-2 sm:inline-flex">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setTab("mine")}
                 className={
-                  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium " +
+                  "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium sm:flex-none " +
                   (tab === "mine" ? "border-rubi-blue bg-rubi-blue/10 text-rubi-blue" : "border-border text-muted-foreground")
                 }
               >
@@ -308,7 +344,7 @@ function FeedbackPage() {
               <button
                 onClick={() => setTab("inbox")}
                 className={
-                  "relative inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium " +
+                  "relative inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium sm:flex-none " +
                   (tab === "inbox" ? "border-rubi-gold bg-rubi-gold/10 text-rubi-gold" : "border-border text-muted-foreground")
                 }
               >
@@ -318,6 +354,14 @@ function FeedbackPage() {
                     {inboxPending}
                   </span>
                 )}
+              </button>
+              <button
+                onClick={exportAll}
+                disabled={tickets.length === 0}
+                title="Baixa todos os tickets e respostas em um arquivo de texto para colar numa IA"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50 sm:flex-none"
+              >
+                <Download className="h-4 w-4" /> Exportar tudo
               </button>
             </div>
           )}
