@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Sparkles } from "lucide-react";
+import { Megaphone, Sparkles } from "lucide-react";
+import { latestPatch, formatPatchDate } from "@/lib/patches";
+import { usePatchAnnouncementState, openPatchAnnouncement } from "@/lib/patch-announcement";
 import { WHATS_NEW, formatWhatsNewDate } from "@/lib/whats-new";
 import {
   useWhatsNewAnnouncementState,
@@ -16,6 +18,10 @@ export function WhatsNewBell() {
   const open = useWhatsNewAnnouncementState((s) => s.open);
   const seenId = useWhatsNewAnnouncementState((s) => s.seenId);
   const ref = useRef<HTMLDivElement | null>(null);
+  const patch = latestPatch();
+  const patchReady = usePatchAnnouncementState((s) => s.ready);
+  const patchDismissed = usePatchAnnouncementState((s) => s.dismissed);
+  const patchOpen = usePatchAnnouncementState((s) => s.open);
 
   useEffect(() => {
     initWhatsNewAnnouncement();
@@ -31,6 +37,8 @@ export function WhatsNewBell() {
   }, [open]);
 
   const unseen = ready && hasUnseenWhatsNew(seenId);
+  // Só no celular: lá o sino de aviso de balanceamento não existe, então a bolinha dele vem pra cá.
+  const patchDot = !!patch && patchReady && !patchDismissed && !patchOpen;
 
   return (
     <div className="relative" ref={ref}>
@@ -49,8 +57,13 @@ export function WhatsNewBell() {
         }
       >
         <Sparkles className="h-4 w-4" />
-        {unseen && !open && (
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rubi-gold shadow-glow-gold" />
+        {(unseen || patchDot) && !open && (
+          <span
+            className={
+              "absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rubi-gold shadow-glow-gold " +
+              (unseen ? "" : "lg:hidden")
+            }
+          />
         )}
       </button>
 
@@ -61,6 +74,27 @@ export function WhatsNewBell() {
           <div className="border-b border-border/60 px-4 py-2.5 text-sm font-semibold">
             Novidades
           </div>
+          {patch && patchReady && (
+            <button
+              type="button"
+              onClick={() => {
+                closeWhatsNewPanel();
+                openPatchAnnouncement();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="flex w-full items-start gap-3 border-b border-border/60 bg-rubi-gold/10 px-4 py-3 text-left hover:bg-rubi-gold/15 lg:hidden"
+            >
+              <Megaphone className="mt-0.5 h-4 w-4 flex-none text-rubi-gold" />
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-rubi-gold">
+                  Aviso: {patch.label} ({formatPatchDate(patch)})
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Ajuste na economia do RubinOT — toque para ler
+                </span>
+              </span>
+            </button>
+          )}
           <div className="max-h-96 overflow-y-auto">
             {WHATS_NEW.map((entry) => (
               <div key={entry.id} className="border-b border-border/40 px-4 py-3 last:border-0">

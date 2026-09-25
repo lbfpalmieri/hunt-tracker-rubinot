@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "sidebar-menu",
+    date: "2026-09-25",
+    title: "Menu novo: lateral no computador, mais limpo no celular",
+    description:
+      "No computador o menu agora fica na lateral esquerda: recolhido mostra só os ícones, abre ao passar o mouse e dá pra fixar aberto (botão dourado na borda). Itens agrupados em Caçada, Oficina, Herói, Taverna e Biblioteca. Em Personalizar menu você escolhe o que fica fixado no topo e a ordem. No celular, a barra de baixo usa os seus fixados e o botão Menu abre tudo em ícones grandes.",
+  },
+  {
     id: "linked-tasks-progress",
     date: "2026-09-25",
     title: "Progresso nas Linked Tasks",

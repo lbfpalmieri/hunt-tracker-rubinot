@@ -2,7 +2,8 @@ import { Bell } from "lucide-react";
 import { latestPatch, formatPatchDate } from "@/lib/patches";
 import { usePatchAnnouncementState, togglePatchAnnouncement } from "@/lib/patch-announcement";
 
-/** Sino no header — fica fixo mesmo depois de "Não quero mais ver" (só a bolinha de novo
+/** No celular/tablet (<lg) este sino some: o aviso vira uma linha dentro do painel do sino
+ * de Novidades (WhatsNewBell), pra caber um sino só no header. Sino no header — fica fixo mesmo depois de "Não quero mais ver" (só a bolinha de novo
  * some), pra quem dispensou sem querer ou mudar de ideia ainda conseguir abrir o aviso. */
 export function PatchAnnouncementBell() {
   const patch = latestPatch();
@@ -19,7 +20,7 @@ export function PatchAnnouncementBell() {
       title={`Aviso: ${patch.label} (${formatPatchDate(patch)})`}
       aria-label="Ver aviso de balanceamento"
       className={
-        "relative flex h-10 w-10 flex-none items-center justify-center rounded-lg transition-colors sm:h-11 sm:w-11 " +
+        "relative hidden h-11 w-11 flex-none items-center justify-center rounded-lg transition-colors lg:flex " +
         (open ? "bg-rubi-gold-soft text-rubi-gold" : "text-muted-foreground hover:bg-accent hover:text-foreground")
       }
     >

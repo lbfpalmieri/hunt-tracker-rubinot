@@ -52,6 +52,10 @@ export function closePatchAnnouncement() {
   }
 }
 
+export function openPatchAnnouncement() {
+  useStore.setState({ open: true });
+}
+
 export function togglePatchAnnouncement() {
   useStore.setState((s) => ({ open: !s.open }));
 }

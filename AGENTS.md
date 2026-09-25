@@ -41,7 +41,12 @@ vocações em grade); feedback.tsx (tickets com imagem no bucket feedback-attach
 Inbox admin, export Markdown sem e-mails, histórico de resolvidos); rendimento.tsx
 (level_snapshots + goals).
 
-Mobile/perf: listas paginadas; imagens lazy; menu "Mais" vira drawer <1024px.
+Mobile/perf: listas paginadas; imagens lazy.
+Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
+entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
+(components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros
+"fixados" + folha "Menu" em grade (MobileNav.tsx). O usuário personaliza fixados/ordem em
+NavCustomizeDialog (localStorage, nav-prefs.ts). Não recrie arrays de nav no AppShell.
 
 Banco (IAs externas): mudanças de estrutura são feitas via SQL, entregue pronto ao
 usuário. Toda tabela nova em public precisa GRANT + RLS + policies no mesmo script;
