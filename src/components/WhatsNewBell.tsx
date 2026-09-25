@@ -55,7 +55,9 @@ export function WhatsNewBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-xl border border-border bg-popover shadow-xl">
+        // No celular o sino fica no meio do header: `absolute right-0` empurrava o painel pra fora
+        // da tela. Aqui ele ocupa a largura toda (o header, por ter backdrop-blur, é o referencial do `fixed`).
+        <div className="fixed inset-x-3 top-full z-40 mt-2 overflow-hidden rounded-xl border border-border bg-popover shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:w-80">
           <div className="border-b border-border/60 px-4 py-2.5 text-sm font-semibold">
             Novidades
           </div>
