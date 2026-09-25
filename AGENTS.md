@@ -42,3 +42,8 @@ Inbox admin, export Markdown sem e-mails, histórico de resolvidos); rendimento.
 (level_snapshots + goals).
 
 Mobile/perf: listas paginadas; imagens lazy; menu "Mais" vira drawer <1024px.
+
+Banco (IAs externas): não há acesso direto ao banco fora do Lovable. Para mudar estrutura,
+crie um arquivo novo em supabase/migrations/AAAAMMDDHHMMSS_descricao.sql (CREATE TABLE +
+GRANT + RLS + policies) e peça ao Lovable "aplique a migração pendente"; nunca editar
+migrações antigas nem types.ts (gerado).
