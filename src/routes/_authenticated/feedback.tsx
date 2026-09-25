@@ -37,6 +37,25 @@ interface Ticket {
   status: string;
   created_at: string;
   updated_at: string;
+  attachment_path?: string | null;
+}
+
+function TicketImage({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    supabase.storage
+      .from("feedback-attachments")
+      .createSignedUrl(path, 3600)
+      .then(({ data }) => { if (alive) setUrl(data?.signedUrl ?? null); });
+    return () => { alive = false; };
+  }, [path]);
+  if (!url) return <div className="text-xs text-muted-foreground">Carregando imagem...</div>;
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="block">
+      <img src={url} alt="Imagem anexada" loading="lazy" className="max-h-80 w-auto rounded-lg border border-border" />
+    </a>
+  );
 }
 
 interface ThreadMessage {
@@ -86,6 +105,8 @@ function FeedbackPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [fileKey, setFileKey] = useState(0);
 
   const [kind, setKind] = useState<Kind>("suggestion");
   const [subject, setSubject] = useState("");
@@ -149,16 +170,31 @@ function FeedbackPage() {
     setSaving(true);
     setError(null);
     try {
+      let attachment_path: string | null = null;
+      if (file) {
+        if (!file.type.startsWith("image/")) throw new Error("Envie apenas imagens.");
+        if (file.size > 5 * 1024 * 1024) throw new Error("A imagem precisa ter até 5 MB.");
+        const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("feedback-attachments")
+          .upload(path, file, { contentType: file.type });
+        if (upErr) throw upErr;
+        attachment_path = path;
+      }
       const { error: insErr } = await db.from("feedback_tickets").insert({
         user_id: userId,
         char_name: activeCharName,
         kind,
         subject: subject.trim(),
         message: message.trim(),
+        attachment_path,
       });
       if (insErr) throw insErr;
       setSubject("");
       setMessage("");
+      setFile(null);
+      setFileKey((k) => k + 1);
       setSent(true);
       setTimeout(() => setSent(false), 4000);
       await load();
@@ -241,6 +277,7 @@ function FeedbackPage() {
                     {open && (
                       <div className="space-y-3 border-t border-border px-4 py-4">
                         <p className="whitespace-pre-wrap rounded-lg bg-muted/30 p-3 text-sm">{t.message}</p>
+                        {t.attachment_path && <TicketImage path={t.attachment_path} />}
 
                         {thread.map((m) => (
                           <div
@@ -410,6 +447,17 @@ function FeedbackPage() {
               placeholder="Conte o que aconteceu ou o que você gostaria de ver no app."
               className="mt-1 w-full resize-y rounded-lg border border-border bg-input px-3 py-2 text-sm"
               required
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Imagem (opcional, até 5 MB)</span>
+            <input
+              key={fileKey}
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-xs file:font-medium file:text-foreground"
             />
           </label>
 
