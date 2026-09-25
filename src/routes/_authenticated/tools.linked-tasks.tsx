@@ -97,36 +97,38 @@ function LinkedTasksPage() {
   const roomDone = (room: LinkedTaskRoom) => roomKeys(room).filter((k) => done.has(k)).length;
   const selectedRoom = roomId === "" ? null : rooms.find((r) => r.id === roomId) ?? null;
 
-  const [bulkBusy, setBulkBusy] = useState(false);
-  const toggleRoom = async (room: LinkedTaskRoom) => {
-    if (!charId || bulkBusy) return;
-    const keys = roomKeys(room);
+  const toggleMany = async (keys: string[], label: string) => {
+    if (!charId || bulkBusy || keys.length === 0) return;
     const allDone = keys.every((k) => done.has(k));
+    const toAdd = keys.filter((k) => !done.has(k));
     setBulkBusy(true);
     setDone((prev) => {
       const n = new Set(prev);
       if (allDone) keys.forEach((k) => n.delete(k));
-      else keys.forEach((k) => n.add(k));
+      else toAdd.forEach((k) => n.add(k));
       return n;
     });
     const { error } = allDone
       ? await db.from("linked_task_progress").delete().eq("character_id", charId).in("task_key", keys)
-      : await db.from("linked_task_progress").insert(
-          keys.filter((k) => !done.has(k)).map((task_key) => ({ character_id: charId, task_key })),
-        );
+      : await db
+          .from("linked_task_progress")
+          .insert(toAdd.map((task_key) => ({ character_id: charId, task_key })));
     setBulkBusy(false);
     if (error) {
       toast.error("Não consegui salvar", { description: error.message });
       setDone((prev) => {
         const n = new Set(prev);
         if (allDone) keys.forEach((k) => n.add(k));
-        else keys.forEach((k) => n.delete(k));
+        else toAdd.forEach((k) => n.delete(k));
         return n;
       });
     } else {
-      toast.success(allDone ? `Sala "${room.name}" desmarcada` : `Sala "${room.name}" concluída`);
+      toast.success(allDone ? `${label} desmarcada` : `${label} concluída`);
     }
   };
+
+  const toggleRoom = (room: LinkedTaskRoom) => toggleMany(roomKeys(room), `Sala "${room.name}"`);
+  const toggleAll = () => toggleMany(allKeys, "Todas as tasks");
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
