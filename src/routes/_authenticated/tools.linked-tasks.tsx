@@ -93,6 +93,41 @@ function LinkedTasksPage() {
   const totalTasks = allKeys.length;
   const doneCount = allKeys.filter((k) => done.has(k)).length;
 
+  const roomKeys = (room: LinkedTaskRoom) => room.tasks.map((t) => `${room.id}-${t.id}`);
+  const roomDone = (room: LinkedTaskRoom) => roomKeys(room).filter((k) => done.has(k)).length;
+  const selectedRoom = roomId === "" ? null : rooms.find((r) => r.id === roomId) ?? null;
+
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const toggleRoom = async (room: LinkedTaskRoom) => {
+    if (!charId || bulkBusy) return;
+    const keys = roomKeys(room);
+    const allDone = keys.every((k) => done.has(k));
+    setBulkBusy(true);
+    setDone((prev) => {
+      const n = new Set(prev);
+      if (allDone) keys.forEach((k) => n.delete(k));
+      else keys.forEach((k) => n.add(k));
+      return n;
+    });
+    const { error } = allDone
+      ? await db.from("linked_task_progress").delete().eq("character_id", charId).in("task_key", keys)
+      : await db.from("linked_task_progress").insert(
+          keys.filter((k) => !done.has(k)).map((task_key) => ({ character_id: charId, task_key })),
+        );
+    setBulkBusy(false);
+    if (error) {
+      toast.error("Não consegui salvar", { description: error.message });
+      setDone((prev) => {
+        const n = new Set(prev);
+        if (allDone) keys.forEach((k) => n.add(k));
+        else keys.forEach((k) => n.delete(k));
+        return n;
+      });
+    } else {
+      toast.success(allDone ? `Sala "${room.name}" desmarcada` : `Sala "${room.name}" concluída`);
+    }
+  };
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const out: { room: LinkedTaskRoom; task: LinkedTaskEntry }[] = [];
@@ -169,29 +204,46 @@ function LinkedTasksPage() {
           >
             Todas as salas
           </button>
-          {rooms.map((room) => (
-            <button
-              key={room.id}
-              type="button"
-              onClick={() => setRoomId(roomId === room.id ? "" : room.id)}
-              className={
-                "inline-flex items-center gap-2 rounded-lg border py-1 pl-1 pr-3 text-sm font-medium transition-colors " +
-                (roomId === room.id
-                  ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
-                  : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
-              }
-            >
-              <img
-                src={room.image}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="h-8 w-8 flex-none"
-                style={{ objectFit: "contain", imageRendering: "pixelated" }}
-              />
-              {room.name}
-            </button>
-          ))}
+          {rooms.map((room) => {
+            const total = room.tasks.length;
+            const doneN = charId ? roomDone(room) : 0;
+            const full = charId && doneN === total && total > 0;
+            return (
+              <button
+                key={room.id}
+                type="button"
+                onClick={() => setRoomId(roomId === room.id ? "" : room.id)}
+                className={
+                  "inline-flex items-center gap-2 rounded-lg border py-1 pl-1 pr-3 text-sm font-medium transition-colors " +
+                  (roomId === room.id
+                    ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                    : full
+                      ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-400"
+                      : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+                }
+              >
+                <img
+                  src={room.image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-8 w-8 flex-none"
+                  style={{ objectFit: "contain", imageRendering: "pixelated" }}
+                />
+                {room.name}
+                {charId && (
+                  <span
+                    className={
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-semibold " +
+                      (full ? "bg-emerald-500/20 text-emerald-400" : "bg-accent text-muted-foreground")
+                    }
+                  >
+                    {doneN}/{total}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
         <div className="relative max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -203,6 +255,50 @@ function LinkedTasksPage() {
           />
         </div>
       </div>
+
+      {selectedRoom && charId && (() => {
+        const keys = roomKeys(selectedRoom);
+        const doneN = keys.filter((k) => done.has(k)).length;
+        const total = keys.length;
+        const pct = total ? Math.round((doneN / total) * 100) : 0;
+        const full = doneN === total && total > 0;
+        return (
+          <div className="card-surface mb-6 p-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="font-medium">
+                Sala <span className="text-rubi-gold">{selectedRoom.name}</span>
+              </span>
+              <span className="text-muted-foreground">
+                <strong className="text-foreground">{doneN}</strong> / {total} · {pct}%
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
+              <div
+                className="h-full bg-emerald-500 transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={() => toggleRoom(selectedRoom)}
+              className={
+                "mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 " +
+                (full
+                  ? "border-border/60 text-muted-foreground hover:border-rubi-danger/50 hover:text-rubi-danger"
+                  : "border-emerald-500/60 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20")
+              }
+            >
+              <Check className="h-4 w-4" />
+              {bulkBusy
+                ? "Salvando…"
+                : full
+                  ? "Desmarcar sala toda"
+                  : "Marcar sala toda como concluída"}
+            </button>
+          </div>
+        );
+      })()}
 
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
