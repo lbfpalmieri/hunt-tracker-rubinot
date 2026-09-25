@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { errorMessage } from "@/lib/errors";
 import { fmtDate } from "@/lib/format";
-import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2 } from "lucide-react";
+import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/feedback")({
   head: () => ({
