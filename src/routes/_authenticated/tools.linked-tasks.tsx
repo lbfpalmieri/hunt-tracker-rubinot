@@ -204,29 +204,46 @@ function LinkedTasksPage() {
           >
             Todas as salas
           </button>
-          {rooms.map((room) => (
-            <button
-              key={room.id}
-              type="button"
-              onClick={() => setRoomId(roomId === room.id ? "" : room.id)}
-              className={
-                "inline-flex items-center gap-2 rounded-lg border py-1 pl-1 pr-3 text-sm font-medium transition-colors " +
-                (roomId === room.id
-                  ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
-                  : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
-              }
-            >
-              <img
-                src={room.image}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="h-8 w-8 flex-none"
-                style={{ objectFit: "contain", imageRendering: "pixelated" }}
-              />
-              {room.name}
-            </button>
-          ))}
+          {rooms.map((room) => {
+            const total = room.tasks.length;
+            const doneN = charId ? roomDone(room) : 0;
+            const full = charId && doneN === total && total > 0;
+            return (
+              <button
+                key={room.id}
+                type="button"
+                onClick={() => setRoomId(roomId === room.id ? "" : room.id)}
+                className={
+                  "inline-flex items-center gap-2 rounded-lg border py-1 pl-1 pr-3 text-sm font-medium transition-colors " +
+                  (roomId === room.id
+                    ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                    : full
+                      ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-400"
+                      : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
+                }
+              >
+                <img
+                  src={room.image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-8 w-8 flex-none"
+                  style={{ objectFit: "contain", imageRendering: "pixelated" }}
+                />
+                {room.name}
+                {charId && (
+                  <span
+                    className={
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-semibold " +
+                      (full ? "bg-emerald-500/20 text-emerald-400" : "bg-accent text-muted-foreground")
+                    }
+                  >
+                    {doneN}/{total}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
         <div className="relative max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
