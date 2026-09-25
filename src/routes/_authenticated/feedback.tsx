@@ -4,7 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { errorMessage } from "@/lib/errors";
 import { fmtDate } from "@/lib/format";
-import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download } from "lucide-react";
+import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download, History, ChevronDown } from "lucide-react";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/feedback")({
   head: () => ({
@@ -29,7 +30,7 @@ type Status = "novo" | "em_analise" | "respondido" | "resolvido";
 interface Ticket {
   id: string;
   user_id: string;
-  user_email: string | null;
+  char_name: string | null;
   kind: string;
   subject: string;
   message: string;
@@ -43,6 +44,7 @@ interface ThreadMessage {
   ticket_id: string;
   author_id: string;
   is_admin: boolean;
+  char_name: string | null;
   body: string;
   created_at: string;
 }
@@ -73,7 +75,8 @@ const db = supabase as unknown as {
 
 function FeedbackPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const activeCharName = useStore((s) => s.characters.find((c) => c.id === s.activeCharacterId)?.name ?? null);
+  const [showHistory, setShowHistory] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +100,6 @@ function FeedbackPage() {
       const { data: auth } = await db.auth.getUser();
       const uid = auth.user?.id ?? null;
       setUserId(uid);
-      setUserEmail(auth.user?.email ?? null);
       if (!uid) return;
 
       const [roles, ticketRows] = await Promise.all([
@@ -149,7 +151,7 @@ function FeedbackPage() {
     try {
       const { error: insErr } = await db.from("feedback_tickets").insert({
         user_id: userId,
-        user_email: userEmail,
+        char_name: activeCharName,
         kind,
         subject: subject.trim(),
         message: message.trim(),
@@ -176,6 +178,7 @@ function FeedbackPage() {
         ticket_id: ticket.id,
         author_id: userId,
         is_admin: isAdmin && ticket.user_id !== userId,
+        char_name: activeCharName,
         body: reply.trim(),
       });
       if (msgErr) throw msgErr;
@@ -202,6 +205,103 @@ function FeedbackPage() {
     }
   };
 
+
+  const activeList = visible.filter((t) => t.status !== "resolvido");
+  const historyList = visible.filter((t) => t.status === "resolvido");
+  const renderTicket = (t: Ticket) => {
+                const thread = messages.filter((m) => m.ticket_id === t.id);
+                const open = openId === t.id;
+                return (
+                  <li key={t.id} className="card-surface overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setOpenId(open ? null : t.id);
+                        setReply("");
+                      }}
+                      className="flex w-full items-start gap-3 p-4 text-left hover:bg-accent/50"
+                    >
+                      {t.kind === "bug" ? (
+                        <Bug className="mt-0.5 h-4 w-4 flex-none text-rubi-danger" />
+                      ) : (
+                        <Lightbulb className="mt-0.5 h-4 w-4 flex-none text-rubi-gold" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold">{t.subject}</span>
+                          <StatusBadge status={t.status} />
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {fmtDate(t.created_at)}
+                          {t.char_name ? ` · ${t.char_name}` : ""}
+                          {thread.length > 0 ? ` · ${thread.length} resposta(s)` : ""}
+                        </div>
+                      </div>
+                    </button>
+
+                    {open && (
+                      <div className="space-y-3 border-t border-border px-4 py-4">
+                        <p className="whitespace-pre-wrap rounded-lg bg-muted/30 p-3 text-sm">{t.message}</p>
+
+                        {thread.map((m) => (
+                          <div
+                            key={m.id}
+                            className={
+                              "whitespace-pre-wrap rounded-lg p-3 text-sm " +
+                              (m.is_admin
+                                ? "border border-rubi-gold/40 bg-rubi-gold/10"
+                                : "bg-muted/20")
+                            }
+                          >
+                            <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              {m.is_admin ? "Resposta da equipe" : m.char_name ?? (m.author_id === userId ? "Você" : "Usuário")} · {fmtDate(m.created_at)}
+                            </div>
+                            {m.body}
+                          </div>
+                        ))}
+
+                        {isAdmin && (
+                          <div className="flex flex-wrap gap-2">
+                            {STATUS_ORDER.map((s) => (
+                              <button
+                                key={s}
+                                onClick={() => changeStatus(t, s)}
+                                className={
+                                  "min-h-9 rounded-lg border px-2.5 py-1 text-xs font-medium " +
+                                  (t.status === s
+                                    ? "border-rubi-blue bg-rubi-blue/10 text-rubi-blue"
+                                    : "border-border text-muted-foreground hover:bg-accent")
+                                }
+                              >
+                                {STATUS_META[s].label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <textarea
+                            value={reply}
+                            onChange={(e) => setReply(e.target.value)}
+                            rows={3}
+                            maxLength={4000}
+                            placeholder={isAdmin ? "Responder..." : "Adicionar mais informações..."}
+                            className="w-full resize-y rounded-lg border border-border bg-input px-3 py-2 text-sm"
+                          />
+                          <button
+                            onClick={() => void sendReply(t)}
+                            disabled={sendingReply || !reply.trim()}
+                            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-rubi-blue px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                          >
+                            <Send className="h-4 w-4" />
+                            Enviar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+  };
+
   // Exporta tudo em texto estruturado para colar numa IA organizar as melhorias.
   const exportAll = () => {
     const lines: string[] = [
@@ -214,7 +314,7 @@ function FeedbackPage() {
       const meta = STATUS_META[(t.status as Status) in STATUS_META ? (t.status as Status) : "novo"];
       lines.push(`## [${t.kind === "bug" ? "BUG" : "SUGESTÃO"}] ${t.subject}`);
       lines.push(`- Status: ${meta.label}`);
-      lines.push(`- Autor: ${t.user_email ?? "desconhecido"}`);
+      lines.push(`- Personagem: ${t.char_name ?? "sem personagem"}`);
       lines.push(`- Criado: ${fmtDate(t.created_at)} · Atualizado: ${fmtDate(t.updated_at)}`);
       lines.push("");
       lines.push(t.message.trim());
@@ -223,7 +323,7 @@ function FeedbackPage() {
         .sort((a, b) => a.created_at.localeCompare(b.created_at));
       for (const m of thread) {
         lines.push("");
-        lines.push(`> **${m.is_admin ? "Equipe" : "Usuário"}** (${fmtDate(m.created_at)}): ${m.body.trim()}`);
+        lines.push(`> **${m.is_admin ? "Equipe" : m.char_name ?? "Usuário"}** (${fmtDate(m.created_at)}): ${m.body.trim()}`);
       }
       lines.push("");
       lines.push("---");
@@ -373,101 +473,26 @@ function FeedbackPage() {
               Nenhuma mensagem por aqui ainda.
             </div>
           ) : (
+            <>
             <ul className="space-y-2">
-              {visible.map((t) => {
-                const thread = messages.filter((m) => m.ticket_id === t.id);
-                const open = openId === t.id;
-                return (
-                  <li key={t.id} className="card-surface overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setOpenId(open ? null : t.id);
-                        setReply("");
-                      }}
-                      className="flex w-full items-start gap-3 p-4 text-left hover:bg-accent/50"
-                    >
-                      {t.kind === "bug" ? (
-                        <Bug className="mt-0.5 h-4 w-4 flex-none text-rubi-danger" />
-                      ) : (
-                        <Lightbulb className="mt-0.5 h-4 w-4 flex-none text-rubi-gold" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold">{t.subject}</span>
-                          <StatusBadge status={t.status} />
-                        </div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">
-                          {fmtDate(t.created_at)}
-                          {isAdmin && t.user_email ? ` · ${t.user_email}` : ""}
-                          {thread.length > 0 ? ` · ${thread.length} resposta(s)` : ""}
-                        </div>
-                      </div>
-                    </button>
-
-                    {open && (
-                      <div className="space-y-3 border-t border-border px-4 py-4">
-                        <p className="whitespace-pre-wrap rounded-lg bg-muted/30 p-3 text-sm">{t.message}</p>
-
-                        {thread.map((m) => (
-                          <div
-                            key={m.id}
-                            className={
-                              "whitespace-pre-wrap rounded-lg p-3 text-sm " +
-                              (m.is_admin
-                                ? "border border-rubi-gold/40 bg-rubi-gold/10"
-                                : "bg-muted/20")
-                            }
-                          >
-                            <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                              {m.is_admin ? "Resposta da equipe" : "Você"} · {fmtDate(m.created_at)}
-                            </div>
-                            {m.body}
-                          </div>
-                        ))}
-
-                        {isAdmin && (
-                          <div className="flex flex-wrap gap-2">
-                            {STATUS_ORDER.map((s) => (
-                              <button
-                                key={s}
-                                onClick={() => changeStatus(t, s)}
-                                className={
-                                  "min-h-9 rounded-lg border px-2.5 py-1 text-xs font-medium " +
-                                  (t.status === s
-                                    ? "border-rubi-blue bg-rubi-blue/10 text-rubi-blue"
-                                    : "border-border text-muted-foreground hover:bg-accent")
-                                }
-                              >
-                                {STATUS_META[s].label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          <textarea
-                            value={reply}
-                            onChange={(e) => setReply(e.target.value)}
-                            rows={3}
-                            maxLength={4000}
-                            placeholder={isAdmin ? "Responder..." : "Adicionar mais informações..."}
-                            className="w-full resize-y rounded-lg border border-border bg-input px-3 py-2 text-sm"
-                          />
-                          <button
-                            onClick={() => void sendReply(t)}
-                            disabled={sendingReply || !reply.trim()}
-                            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-rubi-blue px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-                          >
-                            <Send className="h-4 w-4" />
-                            Enviar
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
+              {activeList.length === 0 && (
+                <li className="card-surface p-6 text-center text-sm text-muted-foreground">Nenhum ticket em aberto.</li>
+              )}
+              {activeList.map(renderTicket)}
             </ul>
+            {historyList.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <button
+                  onClick={() => setShowHistory((v) => !v)}
+                  className="inline-flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
+                >
+                  <span className="inline-flex items-center gap-2"><History className="h-4 w-4" /> Histórico de resolvidos ({historyList.length})</span>
+                  <ChevronDown className={"h-4 w-4 transition-transform " + (showHistory ? "rotate-180" : "")} />
+                </button>
+                {showHistory && <ul className="space-y-2 opacity-90">{historyList.map(renderTicket)}</ul>}
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>
