@@ -256,6 +256,50 @@ function LinkedTasksPage() {
         </div>
       </div>
 
+      {selectedRoom && charId && (() => {
+        const keys = roomKeys(selectedRoom);
+        const doneN = keys.filter((k) => done.has(k)).length;
+        const total = keys.length;
+        const pct = total ? Math.round((doneN / total) * 100) : 0;
+        const full = doneN === total && total > 0;
+        return (
+          <div className="card-surface mb-6 p-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="font-medium">
+                Sala <span className="text-rubi-gold">{selectedRoom.name}</span>
+              </span>
+              <span className="text-muted-foreground">
+                <strong className="text-foreground">{doneN}</strong> / {total} · {pct}%
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
+              <div
+                className="h-full bg-emerald-500 transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={() => toggleRoom(selectedRoom)}
+              className={
+                "mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 " +
+                (full
+                  ? "border-border/60 text-muted-foreground hover:border-rubi-danger/50 hover:text-rubi-danger"
+                  : "border-emerald-500/60 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20")
+              }
+            >
+              <Check className="h-4 w-4" />
+              {bulkBusy
+                ? "Salvando…"
+                : full
+                  ? "Desmarcar sala toda"
+                  : "Marcar sala toda como concluída"}
+            </button>
+          </div>
+        );
+      })()}
+
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
