@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { errorMessage } from "@/lib/errors";
 import { fmtDate } from "@/lib/format";
 import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download, History, ChevronDown } from "lucide-react";
-import { useStore } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/feedback")({
   head: () => ({
@@ -75,7 +75,7 @@ const db = supabase as unknown as {
 
 function FeedbackPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const activeCharName = useStore((s) => s.characters.find((c) => c.id === s.activeCharacterId)?.name ?? null);
+  const activeCharName = useAppStore((s) => s.characters.find((c) => c.id === s.activeCharacterId)?.name ?? null);
   const [showHistory, setShowHistory] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
