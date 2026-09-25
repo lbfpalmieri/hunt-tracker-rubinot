@@ -173,6 +173,7 @@ export type Database = {
       }
       feedback_tickets: {
         Row: {
+          attachment_path: string | null
           char_name: string | null
           created_at: string
           id: string
@@ -185,6 +186,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachment_path?: string | null
           char_name?: string | null
           created_at?: string
           id?: string
@@ -197,6 +199,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachment_path?: string | null
           char_name?: string | null
           created_at?: string
           id?: string
