@@ -98,7 +98,7 @@ function LinkedTasksPage() {
   const selectedRoom = roomId === "" ? null : rooms.find((r) => r.id === roomId) ?? null;
 
   const [bulkBusy, setBulkBusy] = useState(false);
-  const toggleMany = async (keys: string[], label: string) => {
+  const toggleMany = async (keys: string[], label: string, plural = false) => {
     if (!charId || bulkBusy || keys.length === 0) return;
     const allDone = keys.every((k) => done.has(k));
     const toAdd = keys.filter((k) => !done.has(k));
@@ -124,12 +124,12 @@ function LinkedTasksPage() {
         return n;
       });
     } else {
-      toast.success(allDone ? `${label} desmarcada` : `${label} concluída`);
+      toast.success(allDone ? `${label} desmarcada${plural ? "s" : ""}` : `${label} concluída${plural ? "s" : ""}`);
     }
   };
 
   const toggleRoom = (room: LinkedTaskRoom) => toggleMany(roomKeys(room), `Sala "${room.name}"`);
-  const toggleAll = () => toggleMany(allKeys, "Todas as tasks");
+  const toggleAll = () => toggleMany(allKeys, "Todas as tasks", true);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
