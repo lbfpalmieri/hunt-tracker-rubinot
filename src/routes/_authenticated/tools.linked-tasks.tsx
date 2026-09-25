@@ -186,9 +186,29 @@ function LinkedTasksPage() {
           <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
             <div className="h-full bg-emerald-500 transition-all" style={{ width: `${(doneCount / totalTasks) * 100}%` }} />
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Toque no ✓ de cada task para marcar como concluída.
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={toggleAll}
+              className={
+                "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 " +
+                (doneCount === totalTasks
+                  ? "border-border/60 text-muted-foreground hover:border-rubi-danger/50 hover:text-rubi-danger"
+                  : "border-emerald-500/60 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20")
+              }
+            >
+              <Check className="h-4 w-4" />
+              {bulkBusy
+                ? "Salvando…"
+                : doneCount === totalTasks
+                  ? "Desmarcar todas as tasks"
+                  : "Marcar todas as tasks como concluídas"}
+            </button>
+            <p className="text-[11px] text-muted-foreground">
+              Ou toque no ✓ de cada task para marcar uma por uma.
+            </p>
+          </div>
         </div>
       )}
 
