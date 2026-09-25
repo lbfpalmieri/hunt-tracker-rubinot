@@ -1,8 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { Link2, Search, AlertTriangle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link2, Search, AlertTriangle, Check } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAppStore } from "@/lib/store";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { LinkedTaskDialog } from "@/components/LinkedTaskDialog";
@@ -48,6 +54,45 @@ function LinkedTasksPage() {
 
   const rooms = useMemo(() => data?.rooms ?? [], [data]);
 
+  const charId = useAppStore((s) => s.activeCharacterId);
+  const charName = useAppStore((s) => s.characters.find((c) => c.id === s.activeCharacterId)?.name ?? "");
+  const [done, setDone] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setDone(new Set());
+    if (!charId) return;
+    let alive = true;
+    db.from("linked_task_progress")
+      .select("task_key")
+      .eq("character_id", charId)
+      .then(({ data: rows }: { data: { task_key: string }[] | null }) => {
+        if (alive) setDone(new Set((rows ?? []).map((r) => r.task_key)));
+      });
+    return () => { alive = false; };
+  }, [charId]);
+  const toggle = async (key: string) => {
+    if (!charId) return;
+    const was = done.has(key);
+    setDone((prev) => {
+      const n = new Set(prev);
+      if (was) n.delete(key); else n.add(key);
+      return n;
+    });
+    const { error } = was
+      ? await db.from("linked_task_progress").delete().eq("character_id", charId).eq("task_key", key)
+      : await db.from("linked_task_progress").insert({ character_id: charId, task_key: key });
+    if (error) {
+      toast.error("Não consegui salvar", { description: error.message });
+      setDone((prev) => {
+        const n = new Set(prev);
+        if (was) n.add(key); else n.delete(key);
+        return n;
+      });
+    }
+  };
+  const allKeys = useMemo(() => rooms.flatMap((r) => r.tasks.map((t) => `${r.id}-${t.id}`)), [rooms]);
+  const totalTasks = allKeys.length;
+  const doneCount = allKeys.filter((k) => done.has(k)).length;
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const out: { room: LinkedTaskRoom; task: LinkedTaskEntry }[] = [];
@@ -87,6 +132,26 @@ function LinkedTasksPage() {
               ? `Não consegui atualizar da wiki agora, mostrando o último dado salvo. (${data.error})`
               : `Não consegui buscar as linked tasks agora. (${data.error})`}
           </span>
+        </div>
+      )}
+
+      {charId && totalTasks > 0 && (
+        <div className="card-surface mb-4 p-4">
+          <div className="mb-2 flex items-center justify-between text-sm">
+            <span className="font-medium">
+              Progresso de <span className="text-rubi-gold">{charName}</span>
+            </span>
+            <span className="text-muted-foreground">
+              <strong className="text-foreground">{doneCount}</strong> / {totalTasks} ·{" "}
+              {Math.round((doneCount / totalTasks) * 100)}%
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
+            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${(doneCount / totalTasks) * 100}%` }} />
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Toque no ✓ de cada task para marcar como concluída.
+          </p>
         </div>
       )}
 
@@ -153,19 +218,43 @@ function LinkedTasksPage() {
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map(({ room, task }) => (
-            <button
-              key={`${room.id}-${task.id}`}
-              type="button"
+          {visible.map(({ room, task }) => {
+            const key = `${room.id}-${task.id}`;
+            const isDone = done.has(key);
+            return (
+            <div
+              key={key}
+              role="button"
+              tabIndex={0}
               onClick={() => setActive({ room, task })}
-              className="card-surface flex items-start gap-3 p-4 text-left transition-colors hover:border-rubi-blue/50"
+              onKeyDown={(e) => { if (e.key === "Enter") setActive({ room, task }); }}
+              className={
+                "card-surface relative flex cursor-pointer items-start gap-3 p-4 pr-12 text-left transition-colors hover:border-rubi-blue/50 " +
+                (isDone ? "border-emerald-500/50 bg-emerald-500/5" : "")
+              }
             >
+              {charId && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggle(key); }}
+                  title={isDone ? "Desmarcar conclusão" : "Marcar como concluída"}
+                  aria-label={isDone ? "Desmarcar conclusão" : "Marcar como concluída"}
+                  className={
+                    "absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border transition-colors " +
+                    (isDone
+                      ? "border-emerald-500 bg-emerald-500 text-background"
+                      : "border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-400")
+                  }
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+              )}
               <img
                 src={task.image}
                 alt=""
                 loading="lazy"
                 decoding="async"
-                className="h-12 w-12 flex-none"
+                className={"h-12 w-12 flex-none " + (isDone ? "opacity-60" : "")}
                 style={{ objectFit: "contain", imageRendering: "pixelated" }}
               />
               <div className="min-w-0">
@@ -182,8 +271,9 @@ function LinkedTasksPage() {
                   <div className="mt-1 text-xs text-rubi-gold">{task.rewards[0]}</div>
                 )}
               </div>
-            </button>
-          ))}
+            </div>
+            );
+          })}
         </div>
       )}
 
