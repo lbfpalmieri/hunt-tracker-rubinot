@@ -98,35 +98,38 @@ function LinkedTasksPage() {
   const selectedRoom = roomId === "" ? null : rooms.find((r) => r.id === roomId) ?? null;
 
   const [bulkBusy, setBulkBusy] = useState(false);
-  const toggleRoom = async (room: LinkedTaskRoom) => {
-    if (!charId || bulkBusy) return;
-    const keys = roomKeys(room);
+  const toggleMany = async (keys: string[], label: string, plural = false) => {
+    if (!charId || bulkBusy || keys.length === 0) return;
     const allDone = keys.every((k) => done.has(k));
+    const toAdd = keys.filter((k) => !done.has(k));
     setBulkBusy(true);
     setDone((prev) => {
       const n = new Set(prev);
       if (allDone) keys.forEach((k) => n.delete(k));
-      else keys.forEach((k) => n.add(k));
+      else toAdd.forEach((k) => n.add(k));
       return n;
     });
     const { error } = allDone
       ? await db.from("linked_task_progress").delete().eq("character_id", charId).in("task_key", keys)
-      : await db.from("linked_task_progress").insert(
-          keys.filter((k) => !done.has(k)).map((task_key) => ({ character_id: charId, task_key })),
-        );
+      : await db
+          .from("linked_task_progress")
+          .insert(toAdd.map((task_key) => ({ character_id: charId, task_key })));
     setBulkBusy(false);
     if (error) {
       toast.error("Não consegui salvar", { description: error.message });
       setDone((prev) => {
         const n = new Set(prev);
         if (allDone) keys.forEach((k) => n.add(k));
-        else keys.forEach((k) => n.delete(k));
+        else toAdd.forEach((k) => n.delete(k));
         return n;
       });
     } else {
-      toast.success(allDone ? `Sala "${room.name}" desmarcada` : `Sala "${room.name}" concluída`);
+      toast.success(allDone ? `${label} desmarcada${plural ? "s" : ""}` : `${label} concluída${plural ? "s" : ""}`);
     }
   };
+
+  const toggleRoom = (room: LinkedTaskRoom) => toggleMany(roomKeys(room), `Sala "${room.name}"`);
+  const toggleAll = () => toggleMany(allKeys, "Todas as tasks", true);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -184,9 +187,29 @@ function LinkedTasksPage() {
           <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
             <div className="h-full bg-emerald-500 transition-all" style={{ width: `${(doneCount / totalTasks) * 100}%` }} />
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Toque no ✓ de cada task para marcar como concluída.
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={toggleAll}
+              className={
+                "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 " +
+                (doneCount === totalTasks
+                  ? "border-border/60 text-muted-foreground hover:border-rubi-danger/50 hover:text-rubi-danger"
+                  : "border-emerald-500/60 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20")
+              }
+            >
+              <Check className="h-4 w-4" />
+              {bulkBusy
+                ? "Salvando…"
+                : doneCount === totalTasks
+                  ? "Desmarcar todas as tasks"
+                  : "Marcar todas as tasks como concluídas"}
+            </button>
+            <p className="text-[11px] text-muted-foreground">
+              Ou toque no ✓ de cada task para marcar uma por uma.
+            </p>
+          </div>
         </div>
       )}
 
