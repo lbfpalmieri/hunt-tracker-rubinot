@@ -17,6 +17,34 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "linked-tasks-progress",
+    date: "2026-09-25",
+    title: "Progresso nas Linked Tasks",
+    description:
+      "Marque cada task como concluída com o ✓. Barra de progresso geral e por sala, contador em cada sala e botões para marcar a sala toda ou todas as tasks de uma vez.",
+  },
+  {
+    id: "feedback-image",
+    date: "2026-09-25",
+    title: "Imagem no report de bug",
+    description:
+      "Ao enviar sugestão ou bug, agora dá para anexar uma imagem (até 5MB). Só você e o admin conseguem vê-la. Tickets resolvidos ficam num histórico.",
+  },
+  {
+    id: "imbuements-multi",
+    date: "2026-09-25",
+    title: "Imbuements: vários no mesmo item",
+    description:
+      "Corrigido: um item aceita vários imbuements de tipos diferentes ao mesmo tempo. O tempo restante agora é informado em horas e minutos, igual aparece no jogo.",
+  },
+  {
+    id: "session-per-hour-fix",
+    date: "2026-09-24",
+    title: "XP/h da sessão mais preciso",
+    description:
+      "Raw XP/h, Dano/h e Cura/h da sessão agora são calculados pela duração real da própria sessão, batendo com o que você fez de verdade.",
+  },
+  {
     id: "linked-tasks",
     date: "2026-09-23",
     title: "Linked Tasks",
