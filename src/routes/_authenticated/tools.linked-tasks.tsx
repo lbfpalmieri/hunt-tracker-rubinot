@@ -93,6 +93,41 @@ function LinkedTasksPage() {
   const totalTasks = allKeys.length;
   const doneCount = allKeys.filter((k) => done.has(k)).length;
 
+  const roomKeys = (room: LinkedTaskRoom) => room.tasks.map((t) => `${room.id}-${t.id}`);
+  const roomDone = (room: LinkedTaskRoom) => roomKeys(room).filter((k) => done.has(k)).length;
+  const selectedRoom = roomId === "" ? null : rooms.find((r) => r.id === roomId) ?? null;
+
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const toggleRoom = async (room: LinkedTaskRoom) => {
+    if (!charId || bulkBusy) return;
+    const keys = roomKeys(room);
+    const allDone = keys.every((k) => done.has(k));
+    setBulkBusy(true);
+    setDone((prev) => {
+      const n = new Set(prev);
+      if (allDone) keys.forEach((k) => n.delete(k));
+      else keys.forEach((k) => n.add(k));
+      return n;
+    });
+    const { error } = allDone
+      ? await db.from("linked_task_progress").delete().eq("character_id", charId).in("task_key", keys)
+      : await db.from("linked_task_progress").insert(
+          keys.filter((k) => !done.has(k)).map((task_key) => ({ character_id: charId, task_key })),
+        );
+    setBulkBusy(false);
+    if (error) {
+      toast.error("Não consegui salvar", { description: error.message });
+      setDone((prev) => {
+        const n = new Set(prev);
+        if (allDone) keys.forEach((k) => n.add(k));
+        else keys.forEach((k) => n.delete(k));
+        return n;
+      });
+    } else {
+      toast.success(allDone ? `Sala "${room.name}" desmarcada` : `Sala "${room.name}" concluída`);
+    }
+  };
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const out: { room: LinkedTaskRoom; task: LinkedTaskEntry }[] = [];
