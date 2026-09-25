@@ -43,7 +43,6 @@ Inbox admin, export Markdown sem e-mails, histórico de resolvidos); rendimento.
 
 Mobile/perf: listas paginadas; imagens lazy; menu "Mais" vira drawer <1024px.
 
-Banco (IAs externas): não há acesso direto ao banco fora do Lovable. Para mudar estrutura,
-crie um arquivo novo em supabase/migrations/AAAAMMDDHHMMSS_descricao.sql (CREATE TABLE +
-GRANT + RLS + policies) e peça ao Lovable "aplique a migração pendente"; nunca editar
-migrações antigas nem types.ts (gerado).
+Banco (IAs externas): mudanças de estrutura são feitas via SQL, entregue pronto ao
+usuário. Toda tabela nova em public precisa GRANT + RLS + policies no mesmo script;
+queries sempre filtradas por user_id; roles NUNCA em profile/users.
