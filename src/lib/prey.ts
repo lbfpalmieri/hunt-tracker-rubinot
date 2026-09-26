@@ -10,7 +10,48 @@ export interface PreySlot {
   creature: string | null;
 }
 
-/** Percentual padrão de cada bônus no topo da barra de prey. */
+/**
+ * Regras do Prey System (TibiaWiki BR "Prey System" + TibiaWiki EN, conferido em 2026-09-26):
+ * - até 3 slots: Premium tem 2 liberados; o 3º é o "Permanent Prey Slot" comprado na Store;
+ * - 1 criatura por slot, 1 bônus por criatura, e a mesma criatura nunca aparece em 2 slots;
+ * - cada bônus tem 10 estrelas (steps): Dano 7–25% (de 2 em 2), Redução 12–30% (de 2 em 2),
+ *   XP e Loot 13–40% (de 3 em 3).
+ * Sessões salvas antes dessas regras podem ter a mesma criatura com 2 bônus — ficam como estão.
+ */
+export const PREY_MAX_SLOTS = 3;
+export const PREY_UNLOCKED_SLOTS = 2;
+export const PREY_MAX_STARS = 10;
+
+const PREY_STEP: Record<PreyBonus, { min: number; step: number }> = {
+  xp: { min: 13, step: 3 },
+  loot: { min: 13, step: 3 },
+  damage: { min: 7, step: 2 },
+  defense: { min: 12, step: 2 },
+};
+
+/** Percentual do bônus com N estrelas (1–10). */
+export function preyPctForStars(bonus: PreyBonus, stars: number): number {
+  const { min, step } = PREY_STEP[bonus];
+  const n = Math.max(1, Math.min(PREY_MAX_STARS, Math.round(stars)));
+  return min + (n - 1) * step;
+}
+
+/** Estrelas mais próximas de um percentual salvo (sessões antigas guardavam só o %). */
+export function preyStarsForPct(bonus: PreyBonus, pct: number | null | undefined): number {
+  if (pct == null) return PREY_MAX_STARS;
+  const { min, step } = PREY_STEP[bonus];
+  return Math.max(1, Math.min(PREY_MAX_STARS, Math.round((pct - min) / step) + 1));
+}
+
+/** Bandeiras dos bônus, as mesmas do jogo (arquivos da TibiaWiki BR, 44x92). */
+export const PREY_BONUS_IMAGE: Record<PreyBonus, string> = {
+  damage: "https://www.tibiawiki.com.br/images/3/3b/Prey_damage.png",
+  defense: "https://www.tibiawiki.com.br/images/b/be/Prey_reduction.png",
+  xp: "https://www.tibiawiki.com.br/images/7/7e/Prey_xp.png",
+  loot: "https://www.tibiawiki.com.br/images/b/bb/Improved_loot.png",
+};
+
+/** Percentual padrão (10 estrelas) de cada bônus. */
 export const DEFAULT_PREY_PCT: Record<PreyBonus, number> = {
   xp: 40,
   loot: 40,
@@ -19,10 +60,15 @@ export const DEFAULT_PREY_PCT: Record<PreyBonus, number> = {
 };
 
 export const PREY_BONUSES: { value: PreyBonus; label: string; hint: string; emoji: string }[] = [
-  { value: "xp", label: "XP Bonus", hint: "+40% XP", emoji: "✨" },
-  { value: "loot", label: "Improved Loot", hint: "+40% loot", emoji: "💰" },
-  { value: "damage", label: "Damage Boost", hint: "+25% dano", emoji: "⚔️" },
-  { value: "defense", label: "Damage Reduction", hint: "-30% dano recebido", emoji: "🛡️" },
+  { value: "xp", label: "Bonus XP", hint: "XP extra (13–40%)", emoji: "✨" },
+  { value: "loot", label: "Improved Loot", hint: "chance de loot dobrado (13–40%)", emoji: "💰" },
+  { value: "damage", label: "Damage Boost", hint: "dano extra (7–25%)", emoji: "⚔️" },
+  {
+    value: "defense",
+    label: "Damage Reduction",
+    hint: "menos dano recebido (12–30%)",
+    emoji: "🛡️",
+  },
 ];
 
 export function preyBonusLabel(b: string): string {
@@ -30,7 +76,11 @@ export function preyBonusLabel(b: string): string {
 }
 
 /** Short human label, e.g. "XP Bonus 40% (Ingol)". */
-export function preySlotLabel(slot: { bonus: string; pct?: number | null; creature?: string | null }): string {
+export function preySlotLabel(slot: {
+  bonus: string;
+  pct?: number | null;
+  creature?: string | null;
+}): string {
   const pct = slot.pct != null ? ` ${slot.pct}%` : "";
   const creature = slot.creature ? ` (${slot.creature})` : "";
   return `${preyBonusLabel(slot.bonus)}${pct}${creature}`;
@@ -58,7 +108,10 @@ export function preySlotsOf(prey: PreySlot[] | null | undefined, bonus: PreyBonu
 }
 
 /** Rótulo curto para marcar cards afetados por prey, ex. "Loot com Prey +40%". */
-export function preyMarkLabel(prey: PreySlot[] | null | undefined, bonus: PreyBonus): string | null {
+export function preyMarkLabel(
+  prey: PreySlot[] | null | undefined,
+  bonus: PreyBonus,
+): string | null {
   const slots = preySlotsOf(prey, bonus);
   if (!slots.length) return null;
   const names: Record<PreyBonus, string> = {
@@ -73,9 +126,14 @@ export function preyMarkLabel(prey: PreySlot[] | null | undefined, bonus: PreyBo
 }
 
 /** Tooltip detalhado: criaturas com prey daquele bônus. */
-export function preyMarkTitle(prey: PreySlot[] | null | undefined, bonus: PreyBonus): string | undefined {
+export function preyMarkTitle(
+  prey: PreySlot[] | null | undefined,
+  bonus: PreyBonus,
+): string | undefined {
   const slots = preySlotsOf(prey, bonus);
   if (!slots.length) return undefined;
-  const list = slots.map((s) => `${s.creature ?? "criatura"} (${s.pct ?? DEFAULT_PREY_PCT[bonus]}%)`).join(", ");
+  const list = slots
+    .map((s) => `${s.creature ?? "criatura"} (${s.pct ?? DEFAULT_PREY_PCT[bonus]}%)`)
+    .join(", ");
   return `Valor influenciado por Prey: ${list}. Sem a prey, o resultado seria menor.`;
 }

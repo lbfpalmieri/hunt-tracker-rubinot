@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "prey-slots",
+    date: "2026-09-26",
+    title: "Prey do jeito do jogo",
+    description:
+      "O seletor de Prey na Nova sessão e na sessão salva agora segue a janela Prey Creatures do jogo: 3 slots (o 3º é o slot comprado na Store), uma criatura por slot, um bônus por criatura, com as bandeiras do jogo e as estrelas que definem o percentual (Dano 7–25%, Redução 12–30%, XP e Loot 13–40%). Sessões antigas continuam como estavam.",
+  },
+  {
     id: "levels-in-period",
     date: "2026-09-26",
     title: "Níveis no período",

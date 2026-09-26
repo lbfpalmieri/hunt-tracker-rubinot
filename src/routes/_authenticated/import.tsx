@@ -971,7 +971,7 @@ function ImportPage() {
                     : !selectedHuntName
                       ? "Dê um nome à hunt."
                       : !preyReady
-                        ? "Revise os bônus de prey (use um número entre 0 e 100)."
+                        ? "Escolha o bônus de cada prey marcada."
                         : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
             )}

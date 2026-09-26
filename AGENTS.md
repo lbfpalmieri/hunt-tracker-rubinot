@@ -30,8 +30,9 @@ Regras permanentes:
 Cálculos: todo "/h" de sessão = total ÷ duração da própria sessão; nunca copiar o
 "/h" do Hunting Analyser do jogo (janela maior). Média da hunt = média das sessões
 (aggregateByHunt em compare.ts). Imbuements: keyOf = `${gearSlot}::${label}` — tipos
-diferentes coexistem no item; mesmo tipo = renovação. Prey (prey.ts): máx 3 slots;
-XP/Loot 40%, Dano 25%, Defesa 30%.
+diferentes coexistem no item; mesmo tipo = renovação. Prey (prey.ts): 3 slots (2 liberados +
+1 "Permanent Prey Slot" da Store), 1 criatura por slot, 1 bônus por criatura, 10 estrelas:
+Dano 7–25% (+2), Redução 12–30% (+2), XP/Loot 13–40% (+3). Seletor = PreyPicker (layout da janela do jogo).
 
 Telas: sessions.tsx (20/pág) e sessions.$id.tsx; import.tsx (colar export do Hunting
 Analyser, parser.ts, sem OCR); imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx

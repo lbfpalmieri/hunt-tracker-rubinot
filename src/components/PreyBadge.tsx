@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { preyBonusLabel, preySlotLabel, type PreySlot } from "@/lib/prey";
+import { PREY_BONUS_IMAGE, preyBonusLabel, preySlotLabel, type PreySlot } from "@/lib/prey";
 import { GameIcon } from "@/components/GameIcon";
 
 /** Marker shown on sessions played with active Prey Creature bonuses. */
@@ -27,6 +27,15 @@ export function PreyBadge({
               <GameIcon name={slot.creature} size={14} className="flex-none" />
             ) : (
               <Sparkles className="h-3 w-3 flex-none" />
+            )}
+            {slot.bonus in PREY_BONUS_IMAGE && (
+              <img
+                src={PREY_BONUS_IMAGE[slot.bonus]}
+                alt=""
+                width={8}
+                height={17}
+                className="h-[17px] w-2 flex-none [image-rendering:pixelated]"
+              />
             )}
             {preyBonusLabel(slot.bonus)}
             {slot.pct != null ? ` ${slot.pct}%` : ""}
