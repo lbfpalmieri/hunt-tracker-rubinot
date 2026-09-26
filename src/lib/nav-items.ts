@@ -4,6 +4,7 @@ import {
   BookmarkCheck,
   Castle,
   Coins,
+  Crown,
   Gauge,
   Gem,
   Info,
@@ -24,10 +25,11 @@ import {
  * celular). Página nova entra AQUI — e só aqui. O usuário decide quais ficam fixados no topo
  * (ver nav-prefs.ts); tudo que não estiver fixado aparece agrupado.
  */
-export type NavGroupId = "cacada" | "oficina" | "heroi" | "taverna" | "biblioteca";
+export type NavGroupId = "cacada" | "covil" | "oficina" | "heroi" | "taverna" | "biblioteca";
 
 export const NAV_GROUPS: { id: NavGroupId; label: string }[] = [
   { id: "cacada", label: "Caçada" },
+  { id: "covil", label: "Covil" },
   { id: "oficina", label: "Oficina" },
   { id: "heroi", label: "Herói" },
   { id: "taverna", label: "Taverna" },
@@ -92,6 +94,14 @@ export const NAV_ITEMS = [
     short: "Salvas",
     icon: BookmarkCheck,
     group: "cacada",
+  },
+  {
+    id: "bosses",
+    to: "/bosses",
+    label: "Rotação de Bosses",
+    short: "Bosses",
+    icon: Crown,
+    group: "covil",
   },
 
   {

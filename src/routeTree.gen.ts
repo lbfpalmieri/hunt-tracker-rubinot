@@ -22,6 +22,8 @@ import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
+import { Route as AuthenticatedBossesIndexRouteImport } from './routes/_authenticated/bosses.index'
+import { Route as AuthenticatedBossesIdRouteImport } from './routes/_authenticated/bosses.$id'
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
@@ -97,6 +99,17 @@ const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBossesIndexRoute =
+  AuthenticatedBossesIndexRouteImport.update({
+    id: '/bosses/',
+    path: '/bosses/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBossesIdRoute = AuthenticatedBossesIdRouteImport.update({
+  id: '/bosses/$id',
+  path: '/bosses/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCommunityIndexRoute =
   AuthenticatedCommunityIndexRouteImport.update({
     id: '/community/',
@@ -170,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
+  '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
@@ -179,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
   '/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
+  '/bosses/': typeof AuthenticatedBossesIndexRoute
   '/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesByTo {
@@ -194,6 +209,7 @@ export interface FileRoutesByTo {
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
+  '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
@@ -203,6 +219,7 @@ export interface FileRoutesByTo {
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
   '/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
+  '/bosses': typeof AuthenticatedBossesIndexRoute
   '/community': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesById {
@@ -220,6 +237,7 @@ export interface FileRoutesById {
   '/_authenticated/rendimento': typeof AuthenticatedRendimentoRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
+  '/_authenticated/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/sessions/compare': typeof AuthenticatedSessionsCompareRoute
@@ -229,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/_authenticated/tools/ranking': typeof AuthenticatedToolsRankingRoute
   '/_authenticated/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
+  '/_authenticated/bosses/': typeof AuthenticatedBossesIndexRoute
   '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRouteTypes {
@@ -246,6 +265,7 @@ export interface FileRouteTypes {
     | '/rendimento'
     | '/sessions'
     | '/wiki'
+    | '/bosses/$id'
     | '/community/$id'
     | '/sessions/$id'
     | '/sessions/compare'
@@ -255,6 +275,7 @@ export interface FileRouteTypes {
     | '/tools/monster-calculator'
     | '/tools/ranking'
     | '/tools/rubini-coins'
+    | '/bosses/'
     | '/community/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -270,6 +291,7 @@ export interface FileRouteTypes {
     | '/rendimento'
     | '/sessions'
     | '/wiki'
+    | '/bosses/$id'
     | '/community/$id'
     | '/sessions/$id'
     | '/sessions/compare'
@@ -279,6 +301,7 @@ export interface FileRouteTypes {
     | '/tools/monster-calculator'
     | '/tools/ranking'
     | '/tools/rubini-coins'
+    | '/bosses'
     | '/community'
   id:
     | '__root__'
@@ -295,6 +318,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rendimento'
     | '/_authenticated/sessions'
     | '/_authenticated/wiki'
+    | '/_authenticated/bosses/$id'
     | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/sessions/compare'
@@ -304,6 +328,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tools/monster-calculator'
     | '/_authenticated/tools/ranking'
     | '/_authenticated/tools/rubini-coins'
+    | '/_authenticated/bosses/'
     | '/_authenticated/community/'
   fileRoutesById: FileRoutesById
 }
@@ -406,6 +431,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWikiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/bosses/': {
+      id: '/_authenticated/bosses/'
+      path: '/bosses'
+      fullPath: '/bosses/'
+      preLoaderRoute: typeof AuthenticatedBossesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bosses/$id': {
+      id: '/_authenticated/bosses/$id'
+      path: '/bosses/$id'
+      fullPath: '/bosses/$id'
+      preLoaderRoute: typeof AuthenticatedBossesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/community/': {
       id: '/_authenticated/community/'
       path: '/community'
@@ -505,6 +544,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRendimentoRoute: typeof AuthenticatedRendimentoRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
+  AuthenticatedBossesIdRoute: typeof AuthenticatedBossesIdRoute
   AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
   AuthenticatedToolsCompareRoute: typeof AuthenticatedToolsCompareRoute
   AuthenticatedToolsComparisonsRoute: typeof AuthenticatedToolsComparisonsRoute
@@ -512,6 +552,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
   AuthenticatedToolsRankingRoute: typeof AuthenticatedToolsRankingRoute
   AuthenticatedToolsRubiniCoinsRoute: typeof AuthenticatedToolsRubiniCoinsRoute
+  AuthenticatedBossesIndexRoute: typeof AuthenticatedBossesIndexRoute
   AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
 }
 
@@ -526,6 +567,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRendimentoRoute: AuthenticatedRendimentoRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
+  AuthenticatedBossesIdRoute: AuthenticatedBossesIdRoute,
   AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
   AuthenticatedToolsCompareRoute: AuthenticatedToolsCompareRoute,
   AuthenticatedToolsComparisonsRoute: AuthenticatedToolsComparisonsRoute,
@@ -534,6 +576,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedToolsMonsterCalculatorRoute,
   AuthenticatedToolsRankingRoute: AuthenticatedToolsRankingRoute,
   AuthenticatedToolsRubiniCoinsRoute: AuthenticatedToolsRubiniCoinsRoute,
+  AuthenticatedBossesIndexRoute: AuthenticatedBossesIndexRoute,
   AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,
 }
 

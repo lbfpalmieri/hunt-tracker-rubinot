@@ -42,6 +42,11 @@ Inbox admin, export Markdown sem e-mails, histórico de resolvidos); rendimento.
 (level_snapshots + goals).
 
 Mobile/perf: listas paginadas; imagens lazy.
+Rotação de Bosses (/bosses, /bosses/$id): catálogo da TibiaWiki em public.boss_catalog_cache (linha única,
+jsonb compacto — ver src/lib/boss-catalog.ts). A api.php da wiki bloqueia servidor (Cloudflare), então o
+sync roda NO NAVEGADOR do admin (fetch com origin=*) e grava no banco; usuários só leem. Rotações/execuções
+em boss_rotations / boss_rotation_runs; ajuste solo/time em user_boss_prefs. Tema visual próprio
+(carmesim + dourado, components/bosses/).
 Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
 entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros

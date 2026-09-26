@@ -7,6 +7,7 @@ import {
   Globe2,
   Sparkles,
   Calculator,
+  Crown,
   UserCircle2,
   type LucideIcon,
 } from "lucide-react";
@@ -90,6 +91,30 @@ const SECTIONS: Section[] = [
       {
         label: "Tornar uma sessão pública",
         text: "No detalhe de uma sessão sua, dá pra marcar como pública — ela passa a contar nas médias da Comunidade (sem expor suas observações privadas).",
+      },
+    ],
+  },
+  {
+    id: "bosses",
+    icon: Crown,
+    title: "Rotação de Bosses",
+    to: "/bosses",
+    items: [
+      {
+        label: "Catálogo de bosses",
+        text: "Todos os bosses da TibiaWiki (os mesmos do RubinOT) com vida, XP, cooldown, fraquezas e loot por raridade. Filtre por solo/time e tipo (Archfoe, Nemesis, Bane). Solo/time com * é estimativa pela vida — abra o boss e marque o que vale pra você.",
+      },
+      {
+        label: "Montar rotação",
+        text: "Toque no + dos bosses que você faz e crie a rotação. Ela mostra os melhores drops possíveis (raros e muito raros), o loot valioso que não é raro e o elemento mais eficaz contra o conjunto.",
+      },
+      {
+        label: "Registrar rotação",
+        text: 'Abra o Hunting Analyser antes do primeiro boss e, no fim, cole o export em "Registrar rotação". O app acha sozinho quais bosses você matou e os drops de destaque, e soma lucro, lucro/h e tempo médio — comparando com a média das suas hunts pra dizer se a rotação vale a pena.',
+      },
+      {
+        label: "Cooldowns",
+        text: "Pelas rotações registradas do personagem ativo, mostra quais bosses já estão disponíveis e quanto falta pros outros (cooldown da TibiaWiki).",
       },
     ],
   },
