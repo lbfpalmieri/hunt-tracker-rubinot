@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      boss_catalog_cache: {
+        Row: {
+          data: Json
+          id: number
+          synced_at: string
+        }
+        Insert: {
+          data: Json
+          id?: number
+          synced_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: number
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      boss_rotation_runs: {
+        Row: {
+          balance: number
+          bosses_killed: string[]
+          character_id: string | null
+          created_at: string
+          drops: Json
+          duration_sec: number
+          id: string
+          loot: number
+          notes: string | null
+          party_size: number
+          ran_at: string
+          rotation_id: string
+          supplies: number
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          balance?: number
+          bosses_killed?: string[]
+          character_id?: string | null
+          created_at?: string
+          drops?: Json
+          duration_sec?: number
+          id?: string
+          loot?: number
+          notes?: string | null
+          party_size?: number
+          ran_at?: string
+          rotation_id: string
+          supplies?: number
+          user_id?: string
+          xp?: number
+        }
+        Update: {
+          balance?: number
+          bosses_killed?: string[]
+          character_id?: string | null
+          created_at?: string
+          drops?: Json
+          duration_sec?: number
+          id?: string
+          loot?: number
+          notes?: string | null
+          party_size?: number
+          ran_at?: string
+          rotation_id?: string
+          supplies?: number
+          user_id?: string
+          xp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boss_rotation_runs_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boss_rotation_runs_rotation_id_fkey"
+            columns: ["rotation_id"]
+            isOneToOne: false
+            referencedRelation: "boss_rotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boss_rotations: {
+        Row: {
+          bosses: string[]
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bosses?: string[]
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          bosses?: string[]
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       characters: {
         Row: {
           created_at: string
@@ -256,6 +370,7 @@ export type Database = {
       }
       hunt_sessions: {
         Row: {
+          bounty_creature: string | null
           bounty_difficulty: string | null
           bounty_tier: string | null
           bounty_xp: number | null
@@ -276,6 +391,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bounty_creature?: string | null
           bounty_difficulty?: string | null
           bounty_tier?: string | null
           bounty_xp?: number | null
@@ -296,6 +412,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bounty_creature?: string | null
           bounty_difficulty?: string | null
           bounty_tier?: string | null
           bounty_xp?: number | null
@@ -565,6 +682,45 @@ export type Database = {
           include_prey?: boolean
           notes?: string | null
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_boss_prefs: {
+        Row: {
+          party: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          party?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          party?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_nav_prefs: {
+        Row: {
+          pinned: string[]
+          sidebar_expanded: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          pinned?: string[]
+          sidebar_expanded?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          pinned?: string[]
+          sidebar_expanded?: boolean
           updated_at?: string
           user_id?: string
         }
