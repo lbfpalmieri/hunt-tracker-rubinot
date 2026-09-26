@@ -52,7 +52,7 @@ function AdminHuntsPage() {
       );
       setEditing(null);
       await qc.invalidateQueries({ queryKey: ["admin-hunt-names"] });
-      void useAppStore.getState().load?.();
+      void useAppStore.getState().loadAll();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível renomear.");
     } finally {

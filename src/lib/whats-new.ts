@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "admin-hunt-rename",
+    date: "2026-09-26",
+    title: "Nomes de hunt organizados",
+    description:
+      "Hunts salvas com nomes estranhos agora podem ser corrigidas pela administração. Quando o nome corrigido já existe, as sessões são juntadas na mesma hunt — médias e comparativos ficam mais certos.",
+  },
+  {
     id: "session-wizard",
     date: "2026-09-26",
     title: "Nova sessão em passos",

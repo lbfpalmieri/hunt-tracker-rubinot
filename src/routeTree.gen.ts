@@ -34,6 +34,7 @@ import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_auth
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 import { Route as AuthenticatedBossesIdRouteImport } from './routes/_authenticated/bosses.$id'
+import { Route as AuthenticatedAdminHuntsRouteImport } from './routes/_authenticated/admin.hunts'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -169,6 +170,11 @@ const AuthenticatedBossesIdRoute = AuthenticatedBossesIdRouteImport.update({
   path: '/bosses/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminHuntsRoute = AuthenticatedAdminHuntsRouteImport.update({
+  id: '/admin/hunts',
+  path: '/admin/hunts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
+  '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
+  '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/rendimento': typeof AuthenticatedRendimentoRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
+  '/_authenticated/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/_authenticated/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/rendimento'
     | '/sessions'
     | '/wiki'
+    | '/admin/hunts'
     | '/bosses/$id'
     | '/community/$id'
     | '/sessions/$id'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/rendimento'
     | '/sessions'
     | '/wiki'
+    | '/admin/hunts'
     | '/bosses/$id'
     | '/community/$id'
     | '/sessions/$id'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rendimento'
     | '/_authenticated/sessions'
     | '/_authenticated/wiki'
+    | '/_authenticated/admin/hunts'
     | '/_authenticated/bosses/$id'
     | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
@@ -515,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBossesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/hunts': {
+      id: '/_authenticated/admin/hunts'
+      path: '/admin/hunts'
+      fullPath: '/admin/hunts'
+      preLoaderRoute: typeof AuthenticatedAdminHuntsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -544,6 +563,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRendimentoRoute: typeof AuthenticatedRendimentoRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
+  AuthenticatedAdminHuntsRoute: typeof AuthenticatedAdminHuntsRoute
   AuthenticatedBossesIdRoute: typeof AuthenticatedBossesIdRoute
   AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
   AuthenticatedToolsCompareRoute: typeof AuthenticatedToolsCompareRoute
@@ -567,6 +587,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRendimentoRoute: AuthenticatedRendimentoRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
+  AuthenticatedAdminHuntsRoute: AuthenticatedAdminHuntsRoute,
   AuthenticatedBossesIdRoute: AuthenticatedBossesIdRoute,
   AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
   AuthenticatedToolsCompareRoute: AuthenticatedToolsCompareRoute,
