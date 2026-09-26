@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -518,6 +518,8 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
   );
 }
 
+const LIST_LIMIT = 80;
+
 function EditBossesDialog({
   open,
   onOpenChange,
@@ -535,18 +537,25 @@ function EditBossesDialog({
   const [q, setQ] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const list = useMemo(() => {
+  // Toda vez que abre, parte do que está salvo (cancelar descarta o que foi marcado).
+  useEffect(() => {
+    if (!open) return;
+    setPicked(new Set(rotation.bosses));
+    setQ("");
+  }, [open, rotation.bosses]);
+
+  // "Já na rotação" primeiro — pela versão salva, pra lista não pular de lugar ao marcar.
+  const matches = useMemo(() => {
     const term = q.trim().toLowerCase();
+    const saved = new Set(rotation.bosses);
     return catalog.bosses
       .filter((b) => !term || b.name.toLowerCase().includes(term))
       .sort(
         (a, b) =>
-          Number(picked.has(b.name)) - Number(picked.has(a.name)) || a.name.localeCompare(b.name),
-      )
-      .slice(0, 80);
-    // A ordem "selecionados primeiro" só é recalculada quando a busca muda — não pula ao marcar.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catalog, q]);
+          Number(saved.has(b.name)) - Number(saved.has(a.name)) || a.name.localeCompare(b.name),
+      );
+  }, [catalog, q, rotation.bosses]);
+  const list = matches.slice(0, LIST_LIMIT);
 
   const save = async () => {
     setSaving(true);
@@ -562,13 +571,7 @@ function EditBossesDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        if (o) setPicked(new Set(rotation.bosses));
-        onOpenChange(o);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto border-rubi-danger/40 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
@@ -613,6 +616,14 @@ function EditBossesDialog({
             );
           })}
         </ul>
+        {matches.length > LIST_LIMIT && (
+          <p className="text-center text-[11px] text-muted-foreground">
+            Mostrando {LIST_LIMIT} de {matches.length} — busque pelo nome pra achar os outros.
+          </p>
+        )}
+        {matches.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground">Nenhum boss com esse nome.</p>
+        )}
         <DialogFooter>
           <button
             type="button"

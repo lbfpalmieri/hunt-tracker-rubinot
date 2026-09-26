@@ -79,6 +79,19 @@ interface CompactCatalog {
   bosses: CompactBoss[];
 }
 
+/**
+ * Nome limpo do boss. A Infobox às vezes tem template no campo "name" — "Tentugly's Head" usa
+ * `{{#ifeq:{{PAGENAME}}|Home|Tentugly|Tentugly's Head}}` — que aparecia cru na tela. Pro #ifeq
+ * vale o ramo "senão" (a página nunca é "Home"); qualquer outro template cai pro título da página.
+ */
+export function cleanBossName(raw: string, title = ""): string {
+  const ifeq = raw.match(/^\{\{#ifeq:[^|]*\|[^|]*\|[^|]*\|([^}]*)\}\}$/);
+  if (ifeq) return ifeq[1].trim();
+  if (raw.includes("{{") || raw.includes("[[") || !raw.trim())
+    return title || raw.replace(/[{}[\]]/g, "").trim();
+  return raw.trim();
+}
+
 function decode(c: CompactCatalog, syncedAt: string): BossCatalog {
   const items = new Map<string, CatalogItem>();
   for (const [name, npc, marketMin, marketMax] of c.items)
@@ -91,7 +104,7 @@ function decode(c: CompactCatalog, syncedAt: string): BossCatalog {
       (t, i) => (l[t] = (loot[i] ?? []).map((idx) => c.items[idx]?.[0]).filter(Boolean)),
     );
     return {
-      name,
+      name: cleanBossName(name),
       hp,
       xp,
       type,
@@ -267,7 +280,7 @@ async function fetchCompactFromWiki(onProgress: (p: number) => void): Promise<Co
     const size = TIER_ORDER.reduce((a, t) => a + loot[t].length, 0);
     if (!size) continue; // sem loot não interessa pra rotação
 
-    const name = field(c, "name") || p.title;
+    const name = cleanBossName(field(c, "name"), p.title);
     const t = field(c, "bosstype").toLowerCase();
     const mods: ElementMods = {};
     for (const k of MOD_ORDER) {

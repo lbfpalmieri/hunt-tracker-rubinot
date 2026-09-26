@@ -99,11 +99,29 @@ function wikiFileBase(name: string): string {
 
 export type GameIconExt = "gif" | "png";
 
+function urlFor(filename: string): string {
+  const hash = md5(filename);
+  return `${WIKI_IMAGE_BASE}/${hash[0]}/${hash.slice(0, 2)}/${encodeURIComponent(filename)}`;
+}
+
 /** URL do sprite de um monstro/item pelo nome. `null` se o nome for vazio. */
 export function gameIconUrl(name: string, ext: GameIconExt = "gif"): string | null {
   const base = wikiFileBase(name);
   if (!base) return null;
-  const filename = `${base}.${ext}`;
-  const hash = md5(filename);
-  return `${WIKI_IMAGE_BASE}/${hash[0]}/${hash.slice(0, 2)}/${encodeURIComponent(filename)}`;
+  return urlFor(`${base}.${ext}`);
+}
+
+/**
+ * Todas as URLs a tentar, em ordem: Title Case (.gif, .png) e depois o nome exatamente como veio
+ * (.gif, .png). O segundo par existe porque alguns arquivos da wiki fogem da regra das palavras
+ * menores — "Amenef_The_Burning.gif", "Reflection_Of_A_Mage.gif", "Egg_of_The_Many.gif" (17 bosses
+ * e ~6 itens na conferência de 2026-09-26). Nome que já vem certo acerta na primeira.
+ */
+export function gameIconUrls(name: string): string[] {
+  const base = wikiFileBase(name);
+  if (!base) return [];
+  const raw = name.trim().replace(/\s+/g, "_");
+  const exact = raw.charAt(0).toUpperCase() + raw.slice(1);
+  const bases = exact === base ? [base] : [base, exact];
+  return bases.flatMap((b) => [urlFor(`${b}.gif`), urlFor(`${b}.png`)]);
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { gameIconUrl, type GameIconExt } from "@/lib/game-icon";
+import { gameIconUrls } from "@/lib/game-icon";
 
 interface Props {
   /** Nome do monstro ou item, exatamente como sai do Hunting Analyser. */
@@ -12,21 +12,19 @@ interface Props {
 
 /**
  * Sprite de monstro/item puxado ao vivo da TibiaWiki brasileira (ver
- * src/lib/game-icon.ts). Tenta .gif primeiro (maioria dos casos), cai pra
- * .png, e por fim mostra `fallback` se nenhum dos dois existir — nunca
+ * src/lib/game-icon.ts). Tenta as URLs de gameIconUrls em ordem (.gif, .png e
+ * depois o nome exato) e por fim mostra `fallback` se nenhuma existir — nunca
  * quebra o layout com um ícone de imagem quebrada.
  */
 export function GameIcon({ name, size = 28, className, fallback = null }: Props) {
-  const [ext, setExt] = useState<GameIconExt>("gif");
-  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // Reseta a tentativa quando o nome muda (troca de sessão, por exemplo).
   useEffect(() => {
-    setExt("gif");
-    setFailed(false);
+    setAttempt(0);
   }, [name]);
 
-  const url = failed ? null : gameIconUrl(name, ext);
+  const url = gameIconUrls(name)[attempt] ?? null;
   if (!url) return <>{fallback}</>;
 
   return (
@@ -38,10 +36,7 @@ export function GameIcon({ name, size = 28, className, fallback = null }: Props)
       loading="lazy"
       className={className}
       style={{ width: size, height: size, objectFit: "contain", imageRendering: "pixelated" }}
-      onError={() => {
-        if (ext === "gif") setExt("png");
-        else setFailed(true);
-      }}
+      onError={() => setAttempt((a) => a + 1)}
     />
   );
 }
