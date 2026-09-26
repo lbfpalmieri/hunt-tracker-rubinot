@@ -37,8 +37,8 @@ export function NavCustomizeDialog({
           <DialogTitle>Personalizar menu</DialogTitle>
           <DialogDescription>
             Fixe o que você mais usa: vai pro topo do menu lateral e, no celular, os{" "}
-            {MOBILE_BAR_SLOTS} primeiros ficam na barra de baixo. As mudanças valem só neste
-            navegador.
+            {MOBILE_BAR_SLOTS} primeiros ficam na barra de baixo. Fica salvo na sua conta (vale no
+            computador e no celular).
           </DialogDescription>
         </DialogHeader>
 

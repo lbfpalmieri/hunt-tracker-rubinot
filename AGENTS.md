@@ -46,7 +46,8 @@ Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS
 entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros
 "fixados" + folha "Menu" em grade (MobileNav.tsx). O usuário personaliza fixados/ordem em
-NavCustomizeDialog (localStorage, nav-prefs.ts). Não recrie arrays de nav no AppShell.
+NavCustomizeDialog; salvo em public.user_nav_prefs (1 linha/usuário, localStorage só como cache —
+nav-prefs.ts). Não recrie arrays de nav no AppShell.
 
 Banco (IAs externas): mudanças de estrutura são feitas via SQL, entregue pronto ao
 usuário. Toda tabela nova em public precisa GRANT + RLS + policies no mesmo script;
