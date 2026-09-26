@@ -19,9 +19,12 @@ export interface BossRotation {
   updatedAt: string;
 }
 
+/** Item de boss saqueado na execução, com o preço unitário que o usuário usou (RubinOT). */
 export interface BossDrop {
   name: string;
   count: number;
+  /** Ausente em execuções registradas antes do preço por item existir. */
+  unitValue?: number;
 }
 
 export interface BossRotationRun {
@@ -165,8 +168,11 @@ export interface RunStats {
   runs: number;
   totalBalance: number;
   avgBalance: number;
-  /** Lucro por hora somando todas as execuções (total ÷ horas totais). */
-  balancePerHour: number;
+  /**
+   * Lucro por boss morto (total ÷ kills de boss). Lucro por hora não faz sentido aqui: o boss
+   * tem cooldown (ex. 20h), não dá pra repetir a rotação por mais tempo pra ganhar mais.
+   */
+  perBoss: number;
   avgDurationSec: number;
   best: BossRotationRun | null;
 }
@@ -178,7 +184,10 @@ export function runStats(runs: BossRotationRun[]): RunStats {
     runs: runs.length,
     totalBalance,
     avgBalance: runs.length ? totalBalance / runs.length : 0,
-    balancePerHour: totalSec > 0 ? totalBalance / (totalSec / 3600) : 0,
+    perBoss: (() => {
+      const kills = runs.reduce((a, r) => a + r.bossesKilled.length, 0);
+      return kills > 0 ? totalBalance / kills : 0;
+    })(),
     avgDurationSec: runs.length ? totalSec / runs.length : 0,
     best: runs.reduce<BossRotationRun | null>(
       (b, r) => (!b || r.balance > b.balance ? r : b),
@@ -221,4 +230,28 @@ export function fmtWait(ms: number): string {
   if (h >= 48) return `${Math.round(h / 24)} dias`;
   if (h === 0) return `${m}min`;
   return `${h}h${m.toString().padStart(2, "0")}`;
+}
+
+/** Último preço que o usuário usou pra cada item (execuções mais recentes ganham). */
+export function lastPrices(runs: BossRotationRun[]): Map<string, number> {
+  const out = new Map<string, number>();
+  const sorted = [...runs].sort((a, b) => a.ranAt.localeCompare(b.ranAt));
+  for (const r of sorted)
+    for (const d of r.drops) if (d.unitValue != null) out.set(d.name, d.unitValue);
+  return out;
+}
+
+/** Quanto falta pra rotação toda estar disponível (o boss que demora mais). null = sem dado. */
+export function rotationWait(
+  bosses: { name: string; cooldownSec: number }[],
+  kills: Map<string, string>,
+  now = Date.now(),
+): number | null {
+  let worst: number | null = 0;
+  for (const b of bosses) {
+    const w = msUntilAvailable(kills.get(b.name), b.cooldownSec, now);
+    if (w == null) continue;
+    worst = Math.max(worst ?? 0, w);
+  }
+  return bosses.length ? worst : null;
 }

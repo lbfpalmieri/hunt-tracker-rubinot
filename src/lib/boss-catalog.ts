@@ -42,6 +42,12 @@ export interface CatalogItem {
   /** Faixa de preço de mercado no Tibia oficial (referência — o RubinOT tem economia própria). */
   marketMin: number;
   marketMax: number;
+  /**
+   * Só cai de boss (todo mundo no "droppedby" da wiki é boss) — conta como loot da rotação.
+   * Falso = também cai de monstro comum (ex. Demon Horn), então pode ter vindo do caminho.
+   * null = catálogo sincronizado antes desse dado existir.
+   */
+  bossOnly: boolean | null;
 }
 
 export interface Boss {
@@ -68,7 +74,7 @@ const MOD_ORDER = ["physical", "earth", "fire", "death", "energy", "holy", "ice"
 const TIER_ORDER: LootTier[] = ["c", "u", "s", "r", "v"];
 
 /** [name, npc, marketMin, marketMax] */
-type CompactItem = [string, number, number, number];
+type CompactItem = [string, number, number, number, (0 | 1)?];
 /** [name, hp, xp, type, cooldownSec, "loc1;loc2", mods(7), loot(5 arrays de índices, ordem TIER_ORDER)] */
 type CompactBoss = [string, number, number, BossType, number, string, number[], number[][]];
 
@@ -94,8 +100,14 @@ export function cleanBossName(raw: string, title = ""): string {
 
 function decode(c: CompactCatalog, syncedAt: string): BossCatalog {
   const items = new Map<string, CatalogItem>();
-  for (const [name, npc, marketMin, marketMax] of c.items)
-    items.set(name, { name, npc, marketMin, marketMax });
+  for (const [name, npc, marketMin, marketMax, bossOnly] of c.items)
+    items.set(name, {
+      name,
+      npc,
+      marketMin,
+      marketMax,
+      bossOnly: bossOnly == null ? null : bossOnly === 1,
+    });
   const bosses = c.bosses.map(([name, hp, xp, type, cooldownSec, loc, mods, loot]): Boss => {
     const m: ElementMods = {};
     MOD_ORDER.forEach((k, i) => (m[k] = mods[i] ?? 100));
@@ -249,6 +261,8 @@ export async function fetchBossCatalogFromWiki(
 async function fetchCompactFromWiki(onProgress: (p: number) => void): Promise<CompactCatalog> {
   onProgress(0.02);
   const titles = await categoryMembers("Bosses");
+  // Pra saber se um item "só cai de boss": todos os bosses, inclusive os sem loot/removidos/evento.
+  const bossTitles = new Set(titles.map((t) => t.toLowerCase()));
   const bossBatches = Math.ceil(titles.length / 50);
   let done = 0;
   const pages = await fetchPages(titles, true, () =>
@@ -324,11 +338,18 @@ async function fetchCompactFromWiki(onProgress: (p: number) => void): Promise<Co
       const c = itemInfo.get(n) ?? "";
       const market = allNumbers(field(c, "value"));
       i = items.length;
+      // "droppedby"/"droppedRaidby" = quem dropa. Se todos são bosses, o item só pode ter vindo
+      // de boss. Sem essa informação (página sem o campo, link quebrado tipo "Platinum Coins"),
+      // NÃO conta — melhor deixar um item de boss de fora do que somar loot do caminho.
+      const droppers = [...links(field(c, "droppedby")), ...links(field(c, "droppedRaidby"))];
+      const bossOnly =
+        droppers.length > 0 && droppers.every((d) => bossTitles.has(d.toLowerCase()));
       items.push([
         n,
         allNumbers(field(c, "npcvalue"))[0] ?? 0,
         market.length ? Math.min(...market) : 0,
         market.length ? Math.max(...market) : 0,
+        bossOnly ? 1 : 0,
       ]);
       idx.set(n, i);
     }
@@ -450,4 +471,45 @@ export function fmtCooldown(sec: number): string {
   if (h >= 48) return `${Math.round(h / 24)} dias`;
   if (h >= 1) return `${Math.round(h)}h`;
   return `${Math.round(sec / 60)}min`;
+}
+
+const COIN = /^(gold|platinum|crystal) coins?$/;
+
+export interface BossLootLine {
+  /** Nome como está no catálogo (Title Case da wiki). */
+  name: string;
+  count: number;
+  item: CatalogItem | undefined;
+}
+
+/**
+ * Do "Looted Items" do Hunting Analyser, só o que veio dos bosses: itens que a wiki diz que só
+ * caem de boss. O resto (Demon Horn, gold, supplies do caminho…) pode ter vindo dos monstros
+ * mortos no trajeto e não conta no lucro da rotação. Catálogo antigo (sem esse dado) cai pra
+ * "está na tabela de loot de algum boss da rotação".
+ */
+export function bossLinkedLoot(
+  looted: { name: string; count: number }[],
+  bosses: Boss[],
+  catalog: BossCatalog,
+): BossLootLine[] {
+  const byNorm = new Map([...catalog.items.values()].map((it) => [normName(it.name), it]));
+  const inRotation = new Set(
+    bosses.flatMap((b) => LOOT_TIERS.flatMap((t) => b.loot[t])).map(normName),
+  );
+  const out = new Map<string, BossLootLine>();
+  for (const l of looted) {
+    // Stack às vezes vem no plural ("3x gold tokens").
+    let key = normName(l.name);
+    if (!byNorm.has(key) && key.endsWith("s") && byNorm.has(key.slice(0, -1)))
+      key = key.slice(0, -1);
+    const item = byNorm.get(key);
+    if (COIN.test(key)) continue;
+    const linked = item?.bossOnly ?? inRotation.has(key);
+    if (!linked || !item) continue;
+    const cur = out.get(item.name);
+    if (cur) cur.count += l.count;
+    else out.set(item.name, { name: item.name, count: l.count, item });
+  }
+  return [...out.values()];
 }

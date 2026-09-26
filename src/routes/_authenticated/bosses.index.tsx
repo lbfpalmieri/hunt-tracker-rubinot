@@ -40,6 +40,7 @@ import {
   fmtWait,
   lastKills,
   msUntilAvailable,
+  rotationWait,
   runStats,
   updateRotation,
   type BossRotation,
@@ -631,6 +632,8 @@ function RotationsView({
   onBrowse: () => void;
 }) {
   const byName = useMemo(() => new Map(catalog.bosses.map((b) => [b.name, b])), [catalog]);
+  const activeId = useAppStore((s) => s.activeCharacterId);
+  const kills = useMemo(() => lastKills(runs, activeId), [runs, activeId]);
   if (rotations.length === 0) {
     return (
       <div className="card-surface flex flex-col items-center gap-3 p-10 text-center">
@@ -655,6 +658,11 @@ function RotationsView({
       {rotations.map((r) => {
         const s = runStats(runs.filter((x) => x.rotationId === r.id));
         const last = runs.filter((x) => x.rotationId === r.id).at(-1);
+        // Rotação livre quando o boss de cooldown mais longo voltar (personagem ativo).
+        const wait = rotationWait(
+          r.bosses.map((n) => byName.get(n)).filter((b): b is Boss => !!b),
+          kills,
+        );
         return (
           <Link
             key={r.id}
@@ -703,11 +711,13 @@ function RotationsView({
                 </div>
               </div>
               <div className="rounded-lg bg-background/50 p-2">
-                <div className="font-bold text-rubi-gold">
-                  {s.runs ? `${fmtGold(s.balancePerHour)}/h` : "—"}
+                <div
+                  className={"font-bold " + (wait === 0 ? "text-rubi-success" : "text-rubi-gold")}
+                >
+                  {wait === 0 ? "Disponível" : wait == null ? "—" : `em ${fmtWait(wait)}`}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Lucro por hora
+                  Próxima rotação
                 </div>
               </div>
             </div>

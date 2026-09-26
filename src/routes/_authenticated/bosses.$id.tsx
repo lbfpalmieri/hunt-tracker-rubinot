@@ -102,7 +102,6 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
   const { partyOf, setParty } = useBossParty();
   const activeId = useAppStore((s) => s.activeCharacterId);
   const characters = useAppStore((s) => s.characters);
-  const sessions = useAppStore((s) => s.sessions);
 
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -133,20 +132,11 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
     );
   }, [bosses]);
 
-  // Referência pro "vale a pena?": lucro/h médio das hunts normais do personagem ativo.
-  const huntPerHour = useMemo(() => {
-    const mine = sessions.filter((s) => !activeId || s.characterId === activeId);
-    const sec = mine.reduce((a, s) => a + (s.hunting.durationSec || 0), 0);
-    if (sec < 1800) return null;
-    return mine.reduce((a, s) => a + (s.hunting.balance || 0), 0) / (sec / 3600);
-  }, [sessions, activeId]);
-
   const chartData = runs.map((r) => ({
     label: new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(
       new Date(r.ranAt),
     ),
     balance: r.balance,
-    perHour: r.durationSec > 0 ? Math.round(r.balance / (r.durationSec / 3600)) : 0,
   }));
 
   const refresh = () => {
@@ -194,13 +184,6 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
 
   const charName = (cid: string | null) => characters.find((c) => c.id === cid)?.name ?? "—";
   const openParty = openBoss ? partyOf(openBoss) : null;
-  const verdict =
-    stats.runs === 0 || huntPerHour == null
-      ? null
-      : stats.balancePerHour >= huntPerHour
-        ? { good: true, diff: stats.balancePerHour - huntPerHour }
-        : { good: false, diff: huntPerHour - stats.balancePerHour };
-
   return (
     <AppShell>
       <Link
@@ -322,9 +305,10 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
           accent={stats.avgBalance >= 0 ? "success" : "danger"}
         />
         <StatCard
-          label="Lucro por hora"
-          value={stats.runs ? fmtGold(stats.balancePerHour) : "—"}
-          icon={TrendingUp}
+          label="Lucro por boss"
+          value={stats.runs ? fmtGold(stats.perBoss) : "—"}
+          hint="Lucro ÷ bosses mortos"
+          icon={Crown}
           accent="gold"
         />
         <StatCard
@@ -342,35 +326,6 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
         />
       </div>
 
-      {verdict && (
-        <div
-          className={
-            "mb-6 flex items-start gap-3 rounded-xl border p-4 text-sm " +
-            (verdict.good
-              ? "border-rubi-success/40 bg-rubi-success/10"
-              : "border-rubi-danger/40 bg-rubi-danger/10")
-          }
-        >
-          <Scale
-            className={
-              "mt-0.5 h-5 w-5 flex-none " +
-              (verdict.good ? "text-rubi-success" : "text-rubi-danger")
-            }
-          />
-          <div>
-            <strong className="text-foreground">
-              {verdict.good
-                ? "Essa rotação vale a pena."
-                : "Suas hunts estão rendendo mais que essa rotação."}
-            </strong>{" "}
-            A rotação dá {fmtGold(stats.balancePerHour)}/h e suas hunts ({charName(activeId)}) dão{" "}
-            {fmtGold(huntPerHour ?? 0)}/h — {verdict.good ? "+" : "−"}
-            {fmtGold(verdict.diff)}/h.{" "}
-            {stats.runs < 3 && "Com poucas execuções a média ainda oscila bastante."}
-          </div>
-        </div>
-      )}
-
       {runs.length > 0 && (
         <div className="card-surface mb-6 p-4">
           <SectionTitle icon={TrendingUp}>Lucro por execução</SectionTitle>
@@ -378,7 +333,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
             <Suspense
               fallback={<div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />}
             >
-              <BossRunsChart data={chartData} huntPerHour={huntPerHour} />
+              <BossRunsChart data={chartData} />
             </Suspense>
           </div>
         </div>
@@ -449,14 +404,17 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
                   </div>
                   {r.drops.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1.5">
-                      {r.drops.map((d) => (
-                        <span
-                          key={d.name}
-                          className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/30 bg-rubi-gold/10 px-1.5 py-0.5 text-[11px]"
-                        >
-                          <GameIcon name={d.name} size={16} /> {d.count}x {d.name}
-                        </span>
-                      ))}
+                      {[...r.drops]
+                        .sort((a, b) => (b.unitValue ?? 0) * b.count - (a.unitValue ?? 0) * a.count)
+                        .map((d) => (
+                          <span
+                            key={d.name}
+                            title={d.unitValue ? `${fmtGold(d.unitValue)} cada` : undefined}
+                            className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/30 bg-rubi-gold/10 px-1.5 py-0.5 text-[11px]"
+                          >
+                            <GameIcon name={d.name} size={16} /> {d.count}x {d.name}
+                          </span>
+                        ))}
                     </div>
                   )}
                 </div>
@@ -470,7 +428,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
                       {fmtGold(r.balance)}
                     </div>
                     <div className="text-[10px] text-muted-foreground">
-                      {r.durationSec > 0 ? `${fmtGold(r.balance / (r.durationSec / 3600))}/h` : ""}
+                      loot {fmtGold(r.loot)} · supplies {fmtGold(r.supplies)}
                     </div>
                   </div>
                   <button
@@ -495,6 +453,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
         bosses={bosses}
         catalog={catalog}
         characterId={activeId}
+        previousRuns={allRuns}
         onSaved={refresh}
       />
       <EditBossesDialog

@@ -46,7 +46,9 @@ Rotação de Bosses (/bosses, /bosses/$id): catálogo da TibiaWiki em public.bos
 jsonb compacto — ver src/lib/boss-catalog.ts). A api.php da wiki bloqueia servidor (Cloudflare), então o
 sync roda NO NAVEGADOR do admin (fetch com origin=*) e grava no banco; usuários só leem. Rotações/execuções
 em boss_rotations / boss_rotation_runs; ajuste solo/time em user_boss_prefs. Tema visual próprio
-(carmesim + dourado, components/bosses/).
+(carmesim + dourado, components/bosses/). Lucro de execução = só itens que caem APENAS de boss
+("droppedby" da wiki, flag bossOnly no catálogo) × preço informado pelo usuário − supplies; loot dos
+monstros do caminho não conta. NÃO usar lucro/h nessa área (boss tem cooldown).
 Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
 entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros

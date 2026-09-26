@@ -110,7 +110,7 @@ const SECTIONS: Section[] = [
       },
       {
         label: "Registrar rotação",
-        text: 'Abra o Hunting Analyser antes do primeiro boss e, no fim, cole o export em "Registrar rotação". O app acha sozinho quais bosses você matou e os drops de destaque, e soma lucro, lucro/h e tempo médio — comparando com a média das suas hunts pra dizer se a rotação vale a pena.',
+        text: 'Abra o Hunting Analyser antes do primeiro boss e, no fim, cole o export em "Registrar rotação". O app acha sozinho quais bosses você matou e separa só o loot que cai de boss (o dos monstros do caminho fica de fora). Você informa o preço de cada item no RubinOT (lembramos o último) e ele soma lucro por rotação, lucro por boss e tempo médio.',
       },
       {
         label: "Cooldowns",

@@ -21,7 +21,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     date: "2026-09-26",
     title: "Rotação de Bosses",
     description:
-      "Área nova no menu (Covil): catálogo com os bosses da TibiaWiki — vida, XP, cooldown, fraquezas e loot por raridade — separado em solo e time. Monte suas rotações, veja os melhores drops possíveis e o loot valioso que não é raro, registre cada rotação colando o Hunting Analyser e acompanhe lucro, lucro/h, drops e quando cada boss volta.",
+      "Área nova no menu (Covil): catálogo com os bosses da TibiaWiki — vida, XP, cooldown, fraquezas e loot por raridade — separado em solo e time. Monte suas rotações, veja os melhores drops possíveis e o loot valioso que não é raro, registre cada rotação colando o Hunting Analyser e acompanhe o lucro de cada rotação (só o loot que cai de boss, sem o dos monstros do caminho), lucro por boss, drops e quando cada boss volta.",
   },
   {
     id: "sidebar-menu",
