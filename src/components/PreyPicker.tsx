@@ -110,14 +110,16 @@ export function PreyPicker({
   );
 
   return (
-    <div>
+    // @container: as colunas dependem da largura do bloco, não da tela — na Nova sessão o picker
+    // fica numa coluna estreita mesmo com a tela larga (3 slots espremidos em ~100px cada).
+    <div className="@container">
       <p className="text-xs text-muted-foreground">
         Igual à janela <b className="text-foreground">Prey Creatures</b> do jogo: escolha a criatura
         de cada slot e o bônus que saiu pra ela, com as estrelas. Uma criatura por slot, um bônus
         por criatura.
       </p>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 @xl:grid-cols-3">
         {slots.map((slot, i) => {
           const locked = i >= PREY_UNLOCKED_SLOTS && !thirdUnlocked;
           const usedElsewhere = new Set(
