@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "session-wizard",
+    date: "2026-09-26",
+    title: "Nova sessão em passos",
+    description:
+      "Colou o Hunting Analyser, aparece o botão Adicionar sessão: um assistente te leva pelo nome da hunt (com as sugestões), Bounty Task (Sim/Não, no formato do Task Board do jogo: dificuldade, criatura, escudo Silver/Gold e XP da recompensa), Prey (Sim/Não, com os slots do jogo) e, no fim, level, equipamento e observação opcionais.",
+  },
+  {
     id: "prey-slots",
     date: "2026-09-26",
     title: "Prey do jeito do jogo",

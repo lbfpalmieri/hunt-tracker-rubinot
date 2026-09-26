@@ -166,6 +166,7 @@ function rowBounty(row: any): BountyInfo | null {
     difficulty: row.bounty_difficulty as BountyDifficulty,
     tier: row.bounty_tier as BountyTier,
     xp: row.bounty_xp == null ? null : Number(row.bounty_xp),
+    creature: row.bounty_creature ?? null,
   };
 }
 
@@ -499,6 +500,9 @@ export const useAppStore = create<State>()((set, get) => ({
         bounty_difficulty: input.bounty?.difficulty ?? null,
         bounty_tier: input.bounty?.tier ?? null,
         bounty_xp: input.bounty?.xp ?? null,
+        // Só manda a coluna quando tem valor: sessões sem criatura continuam salvando mesmo
+        // se a migration de bounty_creature ainda não tiver rodado.
+        ...(input.bounty?.creature ? { bounty_creature: input.bounty.creature } : {}),
         prey: input.prey ?? null,
         notes: input.notes?.trim() || null,
       })
@@ -531,6 +535,7 @@ export const useAppStore = create<State>()((set, get) => ({
       dbPatch.bounty_difficulty = patch.bounty?.difficulty ?? null;
       dbPatch.bounty_tier = patch.bounty?.tier ?? null;
       dbPatch.bounty_xp = patch.bounty?.xp ?? null;
+      if (patch.bounty?.creature) dbPatch.bounty_creature = patch.bounty.creature;
     }
     if (patch.prey !== undefined) dbPatch.prey = patch.prey ?? null;
     if (patch.notes !== undefined) dbPatch.notes = patch.notes?.trim() || null;

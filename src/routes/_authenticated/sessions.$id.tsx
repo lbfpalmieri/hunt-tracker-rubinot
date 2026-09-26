@@ -332,6 +332,7 @@ function SessionDetail() {
         <BountyEditor
           key={session.id}
           value={session.bounty}
+          creatures={h.kills.slice().sort((a, b) => b.count - a.count)}
           onSave={(next) => updateSession(session.id, { bounty: next })}
         />
       </div>

@@ -34,15 +34,23 @@ import {
   X,
   Swords,
   Skull,
+  Plus,
+  Crosshair,
+  ChevronRight,
 } from "lucide-react";
 import { PasteImageBox, blobToCompressedImage } from "@/components/PasteImage";
+import { BountyTaskPanel } from "@/components/BountyTaskPanel";
+import { BountyBadge } from "@/components/BountyBadge";
+import { PreyBadge } from "@/components/PreyBadge";
 import {
-  BOUNTY_DIFFICULTIES,
-  BOUNTY_TIERS,
-  parseXpAmount,
-  type BountyDifficulty,
-  type BountyTier,
-} from "@/lib/bounty";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { EMPTY_BOUNTY, bountyDraftValid, bountyFromDraft, type BountyDraft } from "@/lib/bounty-draft";
 import { PreyPicker } from "@/components/PreyPicker";
 import type { PreySlot } from "@/lib/prey";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
@@ -84,18 +92,20 @@ function ImportPage() {
   const huntPickerRef = useRef<HTMLDivElement>(null);
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
-  const [hasBounty, setHasBounty] = useState(false);
-  const [bountyDifficulty, setBountyDifficulty] = useState<BountyDifficulty | "">("");
-  const [bountyTier, setBountyTier] = useState<BountyTier | "">("");
-  const [bountyXpText, setBountyXpText] = useState("");
-  const bountyXp = parseXpAmount(bountyXpText);
-  const bountyXpInvalid = bountyXpText.trim().length > 0 && bountyXp == null;
-  const [hasPrey, setHasPrey] = useState(false);
+  // Assistente "Adicionar sessão": Hunt → Bounty → Prey → Finalizar. Bounty e Prey são perguntas
+  // Sim/Não (null = ainda não respondida).
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [step, setStep] = useState(0);
+  const [bountyAnswer, setBountyAnswer] = useState<"yes" | "no" | null>(null);
+  const [bountyDraft, setBountyDraft] = useState<BountyDraft>(EMPTY_BOUNTY);
+  const [preyAnswer, setPreyAnswer] = useState<"yes" | "no" | null>(null);
+  const hasBounty = bountyAnswer === "yes";
+  const hasPrey = preyAnswer === "yes";
   const [prey, setPrey] = useState<PreySlot[] | null>(null);
   const [preyValid, setPreyValid] = useState(true);
   const [notes, setNotes] = useState("");
-  const bountyReady = !hasBounty || Boolean(bountyDifficulty && bountyTier && !bountyXpInvalid);
-  const preyReady = !hasPrey || preyValid;
+  const bountyReady = !hasBounty || bountyDraftValid(bountyDraft);
+  const preyReady = !hasPrey || (preyValid && Boolean(prey?.length));
 
   // O Hunting Analyser mistura a XP perdida na morte com a XP ganha caçando —
   // se o jogador morreu durante a sessão, a Raw XP do bloco fica negativa. Em
@@ -177,7 +187,19 @@ function ImportPage() {
     if (el && el.closest("input, textarea, [contenteditable='true']")) return;
     if (hasImageItem(e.clipboardData?.items)) {
       e.preventDefault();
-      gearNotice();
+      // O campo de equipamento só aparece no último passo do assistente — então o print colado
+      // na tela vai direto pra sessão aqui.
+      const file = Array.from(e.clipboardData?.items ?? [])
+        .find((it) => it.type.startsWith("image/"))
+        ?.getAsFile();
+      if (file) {
+        blobToCompressedImage(file)
+          .then((img) => {
+            setGearUrl(img);
+            gearNotice();
+          })
+          .catch(() => toast.error("Não consegui ler a imagem colada."));
+      }
       return;
     }
     const text = e.clipboardData?.getData("text") ?? "";
@@ -216,7 +238,10 @@ function ImportPage() {
 
   // Ctrl+V em qualquer lugar da tela (fora de campos de texto) já vai pro bloco correto.
   useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => handlePasteEvent(e);
+    // Com o assistente aberto, o Ctrl+V é dele (equipamento no último passo) — não reencaminha blocos.
+    const onPaste = (e: ClipboardEvent) => {
+      if (!wizardOpen) handlePasteEvent(e);
+    };
     document.addEventListener("paste", onPaste);
     return () => document.removeEventListener("paste", onPaste);
   });
@@ -322,6 +347,13 @@ function ImportPage() {
     parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady,
   );
 
+  const stepOk = [
+    Boolean(selectedHuntName),
+    bountyAnswer !== null && bountyReady,
+    preyAnswer !== null && preyReady,
+    true,
+  ];
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const handleSave = async () => {
@@ -352,10 +384,7 @@ function ImportPage() {
         misc: parsed.misc,
         gearUrl,
         isPublic,
-        bounty:
-          hasBounty && bountyDifficulty && bountyTier
-            ? { difficulty: bountyDifficulty, tier: bountyTier, xp: bountyXp }
-            : null,
+        bounty: hasBounty ? bountyFromDraft(bountyDraft) : null,
         prey: hasPrey ? prey : null,
         notes: notes.trim() || null,
       });
@@ -597,7 +626,7 @@ function ImportPage() {
             <div className="mb-4 flex items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 font-display text-sm font-bold uppercase tracking-wider">
                 <Sparkles className="h-4 w-4 text-rubi-gold" />
-                Detalhes da sessão
+                Nova sessão
               </h2>
               {activeChar && (
                 <span
@@ -610,32 +639,52 @@ function ImportPage() {
               )}
             </div>
 
-            {activeChar && (
-              <div
-                className={
-                  "mb-4 rounded-xl border p-3 " +
-                  (activeCharLevel == null
-                    ? "border-rubi-gold/40 bg-rubi-gold/[0.05]"
-                    : "border-border/60 bg-background/30")
-                }
-              >
-                <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  <Swords className="h-3.5 w-3.5 text-rubi-blue" />
-                  Level de {activeChar.name} (opcional)
-                </div>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  {activeCharLevel == null
-                    ? "Ainda não registramos o level desse personagem — preencha aqui, sem precisar ir em Meu rendimento."
-                    : `Registrado: Level ${activeCharLevel}. Atualize aqui rapidinho depois dessa sessão.`}
+            {!parsed.hunting ? (
+              <p className="text-sm text-muted-foreground">
+                Cole o <b className="text-foreground">Hunting Analyser</b> (obrigatório). Input e
+                Miscellaneous são opcionais.
+              </p>
+            ) : !durationOk ? (
+              <p className="rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
+                Não foi possível identificar a duração da sessão. Cole o Hunting Analyser completo,
+                incluindo as linhas "Session data: From ... to ..." e "Session length: HH:MMh".
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Hunting Analyser pronto. Agora é só configurar: nome da hunt, Bounty Task, Prey e,
+                  se quiser, level e equipamento.
                 </p>
-                <div className="mt-2">
-                  {/* key força remontar ao trocar de personagem — sem isso o input ficava com o
-                      valor (e o level) do personagem anterior mesmo depois da troca. */}
-                  <LevelQuickAdd key={effectiveCharId} characterId={effectiveCharId} currentLevel={activeCharLevel} />
-                </div>
-              </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(0);
+                    setWizardOpen(true);
+                  }}
+                  className="group/save relative mt-4 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-rubi-gold via-rubi-gold to-rubi-blue px-4 py-3 font-display text-sm font-bold uppercase tracking-wider text-background shadow-glow-gold transition-all hover:brightness-110 active:scale-[0.98]"
+                >
+                  <Plus className="h-4 w-4" /> Adicionar sessão
+                </button>
+              </>
             )}
+          </div>
+        </div>
+      </div>
 
+      <Dialog open={wizardOpen} onOpenChange={(o) => !saving && setWizardOpen(o)}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">Adicionar sessão</DialogTitle>
+            <DialogDescription>
+              {activeChar?.name}
+              {huntingSummary ? ` · ${huntingSummary}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <WizardSteps step={step} onJump={(i) => i < step && setStep(i)} />
+
+          {step === 0 && (
+            <div>
             <div>
               <span className="flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-wider text-rubi-gold">
                 <MapPin className="h-3.5 w-3.5" />
@@ -795,7 +844,96 @@ function ImportPage() {
                 </p>
               )}
             </div>
+            </div>
+          )}
 
+          {step === 1 && (
+            <div className="space-y-4">
+              <YesNo
+                icon={Trophy}
+                question="Essa sessão teve Bounty Task?"
+                hint="A XP da recompensa da task entra no Hunting Analyser — separamos ela da Raw XP da hunt."
+                value={bountyAnswer}
+                onChange={(v) => {
+                  setBountyAnswer(v);
+                  if (v === "no") setStep(2);
+                }}
+              />
+              {hasBounty && (
+                <BountyTaskPanel
+                  creatures={(parsed.hunting?.kills ?? []).slice().sort((a, b) => b.count - a.count)}
+                  value={bountyDraft}
+                  onChange={setBountyDraft}
+                />
+              )}
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4">
+              <YesNo
+                icon={Crosshair}
+                question="Usou Prey nessa sessão?"
+                hint="Prey aumenta XP, loot, dano ou defesa — marcar ajuda a comparar sessões com e sem bônus."
+                value={preyAnswer}
+                onChange={(v) => {
+                  setPreyAnswer(v);
+                  if (v === "no") setStep(3);
+                }}
+              />
+              {hasPrey && (
+                <PreyPicker
+                  inline
+                  creatures={(parsed.hunting?.kills ?? [])
+                    .slice()
+                    .sort((a, b) => b.count - a.count)
+                    .map((k) => k.name)}
+                  value={prey}
+                  onChange={(next, valid) => {
+                    setPrey(next);
+                    setPreyValid(valid);
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {step === 3 && (
+            <div>
+              <div className="mb-4 flex flex-wrap gap-2 text-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1">
+                  <MapPin className="h-3.5 w-3.5 text-rubi-gold" /> {selectedHuntName}
+                </span>
+                {hasBounty && bountyFromDraft(bountyDraft) && (
+                  <BountyBadge bounty={bountyFromDraft(bountyDraft)!} />
+                )}
+                {hasPrey && prey && <PreyBadge prey={prey} detailed />}
+              </div>
+            {activeChar && (
+              <div
+                className={
+                  "mb-4 rounded-xl border p-3 " +
+                  (activeCharLevel == null
+                    ? "border-rubi-gold/40 bg-rubi-gold/[0.05]"
+                    : "border-border/60 bg-background/30")
+                }
+              >
+                <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <Swords className="h-3.5 w-3.5 text-rubi-blue" />
+                  Level de {activeChar.name} (opcional)
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {activeCharLevel == null
+                    ? "Ainda não registramos o level desse personagem — preencha aqui, sem precisar ir em Meu rendimento."
+                    : `Registrado: Level ${activeCharLevel}. Atualize aqui rapidinho depois dessa sessão.`}
+                </p>
+                <div className="mt-2">
+                  {/* key força remontar ao trocar de personagem — sem isso o input ficava com o
+                      valor (e o level) do personagem anterior mesmo depois da troca. */}
+                  <LevelQuickAdd key={effectiveCharId} characterId={effectiveCharId} currentLevel={activeCharLevel} />
+                </div>
+              </div>
+            )}
             <div className="mt-4">
               <span className="text-xs font-medium text-muted-foreground">
                 Equipamento (opcional)
@@ -807,7 +945,16 @@ function ImportPage() {
                 className="mt-1"
               />
             </div>
-
+            <div className="mt-4">
+              <label className="text-xs font-medium text-muted-foreground">Observação (opcional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ex: testei essa build de runas, rendeu bem no prey de dano"
+                rows={2}
+                className="mt-1 w-full resize-none rounded-lg border border-border bg-input px-3 py-2 text-sm placeholder:text-muted-foreground/60"
+              />
+            </div>
             <label className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
               <input
                 type="checkbox"
@@ -820,127 +967,6 @@ function ImportPage() {
                 vocação, hunt e equipamento ficam visíveis para outros jogadores).
               </span>
             </label>
-
-            <div className="mt-4 rounded-xl border border-rubi-gold/30 bg-rubi-gold/[0.04] p-3">
-              <label className="flex items-start gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={hasBounty}
-                  onChange={(e) => setHasBounty(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[var(--rubi-gold)]"
-                />
-                <span className="flex items-center gap-1.5">
-                  <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
-                  Esta sessão incluiu <b className="text-foreground">bônus de Bounty Task</b>
-                </span>
-              </label>
-
-              {hasBounty && (
-                <div className="mt-3 space-y-3">
-                  <div>
-                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Dificuldade
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                      {BOUNTY_DIFFICULTIES.map((d) => (
-                        <button
-                          key={d.value}
-                          type="button"
-                          title={d.hint}
-                          onClick={() => setBountyDifficulty(d.value)}
-                          className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
-                            bountyDifficulty === d.value
-                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
-                              : "border-border/60 text-muted-foreground hover:border-rubi-gold/50"
-                          }`}
-                        >
-                          {d.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Tipo da task
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {BOUNTY_TIERS.map((t) => (
-                        <button
-                          key={t.value}
-                          type="button"
-                          onClick={() => setBountyTier(t.value)}
-                          className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
-                            bountyTier === t.value
-                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
-                              : "border-border/60 text-muted-foreground hover:border-rubi-gold/50"
-                          }`}
-                        >
-                          {t.label}
-                          <span className="mt-0.5 block text-[10px] font-normal opacity-70">{t.hint}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      XP de bônus (opcional)
-                    </label>
-                    <input
-                      value={bountyXpText}
-                      onChange={(e) => setBountyXpText(e.target.value)}
-                      placeholder="ex: 8kk ou 8000000"
-                      className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-rubi-gold"
-                    />
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {bountyXpInvalid
-                        ? "Valor inválido — use 8kk, 8m ou 8000000."
-                        : bountyXp != null
-                          ? `Será descontado da Raw XP: ${fmtNum(bountyXp)}`
-                          : "Se você não souber o valor, deixe vazio: a sessão fica marcada como Bounty e não entra nas médias de Raw XP/h."}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-3 rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.04] p-3">
-              <label className="flex items-start gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={hasPrey}
-                  onChange={(e) => setHasPrey(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[var(--rubi-blue)]"
-                />
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-rubi-blue" />
-                  Esta sessão teve <b className="text-foreground">Prey</b> ativa
-                </span>
-              </label>
-
-              {hasPrey && (
-                <div className="mt-3">
-                  <PreyPicker
-                    creatures={(parsed.hunting?.kills ?? []).slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
-                    value={null}
-                    onChange={(next, valid) => { setPrey(next); setPreyValid(valid); }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="mt-4">
-              <label className="text-xs font-medium text-muted-foreground">Observação (opcional)</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ex: testei essa build de runas, rendeu bem no prey de dano"
-                rows={2}
-                className="mt-1 w-full resize-none rounded-lg border border-border bg-input px-3 py-2 text-sm placeholder:text-muted-foreground/60"
-              />
-            </div>
-
             <button
               onClick={handleSave}
               disabled={!canSave || saving}
@@ -975,11 +1001,37 @@ function ImportPage() {
                         : "Selecione a dificuldade e o tipo da Bounty Task."}
               </p>
             )}
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="mt-3 text-xs text-muted-foreground hover:text-foreground hover:underline"
+              >
+                ← Voltar
+              </button>
+            </div>
+          )}
 
-          </div>
-
-        </div>
-      </div>
+          {step < 3 && (
+            <DialogFooter className="gap-2 sm:justify-between">
+              <button
+                type="button"
+                onClick={() => (step === 0 ? setWizardOpen(false) : setStep(step - 1))}
+                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                {step === 0 ? "Cancelar" : "Voltar"}
+              </button>
+              <button
+                type="button"
+                disabled={!stepOk[step]}
+                onClick={() => setStep(step + 1)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rubi-blue px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+              >
+                Próximo <ChevronRight className="h-4 w-4" />
+              </button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {!huntingText && (
         <div className="mt-8 flex items-start gap-3 rounded-xl border border-border/60 bg-surface/40 p-4 text-sm text-muted-foreground">
@@ -1170,6 +1222,85 @@ function PreviewRow({ label, value, positive }: { label: string; value: string; 
       >
         {value}
       </dd>
+    </div>
+  );
+}
+
+const WIZARD_STEPS = ["Hunt", "Bounty Task", "Prey", "Finalizar"];
+
+function WizardSteps({ step, onJump }: { step: number; onJump: (i: number) => void }) {
+  return (
+    <ol className="mb-2 grid grid-cols-4 gap-1.5">
+      {WIZARD_STEPS.map((label, i) => (
+        <li key={label}>
+          <button
+            type="button"
+            onClick={() => onJump(i)}
+            disabled={i >= step}
+            className="w-full text-left disabled:cursor-default"
+          >
+            <span
+              className={
+                "block h-1 rounded-full " +
+                (i < step ? "bg-rubi-gold" : i === step ? "bg-rubi-blue" : "bg-muted")
+              }
+            />
+            <span
+              className={
+                "mt-1 block truncate text-[11px] font-semibold " +
+                (i === step ? "text-foreground" : "text-muted-foreground")
+              }
+            >
+              {i + 1}. {label}
+            </span>
+          </button>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function YesNo({
+  icon: Icon,
+  question,
+  hint,
+  value,
+  onChange,
+}: {
+  icon: typeof Trophy;
+  question: string;
+  hint: string;
+  value: "yes" | "no" | null;
+  onChange: (v: "yes" | "no") => void;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-surface/60 p-4">
+      <div className="flex items-start gap-3">
+        <Icon className="mt-0.5 h-5 w-5 flex-none text-rubi-gold" />
+        <div className="min-w-0">
+          <div className="font-display text-base font-bold">{question}</div>
+          <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {(["yes", "no"] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => onChange(v)}
+            className={
+              "rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors " +
+              (value === v
+                ? v === "yes"
+                  ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                  : "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                : "border-border text-muted-foreground hover:border-rubi-blue/50 hover:text-foreground")
+            }
+          >
+            {v === "yes" ? "Sim" : "Não"}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

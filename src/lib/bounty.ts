@@ -1,4 +1,10 @@
-/** Bounty Task metadata attached to a hunt session. */
+/**
+ * Bounty Task (Task Board, Update de Inverno 2025 — TibiaWiki BR "Bounty Tasks"): o jogador escolhe
+ * a dificuldade, o Task Board oferece 3 criaturas, ele pega uma e ao matar a quantidade pedida
+ * ganha XP + Bounty Points + 1 Reroll Token. Tasks Silver/Gold (escudo na faixa do nome) pedem mais
+ * abates e dão mais recompensa. A XP da recompensa entra no Hunting Analyser — por isso ela é
+ * descontada da Raw XP da sessão.
+ */
 export type BountyDifficulty = "beginner" | "adept" | "expert" | "master";
 export type BountyTier = "normal" | "silver" | "gold";
 
@@ -7,7 +13,27 @@ export interface BountyInfo {
   tier: BountyTier;
   /** Raw XP granted by the bounty completion bonus. Null when unknown. */
   xp: number | null;
+  /** Criatura da task (coluna bounty_creature). Ausente em sessões antigas. */
+  creature?: string | null;
 }
+
+/** Bounty Points base de cada dificuldade (tasks Normal; Silver/Gold dão mais, valor não confirmado). */
+export const BOUNTY_BASE_POINTS: Record<BountyDifficulty, number> = {
+  beginner: 3,
+  adept: 7,
+  expert: 16,
+  master: 27,
+};
+
+/** Criaturas que cada dificuldade oferece (classificação do Bestiário). */
+export const BOUNTY_DIFFICULTY_POOL: Record<BountyDifficulty, string> = {
+  beginner: "criaturas fáceis do Bestiário",
+  adept: "fáceis e médias",
+  expert: "médias e difíceis",
+  master: "difíceis e desafiadoras",
+};
+
+export const BOUNTY_TALISMAN_IMAGE = "https://www.tibiawiki.com.br/images/d/de/Bounty_Talisman.gif";
 
 export const BOUNTY_DIFFICULTIES: { value: BountyDifficulty; label: string; hint: string }[] = [
   { value: "beginner", label: "Beginner", hint: "50–110 abates · 3 BP" },
@@ -18,8 +44,8 @@ export const BOUNTY_DIFFICULTIES: { value: BountyDifficulty; label: string; hint
 
 export const BOUNTY_TIERS: { value: BountyTier; label: string; hint: string }[] = [
   { value: "normal", label: "Normal", hint: "sem escudo" },
-  { value: "silver", label: "Silver", hint: "escudo com 1 estrela" },
-  { value: "gold", label: "Gold", hint: "escudo com 2 estrelas" },
+  { value: "silver", label: "Silver", hint: "escudo prata · mais abates" },
+  { value: "gold", label: "Gold", hint: "escudo dourado · ainda mais" },
 ];
 
 export function bountyDifficultyLabel(d: string): string {

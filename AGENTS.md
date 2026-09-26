@@ -35,7 +35,8 @@ diferentes coexistem no item; mesmo tipo = renovação. Prey (prey.ts): 3 slots 
 Dano 7–25% (+2), Redução 12–30% (+2), XP/Loot 13–40% (+3). Seletor = PreyPicker (layout da janela do jogo).
 
 Telas: sessions.tsx (20/pág) e sessions.$id.tsx; import.tsx (colar export do Hunting
-Analyser, parser.ts, sem OCR); imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
+Analyser, parser.ts, sem OCR; salvar = assistente em Dialog: Hunt → Bounty (BountyTaskPanel,
+estilo Task Board, coluna bounty_creature) → Prey (PreyPicker inline) → Finalizar); imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
 (linked_task_progress, barras geral/por sala, marcar tudo); tools.compare.tsx (até 4
 hunts) e tools.comparisons.tsx (salvos privados); community.index.tsx (feed público,
 vocações em grade); feedback.tsx (tickets com imagem no bucket feedback-attachments,

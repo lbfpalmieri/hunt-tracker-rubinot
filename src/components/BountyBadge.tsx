@@ -8,14 +8,14 @@ export function BountyBadge({
   className = "",
   showXp = false,
 }: {
-  bounty: { difficulty: string; tier: string; xp?: number | null };
+  bounty: { difficulty: string; tier: string; xp?: number | null; creature?: string | null };
   className?: string;
   showXp?: boolean;
 }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-gold ${className}`}
-      title={`Bônus de Bounty Task — ${bountyLabel(bounty)}`}
+      title={`Bônus de Bounty Task — ${bountyLabel(bounty)}${bounty.creature ? ` (${bounty.creature})` : ""}`}
     >
       <Trophy className="h-3 w-3" />
       Bounty · {bountyLabel(bounty)}
