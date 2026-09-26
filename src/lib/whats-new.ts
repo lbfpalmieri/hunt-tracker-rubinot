@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "levels-in-period",
+    date: "2026-09-26",
+    title: "Níveis no período",
+    description:
+      "Em Meu rendimento → Visão geral, um card novo mostra quantos níveis você subiu no período escolhido (hoje, semana, mês, tudo ou personalizado), com base nos níveis que você marca.",
+  },
+  {
     id: "boss-rotation",
     date: "2026-09-26",
     title: "Rotação de Bosses",

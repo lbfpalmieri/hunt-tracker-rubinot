@@ -18,7 +18,7 @@ import {
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateSessions, balanceSince } from "@/lib/performance";
 import { aggregateImbuements } from "@/lib/imbuements";
-import { type Period, PERIODS, periodRange, formatRange, filterByPeriod } from "@/lib/period";
+import { type Period, PERIODS, periodRange, formatRange, filterByPeriod, fmtDay } from "@/lib/period";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { huntRawXp, parseXpAmount } from "@/lib/bounty";
 import { detectDeathLoss, totalXpLost } from "@/lib/deaths";
@@ -42,7 +42,9 @@ import {
   AlertTriangle,
   Receipt,
   Skull,
+  ChevronsUp,
 } from "lucide-react";
+import { levelGainInRange } from "@/lib/level";
 
 const EvolutionChart = lazy(() => import("@/components/charts/EvolutionChart"));
 const LevelChart = lazy(() => import("@/components/charts/LevelChart"));
@@ -136,6 +138,10 @@ function RendimentoPage() {
     [levelSnapshots, active],
   );
   const currentLevel = myLevels[myLevels.length - 1] ?? null;
+  const levelGain = useMemo(
+    () => (active ? levelGainInRange(levelSnapshots, active.id, range) : null),
+    [levelSnapshots, active, range],
+  );
   const levelChartData = useMemo(
     () => myLevels.map((l) => ({ date: fmtDate(l.createdAt), level: l.level })),
     [myLevels],
@@ -554,7 +560,29 @@ function RendimentoPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                <StatCard
+                  label="Níveis no período"
+                  value={levelGain ? `${levelGain.gained >= 0 ? "+" : ""}${levelGain.gained}` : "—"}
+                  hint={
+                    levelGain ? (
+                      `de ${levelGain.from} para ${levelGain.to}` +
+                      (levelGain.fromBeforeRange
+                        ? ` · contando desde o registro de ${fmtDay(new Date(levelGain.fromAt))}`
+                        : "")
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setTab("level")}
+                        className="text-left underline decoration-dotted hover:text-foreground"
+                      >
+                        marque seu nível pra ver aqui
+                      </button>
+                    )
+                  }
+                  icon={ChevronsUp}
+                  accent={levelGain && levelGain.gained > 0 ? "success" : "muted"}
+                />
                 <StatCard
                   label="Raw XP / hora"
                   value={fmtNum(agg.rawXph)}
