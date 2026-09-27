@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "setup-presets-wheel",
+    date: "2026-09-26",
+    title: "Setup: presets, Wheel e charms mais fáceis",
+    description:
+      "Salve o setup como preset do personagem (ex.: Soulbleeder T0) e nas próximas sessões é só escolher. A Wheel of Destiny agora mostra os perks de Convicção e Revelação da sua vocação com os ícones do jogo — toque pra subir o estágio. Nos charms aparecem só os que ativaram no Miscellaneous: é só tocar nas criaturas em que cada um estava.",
+  },
+  {
     id: "session-setup",
     date: "2026-09-26",
     title: "Setup da sessão",

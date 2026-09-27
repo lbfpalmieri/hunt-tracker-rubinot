@@ -14,12 +14,14 @@ import {
 export function SetupEditor({
   value,
   vocation,
+  characterId,
   creatures,
   misc,
   onSave,
 }: {
   value: SessionSetup | null;
   vocation: string | null | undefined;
+  characterId: string | null;
   creatures: string[];
   misc: { charm?: Record<string, number> } | null;
   onSave: (next: SessionSetup | null) => void | Promise<void>;
@@ -66,8 +68,9 @@ export function SetupEditor({
         value={draft}
         onChange={setDraft}
         vocation={setupVocation(vocation)}
+        characterId={characterId}
         creatures={creatures}
-        suggestedCharms={charmsFromMisc(misc)}
+        activatedCharms={charmsFromMisc(misc)}
       />
       <div className="mt-4 flex gap-2">
         <button

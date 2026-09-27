@@ -1,10 +1,11 @@
 /**
  * Setup da sessão — campos ESTRUTURADOS (nada de texto livre além do nome da arma) pra jogador
- * comparar o que usou em cada hunt: arma, skills, Wheel, stance, magias aumentadas e Runas de
- * Charm. Veio do pedido de um jogador que escrevia isso nas observações (que são privadas); em
- * texto livre não dava pra mostrar na Comunidade sem abrir porta pra troll, então tudo aqui é
- * escolhido de listas da TibiaWiki BR (conferidas em 2026-09-26: páginas "Charms", categorias
- * "Magias de <Vocação>" e "Magias de Stance"). Salvo em hunt_sessions.setup (jsonb).
+ * comparar o que usou em cada hunt: arma, skills, Wheel of Destiny, postura e Runas de Charm.
+ * Veio do pedido de um jogador que escrevia isso nas observações (que são privadas); em texto
+ * livre não dava pra mostrar na Comunidade sem abrir porta pra troll, então tudo aqui é escolhido
+ * de listas da TibiaWiki BR (conferidas em 2026-09-26: página "Charms", categorias "Magias de
+ * Stance", "Habilidades de Convicção/Revelação" da Roda do Destino). Salvo em hunt_sessions.setup
+ * (jsonb). A parte "fixa" (sem charms) pode virar preset do personagem — ver setup-presets.ts.
  */
 
 export type SetupVocation = "knight" | "paladin" | "sorcerer" | "druid" | "monk";
@@ -16,10 +17,16 @@ export interface SetupCharm {
   creature: string | null;
 }
 
-export interface SetupSpell {
-  spell: string;
-  /** Nível do aumento pela Wheel of Destiny (Augmented 1/2). */
+/** Perk de Convicção da Wheel: "Augmented X" tem estágio I/II; os outros só ligado (1). */
+export interface SetupConviction {
+  perk: string;
   level: 1 | 2;
+}
+
+/** Habilidade de Revelação da Wheel (estágios 1–3). */
+export interface SetupRevelation {
+  perk: string;
+  stage: 1 | 2 | 3;
 }
 
 export interface SessionSetup {
@@ -30,10 +37,11 @@ export interface SessionSetup {
   magicLevel: number | null;
   /** % de dano crítico extra (ex. 14.9). */
   critDamage: number | null;
-  /** Wheel of Destiny — pontos em "Dano e cura". */
+  /** Wheel of Destiny — bônus de "Dano e cura". */
   wheelDmgHeal: number | null;
   stance: string | null;
-  spells: SetupSpell[];
+  conviction: SetupConviction[];
+  revelation: SetupRevelation[];
   charms: SetupCharm[];
 }
 
@@ -45,11 +53,14 @@ export const EMPTY_SETUP: SessionSetup = {
   critDamage: null,
   wheelDmgHeal: null,
   stance: null,
-  spells: [],
+  conviction: [],
+  revelation: [],
   charms: [],
 };
 
 const WIKI = "https://www.tibiawiki.com.br/images";
+
+export const WHEEL_ICON = `${WIKI}/f/fb/Wheel_of_Destiny_Icon.gif`;
 
 /** Runas de Charm (Major: Charm Points; Minor: Charm Echoes) com os ícones da wiki. */
 export const CHARMS: { name: string; kind: "major" | "minor"; icon: string }[] = [
@@ -85,7 +96,7 @@ export const CHARM_LEVEL_LABEL: Record<1 | 2 | 3, string> = { 1: "Nv1", 2: "Nv2"
 /**
  * "Postura" = magia de buff que fica ativa (só uma por vez). Na wiki: paladino/sorcerer/druid em
  * "Magias de Stance"; knight são Blood Rage (ofensiva) e Protector (defensiva), marcadas como
- * "Suporte, Focus"; monk são as Virtudes (mesmo grupo de cooldown).
+ * "Suporte, Focus"; monk são as Virtudes (mesmo grupo de cooldown). Ícone = "<Nome>.gif" (GameIcon).
  */
 export const STANCES: Record<SetupVocation, string[]> = {
   paladin: ["Sharpshooter", "Divine Defiance"],
@@ -102,102 +113,75 @@ export const STANCES: Record<SetupVocation, string[]> = {
 };
 
 /**
- * Magias de combate de cada vocação (as que a Wheel aumenta / que mudam o resultado da hunt).
- * Utilitárias (luz, corda, conjurar munição, curas de condição, invocar familiar...) ficam de fora.
+ * Wheel of Destiny — perks de Convicção por vocação ("Habilidades de Convicção" na wiki). Os
+ * "Augmented X" têm 2 estágios; os outros (Battle Healing, Ballistic Mastery...) são liga/desliga.
+ * Ícone de cada um = "<Nome>.gif" na wiki (GameIcon resolve).
  */
-export const COMBAT_SPELLS: Record<SetupVocation, string[]> = {
-  paladin: [
-    "Avatar of Light",
-    "Divine Barrage",
-    "Divine Caldera",
-    "Divine Dazzle",
-    "Divine Empowerment",
-    "Divine Grenade",
-    "Divine Healing",
-    "Divine Missile",
-    "Ethereal Barrage",
-    "Ethereal Spear",
-    "Holy Flash",
-    "Intense Recovery",
-    "Salvation",
-    "Strong Ethereal Spear",
-  ],
+export const WHEEL_CONVICTION: Record<SetupVocation, string[]> = {
   knight: [
-    "Annihilation",
-    "Avatar of Steel",
-    "Berserk",
-    "Brutal Strike",
-    "Chivalrous Challenge",
-    "Combat Mastery",
-    "Executioner's Throw",
-    "Fair Wound Cleansing",
-    "Fierce Berserk",
-    "Front Sweep",
-    "Groundshaker",
-    "Intense Recovery",
-    "Intense Wound Cleansing",
-    "Inflict Wound",
-    "Whirlwind Throw",
+    "Battle Healing",
+    "Battle Instinct",
+    "Augmented Shield Slam",
+    "Augmented Fierce Berserk",
+    "Augmented Front Sweep",
+    "Augmented Groundshaker",
+    "Augmented Intense Wound Cleansing",
   ],
+  paladin: [
+    "Ballistic Mastery",
+    "Positional Tactics",
+    "Augmented Divine Dazzle",
+    "Augmented Divine Caldera",
+    "Augmented Ethereal Barrage",
+    "Augmented Strong Ethereal Spear",
+    "Augmented Divine Barrage",
+  ],
+  sorcerer: [
+    "Focus Mastery",
+    "Runic Mastery",
+    "Augmented Focus Spells",
+    "Augmented Great Fire Wave",
+    "Augmented Death Echo",
+    "Augmented Energy Wave",
+    "Augmented Special Spells",
+  ],
+  druid: [
+    "Healing Link",
+    "Runic Mastery",
+    "Augmented Heal Friend",
+    "Augmented Nature's Embrace",
+    "Augmented Strong Ice Wave",
+    "Augmented Mass Healing",
+    "Augmented Terra Wave",
+    "Augmented Forked Spells",
+  ],
+  monk: [
+    "Guiding Presence",
+    "Sanctuary",
+    "Augmented Flurry of Blows",
+    "Augmented Mystic Repulse",
+    "Augmented Thousand Fist Blows",
+    "Augmented Chained Penance",
+    "Augmented Mass Spirit Mend",
+  ],
+};
+
+/** Revelação por vocação ("Habilidades de Revelação"); Gift of Life vale pra todas. Estágios 1–3. */
+export const WHEEL_REVELATION: Record<SetupVocation, string[]> = {
+  knight: ["Avatar of Steel", "Executioner's Throw", "Combat Mastery", "Gift of Life"],
+  paladin: ["Avatar of Light", "Divine Grenade", "Divine Empowerment", "Gift of Life"],
   sorcerer: [
     "Avatar of Storm",
     "Beam Mastery",
-    "Death Strike",
-    "Energy Beam",
-    "Energy Wave",
-    "Expose Weakness",
-    "Fire Wave",
-    "Great Death Beam",
-    "Great Energy Beam",
-    "Great Fire Wave",
-    "Hell's Core",
-    "Rage of the Skies",
-    "Sap Strength",
-    "Strong Energy Strike",
-    "Strong Flame Strike",
-    "Ultimate Energy Strike",
-    "Ultimate Flame Strike",
+    "Drain Body",
+    "Lord of Destruction",
+    "Gift of Life",
   ],
-  druid: [
-    "Avatar of Nature",
-    "Blessing of the Grove",
-    "Eternal Winter",
-    "Forked Glacier",
-    "Forked Thorns",
-    "Heal Friend",
-    "Ice Burst",
-    "Mass Healing",
-    "Nature's Embrace",
-    "Strong Ice Strike",
-    "Strong Ice Wave",
-    "Strong Terra Strike",
-    "Terra Burst",
-    "Terra Wave",
-    "Twin Bursts",
-    "Ultimate Ice Strike",
-    "Ultimate Terra Strike",
-    "Wrath of Nature",
-  ],
-  monk: [
-    "Avatar of Balance",
-    "Balanced Brawl",
-    "Chained Penance",
-    "Devastating Knockout",
-    "Double Jab",
-    "Flurry of Blows",
-    "Focus Harmony",
-    "Focus Serenity",
-    "Forceful Uppercut",
-    "Greater Flurry of Blows",
-    "Greater Tiger Clash",
-    "Mass Spirit Mend",
-    "Mystic Repulse",
-    "Spirit Mend",
-    "Spiritual Outburst",
-    "Sweeping Takedown",
-    "Tiger Clash",
-  ],
+  druid: ["Avatar of Nature", "Blessing of the Grove", "Twin Bursts", "Gift of Life"],
+  monk: ["Avatar of Balance", "Spiritual Outburst", "Ascetic", "Gift of Life"],
 };
+
+export const convictionMaxLevel = (perk: string): 1 | 2 => (perk.startsWith("Augmented ") ? 2 : 1);
 
 export const SKILL_LABEL: Record<SetupVocation, string | null> = {
   paladin: "Distance",
@@ -219,8 +203,9 @@ export function setupVocation(vocation: string | null | undefined): SetupVocatio
 }
 
 const KNOWN_CHARMS = new Set(CHARMS.map((c) => c.name));
-const KNOWN_SPELLS = new Set(Object.values(COMBAT_SPELLS).flat());
 const KNOWN_STANCES = new Set(Object.values(STANCES).flat());
+const KNOWN_CONVICTION = new Set(Object.values(WHEEL_CONVICTION).flat());
+const KNOWN_REVELATION = new Set(Object.values(WHEEL_REVELATION).flat());
 
 const num = (v: unknown, min: number, max: number): number | null => {
   const n =
@@ -243,10 +228,20 @@ export function cleanWeaponName(v: unknown): string | null {
   return s || null;
 }
 
+const objs = (v: unknown) =>
+  (Array.isArray(v) ? v : []).filter(
+    (x): x is Record<string, unknown> => !!x && typeof x === "object",
+  );
+
 /** Limpa o que veio do banco/formulário: só valores das listas conhecidas e números em faixa. */
 export function normalizeSetup(value: unknown): SessionSetup | null {
   if (!value || typeof value !== "object") return null;
   const v = value as Record<string, unknown>;
+  // Primeira versão (poucas horas no ar) guardava "spells" — viram Convicção "Augmented X".
+  const legacy = objs(v.spells).map((s) => ({
+    perk: `Augmented ${String(s.spell)}`,
+    level: s.level,
+  }));
   const setup: SessionSetup = {
     weapon: cleanWeaponName(v.weapon),
     weaponTier: num(v.weaponTier, 0, 10),
@@ -255,13 +250,23 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
     critDamage: num(v.critDamage, 0, 500),
     wheelDmgHeal: num(v.wheelDmgHeal, 0, 500),
     stance: typeof v.stance === "string" && KNOWN_STANCES.has(v.stance) ? v.stance : null,
-    spells: (Array.isArray(v.spells) ? v.spells : [])
-      .filter((s): s is Record<string, unknown> => !!s && typeof s === "object")
-      .filter((s) => typeof s.spell === "string" && KNOWN_SPELLS.has(s.spell))
-      .map((s) => ({ spell: s.spell as string, level: (s.level === 2 ? 2 : 1) as 1 | 2 }))
+    conviction: [...objs(v.conviction), ...legacy]
+      .filter((c) => typeof c.perk === "string" && KNOWN_CONVICTION.has(c.perk))
+      .map((c) => ({
+        perk: c.perk as string,
+        level: (c.level === 2 && convictionMaxLevel(c.perk as string) === 2 ? 2 : 1) as 1 | 2,
+      }))
+      .filter((c, i, arr) => arr.findIndex((x) => x.perk === c.perk) === i)
       .slice(0, 12),
-    charms: (Array.isArray(v.charms) ? v.charms : [])
-      .filter((c): c is Record<string, unknown> => !!c && typeof c === "object")
+    revelation: objs(v.revelation)
+      .filter((r) => typeof r.perk === "string" && KNOWN_REVELATION.has(r.perk))
+      .map((r) => ({
+        perk: r.perk as string,
+        stage: (r.stage === 3 ? 3 : r.stage === 2 ? 2 : 1) as 1 | 2 | 3,
+      }))
+      .filter((r, i, arr) => arr.findIndex((x) => x.perk === r.perk) === i)
+      .slice(0, 6),
+    charms: objs(v.charms)
       .filter((c) => typeof c.charm === "string" && KNOWN_CHARMS.has(c.charm))
       .map((c) => ({
         charm: c.charm as string,
@@ -271,7 +276,7 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
             ? c.creature.trim().slice(0, 40)
             : null,
       }))
-      .slice(0, 12),
+      .slice(0, 24),
   };
   return isEmptySetup(setup) ? null : setup;
 }
@@ -286,21 +291,25 @@ export function isEmptySetup(s: SessionSetup | null | undefined): boolean {
     s.critDamage == null &&
     s.wheelDmgHeal == null &&
     !s.stance &&
-    s.spells.length === 0 &&
+    s.conviction.length === 0 &&
+    s.revelation.length === 0 &&
     s.charms.length === 0
   );
+}
+
+/** Parte do setup que vira preset (tudo menos os charms, que dependem das criaturas da hunt). */
+export function presetPart(s: SessionSetup): SessionSetup {
+  return { ...s, charms: [] };
 }
 
 export function charmIcon(name: string): string | undefined {
   return CHARMS.find((c) => c.name === name)?.icon;
 }
 
-/** Charms que dispararam na sessão (bloco "Charm" do Miscellaneous), pra sugerir. */
+/** Charms que ativaram na sessão (bloco "Charm" do Miscellaneous). */
 export function charmsFromMisc(
   misc: { charm?: Record<string, number> } | null | undefined,
 ): string[] {
-  const names = Object.keys(misc?.charm ?? {});
-  return CHARMS.map((c) => c.name).filter((c) =>
-    names.some((n) => n.toLowerCase() === c.toLowerCase()),
-  );
+  const names = Object.keys(misc?.charm ?? {}).map((n) => n.toLowerCase());
+  return CHARMS.map((c) => c.name).filter((c) => names.includes(c.toLowerCase()));
 }

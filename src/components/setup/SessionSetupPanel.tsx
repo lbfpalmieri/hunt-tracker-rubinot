@@ -1,21 +1,32 @@
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Check, Plus, Save, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { GameIcon } from "@/components/GameIcon";
 import {
   CHARMS,
-  CHARM_LEVEL_LABEL,
-  COMBAT_SPELLS,
   SKILL_LABEL,
   STANCES,
+  WHEEL_CONVICTION,
+  WHEEL_ICON,
+  WHEEL_REVELATION,
   charmIcon,
   cleanWeaponName,
+  convictionMaxLevel,
   type SessionSetup,
+  type SetupCharm,
   type SetupVocation,
 } from "@/lib/session-setup";
+import {
+  suggestedPresetName,
+  useDeleteSetupPreset,
+  useSaveSetupPreset,
+  useSetupPresets,
+} from "@/lib/setup-presets";
 
 const FIELD =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue";
 const LABEL = "mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
+const ROMAN = ["", "I", "II", "III"];
 
 const toNum = (s: string): number | null => {
   if (!s.trim()) return null;
@@ -23,82 +34,216 @@ const toNum = (s: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+const uniq = <T,>(a: T[]) => [...new Set(a)];
+
 /**
- * Editor do setup da sessão (controlado). Tudo sai de listas (charms, stances, magias da
- * vocação) — só o nome da arma é digitado. Ver src/lib/session-setup.ts.
+ * Editor do setup da sessão (controlado). Preset do personagem no topo (arma, skills, Wheel e
+ * postura de uma vez); Wheel com os perks de Convicção/Revelação da vocação (ícones da wiki);
+ * charms: só os que ativaram no Miscellaneous, e a pessoa só liga cada um às criaturas mortas.
  */
 export function SessionSetupPanel({
   value,
   onChange,
   vocation,
+  characterId,
   creatures,
-  suggestedCharms = [],
+  activatedCharms = [],
 }: {
   value: SessionSetup;
   onChange: (next: SessionSetup) => void;
-  /** Vocação do personagem — filtra stances/magias e o nome da skill. Null = mostra todas. */
+  /** Vocação do personagem — filtra postura/Wheel e o nome da skill. Null = mostra todas. */
   vocation: SetupVocation | null;
-  /** Criaturas mortas na sessão (pra ligar cada charm a uma criatura). */
+  /** Personagem dono dos presets. */
+  characterId: string | null;
+  /** Criaturas mortas na sessão (mais mortas primeiro). */
   creatures: string[];
-  /** Charms que dispararam na sessão (Miscellaneous). */
-  suggestedCharms?: string[];
+  /** Charms que ativaram na sessão (bloco "Charm" do Miscellaneous). */
+  activatedCharms?: string[];
 }) {
   const set = (patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
 
-  const stances = vocation ? STANCES[vocation] : Object.values(STANCES).flat();
-  const spells = vocation
-    ? COMBAT_SPELLS[vocation]
-    : [...new Set(Object.values(COMBAT_SPELLS).flat())].sort();
+  const stances = vocation ? STANCES[vocation] : uniq(Object.values(STANCES).flat());
+  const conviction = vocation
+    ? WHEEL_CONVICTION[vocation]
+    : uniq(Object.values(WHEEL_CONVICTION).flat());
+  const revelation = vocation
+    ? WHEEL_REVELATION[vocation]
+    : uniq(Object.values(WHEEL_REVELATION).flat());
   const skillLabel = vocation ? SKILL_LABEL[vocation] : "Skill principal";
 
-  const [newSpell, setNewSpell] = useState("");
-  const [newSpellLevel, setNewSpellLevel] = useState<1 | 2>(2);
-  const [newCharm, setNewCharm] = useState("");
-  const [newCharmLevel, setNewCharmLevel] = useState<1 | 2 | 3>(2);
-  const [newCharmCreature, setNewCharmCreature] = useState("");
+  // ---------- presets ----------
+  const { data: presets = [] } = useSetupPresets(characterId);
+  const savePreset = useSaveSetupPreset(characterId);
+  const deletePreset = useDeleteSetupPreset(characterId);
+  const [presetId, setPresetId] = useState("");
+  const [naming, setNaming] = useState<string | null>(null);
 
-  const addSpell = () => {
-    if (!newSpell) return;
-    set({
-      spells: [
-        ...value.spells.filter((s) => s.spell !== newSpell),
-        { spell: newSpell, level: newSpellLevel },
-      ],
-    });
-    setNewSpell("");
+  const applyPreset = (id: string) => {
+    setPresetId(id);
+    const p = presets.find((x) => x.id === id);
+    if (p) onChange({ ...p.setup, charms: value.charms });
   };
 
-  const addCharm = (charm = newCharm) => {
-    if (!charm) return;
-    const creature = newCharmCreature || null;
+  const confirmSave = async () => {
+    if (!naming?.trim()) return;
+    try {
+      await savePreset.mutateAsync({ name: naming, setup: value });
+      toast.success(`Preset "${naming.trim()}" salvo`);
+      setNaming(null);
+    } catch (e) {
+      toast.error("Não consegui salvar o preset", { description: (e as Error).message });
+    }
+  };
+
+  // ---------- Wheel ----------
+  const cycleConviction = (perk: string) => {
+    const cur = value.conviction.find((c) => c.perk === perk);
+    const max = convictionMaxLevel(perk);
+    const rest = value.conviction.filter((c) => c.perk !== perk);
+    if (!cur) set({ conviction: [...rest, { perk, level: 1 }] });
+    else if (cur.level < max) set({ conviction: [...rest, { perk, level: 2 }] });
+    else set({ conviction: rest });
+  };
+  const cycleRevelation = (perk: string) => {
+    const cur = value.revelation.find((r) => r.perk === perk);
+    const rest = value.revelation.filter((r) => r.perk !== perk);
+    if (!cur) set({ revelation: [...rest, { perk, stage: 1 }] });
+    else if (cur.stage < 3)
+      set({ revelation: [...rest, { perk, stage: (cur.stage + 1) as 2 | 3 }] });
+    else set({ revelation: rest });
+  };
+
+  // ---------- charms ----------
+  const [extraCharms, setExtraCharms] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [levelOf, setLevelOf] = useState<Record<string, 1 | 2 | 3>>({});
+  const rows = uniq([...activatedCharms, ...value.charms.map((c) => c.charm), ...extraCharms]);
+  const entries = (charm: string) => value.charms.filter((c) => c.charm === charm);
+  const rowLevel = (charm: string): 1 | 2 | 3 => entries(charm)[0]?.level ?? levelOf[charm] ?? 2;
+  const others = (charm: string) => value.charms.filter((c) => c.charm !== charm);
+
+  const setCharmLevel = (charm: string, level: 1 | 2 | 3) => {
+    setLevelOf((m) => ({ ...m, [charm]: level }));
+    const e = entries(charm);
     set({
       charms: [
-        ...value.charms.filter((c) => !(c.charm === charm && c.creature === creature)),
-        { charm, level: newCharmLevel, creature },
+        ...others(charm),
+        ...(e.length ? e.map((x) => ({ ...x, level })) : [{ charm, level, creature: null }]),
       ],
     });
-    setNewCharm("");
-    setNewCharmCreature("");
   };
-
-  const pendingSuggestions = suggestedCharms.filter(
-    (c) => !value.charms.some((x) => x.charm === c),
-  );
+  const toggleCreature = (charm: string, creature: string) => {
+    const e = entries(charm).filter((x) => x.creature);
+    const level = rowLevel(charm);
+    const next: SetupCharm[] = e.some((x) => x.creature === creature)
+      ? e.filter((x) => x.creature !== creature)
+      : [...e, { charm, level, creature }];
+    set({
+      charms: [...others(charm), ...(next.length ? next : [{ charm, level, creature: null }])],
+    });
+  };
+  const removeRow = (charm: string) => {
+    set({ charms: others(charm) });
+    setExtraCharms((x) => x.filter((c) => c !== charm));
+  };
 
   return (
     <div className="space-y-5">
+      {/* Preset */}
+      <section className="rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.05] p-3">
+        <span className={LABEL}>Preset do personagem</span>
+        {naming == null ? (
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={presetId}
+              onChange={(e) => applyPreset(e.target.value)}
+              className={FIELD + " min-w-0 flex-1"}
+            >
+              <option value="">
+                {presets.length ? "Escolher preset salvo…" : "Nenhum preset salvo ainda"}
+              </option>
+              {presets.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setNaming(suggestedPresetName(value))}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rubi-blue/50 px-3 py-2 text-sm font-semibold text-rubi-blue hover:bg-rubi-blue/10"
+            >
+              <Save className="h-4 w-4" /> Salvar como preset
+            </button>
+            {presetId && (
+              <button
+                type="button"
+                onClick={() => {
+                  deletePreset.mutate(presetId);
+                  setPresetId("");
+                }}
+                aria-label="Excluir preset"
+                className="rounded-lg border border-border px-2.5 text-muted-foreground hover:text-rubi-danger"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              autoFocus
+              value={naming}
+              onChange={(e) => setNaming(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && confirmSave()}
+              maxLength={40}
+              placeholder="Nome do preset (ex: Soulbleeder T0)"
+              className={FIELD}
+            />
+            <button
+              type="button"
+              onClick={confirmSave}
+              disabled={savePreset.isPending}
+              aria-label="Confirmar"
+              className="rounded-lg bg-rubi-blue px-3 text-primary-foreground disabled:opacity-50"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setNaming(null)}
+              aria-label="Cancelar"
+              className="rounded-lg border border-border px-3 text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <p className="mt-1.5 text-[10px] text-muted-foreground">
+          Preencha uma vez e salve (arma, skills, Wheel e postura). Nas próximas sessões é só
+          escolher o preset. Charms não entram — dependem da hunt.
+        </p>
+      </section>
+
       {/* Arma + skills */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <label className="col-span-2">
           <span className={LABEL}>Arma</span>
-          <input
-            value={value.weapon ?? ""}
-            onChange={(e) => set({ weapon: e.target.value })}
-            onBlur={(e) => set({ weapon: cleanWeaponName(e.target.value) })}
-            maxLength={40}
-            placeholder="Soulbleeder"
-            className={FIELD}
-          />
+          <div className="flex items-center gap-2">
+            {value.weapon && (
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-border bg-background">
+                <GameIcon name={value.weapon} size={32} />
+              </span>
+            )}
+            <input
+              value={value.weapon ?? ""}
+              onChange={(e) => set({ weapon: e.target.value })}
+              onBlur={(e) => set({ weapon: cleanWeaponName(e.target.value) })}
+              maxLength={40}
+              placeholder="Soulbleeder"
+              className={FIELD}
+            />
+          </div>
         </label>
         <label>
           <span className={LABEL}>Tier</span>
@@ -149,23 +294,13 @@ export function SessionSetupPanel({
             className={FIELD}
           />
         </label>
-        <label className="col-span-2 sm:col-span-1">
-          <span className={LABEL}>Wheel · dano e cura</span>
-          <input
-            inputMode="numeric"
-            value={value.wheelDmgHeal ?? ""}
-            onChange={(e) => set({ wheelDmgHeal: toNum(e.target.value) })}
-            placeholder="21"
-            className={FIELD}
-          />
-        </label>
       </section>
 
-      {/* Stance */}
+      {/* Postura */}
       {stances.length > 0 && (
         <section>
-          <span className={LABEL}>Postura (stance)</span>
-          <div className="flex flex-wrap gap-1.5">
+          <span className={LABEL}>Postura</span>
+          <div className="flex flex-wrap gap-2">
             {stances.map((st) => {
               const on = value.stance === st;
               return (
@@ -174,12 +309,13 @@ export function SessionSetupPanel({
                   type="button"
                   onClick={() => set({ stance: on ? null : st })}
                   className={
-                    "rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors " +
+                    "inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors " +
                     (on
                       ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                       : "border-border text-muted-foreground hover:text-foreground")
                   }
                 >
+                  <GameIcon name={st} size={24} />
                   {st}
                 </button>
               );
@@ -188,156 +324,215 @@ export function SessionSetupPanel({
         </section>
       )}
 
-      {/* Magias aumentadas pela Wheel */}
-      <section>
-        <span className={LABEL}>Magias aumentadas (Wheel)</span>
-        {value.spells.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {value.spells.map((s) => (
-              <span
-                key={s.spell}
-                className="inline-flex items-center gap-1 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 py-0.5 pl-2.5 pr-1 text-xs text-rubi-blue"
-              >
-                {s.spell} Nv{s.level}
-                <button
-                  type="button"
-                  onClick={() => set({ spells: value.spells.filter((x) => x.spell !== s.spell) })}
-                  aria-label={`Tirar ${s.spell}`}
-                  className="rounded-full p-0.5 hover:bg-rubi-blue/20"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="flex gap-2">
-          <select value={newSpell} onChange={(e) => setNewSpell(e.target.value)} className={FIELD}>
-            <option value="">Escolher magia…</option>
-            {spells.map((sp) => (
-              <option key={sp} value={sp}>
-                {sp}
-              </option>
-            ))}
-          </select>
-          <select
-            value={newSpellLevel}
-            onChange={(e) => setNewSpellLevel(Number(e.target.value) as 1 | 2)}
-            className="w-20 flex-none rounded-lg border border-border bg-background px-2 text-sm"
-          >
-            <option value={1}>Nv1</option>
-            <option value={2}>Nv2</option>
-          </select>
-          <button
-            type="button"
-            onClick={addSpell}
-            disabled={!newSpell}
-            aria-label="Adicionar magia"
-            className="flex-none rounded-lg border border-rubi-blue/50 px-3 text-rubi-blue hover:bg-rubi-blue/10 disabled:opacity-40"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+      {/* Wheel of Destiny */}
+      <section className="rounded-xl border border-rubi-gold/25 bg-rubi-gold/[0.04] p-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <img src={WHEEL_ICON} alt="" className="h-6 w-6 [image-rendering:pixelated]" />
+            Wheel of Destiny
+          </span>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            Dano e cura +
+            <input
+              inputMode="numeric"
+              value={value.wheelDmgHeal ?? ""}
+              onChange={(e) => set({ wheelDmgHeal: toNum(e.target.value) })}
+              placeholder="21"
+              className="w-16 rounded-md border border-border bg-background px-2 py-1 text-sm outline-none focus:border-rubi-gold"
+            />
+          </label>
+        </div>
+
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Convicção <span className="normal-case">(toque pra subir: I → II → desliga)</span>
+        </div>
+        <div className="mb-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+          {conviction.map((perk) => {
+            const cur = value.conviction.find((c) => c.perk === perk);
+            return (
+              <WheelTile
+                key={perk}
+                name={perk}
+                label={perk.replace(/^Augmented /, "")}
+                badge={cur ? (convictionMaxLevel(perk) === 1 ? "✓" : ROMAN[cur.level]) : null}
+                onClick={() => cycleConviction(perk)}
+              />
+            );
+          })}
+        </div>
+
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Revelação <span className="normal-case">(estágio 1 → 2 → 3 → desliga)</span>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+          {revelation.map((perk) => {
+            const cur = value.revelation.find((r) => r.perk === perk);
+            return (
+              <WheelTile
+                key={perk}
+                name={perk}
+                label={perk}
+                badge={cur ? ROMAN[cur.stage] : null}
+                onClick={() => cycleRevelation(perk)}
+              />
+            );
+          })}
         </div>
       </section>
 
       {/* Runas de Charm */}
       <section>
         <span className={LABEL}>Runas de Charm</span>
-        {pendingSuggestions.length > 0 && (
-          <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-            Dispararam nesta sessão:
-            {pendingSuggestions.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setNewCharm(c)}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 hover:border-rubi-gold/60 hover:text-foreground"
-              >
-                <img src={charmIcon(c)} alt="" className="h-4 w-4" /> {c}
-              </button>
-            ))}
+        {rows.length === 0 ? (
+          <p className="mb-2 text-xs text-muted-foreground">
+            {activatedCharms.length === 0
+              ? "Cole o Miscellaneous da sessão pra ver quais charms ativaram — aí é só ligar cada um às criaturas."
+              : ""}
+          </p>
+        ) : (
+          <div className="mb-2 space-y-2">
+            {rows.map((charm) => {
+              const linked = new Set(
+                entries(charm)
+                  .map((e) => e.creature)
+                  .filter(Boolean),
+              );
+              const lvl = rowLevel(charm);
+              return (
+                <div key={charm} className="rounded-lg border border-border bg-surface/60 p-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <img src={charmIcon(charm)} alt="" className="h-8 w-8" />
+                    <span className="font-semibold text-rubi-gold">{charm}</span>
+                    {activatedCharms.includes(charm) && (
+                      <span className="rounded bg-rubi-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-rubi-success">
+                        ativou nesta sessão
+                      </span>
+                    )}
+                    <div className="ml-auto flex items-center gap-1">
+                      {([1, 2, 3] as const).map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setCharmLevel(charm, n)}
+                          title={n === 1 ? "Bronze" : n === 2 ? "Prata" : "Ouro"}
+                          className={
+                            "rounded-md border px-2 py-0.5 text-[11px] font-semibold " +
+                            (lvl === n && entries(charm).length
+                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                              : "border-border text-muted-foreground hover:text-foreground")
+                          }
+                        >
+                          Nv{n}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => removeRow(charm)}
+                        aria-label={`Tirar ${charm}`}
+                        className="ml-1 rounded p-1 text-muted-foreground hover:text-rubi-danger"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {creatures.map((cr) => {
+                      const on = linked.has(cr);
+                      return (
+                        <button
+                          key={cr}
+                          type="button"
+                          onClick={() => toggleCreature(charm, cr)}
+                          className={
+                            "inline-flex items-center gap-1 rounded-md border py-0.5 pl-0.5 pr-2 text-[11px] transition-colors " +
+                            (on
+                              ? "border-rubi-gold bg-rubi-gold/15 text-foreground"
+                              : "border-border text-muted-foreground hover:text-foreground")
+                          }
+                        >
+                          <GameIcon name={cr} size={20} /> {cr}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {linked.size === 0 && (
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      Toque nas criaturas em que esse charm estava.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
-        {value.charms.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {value.charms.map((c, i) => (
-              <span
-                key={`${c.charm}-${c.creature}-${i}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold/10 py-0.5 pl-1.5 pr-1 text-xs"
-              >
-                <img src={charmIcon(c.charm)} alt="" className="h-4 w-4" />
-                <span className="font-semibold text-rubi-gold">
-                  {c.charm} {CHARM_LEVEL_LABEL[c.level]}
-                </span>
-                {c.creature && (
-                  <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    · <GameIcon name={c.creature} size={16} /> {c.creature}
-                  </span>
-                )}
+
+        {pickerOpen ? (
+          <div className="rounded-lg border border-border p-2">
+            <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9">
+              {CHARMS.filter((c) => !rows.includes(c.name)).map((c) => (
                 <button
+                  key={c.name}
                   type="button"
-                  onClick={() => set({ charms: value.charms.filter((_, j) => j !== i) })}
-                  aria-label={`Tirar ${c.charm}`}
-                  className="rounded-full p-0.5 hover:bg-rubi-gold/20"
+                  title={c.name}
+                  onClick={() => {
+                    setExtraCharms((x) => [...x, c.name]);
+                    setPickerOpen(false);
+                  }}
+                  className="flex flex-col items-center gap-0.5 rounded-md p-1 hover:bg-accent"
                 >
-                  <X className="h-3 w-3" />
+                  <img src={c.icon} alt="" className="h-8 w-8" />
+                  <span className="line-clamp-1 text-[9px] text-muted-foreground">{c.name}</span>
                 </button>
-              </span>
-            ))}
+              ))}
+            </div>
           </div>
-        )}
-        <div className="grid grid-cols-[minmax(0,1fr)_5rem] gap-2 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)_auto]">
-          <select value={newCharm} onChange={(e) => setNewCharm(e.target.value)} className={FIELD}>
-            <option value="">Escolher charm…</option>
-            <optgroup label="Major">
-              {CHARMS.filter((c) => c.kind === "major").map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Minor">
-              {CHARMS.filter((c) => c.kind === "minor").map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-          <select
-            value={newCharmLevel}
-            onChange={(e) => setNewCharmLevel(Number(e.target.value) as 1 | 2 | 3)}
-            className="rounded-lg border border-border bg-background px-2 text-sm"
-          >
-            <option value={1}>Nv1</option>
-            <option value={2}>Nv2</option>
-            <option value={3}>Nv3</option>
-          </select>
-          <select
-            value={newCharmCreature}
-            onChange={(e) => setNewCharmCreature(e.target.value)}
-            className={FIELD}
-          >
-            <option value="">Em qual criatura?</option>
-            {creatures.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+        ) : (
           <button
             type="button"
-            onClick={() => addCharm()}
-            disabled={!newCharm}
-            className="inline-flex items-center justify-center gap-1 rounded-lg border border-rubi-gold/50 px-3 py-2 text-sm font-semibold text-rubi-gold hover:bg-rubi-gold/10 disabled:opacity-40"
+            onClick={() => setPickerOpen(true)}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
-            <Plus className="h-4 w-4" /> Adicionar
+            <Plus className="h-3.5 w-3.5" /> Outro charm que não apareceu
           </button>
-        </div>
+        )}
         <p className="mt-1.5 text-[10px] text-muted-foreground">
           Nv1 = Bronze, Nv2 = Prata, Nv3 = Ouro (TibiaWiki).
         </p>
       </section>
     </div>
+  );
+}
+
+function WheelTile({
+  name,
+  label,
+  badge,
+  onClick,
+}: {
+  name: string;
+  label: string;
+  badge: string | null;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={name}
+      className={
+        "relative flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-[11px] leading-tight transition-colors " +
+        (badge
+          ? "border-rubi-gold bg-rubi-gold/15 text-foreground"
+          : "border-border text-muted-foreground opacity-80 hover:opacity-100")
+      }
+    >
+      <GameIcon name={name} size={28} className={badge ? "" : "grayscale"} />
+      <span className="line-clamp-2 min-w-0 flex-1">{label}</span>
+      {badge && (
+        <span className="flex-none rounded bg-rubi-gold px-1 text-[10px] font-bold text-background">
+          {badge}
+        </span>
+      )}
+    </button>
   );
 }

@@ -2,10 +2,14 @@ import { GameIcon } from "@/components/GameIcon";
 import {
   CHARM_LEVEL_LABEL,
   SKILL_LABEL,
+  WHEEL_ICON,
   charmIcon,
+  convictionMaxLevel,
   setupVocation,
   type SessionSetup,
 } from "@/lib/session-setup";
+
+const ROMAN = ["", "I", "II", "III"];
 
 /** Setup da sessão em modo leitura (sessão privada, Comunidade e comparação). */
 export function SetupCard({
@@ -20,21 +24,47 @@ export function SetupCard({
   const voc = setupVocation(vocation);
   const skillLabel = voc ? SKILL_LABEL[voc] : "Skill";
   const stats: [string, string][] = [];
-  if (setup.weapon || setup.weaponTier != null)
-    stats.push([
-      "Arma",
-      `${setup.weapon ?? "—"}${setup.weaponTier != null ? ` T${setup.weaponTier}` : ""}`,
-    ]);
   if (setup.skill != null && skillLabel) stats.push([skillLabel, String(setup.skill)]);
   if (setup.magicLevel != null) stats.push(["Magic Level", String(setup.magicLevel)]);
   if (setup.critDamage != null) stats.push(["Crítico extra", `+${setup.critDamage}%`]);
   if (setup.wheelDmgHeal != null) stats.push(["Wheel dano e cura", `+${setup.wheelDmgHeal}`]);
-  if (setup.stance) stats.push(["Postura", setup.stance]);
+
+  // Charms agrupados: "Freeze Nv2 · Vexclaw, Hellflayer"
+  const charmGroups = [...new Set(setup.charms.map((c) => c.charm))].map((charm) => {
+    const list = setup.charms.filter((c) => c.charm === charm);
+    return {
+      charm,
+      level: list[0].level,
+      creatures: list.map((c) => c.creature).filter(Boolean) as string[],
+    };
+  });
 
   return (
     <div className="space-y-3">
+      {(setup.weapon || setup.weaponTier != null || setup.stance) && (
+        <div className="flex flex-wrap gap-2">
+          {(setup.weapon || setup.weaponTier != null) && (
+            <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 py-1 pl-1 pr-2.5 text-sm font-semibold">
+              {setup.weapon && <GameIcon name={setup.weapon} size={28} />}
+              {setup.weapon ?? "Arma"}
+              {setup.weaponTier != null && (
+                <span className="rounded bg-rubi-gold/15 px-1 text-xs text-rubi-gold">
+                  T{setup.weaponTier}
+                </span>
+              )}
+            </span>
+          )}
+          {setup.stance && (
+            <span className="inline-flex items-center gap-2 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 py-1 pl-1 pr-2.5 text-sm text-rubi-blue">
+              <GameIcon name={setup.stance} size={24} />
+              {setup.stance}
+            </span>
+          )}
+        </div>
+      )}
+
       {stats.length > 0 && (
-        <dl className={"grid gap-2 " + (compact ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3")}>
+        <dl className={"grid gap-2 " + (compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4")}>
           {stats.map(([k, v]) => (
             <div
               key={k}
@@ -46,32 +76,53 @@ export function SetupCard({
           ))}
         </dl>
       )}
-      {setup.spells.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {setup.spells.map((s) => (
+
+      {(setup.conviction.length > 0 || setup.revelation.length > 0) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <img src={WHEEL_ICON} alt="Wheel" title="Wheel of Destiny" className="h-5 w-5" />
+          {setup.revelation.map((r) => (
             <span
-              key={s.spell}
-              className="rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2.5 py-0.5 text-xs text-rubi-blue"
+              key={r.perk}
+              className="inline-flex items-center gap-1 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 py-0.5 pl-0.5 pr-2 text-xs"
             >
-              {s.spell} Nv{s.level}
+              <GameIcon name={r.perk} size={18} /> {r.perk}
+              <b className="text-rubi-gold">{ROMAN[r.stage]}</b>
+            </span>
+          ))}
+          {setup.conviction.map((c) => (
+            <span
+              key={c.perk}
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-background/40 py-0.5 pl-0.5 pr-2 text-xs"
+            >
+              <GameIcon name={c.perk} size={18} /> {c.perk.replace(/^Augmented /, "")}
+              {convictionMaxLevel(c.perk) === 2 && (
+                <b className="text-rubi-gold">{ROMAN[c.level]}</b>
+              )}
             </span>
           ))}
         </div>
       )}
-      {setup.charms.length > 0 && (
+
+      {charmGroups.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {setup.charms.map((c, i) => (
+          {charmGroups.map((g) => (
             <span
-              key={`${c.charm}-${c.creature}-${i}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold/10 py-0.5 pl-1.5 pr-2.5 text-xs"
+              key={g.charm}
+              className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold/10 py-0.5 pl-1 pr-2.5 text-xs"
             >
-              <img src={charmIcon(c.charm)} alt="" className="h-4 w-4" />
+              <img src={charmIcon(g.charm)} alt="" className="h-5 w-5" />
               <span className="font-semibold text-rubi-gold">
-                {c.charm} {CHARM_LEVEL_LABEL[c.level]}
+                {g.charm} {CHARM_LEVEL_LABEL[g.level]}
               </span>
-              {c.creature && (
+              {g.creatures.length > 0 && (
                 <span className="inline-flex items-center gap-1 text-muted-foreground">
-                  · <GameIcon name={c.creature} size={16} /> {c.creature}
+                  ·
+                  {g.creatures.map((c) => (
+                    <span key={c} className="inline-flex items-center gap-0.5" title={c}>
+                      <GameIcon name={c} size={16} />
+                      {!compact && c}
+                    </span>
+                  ))}
                 </span>
               )}
             </span>

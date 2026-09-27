@@ -351,6 +351,7 @@ function SessionDetail() {
           key={session.id}
           value={session.setup}
           vocation={char?.vocation}
+          characterId={session.characterId}
           creatures={h.kills.slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
           misc={session.misc}
           onSave={(next) => updateSession(session.id, { setup: next })}

@@ -921,11 +921,12 @@ function ImportPage() {
                 value={setup}
                 onChange={setSetup}
                 vocation={setupVocation(activeChar?.vocation)}
+                characterId={effectiveCharId || null}
                 creatures={(parsed.hunting?.kills ?? [])
                   .slice()
                   .sort((a, b) => b.count - a.count)
                   .map((k) => k.name)}
-                suggestedCharms={charmsFromMisc(parsed.misc)}
+                activatedCharms={charmsFromMisc(parsed.misc)}
               />
             </div>
           )}
