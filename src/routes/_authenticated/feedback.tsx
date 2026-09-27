@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { errorMessage } from "@/lib/errors";
 import { fmtDate } from "@/lib/format";
-import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download, History, ChevronDown, Pencil } from "lucide-react";
+import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download, History, ChevronDown, Pencil, StickyNote } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/feedback")({
@@ -516,6 +516,12 @@ function FeedbackPage() {
                 className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:flex-none"
               >
                 <Pencil className="h-4 w-4" /> Nomes de hunt
+              </Link>
+              <Link
+                to="/admin/notes"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:flex-none"
+              >
+                <StickyNote className="h-4 w-4" /> Observações
               </Link>
             </div>
           )}
