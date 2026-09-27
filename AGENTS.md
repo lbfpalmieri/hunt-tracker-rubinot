@@ -60,6 +60,8 @@ em boss_rotations / boss_rotation_runs; ajuste solo/time em user_boss_prefs. Tem
 (carmesim + dourado, components/bosses/). Lucro de execução = só itens que caem APENAS de boss
 ("droppedby" da wiki, flag bossOnly no catálogo) × preço informado pelo usuário − supplies; loot dos
 monstros do caminho não conta. NÃO usar lucro/h nessa área (boss tem cooldown).
+Preço dos itens no registro: "Meus preços" (public.user_item_prices por user+world, item-prices.ts; aba
+"Meus preços" do Covil) ou "Preço NPC" da wiki; digitado no registro é salvo na tabela.
 Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
 entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros

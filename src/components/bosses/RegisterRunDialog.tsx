@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, ClipboardPaste, Skull } from "lucide-react";
+import { Check, ClipboardPaste, Plus, Skull } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -15,6 +15,7 @@ import { addRun, lastPrices, type BossRotationRun } from "@/lib/boss-rotations";
 import { fmtDuration, fmtGold } from "@/lib/format";
 import { parseHunting, parseSessionStamp } from "@/lib/parser";
 import { parseGoldInput } from "@/lib/rc-calc";
+import { priceMap, useItemPrices, useSaveItemPrices } from "@/lib/item-prices";
 
 interface Props {
   open: boolean;
@@ -25,6 +26,8 @@ interface Props {
   characterId: string | null;
   /** Execuções anteriores — de onde vem o último preço usado pra cada item. */
   previousRuns: BossRotationRun[];
+  /** Servidor do personagem — "Meus preços" são por servidor. */
+  world: string | null;
   onSaved: () => void;
 }
 
@@ -32,8 +35,10 @@ interface Props {
  * Registrar uma execução da rotação: cola o Hunting Analyser (o mesmo export da Nova sessão).
  * O app acha quais bosses da rotação morreram (Killed Monsters) e separa do "Looted Items" só o
  * que é loot de boss — item que a wiki diz que só cai de boss. Loot dos monstros do caminho fica
- * de fora. O analyser não diz o preço de cada item, então o usuário informa (preço do RubinOT);
- * a gente lembra o último preço usado.
+ * de fora (mas dá pra incluir na mão: token, item de delivery...). O analyser não diz o preço de
+ * cada item: a pessoa escolhe calcular com "Meus preços" (tabela user_item_prices do servidor dela,
+ * ver item-prices.ts) ou com o preço de NPC da TibiaWiki, e pode corrigir item a item — o que ela
+ * digita vira "meu preço" pras próximas.
  */
 export function RegisterRunDialog({
   open,
@@ -43,6 +48,7 @@ export function RegisterRunDialog({
   catalog,
   characterId,
   previousRuns,
+  world,
   onSaved,
 }: Props) {
   const [text, setText] = useState("");
@@ -50,6 +56,12 @@ export function RegisterRunDialog({
   const [killedOverride, setKilledOverride] = useState<Set<string> | null>(null);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [mode, setMode] = useState<"mine" | "npc">("mine");
+  const [included, setIncluded] = useState<Set<string>>(new Set());
+  const [rememberPrices, setRememberPrices] = useState(true);
+  const { data: myPriceList } = useItemPrices(world);
+  const myPrices = useMemo(() => priceMap(myPriceList), [myPriceList]);
+  const savePrices = useSaveItemPrices(world);
 
   const parsed = useMemo(() => (text.trim() ? parseHunting(text) : null), [text]);
   const valid = !!parsed && (parsed.durationSec > 0 || parsed.loot > 0 || parsed.kills.length > 0);
@@ -62,26 +74,58 @@ export function RegisterRunDialog({
   const killed = killedOverride ?? detected;
 
   const remembered = useMemo(() => lastPrices(previousRuns), [previousRuns]);
-  const lines = useMemo(
+  const autoLines = useMemo(
     () => (parsed ? bossLinkedLoot(parsed.lootedItems, bosses, catalog) : []),
     [parsed, bosses, catalog],
   );
-  const ignored = useMemo(() => {
+  const ignoredAll = useMemo(() => {
     if (!parsed) return [];
-    const linked = new Set(lines.map((l) => normName(l.name)));
+    const linked = new Set(autoLines.map((l) => normName(l.name)));
     return parsed.lootedItems.filter((l) => {
       const n = normName(l.name);
-      return !linked.has(n) && !linked.has(n.replace(/s$/, ""));
+      return (
+        !linked.has(n) &&
+        !linked.has(n.replace(/s$/, "")) &&
+        !/^(gold|platinum|crystal) coins?$/.test(n)
+      );
     });
-  }, [parsed, lines]);
+  }, [parsed, autoLines]);
+  // Itens de fora que a pessoa escolheu contar (token, delivery task...). Nome em Title Case.
+  // Nome como a gente conhece (preço salvo ou catálogo), inclusive do plural do analyser
+  // ("3x gold tokens" → "Gold Token"); senão, o nome do analyser em Title Case.
+  const known = useMemo(
+    () => new Map([...myPrices.keys(), ...catalog.items.keys()].map((k) => [normName(k), k])),
+    [myPrices, catalog],
+  );
+  const titled = (n: string) => {
+    const key = normName(n);
+    const hit = known.get(key) ?? (key.endsWith("s") ? known.get(key.slice(0, -1)) : undefined);
+    return hit ?? n.replace(/^(a|an) /i, "").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+  const lines = [
+    ...autoLines,
+    ...ignoredAll
+      .filter((i) => included.has(i.name))
+      .map((i) => ({ name: titled(i.name), count: i.count, item: undefined })),
+  ];
+  const ignored = ignoredAll.filter((i) => !included.has(i.name));
 
-  /** Preço unitário: o que o usuário digitou > último usado > NPC. */
-  const unitOf = (name: string, npc: number): number => {
+  const npcOf = (name: string) => catalog.items.get(name)?.npc ?? 0;
+  /** Preço unitário: digitado > (Meus preços: meu preço > último usado > NPC) | (NPC). */
+  const unitOf = (name: string): number => {
     const typed = prices[name];
     if (typed != null) return parseGoldInput(typed) ?? 0;
-    return remembered.get(name) ?? npc;
+    if (mode === "npc") return npcOf(name);
+    return myPrices.get(name) ?? remembered.get(name) ?? npcOf(name);
   };
-  const bossLoot = lines.reduce((a, l) => a + l.count * unitOf(l.name, l.item?.npc ?? 0), 0);
+  const sourceOf = (name: string): string => {
+    if (prices[name] != null) return "digitado";
+    if (mode === "npc") return "NPC";
+    if (myPrices.has(name)) return "seu preço";
+    if (remembered.has(name)) return "último usado";
+    return npcOf(name) ? "NPC" : "sem preço";
+  };
+  const bossLoot = lines.reduce((a, l) => a + l.count * unitOf(l.name), 0);
   const supplies = parsed?.supplies ?? 0;
   const profit = bossLoot - supplies;
 
@@ -90,6 +134,7 @@ export function RegisterRunDialog({
     setParty("1");
     setKilledOverride(null);
     setPrices({});
+    setIncluded(new Set());
   };
 
   const toggleKilled = (name: string) => {
@@ -118,10 +163,20 @@ export function RegisterRunDialog({
         drops: lines.map((l) => ({
           name: l.name,
           count: l.count,
-          unitValue: unitOf(l.name, l.item?.npc ?? 0),
+          unitValue: unitOf(l.name),
         })),
         notes: null,
       });
+      // O que foi digitado vira "meu preço" nesse servidor (falha aqui não desfaz a rotação).
+      const typed = Object.entries(prices)
+        .map(([item, raw]) => ({ item, price: parseGoldInput(raw) ?? 0 }))
+        .filter((e) => e.price > 0);
+      if (rememberPrices && typed.length) {
+        savePrices.mutate(typed, {
+          onError: (e) =>
+            toast.error("Rotação salva, mas os preços não", { description: e.message }),
+        });
+      }
       toast.success("Rotação registrada");
       reset();
       onSaved();
@@ -207,8 +262,33 @@ export function RegisterRunDialog({
             </div>
 
             <div>
-              <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-rubi-gold">
-                Loot dos bosses
+              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-rubi-gold">
+                  Loot dos bosses
+                </span>
+                <div className="inline-flex rounded-lg border border-border bg-background p-0.5 text-[11px] font-medium">
+                  {(
+                    [
+                      ["mine", "Meus preços"],
+                      ["npc", "Preço NPC"],
+                    ] as const
+                  ).map(([m, label]) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setMode(m);
+                        setPrices({});
+                      }}
+                      className={
+                        "rounded-md px-2 py-1 " +
+                        (mode === m ? "bg-rubi-gold/20 text-rubi-gold" : "text-muted-foreground")
+                      }
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
               {lines.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
@@ -217,12 +297,20 @@ export function RegisterRunDialog({
               ) : (
                 <ul className="space-y-1.5">
                   {lines.map((l) => {
-                    const unit = unitOf(l.name, l.item?.npc ?? 0);
+                    const unit = unitOf(l.name);
                     return (
                       <li key={l.name} className="flex items-center gap-2">
                         <GameIcon name={l.name} size={24} />
-                        <span className="min-w-0 flex-1 truncate text-sm">
-                          {l.count}x {l.name}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm">
+                            {l.count}x {l.name}
+                          </span>
+                          <span className="block text-[10px] text-muted-foreground">
+                            {sourceOf(l.name)}
+                            {npcOf(l.name) > 0 && sourceOf(l.name) !== "NPC"
+                              ? ` · NPC ${fmtGold(npcOf(l.name))}`
+                              : ""}
+                          </span>
                         </span>
                         <input
                           inputMode="decimal"
@@ -240,14 +328,33 @@ export function RegisterRunDialog({
                   })}
                 </ul>
               )}
-              <p className="mt-1.5 text-[10px] text-muted-foreground">
-                Só itens que a TibiaWiki diz que caem apenas de boss. Preço por unidade no RubinOT
-                (aceita 150k, 1,5kk) — lembramos o último que você usou.
-                {ignored.length > 0 &&
-                  ` Ficaram de fora ${ignored.length} itens que também caem de monstro comum (${ignored
-                    .slice(0, 4)
-                    .map((i) => i.name)
-                    .join(", ")}${ignored.length > 4 ? "…" : ""}).`}
+              {ignored.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                  Ficaram de fora (também caem de monstro comum) — toque pra contar:
+                  {ignored.map((i) => (
+                    <button
+                      key={i.name}
+                      type="button"
+                      onClick={() => setIncluded((s) => new Set(s).add(i.name))}
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 hover:border-rubi-gold/60 hover:text-foreground"
+                    >
+                      <Plus className="h-3 w-3" /> {i.count}x {i.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <label className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={rememberPrices}
+                  onChange={(e) => setRememberPrices(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-[var(--rubi-gold)]"
+                />
+                Salvar os preços que eu digitar como "Meus preços"{world ? ` em ${world}` : ""}
+              </label>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Preço por unidade (aceita 150k, 1,5kk). "Meus preços" usa a sua tabela do servidor;
+                sem preço lá, o último que você usou; senão, o NPC da TibiaWiki.
               </p>
             </div>
 

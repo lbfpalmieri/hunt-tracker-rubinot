@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "item-prices",
+    date: "2026-09-27",
+    title: "Meus preços na Rotação de Bosses",
+    description:
+      "Nova aba Meus preços no Covil: guarde quanto cada item vale no market do seu servidor (drops raros, gold/silver token, delivery task...). Ao registrar uma rotação, escolha calcular com Meus preços ou com o preço de NPC — e o que você digitar lá também é salvo. Itens que ficaram de fora do loot de boss podem ser incluídos com um toque.",
+  },
+  {
     id: "weapons-by-vocation",
     date: "2026-09-27",
     title: "Armas da wiki no setup",

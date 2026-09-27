@@ -7,6 +7,7 @@ import {
   Clock,
   Crown,
   Hourglass,
+  Tag,
   Loader2,
   Plus,
   RefreshCw,
@@ -19,6 +20,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { GameIcon } from "@/components/GameIcon";
 import { BossDialog } from "@/components/bosses/BossDialog";
+import { ItemPricesPanel } from "@/components/bosses/ItemPricesPanel";
 import {
   BossHero,
   BossPortrait,
@@ -72,7 +74,7 @@ export const Route = createFileRoute("/_authenticated/bosses/")({
   component: BossesPage,
 });
 
-type Tab = "catalogo" | "rotacoes" | "cooldowns";
+type Tab = "catalogo" | "rotacoes" | "cooldowns" | "precos";
 type Sort = "drop" | "hp" | "xp" | "name";
 const PAGE = 48;
 
@@ -81,6 +83,9 @@ function BossesPage() {
   const { data: rotations = [] } = useRotations();
   const { data: runs = [] } = useRuns();
   const [tab, setTab] = useState<Tab | null>(null);
+  const activeWorld = useAppStore(
+    (s) => s.characters.find((c) => c.id === s.activeCharacterId)?.world ?? null,
+  );
   const current: Tab = tab ?? (rotations.length > 0 ? "rotacoes" : "catalogo");
 
   return (
@@ -105,6 +110,7 @@ function BossesPage() {
               Crown,
             ],
             ["cooldowns", "Cooldowns", Hourglass],
+            ["precos", "Meus preços", Tag],
           ] as const
         ).map(([id, label, Icon]) => (
           <button
@@ -141,6 +147,8 @@ function BossesPage() {
           runs={runs}
           onBrowse={() => setTab("catalogo")}
         />
+      ) : current === "precos" ? (
+        <ItemPricesPanel catalog={catalog} world={activeWorld} />
       ) : (
         <CooldownsView catalog={catalog} rotations={rotations} runs={runs} />
       )}

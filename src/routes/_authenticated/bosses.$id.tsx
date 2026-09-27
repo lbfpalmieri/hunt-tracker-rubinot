@@ -454,6 +454,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
         catalog={catalog}
         characterId={activeId}
         previousRuns={allRuns}
+        world={characters.find((c) => c.id === activeId)?.world ?? null}
         onSaved={refresh}
       />
       <EditBossesDialog
