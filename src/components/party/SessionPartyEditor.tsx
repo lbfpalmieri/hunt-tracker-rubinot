@@ -47,6 +47,7 @@ export function SessionPartyEditor({
         onChange={setDraft}
         charName={charName}
         personalBalance={personal.balance}
+        personalDurationSec={session.hunting.durationSec}
       />
       {(dirty || saving) && (
         <button

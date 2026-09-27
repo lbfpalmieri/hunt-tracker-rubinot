@@ -68,13 +68,12 @@ import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
 import {
   applyPartySplit,
-  findSelf,
-  looksLikePartyHunt,
-  parsePartyHunt,
-  PARTY_MAX,
+  looksLikePartyText,
+  partyFromText,
+  selfShare,
   type PartyInfo,
 } from "@/lib/party";
-import { PartyEditor } from "@/components/party/PartyEditor";
+import { PARTY_COPY_HELP, PartyEditor } from "@/components/party/PartyEditor";
 import { PartyBadge } from "@/components/party/PartyBadge";
 import { useNavPrefs } from "@/lib/nav-prefs";
 
@@ -124,6 +123,8 @@ function ImportPage() {
   const playMode = useNavPrefs((s) => s.mode);
   const [partyAnswer, setPartyAnswer] = useState<"yes" | "no" | null>(null);
   const [party, setParty] = useState<PartyInfo | null>(null);
+  // Texto colado no bloco "Party Hunt Analyser" da página (a party em si fica em `party`).
+  const [partyText, setPartyText] = useState("");
   const hasParty = partyAnswer === "yes" && !!party;
   // Com o Party Hunt Analyser colado, precisa saber quem é você pra dividir.
   const partyReady = partyAnswer === "no" || (!!party && (!party.members || !!party.self));
@@ -166,10 +167,25 @@ function ImportPage() {
     return () => clearTimeout(t);
   }, [notice]);
 
+  const applyPartyText = (text: string) => {
+    setPartyText(text);
+    if (!text.trim()) {
+      setParty(null);
+      setPartyAnswer(null);
+      return;
+    }
+    const p = partyFromText(text, activeChar?.name);
+    if (p) {
+      setParty(p);
+      setPartyAnswer("yes");
+    }
+  };
+
   const setters: Record<Exclude<BlockKind, "unknown">, (v: string) => void> = {
     hunting: setHuntingText,
     damage: setDamageText,
     misc: setMiscText,
+    party: applyPartyText,
   };
 
   const routePaste = (text: string, from?: Exclude<BlockKind, "unknown">) => {
@@ -177,32 +193,13 @@ function ImportPage() {
       setNotice({ tone: "error", title: "Nada para colar", detail: "Sua área de transferência está vazia." });
       return;
     }
-    // Party Hunt Analyser: não é bloco da sessão — vira a party do passo "Grupo".
-    if (looksLikePartyHunt(text)) {
-      const p = parsePartyHunt(text);
-      if (p) {
-        const members = p.members.slice(0, PARTY_MAX);
-        setParty({
-          size: members.length,
-          members,
-          self: findSelf(members, activeChar?.name),
-          personal: null,
-        });
-        setPartyAnswer("yes");
-        setNotice({
-          tone: "ok",
-          title: "Party Hunt Analyser reconhecido",
-          detail: `Party de ${members.length} — o lucro da sessão vai ser a sua parte da divisão.`,
-        });
-        return;
-      }
-    }
     const kind = detectBlockKind(text);
     if (kind === "unknown") {
       setNotice({
         tone: "error",
         title: "Não reconheci esse texto",
-        detail: "Copie o bloco completo direto do jogo (Hunting Analyser, Input Analyser ou Miscellaneous).",
+        detail:
+          "Copie o bloco completo direto do jogo (Hunting Analyser, Input Analyser, Miscellaneous ou Party Hunt).",
       });
       return;
     }
@@ -211,9 +208,11 @@ function ImportPage() {
       tone: "ok",
       title: `${BLOCK_LABEL[kind]} reconhecido`,
       detail:
-        from && from !== kind
-          ? `O texto era do ${BLOCK_LABEL[kind]} — coloquei no bloco certo automaticamente.`
-          : undefined,
+        kind === "party"
+          ? "Hunt em grupo: o lucro da sessão vai ser a sua parte da divisão (confira no passo Grupo)."
+          : from && from !== kind
+            ? `O texto era do ${BLOCK_LABEL[kind]} — coloquei no bloco certo automaticamente.`
+            : undefined,
     });
   };
 
@@ -377,7 +376,7 @@ function ImportPage() {
   };
 
   const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
-  const huntingIsParty = !!huntingText && looksLikePartyHunt(huntingText);
+  const huntingIsParty = !!huntingText && looksLikePartyText(huntingText);
   const huntingStatus: SlotStatus = !huntingText
     ? "empty"
     : parsed.hunting && durationOk && !huntingIsParty
@@ -482,6 +481,33 @@ function ImportPage() {
     }
   };
 
+
+  // Bloco do Party Hunt Analyser: 2º no Modo Grupo (recomendado), último no Solo.
+  const partyParsed = !!party && (!!party.members?.length || party.splitterShare != null);
+  const partyShareNow = partyParsed ? selfShare(party) : null;
+  const partySlot = (
+    <PasteSlot
+      label="Party Hunt Analyser"
+      help={`Hunt em grupo — divide o loot. ${PARTY_COPY_HELP}`}
+      value={partyText}
+      onChange={applyPartyText}
+      status={partyText ? (partyParsed ? "ok" : "error") : "empty"}
+      expect="party"
+      onPasteEvent={handlePasteEvent}
+      onPasteBtn={handleClipboardButton}
+      summary={
+        partyParsed && party
+          ? `Party de ${party.size}` +
+            (partyShareNow != null
+              ? ` · sua parte ${fmtGold(partyShareNow)}`
+              : " · escolha quem é você no passo Grupo")
+          : undefined
+      }
+      message='Não reconheci. Use "Copy to Clipboard" na janela Party Hunt.'
+      optional
+      recommended={playMode === "party"}
+    />
+  );
 
   if (!hydrated) {
     return (
@@ -597,6 +623,7 @@ function ImportPage() {
             summary={huntingSummary}
             message={huntingMessage}
           />
+          {playMode === "party" && partySlot}
           <PasteSlot
             label="Input Analyser"
             help="Dano recebido: Total, Max-DPS, Damage Types e Sources."
@@ -625,6 +652,7 @@ function ImportPage() {
             message="Não reconheci esse bloco. Copie o Miscellaneous completo."
             optional
           />
+          {playMode !== "party" && partySlot}
           {parsed.hunting && (
             <div className="card-surface p-5">
               <h3 className="mb-3 text-sm font-semibold">Preview</h3>
@@ -942,10 +970,14 @@ function ImportPage() {
                   value={party}
                   onChange={(p) => {
                     setParty(p);
-                    if (!p) setPartyAnswer("no");
+                    if (!p) {
+                      setPartyAnswer("no");
+                      setPartyText("");
+                    }
                   }}
                   charName={activeChar?.name ?? null}
                   personalBalance={parsed.hunting?.balance ?? 0}
+                  personalDurationSec={parsed.hunting?.durationSec}
                 />
               )}
             </div>
@@ -1215,6 +1247,7 @@ function PasteSlot({
   summary,
   message,
   optional,
+  recommended = false,
   expect,
   onPasteEvent,
   onPasteBtn,
@@ -1227,6 +1260,8 @@ function PasteSlot({
   summary?: string;
   message?: string;
   optional?: boolean;
+  /** Opcional, mas destacado (ex.: Party Hunt Analyser no Modo Grupo). */
+  recommended?: boolean;
   expect: Exclude<BlockKind, "unknown">;
   onPasteEvent: (e: ClipboardEvent, from: Exclude<BlockKind, "unknown">) => void;
   onPasteBtn: (from: Exclude<BlockKind, "unknown">) => Promise<void>;
@@ -1287,7 +1322,11 @@ function PasteSlot({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate font-display text-[15px] font-bold tracking-tight">{label}</span>
-            {optional ? (
+            {recommended ? (
+              <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue-soft px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-rubi-blue">
+                recomendado
+              </span>
+            ) : optional ? (
               <span className="flex-none rounded-full border border-border/70 px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 opcional
               </span>

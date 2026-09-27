@@ -6,7 +6,13 @@ import { useOtherModeCount, usePlayMode } from "@/lib/play-mode";
  * Aviso discreto de que existem sessões no outro modo (escondidas aqui), com atalho pra trocar.
  * Some quando não tem nada no outro modo — quem só joga solo nunca vê isso.
  */
-export function ModeHint({ characterId, className = "" }: { characterId: string | null; className?: string }) {
+export function ModeHint({
+  characterId,
+  className = "",
+}: {
+  characterId: string | null;
+  className?: string;
+}) {
   const mode = usePlayMode();
   const other = useOtherModeCount(characterId);
   if (other === 0) return null;

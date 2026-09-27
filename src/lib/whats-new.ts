@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "party-hunt-analyser",
+    date: "2026-09-27",
+    title: "Modo Grupo com Party Hunt Analyser e LootSplitter",
+    description:
+      "A Nova sessão ganhou o bloco Party Hunt Analyser (no jogo: janela Party Hunt → botão direito → Copy to Clipboard). A divisão é a mesma do LootSplitter do cliente: líder primeiro, média do balance e quem ficou acima transfere pra quem ficou abaixo — com o comando \"transfer N to Nome\" do banco pronto pra copiar. Tem os ajustes do Advanced (gasto extra por jogador e tirar alguém da divisão), aceita também o resultado copiado da janela LootSplitter e avisa se o analyser da party for de outra sessão.",
+  },
+  {
     id: "equipment-doll",
     date: "2026-09-27",
     title: "Equipamentos no set, igual ao inventário do jogo",

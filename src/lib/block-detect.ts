@@ -1,13 +1,17 @@
+import { looksLikePartyText } from "./party";
+
 /**
  * Identifica qual export do Tibia foi colado, para impedir que o usuário cole
- * o Hunt Analyser no campo do Input Analyser (ou vice-versa).
+ * o Hunt Analyser no campo do Input Analyser (ou vice-versa). "party" = Party Hunt
+ * Analyser ("Copy to Clipboard") ou o resultado do LootSplitter — ver party.ts.
  */
-export type BlockKind = "hunting" | "damage" | "misc" | "unknown";
+export type BlockKind = "hunting" | "damage" | "misc" | "party" | "unknown";
 
 export const BLOCK_LABEL: Record<Exclude<BlockKind, "unknown">, string> = {
   hunting: "Hunting Analyser",
   damage: "Input Analyser",
   misc: "Miscellaneous",
+  party: "Party Hunt Analyser",
 };
 
 function score(text: string, patterns: RegExp[]): number {
@@ -17,6 +21,8 @@ function score(text: string, patterns: RegExp[]): number {
 export function detectBlockKind(raw: string): BlockKind {
   const text = raw.replace(/\r/g, "");
   if (!text.trim()) return "unknown";
+  // Antes do Hunting: o da party também tem Session data/Supplies/Balance.
+  if (looksLikePartyText(text)) return "party";
 
   const hunting = score(text, [
     /Session data\s*:/i,
