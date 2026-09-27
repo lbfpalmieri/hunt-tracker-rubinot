@@ -20,6 +20,7 @@ import {
   type TierGearSlot,
 } from "@/lib/equipment";
 import { fmtPct, forgeLines } from "@/lib/forge";
+import { TierPicker } from "@/components/setup/TierPicker";
 import type { SessionSetup, SetupVocation } from "@/lib/session-setup";
 import { WEAPON_KIND_LABEL, findWeapon, weaponSummary, weaponsForVocation } from "@/lib/weapons";
 
@@ -293,25 +294,14 @@ export function EquipmentDoll({
                       {slotLabel(slot, vocation)}
                     </span>
                     <b className="font-semibold">{it.name}</b>
-                    {max > 0 && onChange ? (
-                      <select
-                        aria-label={`Tier de ${it.name}`}
-                        title={`Tier (Exaltation Forge) — esse item vai até T${max}`}
-                        value={tier}
-                        onChange={(ev) => setTier(slot, Number(ev.target.value))}
-                        className={
-                          "ml-1.5 cursor-pointer rounded-md border px-1.5 py-0.5 align-baseline text-[11px] font-bold outline-none transition-colors focus:ring-2 focus:ring-rubi-gold/50 " +
-                          (tier > 0
-                            ? "border-rubi-gold bg-rubi-gold text-background shadow-[0_0_10px_-2px_var(--rubi-gold)]"
-                            : "border-dashed border-rubi-gold/80 bg-rubi-gold/10 text-rubi-gold hover:bg-rubi-gold/20")
-                        }
-                      >
-                        {Array.from({ length: max + 1 }, (_, t) => (
-                          <option key={t} value={t}>
-                            {t === 0 ? `+ Tier (até T${max})` : `Tier ${t}`}
-                          </option>
-                        ))}
-                      </select>
+                    {max > 0 && onChange && isTierSlot(slot) ? (
+                      <TierPicker
+                        slot={slot}
+                        itemName={it.name}
+                        tier={tier}
+                        max={max}
+                        onChange={(t) => setTier(slot, t)}
+                      />
                     ) : tier > 0 ? (
                       <span className="ml-1.5 rounded bg-rubi-gold/15 px-1 text-[10px] font-bold text-rubi-gold">
                         T{tier}
