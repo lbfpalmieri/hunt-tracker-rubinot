@@ -1,7 +1,6 @@
 import { GameIcon } from "@/components/GameIcon";
 import {
   CHARM_LEVEL_LABEL,
-  SKILL_LABEL,
   WHEEL_ICON,
   charmIcon,
   convictionMaxLevel,
@@ -26,11 +25,9 @@ export function SetupCard({
 }) {
   const voc = setupVocation(vocation);
   const weapon = findWeapon(setup.weapon);
-  const skillLabel = voc ? SKILL_LABEL[voc] : "Skill";
+  // Skill, Magic Level e crítico saíram do setup (confuso) — sessões antigas que têm esses campos não
+  // mostram mais.
   const stats: [string, string][] = [];
-  if (setup.skill != null && skillLabel) stats.push([skillLabel, String(setup.skill)]);
-  if (setup.magicLevel != null) stats.push(["Magic Level", String(setup.magicLevel)]);
-  if (setup.critDamage != null) stats.push(["Crítico extra", `+${setup.critDamage}%`]);
   if (setup.wheelDmgHeal != null) stats.push(["Wheel dano e cura", `+${setup.wheelDmgHeal}`]);
 
   // Charms agrupados: "Freeze Nv2 · Vexclaw, Hellflayer"

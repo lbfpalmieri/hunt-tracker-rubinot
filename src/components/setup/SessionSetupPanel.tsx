@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { GameIcon } from "@/components/GameIcon";
 import {
   CHARMS,
-  SKILL_LABEL,
   STANCES,
   WHEEL_CONVICTION,
   WHEEL_ICON,
@@ -74,7 +73,6 @@ export function SessionSetupPanel({
   const revelation = vocation
     ? WHEEL_REVELATION[vocation]
     : uniq(Object.values(WHEEL_REVELATION).flat());
-  const skillLabel = vocation ? SKILL_LABEL[vocation] : "Skill principal";
 
   // ---------- presets ----------
   const { data: presets = [] } = useSetupPresets(characterId);
@@ -248,7 +246,7 @@ export function SessionSetupPanel({
         </section>
       )}
 
-      {/* Equipamento (boneco do inventário) com tier/skills/postura na coluna do lado */}
+      {/* Equipamento (boneco do inventário) com a postura na coluna do lado */}
       <section>
         <span className={LABEL}>Equipamento</span>
         <EquipmentDoll
@@ -256,69 +254,36 @@ export function SessionSetupPanel({
           onChange={set}
           vocation={vocation}
           aside={
-            <div className="space-y-3 border-t border-border/60 pt-3">
-              <section className="grid grid-cols-2 gap-3">
-                <label>
-                  <span className={LABEL}>Crítico extra %</span>
-                  <input
-                    inputMode="decimal"
-                    value={value.critDamage ?? ""}
-                    onChange={(e) => set({ critDamage: toNum(e.target.value) })}
-                    placeholder="14,9"
-                    className={FIELD}
-                  />
-                </label>
-                {skillLabel && (
-                  <label>
-                    <span className={LABEL}>{skillLabel}</span>
-                    <input
-                      inputMode="numeric"
-                      value={value.skill ?? ""}
-                      onChange={(e) => set({ skill: toNum(e.target.value) })}
-                      placeholder="219"
-                      className={FIELD}
-                    />
-                  </label>
+            stances.length > 0 && (
+              <div className="space-y-3 border-t border-border/60 pt-3">
+                {stances.length > 0 && (
+                  <section>
+                    <span className={LABEL}>Postura</span>
+                    <div className="flex flex-wrap gap-2">
+                      {stances.map((st) => {
+                        const on = value.stance === st;
+                        return (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => set({ stance: on ? null : st })}
+                            className={
+                              "inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors " +
+                              (on
+                                ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                                : "border-border text-muted-foreground hover:text-foreground")
+                            }
+                          >
+                            <GameIcon name={st} size={24} />
+                            {st}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
                 )}
-                <label>
-                  <span className={LABEL}>Magic Level</span>
-                  <input
-                    inputMode="numeric"
-                    value={value.magicLevel ?? ""}
-                    onChange={(e) => set({ magicLevel: toNum(e.target.value) })}
-                    placeholder="47"
-                    className={FIELD}
-                  />
-                </label>
-              </section>
-
-              {stances.length > 0 && (
-                <section>
-                  <span className={LABEL}>Postura</span>
-                  <div className="flex flex-wrap gap-2">
-                    {stances.map((st) => {
-                      const on = value.stance === st;
-                      return (
-                        <button
-                          key={st}
-                          type="button"
-                          onClick={() => set({ stance: on ? null : st })}
-                          className={
-                            "inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors " +
-                            (on
-                              ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
-                              : "border-border text-muted-foreground hover:text-foreground")
-                          }
-                        >
-                          <GameIcon name={st} size={24} />
-                          {st}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-            </div>
+              </div>
+            )
           }
         />
       </section>

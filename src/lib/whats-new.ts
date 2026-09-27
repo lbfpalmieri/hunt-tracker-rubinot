@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "setup-no-skills",
+    date: "2026-09-27",
+    title: "Setup mais simples",
+    description:
+      "Saíram do setup os campos de crítico extra, skill (melee/distance/fist) e magic level — o set fica no boneco de equipamentos (com tier), postura e Wheel.",
+  },
+  {
     id: "gear-tiers",
     date: "2026-09-27",
     title: "Tier nos equipamentos do set",
