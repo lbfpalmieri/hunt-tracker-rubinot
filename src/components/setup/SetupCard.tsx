@@ -9,6 +9,8 @@ import {
   type SessionSetup,
 } from "@/lib/session-setup";
 
+import { findWeapon, weaponSummary } from "@/lib/weapons";
+
 const ROMAN = ["", "I", "II", "III"];
 
 /** Setup da sessão em modo leitura (sessão privada, Comunidade e comparação). */
@@ -22,6 +24,7 @@ export function SetupCard({
   compact?: boolean;
 }) {
   const voc = setupVocation(vocation);
+  const weapon = findWeapon(setup.weapon);
   const skillLabel = voc ? SKILL_LABEL[voc] : "Skill";
   const stats: [string, string][] = [];
   if (setup.skill != null && skillLabel) stats.push([skillLabel, String(setup.skill)]);
@@ -41,17 +44,32 @@ export function SetupCard({
 
   return (
     <div className="space-y-3">
-      {(setup.weapon || setup.weaponTier != null || setup.stance) && (
+      {(setup.weapon || setup.weaponTier != null || setup.stance || setup.quiver) && (
         <div className="flex flex-wrap gap-2">
           {(setup.weapon || setup.weaponTier != null) && (
             <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 py-1 pl-1 pr-2.5 text-sm font-semibold">
-              {setup.weapon && <GameIcon name={setup.weapon} size={28} />}
-              {setup.weapon ?? "Arma"}
-              {setup.weaponTier != null && (
-                <span className="rounded bg-rubi-gold/15 px-1 text-xs text-rubi-gold">
-                  T{setup.weaponTier}
+              {setup.weapon && <GameIcon name={weapon?.icon ?? setup.weapon} size={28} />}
+              <span>
+                <span className="flex items-center gap-1.5">
+                  {setup.weapon ?? "Arma"}
+                  {setup.weaponTier != null && (
+                    <span className="rounded bg-rubi-gold/15 px-1 text-xs text-rubi-gold">
+                      T{setup.weaponTier}
+                    </span>
+                  )}
                 </span>
-              )}
+                {weapon && !compact && (
+                  <span className="block text-[10px] font-normal text-muted-foreground">
+                    {weaponSummary(weapon)}
+                  </span>
+                )}
+              </span>
+            </span>
+          )}
+          {setup.quiver && (
+            <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 py-1 pl-1 pr-2.5 text-sm">
+              <GameIcon name={setup.quiver} size={24} />
+              {setup.quiver}
             </span>
           )}
           {setup.stance && (

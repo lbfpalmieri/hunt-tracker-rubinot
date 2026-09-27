@@ -11,12 +11,13 @@ import {
   WHEEL_ICON,
   WHEEL_REVELATION,
   charmIcon,
-  cleanWeaponName,
   convictionMaxLevel,
   type SessionSetup,
   type SetupCharm,
   type SetupVocation,
 } from "@/lib/session-setup";
+import { WeaponPicker } from "@/components/setup/WeaponPicker";
+import { findWeapon, quivers } from "@/lib/weapons";
 import {
   suggestedPresetName,
   useSaveSetupPreset,
@@ -194,7 +195,10 @@ export function SessionSetupPanel({
                       {pr.gearUrl ? (
                         <img src={pr.gearUrl} alt="" className="h-full w-full object-contain" />
                       ) : pr.setup.weapon ? (
-                        <GameIcon name={pr.setup.weapon} size={40} />
+                        <GameIcon
+                          name={findWeapon(pr.setup.weapon)?.icon ?? pr.setup.weapon}
+                          size={40}
+                        />
                       ) : (
                         <Shirt className="h-7 w-7 text-muted-foreground/50" />
                       )}
@@ -259,24 +263,21 @@ export function SessionSetupPanel({
 
       {/* Arma + skills */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <label className="col-span-2">
+        <div className="col-span-2 sm:col-span-4">
           <span className={LABEL}>Arma</span>
-          <div className="flex items-center gap-2">
-            {value.weapon && (
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-border bg-background">
-                <GameIcon name={value.weapon} size={32} />
-              </span>
-            )}
-            <input
-              value={value.weapon ?? ""}
-              onChange={(e) => set({ weapon: e.target.value })}
-              onBlur={(e) => set({ weapon: cleanWeaponName(e.target.value) })}
-              maxLength={40}
-              placeholder="Soulbleeder"
-              className={FIELD}
-            />
-          </div>
-        </label>
+          <WeaponPicker
+            value={value.weapon}
+            vocation={vocation}
+            onChange={(weapon) => {
+              // Tier acima do máximo da arma nova não existe — zera.
+              const max = findWeapon(weapon)?.maxTier;
+              set({
+                weapon,
+                weaponTier: max != null && (value.weaponTier ?? 0) > max ? null : value.weaponTier,
+              });
+            }}
+          />
+        </div>
         <label>
           <span className={LABEL}>Tier</span>
           <select
@@ -287,7 +288,7 @@ export function SessionSetupPanel({
             className={FIELD}
           >
             <option value="">—</option>
-            {Array.from({ length: 11 }, (_, i) => (
+            {Array.from({ length: (findWeapon(value.weapon)?.maxTier ?? 10) + 1 }, (_, i) => (
               <option key={i} value={i}>
                 T{i}
               </option>
@@ -314,6 +315,31 @@ export function SessionSetupPanel({
               placeholder="219"
               className={FIELD}
             />
+          </label>
+        )}
+        {vocation === "paladin" && (
+          <label className="col-span-2">
+            <span className={LABEL}>Aljava</span>
+            <div className="flex items-center gap-2">
+              {value.quiver && (
+                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-border bg-background">
+                  <GameIcon name={value.quiver} size={32} />
+                </span>
+              )}
+              <select
+                value={value.quiver ?? ""}
+                onChange={(e) => set({ quiver: e.target.value || null })}
+                className={FIELD}
+              >
+                <option value="">—</option>
+                {quivers().map((qv) => (
+                  <option key={qv.name} value={qv.name}>
+                    {qv.name}
+                    {qv.level ? ` (Lv ${qv.level})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
           </label>
         )}
         <label>

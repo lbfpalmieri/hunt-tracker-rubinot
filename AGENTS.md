@@ -40,7 +40,10 @@ estilo Task Board, coluna bounty_creature) → Prey (PreyPicker inline) → Setu
 Setup da sessão: hunt_sessions.setup jsonb (src/lib/session-setup.ts) — SÓ campos estruturados de listas
 da TibiaWiki (charms, posturas, perks de Convicção/Revelação da Wheel por vocação; ícones via GameIcon) + nome da arma sanitizado; é público com a sessão.
 Presets do setup ("sets", sem charms, com gear_url = print) por personagem em public.setup_presets
-(setup-presets.ts); tela dedicada /equipamentos (Meus sets). Escolher set no assistente preenche o setup e o
+(setup-presets.ts); tela dedicada /equipamentos (Meus sets).
+Armas: src/data/weapons-data.ts (530 armas extraídas da TibiaWiki BR — categorias Espadas/Machados/Clavas,
+Bows/Crossbows/Armas de Arremesso, Wands, Rods, Punhos (monk), Aljavas; sem obsoletas), lidas por
+src/lib/weapons.ts e filtradas por vocação no WeaponPicker. Arma nova do jogo = refazer a extração. Escolher set no assistente preenche o setup e o
 print da sessão (se ela ainda não tiver). Dashboard: RendimentoNudge + SetsNudge com horários defasados.
 Observações (notes) continuam privadas — não exibir texto livre na Comunidade.; imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
 (linked_task_progress, barras geral/por sala, marcar tudo); tools.compare.tsx (até 4

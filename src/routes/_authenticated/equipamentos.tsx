@@ -25,6 +25,7 @@ import {
   type SetupPreset,
 } from "@/lib/setup-presets";
 import { useAppStore } from "@/lib/store";
+import { findWeapon } from "@/lib/weapons";
 
 export const Route = createFileRoute("/_authenticated/equipamentos")({
   head: () => ({
@@ -107,7 +108,7 @@ function EquipamentosPage() {
                     className="h-full w-full object-contain"
                   />
                 ) : p.setup.weapon ? (
-                  <GameIcon name={p.setup.weapon} size={64} />
+                  <GameIcon name={findWeapon(p.setup.weapon)?.icon ?? p.setup.weapon} size={64} />
                 ) : (
                   <Shirt className="h-10 w-10 text-muted-foreground/40" />
                 )}

@@ -30,8 +30,11 @@ export interface SetupRevelation {
 }
 
 export interface SessionSetup {
+  /** Nome da arma (lista da TibiaWiki em src/lib/weapons.ts, filtrada pela vocação). */
   weapon: string | null;
   weaponTier: number | null;
+  /** Aljava (só paladino). */
+  quiver: string | null;
   /** Skill principal: Distance (paladino), Melee (knight), Fist (monk). Mago não usa. */
   skill: number | null;
   magicLevel: number | null;
@@ -48,6 +51,7 @@ export interface SessionSetup {
 export const EMPTY_SETUP: SessionSetup = {
   weapon: null,
   weaponTier: null,
+  quiver: null,
   skill: null,
   magicLevel: null,
   critDamage: null,
@@ -245,6 +249,7 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
   const setup: SessionSetup = {
     weapon: cleanWeaponName(v.weapon),
     weaponTier: num(v.weaponTier, 0, 10),
+    quiver: cleanWeaponName(v.quiver),
     skill: num(v.skill, 0, 400),
     magicLevel: num(v.magicLevel, 0, 200),
     critDamage: num(v.critDamage, 0, 500),
@@ -286,6 +291,7 @@ export function isEmptySetup(s: SessionSetup | null | undefined): boolean {
   return (
     !s.weapon &&
     s.weaponTier == null &&
+    !s.quiver &&
     s.skill == null &&
     s.magicLevel == null &&
     s.critDamage == null &&

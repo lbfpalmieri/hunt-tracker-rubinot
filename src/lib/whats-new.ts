@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "weapons-by-vocation",
+    date: "2026-09-27",
+    title: "Armas da wiki no setup",
+    description:
+      "O campo Arma agora é uma lista com as 530 armas atuais da TibiaWiki, filtrada pela sua vocação — espadas, machados e clavas pro knight; arcos, bestas e arremesso pro paladino (com aljava); wands pro sorcerer; rods pro druid; punhos (katar, sai, claws...) pro monk. Mostra ícone, level, ataque/elemento ou dano, defesa, skills, slots de imbuement e o tier máximo.",
+  },
+  {
     id: "meus-sets",
     date: "2026-09-27",
     title: "Meus sets de equipamento",
