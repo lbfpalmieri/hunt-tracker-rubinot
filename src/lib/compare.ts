@@ -126,6 +126,8 @@ export interface CommunityRow {
   bounty: { difficulty: string; tier: string; xp: number | null } | null;
   prey: unknown;
   setup?: SessionSetup | null;
+  /** Hunt em grupo; noXp = feita só com o Party Hunt Analyser (fica fora das médias de XP). */
+  party?: { size: number; split: boolean; noXp?: boolean } | null;
 }
 
 export function fromCommunityRow(r: CommunityRow): CompareHunt {
@@ -137,7 +139,13 @@ export function fromCommunityRow(r: CommunityRow): CompareHunt {
       } as BountyInfo)
     : null;
   const rawXpTotal = Number(r.rawXp || r.xpGain || 0);
-  const rawXpHunt = !bounty ? rawXpTotal : bounty.xp == null ? null : Math.max(0, rawXpTotal - bounty.xp);
+  const rawXpHunt = r.party?.noXp
+    ? null
+    : !bounty
+      ? rawXpTotal
+      : bounty.xp == null
+        ? null
+        : Math.max(0, rawXpTotal - bounty.xp);
   const { types: damageTypes, sources: damageSources } = splitDamageBreakdown(
     r.damageTakenTypes ?? [],
     r.damageTakenSources ?? [],

@@ -1,4 +1,4 @@
-import type { HuntingData } from "./parser";
+import { resolveDurationSec, type HuntingData } from "./parser";
 
 /**
  * Hunt em grupo (party) — segue o que o cliente do RubinOT faz (OTClient, módulos
@@ -20,14 +20,26 @@ import type { HuntingData } from "./parser";
  *   Outro Membro
  *   \t...
  * "Copy to LootSplitter" NÃO copia nada: só abre a janela LootSplitter do próprio cliente com
- * esse mesmo texto. O botão "Copy" dessa janela copia o RESULTADO:
+ * esse mesmo texto. O "Copy" dessa janela copia o RESULTADO — no cliente do RubinOT (export real
+ * enviado pelo usuário em 2026-09-27):
  *   - Loot Splitter -
+ *   From 2026-09-27, 06:21:19 to 2026-09-27, 07:10:20
  *
- *   - Bank transfers:
- *   - Lodrak should transfer 963953 to Tester
+ *   Zork Ligth: 8,495,121          (balance de cada um)
+ *   Emplacado: 673,187
  *
- *   - Total profit: 2.074.424 $ (691.475 $ each)
- * Os dois formatos são aceitos aqui.
+ *   Loot: 9,343,254
+ *   Supplies: 174,946
+ *   Profit: 9,168,308 (4,584,154 each)
+ *
+ *   Bank transfers:
+ *   - Zork Ligth transfers 3,910,967 to Emplacado
+ * (o OTClient base usa "- Total profit: X $ (Y $ each)" e "should transfer" — também aceito).
+ * Os dois textos (Party Hunt e resultado) são aceitos aqui.
+ *
+ * MODO GRUPO: a sessão é registrada SÓ com esse texto (sem Hunting Analyser) — duração e datas da
+ * sessão da party, loot/supplies/dano/cura da linha do usuário e o lucro = parte da divisão. Sem XP
+ * nem criaturas (o analyser da party não traz): `noHuntingAnalyser` tira a sessão das médias de XP.
  *
  * DIVISÃO (igual ao LootSplitter do cliente): líder primeiro, depois os membros na ordem do texto;
  * cada um com balance − "extra cost" (gasto extra informado — ex. quem pagou imbuement/bless da
@@ -72,6 +84,13 @@ export interface PartyInfo {
   splitterShare?: number | null;
   /** Transferências lidas do resultado do LootSplitter. */
   splitterTransfers?: PartyTransfer[] | null;
+  /** De onde vieram os membros: Party Hunt Analyser (loot/supplies de cada um) ou resultado do LootSplitter (só balance). */
+  source?: "analyser" | "splitter" | null;
+  /** "2026-09-27, 06:21:19" — início/fim da sessão da party. */
+  startedAt?: string | null;
+  endedAt?: string | null;
+  /** Sessão registrada só com o texto da party (Modo Grupo): sem XP, criaturas e loot por item. */
+  noHuntingAnalyser?: boolean;
 }
 
 export interface PartyTransfer {
@@ -98,10 +117,20 @@ const durationSec = (s: string): number | null => {
 export interface ParsedPartyHunt {
   lootType: "Leader" | "Market" | null;
   sessionSec: number | null;
+  startedAt: string | null;
+  endedAt: string | null;
   loot: number;
   supplies: number;
   balance: number;
   members: PartyMember[];
+}
+
+/** "From 2026-09-27, 06:21:19 to 2026-09-27, 07:10:20" */
+function fromTo(s: string): { from: string; to: string } | null {
+  const m = s.match(
+    /From\s+(\d{4}-\d{2}-\d{2},?\s*\d{1,2}:\d{2}(?::\d{2})?)\s+to\s+(\d{4}-\d{2}-\d{2},?\s*\d{1,2}:\d{2}(?::\d{2})?)/i,
+  );
+  return m ? { from: m[1].trim(), to: m[2].trim() } : null;
 }
 
 const KEY_RE =
@@ -119,6 +148,7 @@ export function parsePartyHunt(text: string): ParsedPartyHunt | null {
   const head: Record<string, number> = {};
   let lootType: ParsedPartyHunt["lootType"] = null;
   let sessionSec: number | null = null;
+  let range: { from: string; to: string } | null = null;
   const members: PartyMember[] = [];
   let cur: PartyMember | null = null;
 
@@ -156,14 +186,19 @@ export function parsePartyHunt(text: string): ParsedPartyHunt | null {
       lootType = t === "market" ? "Market" : t === "leader" ? "Leader" : null;
     } else if (key === "Session" || key === "Session length") {
       sessionSec = durationSec(seg);
+    } else if (key === "Session data") {
+      range = fromTo(seg);
     }
   });
 
   if (!members.length) return null;
   const sum = (k: "loot" | "supplies" | "balance") => members.reduce((a, x) => a + x[k], 0);
+  const r = range as { from: string; to: string } | null;
   return {
     lootType,
     sessionSec,
+    startedAt: r?.from ?? null,
+    endedAt: r?.to ?? null,
     loot: head.loot ?? sum("loot"),
     supplies: head.supplies ?? sum("supplies"),
     balance: head.balance ?? sum("balance"),
@@ -175,17 +210,38 @@ export interface ParsedSplitterResult {
   total: number;
   each: number;
   transfers: PartyTransfer[];
+  /** "Nome: balance" de cada membro (formato do RubinOT). */
+  members: { name: string; balance: number }[];
+  startedAt: string | null;
+  endedAt: string | null;
 }
 
-/** Lê o resultado copiado da janela LootSplitter do cliente ("Total profit: X $ (Y $ each)"). */
+const SPLITTER_KEYS = /^(loot|supplies|profit|total profit|from|bank transfers|session.*)$/i;
+
+/** Lê o resultado copiado da janela LootSplitter (formato do RubinOT e do OTClient base). */
 export function parseSplitterResult(text: string): ParsedSplitterResult | null {
-  const tot = text.match(/Total profit:\s*(-?[\d.,]+)\s*\$\s*\(\s*(-?[\d.,]+)\s*\$\s*each\s*\)/i);
+  const tot = text.match(/Profit:\s*(-?[\d.,]+)\s*\$?\s*\(\s*(-?[\d.,]+)\s*\$?\s*each\s*\)/i);
   if (!tot) return null;
   const transfers: PartyTransfer[] = [];
-  for (const m of text.matchAll(/-\s*(.+?)\s+should transfer\s+([\d.,]+)\s+to\s+(.+)/gi)) {
+  for (const m of text.matchAll(
+    /-\s*([^\n]+?)\s+(?:should transfer|transfers)\s+([\d.,]+)\s+to\s+([^\n]+)/gi,
+  )) {
     transfers.push({ from: m[1].trim(), to: m[3].trim(), amount: toNum(m[2]) });
   }
-  return { total: toNum(tot[1]), each: toNum(tot[2]), transfers };
+  const members: { name: string; balance: number }[] = [];
+  for (const m of text.matchAll(/^[ \t]*([^:\n-][^:\n]*?)[ \t]*:[ \t]*(-?[\d.,]+)[ \t]*$/gm)) {
+    const name = m[1].trim();
+    if (!SPLITTER_KEYS.test(name)) members.push({ name: name.slice(0, 40), balance: toNum(m[2]) });
+  }
+  const r = fromTo(text);
+  return {
+    total: toNum(tot[1]),
+    each: toNum(tot[2]),
+    transfers,
+    members,
+    startedAt: r?.from ?? null,
+    endedAt: r?.to ?? null,
+  };
 }
 
 /** Parece o Party Hunt Analyser (e não o Hunting Analyser pessoal)? */
@@ -223,9 +279,33 @@ export function partyFromText(text: string, charName: string | null | undefined)
       personal: null,
       lootType: hunt.lootType,
       sessionSec: hunt.sessionSec,
+      startedAt: hunt.startedAt,
+      endedAt: hunt.endedAt,
+      source: "analyser",
     };
   }
   const res = parseSplitterResult(text);
+  // Formato do RubinOT: tem o balance de cada um → vira membro de verdade (divide igual ao jogo).
+  if (res && res.members.length >= PARTY_MIN) {
+    const members: PartyMember[] = res.members.slice(0, PARTY_MAX).map((m) => ({
+      name: m.name,
+      leader: false,
+      loot: Math.max(0, m.balance),
+      supplies: Math.max(0, -m.balance),
+      balance: m.balance,
+      damage: 0,
+      healing: 0,
+    }));
+    return {
+      size: members.length,
+      members,
+      self: findSelf(members, charName),
+      personal: null,
+      startedAt: res.startedAt,
+      endedAt: res.endedAt,
+      source: "splitter",
+    };
+  }
   if (res) {
     const names = new Set(res.transfers.flatMap((t) => [t.from, t.to]));
     const bySplit = res.each ? Math.round(res.total / res.each) : 0;
@@ -236,9 +316,44 @@ export function partyFromText(text: string, charName: string | null | undefined)
       personal: null,
       splitterShare: res.each,
       splitterTransfers: res.transfers,
+      startedAt: res.startedAt,
+      endedAt: res.endedAt,
+      source: "splitter",
     };
   }
   return null;
+}
+
+/**
+ * Hunting da sessão feita SÓ com o texto da party (Modo Grupo): números PESSOAIS da linha do
+ * usuário (a divisão entra depois, em applyPartySplit). Sem XP, criaturas e itens.
+ */
+export function huntingFromParty(party: PartyInfo): HuntingData {
+  const me = party.members?.find((m) => m.name === party.self);
+  const startedAt = party.startedAt ?? null;
+  const endedAt = party.endedAt ?? null;
+  const durationSec =
+    resolveDurationSec({ durationSec: 0, startedAt, endedAt }) || party.sessionSec || 0;
+  const perHour = (v: number) => Math.round(v / (durationSec / 3600 || 1));
+  const balance = me?.balance ?? 0;
+  return {
+    startedAt,
+    endedAt,
+    durationSec,
+    rawXp: 0,
+    xpGain: 0,
+    xpPerHour: 0,
+    rawXpPerHour: 0,
+    loot: me ? me.loot : 0,
+    supplies: me ? me.supplies : 0,
+    balance,
+    damage: me?.damage ?? 0,
+    damagePerHour: perHour(me?.damage ?? 0),
+    healing: me?.healing ?? 0,
+    healingPerHour: perHour(me?.healing ?? 0),
+    kills: [],
+    lootedItems: [],
+  };
 }
 
 /** Membros na ordem do LootSplitter do cliente: líder primeiro, depois a ordem do texto. */
@@ -389,5 +504,9 @@ export function normalizeParty(raw: unknown): PartyInfo | null {
     sessionSec: Number(r.sessionSec) > 0 ? Number(r.sessionSec) : null,
     splitterShare: typeof r.splitterShare === "number" ? r.splitterShare : null,
     splitterTransfers: transfers && transfers.length ? transfers : null,
+    source: r.source === "analyser" || r.source === "splitter" ? r.source : null,
+    startedAt: typeof r.startedAt === "string" ? r.startedAt.slice(0, 30) : null,
+    endedAt: typeof r.endedAt === "string" ? r.endedAt.slice(0, 30) : null,
+    ...(r.noHuntingAnalyser === true ? { noHuntingAnalyser: true } : {}),
   };
 }

@@ -85,7 +85,10 @@ export function parseXpAmount(raw: string): number | null {
 export function huntRawXp(session: {
   hunting: { rawXp: number; xpGain: number };
   bounty?: BountyInfo | null;
+  /** Sessão só com o Party Hunt Analyser (Modo Grupo) não tem XP — fica fora das médias. */
+  party?: { noHuntingAnalyser?: boolean } | null;
 }): number | null {
+  if (session.party?.noHuntingAnalyser) return null;
   const raw = session.hunting.rawXp || session.hunting.xpGain;
   if (!session.bounty) return raw;
   if (session.bounty.xp == null) return null;

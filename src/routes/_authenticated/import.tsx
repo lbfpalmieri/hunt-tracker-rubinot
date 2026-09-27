@@ -68,6 +68,7 @@ import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
 import {
   applyPartySplit,
+  huntingFromParty,
   looksLikePartyText,
   partyFromText,
   selfShare,
@@ -75,7 +76,7 @@ import {
 } from "@/lib/party";
 import { PARTY_COPY_HELP, PartyEditor } from "@/components/party/PartyEditor";
 import { PartyBadge } from "@/components/party/PartyBadge";
-import { useNavPrefs } from "@/lib/nav-prefs";
+import { setPlayMode, useNavPrefs } from "@/lib/nav-prefs";
 
 
 
@@ -119,15 +120,17 @@ function ImportPage() {
   const [bountyAnswer, setBountyAnswer] = useState<"yes" | "no" | null>(null);
   const [bountyDraft, setBountyDraft] = useState<BountyDraft>(EMPTY_BOUNTY);
   const [preyAnswer, setPreyAnswer] = useState<"yes" | "no" | null>(null);
-  // Hunt em party (party.ts). No Modo Grupo já abre respondido "Sim".
+  // Hunt em party (party.ts). No MODO GRUPO a sessão vem SÓ do Party Hunt Analyser (ou do resultado
+  // do LootSplitter): sem Hunting/Input/Misc, e o assistente pula Bounty e Prey (dependem de XP e
+  // criaturas, que o analyser da party não traz). No Modo Solo não tem party.
   const playMode = useNavPrefs((s) => s.mode);
-  const [partyAnswer, setPartyAnswer] = useState<"yes" | "no" | null>(null);
+  const groupMode = playMode === "party";
   const [party, setParty] = useState<PartyInfo | null>(null);
   // Texto colado no bloco "Party Hunt Analyser" da página (a party em si fica em `party`).
   const [partyText, setPartyText] = useState("");
-  const hasParty = partyAnswer === "yes" && !!party;
-  // Com o Party Hunt Analyser colado, precisa saber quem é você pra dividir.
-  const partyReady = partyAnswer === "no" || (!!party && (!party.members || !!party.self));
+  const hasParty = groupMode && !!party;
+  // Precisa saber quem é você entre os membros (é a sua linha que vira a sessão).
+  const partyReady = !groupMode || (!!party?.members?.length && !!party.self);
   const [setup, setSetup] = useState<SessionSetup>(EMPTY_SETUP);
   const hasBounty = bountyAnswer === "yes";
   const hasPrey = preyAnswer === "yes";
@@ -171,13 +174,11 @@ function ImportPage() {
     setPartyText(text);
     if (!text.trim()) {
       setParty(null);
-      setPartyAnswer(null);
       return;
     }
     const p = partyFromText(text, activeChar?.name);
     if (p) {
       setParty(p);
-      setPartyAnswer("yes");
     }
   };
 
@@ -200,6 +201,25 @@ function ImportPage() {
         title: "Não reconheci esse texto",
         detail:
           "Copie o bloco completo direto do jogo (Hunting Analyser, Input Analyser, Miscellaneous ou Party Hunt).",
+      });
+      return;
+    }
+    if (kind === "party" && !groupMode) {
+      setPlayMode("party");
+      applyPartyText(text);
+      setNotice({
+        tone: "ok",
+        title: "Party Hunt Analyser — mudamos pro Modo Grupo",
+        detail: "Hunt em grupo é registrada só com o Party Hunt Analyser, no Modo Grupo.",
+      });
+      return;
+    }
+    if (kind !== "party" && groupMode) {
+      setNotice({
+        tone: "error",
+        title: `${BLOCK_LABEL[kind]} não é usado no Modo Grupo`,
+        detail:
+          'No Modo Grupo a sessão vem só do Party Hunt Analyser (janela Party Hunt → botão direito → "Copy to Clipboard"). Pra hunt solo, troque pro Modo Solo no topo.',
       });
       return;
     }
@@ -295,6 +315,9 @@ function ImportPage() {
   });
 
   const parsed = useMemo(() => {
+    if (groupMode) {
+      return { hunting: party?.members?.length ? huntingFromParty(party) : null, damage: null, misc: null };
+    }
     try {
       const hunting = huntingText.trim() ? parseHunting(huntingText) : null;
       const damage = damageText.trim() ? parseDamage(damageText) : null;
@@ -303,7 +326,7 @@ function ImportPage() {
     } catch {
       return { hunting: null, damage: null, misc: null };
     }
-  }, [huntingText, damageText, miscText]);
+  }, [huntingText, damageText, miscText, groupMode, party]);
 
   // Suggests which hunt this session belongs to by matching the monsters just
   // killed against monsters seen before under each hunt name.
@@ -376,7 +399,7 @@ function ImportPage() {
   };
 
   const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
-  const huntingIsParty = !!huntingText && looksLikePartyText(huntingText);
+  const huntingIsParty = !groupMode && !!huntingText && looksLikePartyText(huntingText);
   const huntingStatus: SlotStatus = !huntingText
     ? "empty"
     : parsed.hunting && durationOk && !huntingIsParty
@@ -384,10 +407,12 @@ function ImportPage() {
       : "error";
   const huntingSummary =
     parsed.hunting && durationOk
-      ? `${fmtDuration(parsed.hunting.durationSec)} · ${fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} kills · ${fmtGold(parsed.hunting.balance)}`
+      ? groupMode
+        ? `${fmtDuration(parsed.hunting.durationSec)} · party de ${party?.size ?? "?"}`
+        : `${fmtDuration(parsed.hunting.durationSec)} · ${fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} kills · ${fmtGold(parsed.hunting.balance)}`
       : undefined;
   const huntingMessage = huntingIsParty
-    ? "Esse é o Party Hunt Analyser — aqui vai o Hunting Analyser do seu personagem. O da party entra no passo \"Grupo\" ao adicionar a sessão."
+    ? "Esse é o Party Hunt Analyser — hunt em grupo é registrada no Modo Grupo (alternador no topo)."
     : !parsed.hunting
     ? "Não reconheci esse bloco. Copie o Hunt Analyser completo do jogo."
     : "Duração não identificada. O texto precisa incluir \"Session data: From ... to ...\" e \"Session length\".";
@@ -409,9 +434,22 @@ function ImportPage() {
       preyReady,
   );
 
+  // Modo Grupo: sem Bounty e Prey (sem XP/criaturas no analyser da party). Modo Solo: sem Grupo.
+  const skipSteps = groupMode ? [2, 3] : [1];
+  const stepNext = (s: number) => {
+    let n = s + 1;
+    while (skipSteps.includes(n)) n++;
+    return n;
+  };
+  const stepBack = (s: number) => {
+    let n = s - 1;
+    while (n > 0 && skipSteps.includes(n)) n--;
+    return n;
+  };
+
   const stepOk = [
     Boolean(selectedHuntName),
-    partyAnswer !== null && partyReady,
+    partyReady,
     bountyAnswer !== null && bountyReady,
     preyAnswer !== null && preyReady,
     true,
@@ -441,7 +479,10 @@ function ImportPage() {
           }
         : parsed.hunting;
       // Em party com o Party Hunt Analyser: o lucro salvo é a parte do usuário na divisão.
-      const split = applyPartySplit(correctedHunting, hasParty ? party : null);
+      const split = applyPartySplit(
+        correctedHunting,
+        hasParty && party ? { ...party, noHuntingAnalyser: true } : null,
+      );
       const created = await addSession({
         characterId: effectiveCharId,
         huntName: selectedHuntName,
@@ -488,7 +529,7 @@ function ImportPage() {
   const partySlot = (
     <PasteSlot
       label="Party Hunt Analyser"
-      help={`Hunt em grupo — divide o loot. ${PARTY_COPY_HELP}`}
+      help={PARTY_COPY_HELP}
       value={partyText}
       onChange={applyPartyText}
       status={partyText ? (partyParsed ? "ok" : "error") : "empty"}
@@ -504,8 +545,6 @@ function ImportPage() {
           : undefined
       }
       message='Não reconheci. Use "Copy to Clipboard" na janela Party Hunt.'
-      optional
-      recommended={playMode === "party"}
     />
   );
 
@@ -602,15 +641,25 @@ function ImportPage() {
           <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">V</kbd> em
           qualquer lugar da tela — o sistema identifica o bloco e encaixa no lugar certo.
         </p>
-        <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
-          <Skull className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-danger/70" />
-          Se você morreu durante a hunt, cole o Hunting Analyser logo em seguida — antes de caçar mais, senão a
-          Raw XP pode voltar a ficar positiva e o sistema não consegue detectar a morte.
-        </p>
+        {groupMode ? (
+          <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
+            <Users className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-blue" />
+            Modo Grupo: a sessão vem só do Party Hunt Analyser (ou do resultado do LootSplitter) — o
+            lucro salvo é a sua parte da divisão, igual ao LootSplitter do jogo.
+          </p>
+        ) : (
+          <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
+            <Skull className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-danger/70" />
+            Se você morreu durante a hunt, cole o Hunting Analyser logo em seguida — antes de caçar mais, senão a
+            Raw XP pode voltar a ficar positiva e o sistema não consegue detectar a morte.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-2 lg:col-span-2">
+          {groupMode ? partySlot : (
+          <>
           <PasteSlot
             label="Hunting Analyser"
             help="Cole aqui o bloco do Hunt Analyser (obrigatório)."
@@ -623,7 +672,6 @@ function ImportPage() {
             summary={huntingSummary}
             message={huntingMessage}
           />
-          {playMode === "party" && partySlot}
           <PasteSlot
             label="Input Analyser"
             help="Dano recebido: Total, Max-DPS, Damage Types e Sources."
@@ -652,8 +700,9 @@ function ImportPage() {
             message="Não reconheci esse bloco. Copie o Miscellaneous completo."
             optional
           />
-          {playMode !== "party" && partySlot}
-          {parsed.hunting && (
+          </>
+          )}
+          {parsed.hunting && !groupMode && (
             <div className="card-surface p-5">
               <h3 className="mb-3 text-sm font-semibold">Preview</h3>
               <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -737,10 +786,17 @@ function ImportPage() {
             </div>
 
             {!parsed.hunting ? (
-              <p className="text-sm text-muted-foreground">
-                Cole o <b className="text-foreground">Hunting Analyser</b> (obrigatório). Input e
-                Miscellaneous são opcionais.
-              </p>
+              groupMode ? (
+                <p className="text-sm text-muted-foreground">
+                  Cole o <b className="text-foreground">Party Hunt Analyser</b> — no jogo, janela
+                  Party Hunt → botão direito → "Copy to Clipboard".
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Cole o <b className="text-foreground">Hunting Analyser</b> (obrigatório). Input e
+                  Miscellaneous são opcionais.
+                </p>
+              )
             ) : !durationOk ? (
               <p className="rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-2 text-xs text-rubi-danger">
                 Não foi possível identificar a duração da sessão. Cole o Hunting Analyser completo,
@@ -749,17 +805,14 @@ function ImportPage() {
             ) : (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Hunting Analyser pronto. Agora é só configurar: nome da hunt, party, Bounty Task,
-                  Prey e, se quiser, level e equipamento.
+                  {groupMode
+                    ? "Party Hunt Analyser pronto. Agora é só configurar: nome da hunt, quem é você na party e, se quiser, setup, level e equipamento."
+                    : "Hunting Analyser pronto. Agora é só configurar: nome da hunt, Bounty Task, Prey e, se quiser, level e equipamento."}
                 </p>
                 <button
                   type="button"
                   onClick={() => {
                     setStep(0);
-                    if (partyAnswer === null && playMode === "party") {
-                      setPartyAnswer("yes");
-                      setParty((p) => p ?? { size: 2, members: null, self: null, personal: null });
-                    }
                     setWizardOpen(true);
                   }}
                   className="group/save relative mt-4 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-rubi-gold via-rubi-gold to-rubi-blue px-4 py-3 font-display text-sm font-bold uppercase tracking-wider text-background shadow-glow-gold transition-all hover:brightness-110 active:scale-[0.98]"
@@ -782,7 +835,7 @@ function ImportPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <WizardSteps step={step} onJump={(i) => i < step && setStep(i)} />
+          <WizardSteps step={step} skip={skipSteps} onJump={(i) => i < step && setStep(i)} />
 
           {step === 0 && (
             <div>
@@ -948,39 +1001,14 @@ function ImportPage() {
             </div>
           )}
 
-          {step === 1 && (
-            <div className="space-y-4">
-              <YesNo
-                icon={Users}
-                question="Essa hunt foi em party?"
-                hint="Em party o loot fica com quem pega (normalmente o líder). Cole o Party Hunt Analyser e o lucro salvo vira a sua parte da divisão — e a sessão vai pro Modo Grupo, sem bagunçar as médias das suas hunts solo."
-                value={partyAnswer}
-                onChange={(v) => {
-                  setPartyAnswer(v);
-                  if (v === "yes") {
-                    setParty((p) => p ?? { size: 2, members: null, self: null, personal: null });
-                  } else {
-                    setParty(null);
-                    setStep(2);
-                  }
-                }}
-              />
-              {partyAnswer === "yes" && (
-                <PartyEditor
-                  value={party}
-                  onChange={(p) => {
-                    setParty(p);
-                    if (!p) {
-                      setPartyAnswer("no");
-                      setPartyText("");
-                    }
-                  }}
-                  charName={activeChar?.name ?? null}
-                  personalBalance={parsed.hunting?.balance ?? 0}
-                  personalDurationSec={parsed.hunting?.durationSec}
-                />
-              )}
-            </div>
+          {step === 1 && groupMode && (
+            <PartyEditor
+              fixed
+              value={party}
+              onChange={(p) => p && setParty(p)}
+              charName={activeChar?.name ?? null}
+              personalBalance={parsed.hunting?.balance ?? 0}
+            />
           )}
 
           {step === 2 && (
@@ -1156,7 +1184,11 @@ function ImportPage() {
                 }
               >
                 {!parsed.hunting
-                  ? "Cole o Hunting Analyser para continuar."
+                  ? groupMode
+                    ? "Cole o Party Hunt Analyser para continuar."
+                    : "Cole o Hunting Analyser para continuar."
+                  : !partyReady
+                    ? "Escolha quem é você na party (passo Grupo)."
                   : !durationOk
                     ? "Não foi possível identificar a duração da sessão. Cole o Hunting Analyser completo, incluindo as linhas \"Session data: From ... to ...\" e \"Session length: HH:MMh\"."
                     : !selectedHuntName
@@ -1180,7 +1212,7 @@ function ImportPage() {
             <DialogFooter className="gap-2 sm:justify-between">
               <button
                 type="button"
-                onClick={() => (step === 0 ? setWizardOpen(false) : setStep(step - 1))}
+                onClick={() => (step === 0 ? setWizardOpen(false) : setStep(stepBack(step)))}
                 className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 {step === 0 ? "Cancelar" : "Voltar"}
@@ -1188,7 +1220,7 @@ function ImportPage() {
               <button
                 type="button"
                 disabled={!stepOk[step]}
-                onClick={() => setStep(step + 1)}
+                onClick={() => setStep(stepNext(step))}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rubi-blue px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
               >
                 {step === 4 && !normalizeSetup(setup) ? "Pular" : "Próximo"}{" "}
@@ -1401,10 +1433,22 @@ function PreviewRow({ label, value, positive }: { label: string; value: string; 
 
 const WIZARD_STEPS = ["Hunt", "Grupo", "Bounty Task", "Prey", "Setup", "Finalizar"];
 
-function WizardSteps({ step, onJump }: { step: number; onJump: (i: number) => void }) {
+function WizardSteps({
+  step,
+  skip,
+  onJump,
+}: {
+  step: number;
+  skip: number[];
+  onJump: (i: number) => void;
+}) {
+  const shown = WIZARD_STEPS.map((label, i) => ({ label, i })).filter(({ i }) => !skip.includes(i));
   return (
-    <ol className="mb-2 grid grid-cols-6 gap-1.5">
-      {WIZARD_STEPS.map((label, i) => (
+    <ol
+      className="mb-2 grid gap-1.5"
+      style={{ gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))` }}
+    >
+      {shown.map(({ label, i }, n) => (
         <li key={label}>
           <button
             type="button"
@@ -1424,7 +1468,7 @@ function WizardSteps({ step, onJump }: { step: number; onJump: (i: number) => vo
                 (i === step ? "text-foreground" : "text-muted-foreground")
               }
             >
-              {i + 1}. {label}
+              {n + 1}. {label}
             </span>
           </button>
         </li>

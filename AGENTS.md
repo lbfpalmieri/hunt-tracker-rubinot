@@ -70,7 +70,11 @@ Modo Solo/Grupo (play-mode.ts): hunt_sessions.party jsonb (party.ts: size, membe
 self, personal, extraCost/removed por membro, lootType, splitterShare). Formatos e divisão tirados do cliente
 (OTClient: game_analyser/PartyHuntAnalyser.lua "Copy to Clipboard" e game_lootsplitter/lootsplitter.lua) —
 "Copy to LootSplitter" NÃO copia, só abre a janela do cliente; a divisão (computeSplit) replica o LootSplitter
-(líder primeiro, média, maior→menor com floor), exceto que membro removido sai do total. Com o analyser da party, hunting é salvo JÁ DIVIDIDO (balance = total ÷ membros, loot =
+(líder primeiro, média, maior→menor com floor), exceto que membro removido sai do total.
+MODO GRUPO = sessão SÓ do texto da party (import.tsx: parsed.hunting vem de huntingFromParty; sem
+Hunting/Input/Misc; assistente pula Bounty/Prey). Resultado do LootSplitter do RubinOT (formato real:
+"Nome: balance", "Profit: X (Y each)", "- A transfers N to B") também vira party. party.noHuntingAnalyser
+= sem XP → huntRawXp() null (fora das médias de XP). Modo Solo não cria party (colar o da party troca de modo). Com o analyser da party, hunting é salvo JÁ DIVIDIDO (balance = total ÷ membros, loot =
 parte + supplies próprios; números pessoais em party.personal — resplit/unsplitHunting pra editar). Modo
 fica em user_nav_prefs.play_mode (nav-prefs.ts) e muda o visual via html[data-play-mode="party"] (styles.css).
 Telas de hunt (Dashboard, Sessões, Comparar, Ranking, Calculadora, Comunidade) usam useModeSessions() /

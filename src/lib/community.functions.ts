@@ -11,9 +11,9 @@ import { isSplit, normalizeParty } from "./party";
  * membros (outros jogadores) nunca saem daqui.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function publicParty(raw: any): { size: number; split: boolean } | null {
+function publicParty(raw: any): { size: number; split: boolean; noXp: boolean } | null {
   const p = normalizeParty(raw);
-  return p ? { size: p.size, split: isSplit(p) } : null;
+  return p ? { size: p.size, split: isSplit(p), noXp: !!p.noHuntingAnalyser } : null;
 }
 
 /** Columns that are safe to expose publicly. Never include user_id/character_id. */

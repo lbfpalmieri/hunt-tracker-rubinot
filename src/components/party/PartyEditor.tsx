@@ -36,6 +36,8 @@ interface Props {
   personalBalance: number;
   /** Duração do Hunting Analyser pessoal — avisa se o da party for de outra sessão. */
   personalDurationSec?: number;
+  /** Modo Grupo (Nova sessão): a party é obrigatória — sem "Foi solo" nem "Trocar". */
+  fixed?: boolean;
 }
 
 /** Como copiar no jogo — o "Copy to LootSplitter" não copia nada (só abre a janela do cliente). */
@@ -52,6 +54,7 @@ export function PartyEditor({
   charName,
   personalBalance,
   personalDurationSec,
+  fixed = false,
 }: Props) {
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -107,13 +110,15 @@ export function PartyEditor({
             </span>
           )}
         </span>
-        <button
-          type="button"
-          onClick={() => onChange(null)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <X className="h-3.5 w-3.5" /> Foi solo
-        </button>
+        {!fixed && (
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" /> Foi solo
+          </button>
+        )}
       </div>
 
       {durationMismatch && (
@@ -155,7 +160,7 @@ export function PartyEditor({
             lucro salvo fica o do seu analyser (quem não é líder normalmente fica sem loot).
           </p>
         </>
-      ) : (
+      ) : fixed ? null : (
         <button
           type="button"
           onClick={() =>

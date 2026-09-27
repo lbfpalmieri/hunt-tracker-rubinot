@@ -102,6 +102,8 @@ function SessionDetail() {
   }
 
   const h = session.hunting;
+  // Sessão do Modo Grupo feita só com o Party Hunt Analyser: sem XP e sem criaturas.
+  const noXp = !!session.party?.noHuntingAnalyser;
   const hours = h.durationSec / 3600 || 1;
   const gph = h.balance / hours;
   const netRawXp = huntRawXp(session);
@@ -172,6 +174,15 @@ function SessionDetail() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />
+        {noXp ? (
+          <StatCard
+            label="Raw XP"
+            value="—"
+            hint="Sessão do Party Hunt Analyser — ele não traz XP"
+            icon={Zap}
+            accent="muted"
+          />
+        ) : (
         <StatCard
           label={session.bounty ? "Raw XP (com bounty)" : "Raw XP"}
           value={fmtNum(h.rawXp || h.xpGain)}
@@ -188,6 +199,7 @@ function SessionDetail() {
           icon={session.bounty ? Trophy : Zap}
           accent={session.bounty ? "gold" : "blue"}
         />
+        )}
         <StatCard
           label={isSplit(session.party) ? "Lucro (sua parte)" : "Lucro"}
           value={fmtGold(h.balance)}
@@ -204,9 +216,9 @@ function SessionDetail() {
         />
         <StatCard
           label="Kills"
-          value={fmtNum(totalKills)}
-          perHour={fmtNum(killsPerHour)}
-          hint={`${h.kills.length} espécies`}
+          value={noXp ? "—" : fmtNum(totalKills)}
+          perHour={noXp ? undefined : fmtNum(killsPerHour)}
+          hint={noXp ? "o Party Hunt Analyser não traz as criaturas" : `${h.kills.length} espécies`}
           icon={Skull}
           accent="gold"
         />

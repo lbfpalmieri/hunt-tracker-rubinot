@@ -280,7 +280,8 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* XP */}
+          {/* XP — some quando nenhuma sessão tem XP (Modo Grupo: só Party Hunt Analyser) */}
+          {!(mode === "party" && agg.totalRawXp === 0) && (
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-rubi-blue">
               <Zap className="h-3.5 w-3.5" /> Experiência
@@ -323,6 +324,7 @@ function Dashboard() {
             </div>
 
           </div>
+          )}
 
           {/* Gold */}
           <div className="mt-6">
@@ -437,7 +439,9 @@ function Dashboard() {
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {huntRawXp(s) == null
-                            ? "bounty · raw xp/h n/d"
+                            ? s.party?.noHuntingAnalyser
+                              ? `party de ${s.party.size}`
+                              : "bounty · raw xp/h n/d"
                             : `${fmtNum((huntRawXp(s) as number) / (s.hunting.durationSec / 3600 || 1))} raw xp/h`}
                         </div>
                       </div>

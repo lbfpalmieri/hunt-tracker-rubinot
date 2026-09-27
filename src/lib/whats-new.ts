@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "group-session-party-only",
+    date: "2026-09-27",
+    title: "Modo Grupo: sessão só com o Party Hunt Analyser",
+    description:
+      "No Modo Grupo a Nova sessão pede só o Party Hunt Analyser (Copy to Clipboard) — ou o resultado copiado do LootSplitter do RubinOT. O app acha você na party, divide igual ao jogo e salva a sua parte, com a duração e o horário da party. O assistente fica Hunt → Grupo → Setup → Finalizar. Como o analyser da party não traz XP, essas sessões ficam fora das médias de XP. Colou o da party no Modo Solo? O app troca pro Modo Grupo sozinho.",
+  },
+  {
     id: "sets-no-print",
     date: "2026-09-27",
     title: "Tela de sets mais enxuta",

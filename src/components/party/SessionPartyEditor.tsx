@@ -47,7 +47,10 @@ export function SessionPartyEditor({
         onChange={setDraft}
         charName={charName}
         personalBalance={personal.balance}
-        personalDurationSec={session.hunting.durationSec}
+        personalDurationSec={
+          session.party?.noHuntingAnalyser ? undefined : session.hunting.durationSec
+        }
+        fixed={!!session.party?.noHuntingAnalyser}
       />
       {(dirty || saving) && (
         <button
