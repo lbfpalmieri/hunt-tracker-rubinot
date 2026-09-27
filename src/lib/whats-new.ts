@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "session-setup",
+    date: "2026-09-26",
+    title: "Setup da sessão",
+    description:
+      "Novo passo (opcional) ao adicionar sessão e seção na sessão salva: arma e tier, skill, Magic Level, crítico extra, Wheel (dano e cura), postura (stance), magias aumentadas e Runas de Charm por criatura — tudo escolhido de listas da TibiaWiki. Os charms que dispararam no Miscellaneous já aparecem sugeridos. O setup aparece na comparação de sessões e, em sessões públicas, na Comunidade.",
+  },
+  {
     id: "admin-session-notes",
     date: "2026-09-27",
     title: "Observações lidas pela administração",

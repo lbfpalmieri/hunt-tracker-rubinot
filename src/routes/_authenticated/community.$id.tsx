@@ -7,10 +7,10 @@ import { GameIcon } from "@/components/GameIcon";
 import { getCommunitySession } from "@/lib/community.functions";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
-  ArrowLeft, Coins, Globe2, Heart, Package, Shield, ShoppingCart, Skull, Swords, Timer, Zap, Trophy,
-} from "lucide-react";
+  ArrowLeft, Coins, Globe2, Heart, Package, Shield, ShoppingCart, Skull, Swords, Timer, Zap, Trophy, Wrench } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
+import { SetupCard } from "@/components/setup/SetupCard";
 import { bountyLabel } from "@/lib/bounty";
 
 export const Route = createFileRoute("/_authenticated/community/$id")({
@@ -222,6 +222,15 @@ function SessionView({ session }: { session: any }) {
             data={session.misc.itemUpgrade ?? {}}
             emptyLabel="Nenhum item upgrade ativo nesta hunt."
           />
+        </div>
+      )}
+
+      {session.setup && (
+        <div className="card-surface mt-6 p-5">
+          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
+            <Wrench className="h-4 w-4 text-rubi-blue" /> Setup
+          </h2>
+          <SetupCard setup={session.setup} vocation={session.vocation} />
         </div>
       )}
 

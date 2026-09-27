@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveDurationSec, type HuntingData, type DamageData, type MiscData } from "./parser";
 import type { BountyInfo, BountyDifficulty, BountyTier } from "./bounty";
 import { normalizePrey, type PreySlot } from "./prey";
+import { normalizeSetup, type SessionSetup } from "./session-setup";
 import { currentLevel } from "./level";
 
 /** Repara sessões antigas salvas sem duração, derivando do intervalo/miscellaneous. */
@@ -35,6 +36,8 @@ export interface HuntSession {
   prey: PreySlot[] | null;
   /** Observação livre do usuário sobre a sessão — sempre privada, nunca exposta na Comunidade. */
   notes: string | null;
+  /** Setup estruturado (arma, skills, Wheel, stance, charms) — público junto com a sessão. */
+  setup: SessionSetup | null;
 }
 
 
@@ -136,8 +139,8 @@ interface State {
   removeCharacter: (id: string) => Promise<void>;
   addHunt: (characterId: string, name: string) => Promise<Hunt>;
   removeHunt: (id: string) => Promise<void>;
-  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty" | "prey" | "notes"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null }) => Promise<HuntSession>;
-  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null }) => Promise<void>;
+  addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty" | "prey" | "notes" | "setup"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null; setup?: SessionSetup | null }) => Promise<HuntSession>;
+  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null; setup?: SessionSetup | null }) => Promise<void>;
   removeSession: (id: string) => Promise<void>;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
@@ -284,6 +287,7 @@ export const useAppStore = create<State>()((set, get) => ({
         bounty: rowBounty(s),
         prey: normalizePrey(s.prey),
         notes: s.notes ?? null,
+        setup: normalizeSetup(s.setup),
       }));
 
       const hunts: Hunt[] = (huntRes.data ?? []).map((h: any) => ({
@@ -505,6 +509,8 @@ export const useAppStore = create<State>()((set, get) => ({
         ...(input.bounty?.creature ? { bounty_creature: input.bounty.creature } : {}),
         prey: input.prey ?? null,
         notes: input.notes?.trim() || null,
+        // Só manda a coluna com valor — sessão sem setup salva mesmo antes da migration.
+        ...(normalizeSetup(input.setup) ? { setup: normalizeSetup(input.setup) } : {}),
       })
       .select()
       .single();
@@ -522,6 +528,7 @@ export const useAppStore = create<State>()((set, get) => ({
       bounty: rowBounty(data),
       prey: normalizePrey(data.prey),
       notes: data.notes ?? null,
+      setup: normalizeSetup(data.setup),
     };
     set((s) => ({ sessions: [created, ...s.sessions] }));
     return created;
@@ -539,6 +546,7 @@ export const useAppStore = create<State>()((set, get) => ({
     }
     if (patch.prey !== undefined) dbPatch.prey = patch.prey ?? null;
     if (patch.notes !== undefined) dbPatch.notes = patch.notes?.trim() || null;
+    if (patch.setup !== undefined) dbPatch.setup = normalizeSetup(patch.setup);
     if (Object.keys(dbPatch).length === 0) return;
     const { error } = await db.from("hunt_sessions").update(dbPatch).eq("id", id);
     if (error) throw error;

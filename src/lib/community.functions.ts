@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { normalizePrey } from "./prey";
+import { normalizeSetup } from "./session-setup";
 
 /** Columns that are safe to expose publicly. Never include user_id/character_id. */
 const LIST_COLUMNS =
@@ -39,17 +40,21 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => listInput.parse(input ?? {}))
   .handler(async ({ data }) => {
     const supabase = publicClient();
-    let q = supabase
-      .from("hunt_sessions")
-      .select(LIST_COLUMNS)
-      .eq("is_public", true)
-      .order("created_at", { ascending: false })
-      .limit(data.limit ?? 300);
+    const query = (cols: string) => {
+      let q = supabase
+        .from("hunt_sessions")
+        .select(cols)
+        .eq("is_public", true)
+        .order("created_at", { ascending: false })
+        .limit(data.limit ?? 300);
+      if (data.vocation) q = q.eq("char_vocation", data.vocation);
+      if (data.hunt) q = q.ilike("hunt_name", `%${data.hunt}%`);
+      return q;
+    };
 
-    if (data.vocation) q = q.eq("char_vocation", data.vocation);
-    if (data.hunt) q = q.ilike("hunt_name", `%${data.hunt}%`);
-
-    const { data: rows, error } = await q;
+    // "setup" é estruturado (seguro de expor). Sem a coluna no banco ainda, busca sem ela.
+    let { data: rows, error } = await query(`${LIST_COLUMNS}, setup`);
+    if (error) ({ data: rows, error } = await query(LIST_COLUMNS));
     if (error) return { sessions: [], error: error.message };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,6 +87,7 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
             }
           : null,
         prey: normalizePrey(r.prey),
+        setup: normalizeSetup(r.setup),
         balance: Number(r.hunting?.balance ?? 0),
         loot: Number(r.hunting?.loot ?? 0),
         supplies: Number(r.hunting?.supplies ?? 0),
@@ -158,12 +164,11 @@ export const getCommunitySession = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const supabase = publicClient();
-    const { data: row, error } = await supabase
-      .from("hunt_sessions")
-      .select(DETAIL_COLUMNS)
-      .eq("is_public", true)
-      .eq("id", data.id)
-      .maybeSingle();
+    const fetchRow = (cols: string) =>
+      supabase.from("hunt_sessions").select(cols).eq("is_public", true).eq("id", data.id).maybeSingle();
+    // "setup" (estruturado, seguro de expor) — se a coluna ainda não existir no banco, busca sem.
+    let { data: row, error } = await fetchRow(`${DETAIL_COLUMNS}, setup`);
+    if (error) ({ data: row, error } = await fetchRow(DETAIL_COLUMNS));
     if (error || !row) return { session: null };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = row as any;
@@ -187,6 +192,7 @@ export const getCommunitySession = createServerFn({ method: "GET" })
             }
           : null,
         prey: normalizePrey(r.prey),
+        setup: normalizeSetup(r.setup),
       },
     };
   });

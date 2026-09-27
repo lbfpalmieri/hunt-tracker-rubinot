@@ -51,6 +51,10 @@ const SECTIONS: Section[] = [
         text: "Escolhe até 4 sessões específicas (sem médias) lado a lado — bom pra testar runas, magias ou rotações diferentes na mesma spot.",
       },
       {
+        label: "Setup da sessão",
+        text: "Registre arma, skills, Wheel, postura, magias aumentadas e Runas de Charm (ao adicionar a sessão ou depois, na sessão salva). Aparece na comparação de sessões e, em sessões públicas, na Comunidade — tudo escolhido de listas, sem texto livre.",
+      },
+      {
         label: "Dashboard da hunt",
         text: "Aberto a partir de uma hunt: resumo com médias, qual elemento causa mais dano nos monstros da hunt (baseado na TibiaWiki) e o bônus de Prey/Bounty separado do resto.",
       },

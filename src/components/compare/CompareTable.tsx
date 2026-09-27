@@ -16,6 +16,7 @@ import {
   Shield,
   Skull,
   GitCompareArrows,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -23,6 +24,7 @@ import type { CompareHunt } from "@/lib/compare";
 import { perHour, topKills } from "@/lib/compare";
 import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
 import { preyMarkLabel, preyMarkTitle, type PreyBonus } from "@/lib/prey";
+import { SetupCard } from "@/components/setup/SetupCard";
 import { BountyBadge } from "@/components/BountyBadge";
 import { formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { PositionBadge, fmtPct } from "@/components/compare/shared";
@@ -432,6 +434,7 @@ function DiffBadge({ row, hunts, h }: { row: Row; hunts: CompareHunt[]; h: Compa
 
 export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
   const patch = latestPatch();
+  const hasSetup = hunts.some((h) => h.setup);
 
   /** Placar compacto: quantas métricas com vencedor claro cada hunt ganhou. */
   const scoreboard = useMemo(() => {
@@ -582,6 +585,14 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                 );
               })}
             </dl>
+            {h.setup && (
+              <div className="border-t border-border/60 p-4">
+                <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <Wrench className="h-3.5 w-3.5 text-rubi-blue" /> Setup
+                </div>
+                <SetupCard setup={h.setup} vocation={h.vocation} compact />
+              </div>
+            )}
           </section>
         ))}
         <p className="px-1 text-xs text-muted-foreground">
@@ -694,6 +705,27 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                     })}
                   </tr>
                 ))}
+                {hasSetup && (
+                  <tr className="border-t border-border/60">
+                    <th className="sticky left-0 z-10 bg-card px-4 py-2.5 text-left align-top text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-rubi-blue-soft">
+                          <Wrench className="h-3.5 w-3.5 text-rubi-blue" />
+                        </span>
+                        Setup
+                      </span>
+                    </th>
+                    {hunts.map((h) => (
+                      <td key={h.key} className="px-4 py-2.5 align-top">
+                        {h.setup ? (
+                          <SetupCard setup={h.setup} vocation={h.vocation} compact />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

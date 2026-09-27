@@ -1,6 +1,7 @@
 import type { HuntSession } from "./store";
 import { huntRawXp, type BountyInfo } from "./bounty";
 import { normalizePrey, type PreySlot } from "./prey";
+import type { SessionSetup } from "./session-setup";
 import { isKnownDamageElement } from "./damage-elements";
 
 export type CompareSource = "own" | "community";
@@ -33,6 +34,8 @@ export interface CompareHunt {
   damageSources: { name: string; pct: number }[];
   bounty: BountyInfo | null;
   prey: PreySlot[] | null;
+  /** Setup estruturado da sessão (só sessões individuais; médias de hunt não têm). */
+  setup?: SessionSetup | null;
   /** Quantas sessões formam esta hunt (1 = sessão única). */
   sessionCount?: number;
   /** Quantas dessas sessões tinham prey ativa. */
@@ -96,6 +99,7 @@ export function fromOwnSession(s: HuntSession, charName: string, vocation: strin
     damageSources,
     bounty: s.bounty,
     prey: s.prey,
+    setup: s.setup,
   };
 }
 
@@ -121,6 +125,7 @@ export interface CommunityRow {
   damageTakenSources?: { name: string; pct: number }[];
   bounty: { difficulty: string; tier: string; xp: number | null } | null;
   prey: unknown;
+  setup?: SessionSetup | null;
 }
 
 export function fromCommunityRow(r: CommunityRow): CompareHunt {
@@ -161,6 +166,7 @@ export function fromCommunityRow(r: CommunityRow): CompareHunt {
     damageSources,
     bounty,
     prey: normalizePrey(r.prey),
+    setup: r.setup ?? null,
   };
 }
 

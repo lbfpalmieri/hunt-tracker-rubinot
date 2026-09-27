@@ -36,7 +36,10 @@ Dano 7–25% (+2), Redução 12–30% (+2), XP/Loot 13–40% (+3). Seletor = Pre
 
 Telas: sessions.tsx (20/pág) e sessions.$id.tsx; import.tsx (colar export do Hunting
 Analyser, parser.ts, sem OCR; salvar = assistente em Dialog: Hunt → Bounty (BountyTaskPanel,
-estilo Task Board, coluna bounty_creature) → Prey (PreyPicker inline) → Finalizar); imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
+estilo Task Board, coluna bounty_creature) → Prey (PreyPicker inline) → Setup → Finalizar).
+Setup da sessão: hunt_sessions.setup jsonb (src/lib/session-setup.ts) — SÓ campos estruturados de listas
+da TibiaWiki (charms, stances, magias por vocação) + nome da arma sanitizado; é público com a sessão.
+Observações (notes) continuam privadas — não exibir texto livre na Comunidade.; imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
 (linked_task_progress, barras geral/por sala, marcar tudo); tools.compare.tsx (até 4
 hunts) e tools.comparisons.tsx (salvos privados); community.index.tsx (feed público,
 vocações em grade); feedback.tsx (tickets com imagem no bucket feedback-attachments,

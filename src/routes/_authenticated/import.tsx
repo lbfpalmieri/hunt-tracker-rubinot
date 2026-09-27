@@ -37,6 +37,7 @@ import {
   Plus,
   Crosshair,
   ChevronRight,
+  Wrench,
 } from "lucide-react";
 import { PasteImageBox, blobToCompressedImage } from "@/components/PasteImage";
 import { BountyTaskPanel } from "@/components/BountyTaskPanel";
@@ -52,6 +53,14 @@ import {
 } from "@/components/ui/dialog";
 import { EMPTY_BOUNTY, bountyDraftValid, bountyFromDraft, type BountyDraft } from "@/lib/bounty-draft";
 import { PreyPicker } from "@/components/PreyPicker";
+import { SessionSetupPanel } from "@/components/setup/SessionSetupPanel";
+import {
+  EMPTY_SETUP,
+  charmsFromMisc,
+  normalizeSetup,
+  setupVocation,
+  type SessionSetup,
+} from "@/lib/session-setup";
 import type { PreySlot } from "@/lib/prey";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
 import { errorMessage } from "@/lib/errors";
@@ -92,13 +101,14 @@ function ImportPage() {
   const huntPickerRef = useRef<HTMLDivElement>(null);
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
-  // Assistente "Adicionar sessão": Hunt → Bounty → Prey → Finalizar. Bounty e Prey são perguntas
+  // Assistente "Adicionar sessão": Hunt → Bounty → Prey → Setup → Finalizar. Bounty e Prey são perguntas
   // Sim/Não (null = ainda não respondida).
   const [wizardOpen, setWizardOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [bountyAnswer, setBountyAnswer] = useState<"yes" | "no" | null>(null);
   const [bountyDraft, setBountyDraft] = useState<BountyDraft>(EMPTY_BOUNTY);
   const [preyAnswer, setPreyAnswer] = useState<"yes" | "no" | null>(null);
+  const [setup, setSetup] = useState<SessionSetup>(EMPTY_SETUP);
   const hasBounty = bountyAnswer === "yes";
   const hasPrey = preyAnswer === "yes";
   const [prey, setPrey] = useState<PreySlot[] | null>(null);
@@ -352,6 +362,7 @@ function ImportPage() {
     bountyAnswer !== null && bountyReady,
     preyAnswer !== null && preyReady,
     true,
+    true,
   ];
 
   const [saving, setSaving] = useState(false);
@@ -386,6 +397,7 @@ function ImportPage() {
         isPublic,
         bounty: hasBounty ? bountyFromDraft(bountyDraft) : null,
         prey: hasPrey ? prey : null,
+        setup: normalizeSetup(setup),
         notes: notes.trim() || null,
       });
 
@@ -900,6 +912,26 @@ function ImportPage() {
 
           {step === 3 && (
             <div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                <b className="text-foreground">Opcional.</b> Arma, skills, Wheel, postura e Runas de
+                Charm que você usou — aparece na comparação de sessões e, se a sessão for pública, na
+                Comunidade. Pode pular.
+              </p>
+              <SessionSetupPanel
+                value={setup}
+                onChange={setSetup}
+                vocation={setupVocation(activeChar?.vocation)}
+                creatures={(parsed.hunting?.kills ?? [])
+                  .slice()
+                  .sort((a, b) => b.count - a.count)
+                  .map((k) => k.name)}
+                suggestedCharms={charmsFromMisc(parsed.misc)}
+              />
+            </div>
+          )}
+
+          {step === 4 && (
+            <div>
               <div className="mb-4 flex flex-wrap gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1">
                   <MapPin className="h-3.5 w-3.5 text-rubi-gold" /> {selectedHuntName}
@@ -908,6 +940,11 @@ function ImportPage() {
                   <BountyBadge bounty={bountyFromDraft(bountyDraft)!} />
                 )}
                 {hasPrey && prey && <PreyBadge prey={prey} detailed />}
+                {normalizeSetup(setup) && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2.5 py-1 font-semibold text-rubi-blue">
+                    <Wrench className="h-3.5 w-3.5" /> Setup registrado
+                  </span>
+                )}
               </div>
             {activeChar && (
               <div
@@ -1003,7 +1040,7 @@ function ImportPage() {
             )}
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="mt-3 text-xs text-muted-foreground hover:text-foreground hover:underline"
               >
                 ← Voltar
@@ -1011,7 +1048,7 @@ function ImportPage() {
             </div>
           )}
 
-          {step < 3 && (
+          {step < 4 && (
             <DialogFooter className="gap-2 sm:justify-between">
               <button
                 type="button"
@@ -1026,7 +1063,8 @@ function ImportPage() {
                 onClick={() => setStep(step + 1)}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rubi-blue px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
               >
-                Próximo <ChevronRight className="h-4 w-4" />
+                {step === 3 && !normalizeSetup(setup) ? "Pular" : "Próximo"}{" "}
+                <ChevronRight className="h-4 w-4" />
               </button>
             </DialogFooter>
           )}
@@ -1226,11 +1264,11 @@ function PreviewRow({ label, value, positive }: { label: string; value: string; 
   );
 }
 
-const WIZARD_STEPS = ["Hunt", "Bounty Task", "Prey", "Finalizar"];
+const WIZARD_STEPS = ["Hunt", "Bounty Task", "Prey", "Setup", "Finalizar"];
 
 function WizardSteps({ step, onJump }: { step: number; onJump: (i: number) => void }) {
   return (
-    <ol className="mb-2 grid grid-cols-4 gap-1.5">
+    <ol className="mb-2 grid grid-cols-5 gap-1.5">
       {WIZARD_STEPS.map((label, i) => (
         <li key={label}>
           <button

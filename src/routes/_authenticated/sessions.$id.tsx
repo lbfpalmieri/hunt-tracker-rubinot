@@ -10,12 +10,13 @@ import { BountyEditor } from "@/components/BountyEditor";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
 import { SessionNotesEditor } from "@/components/SessionNotesEditor";
+import { SetupEditor } from "@/components/setup/SetupEditor";
 import { GameIcon } from "@/components/GameIcon";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
 import { fromOwnSession } from "@/lib/compare";
 
-import { Sparkles } from "lucide-react";
+import { Sparkles, Wrench } from "lucide-react";
 import {
   ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard,
 } from "lucide-react";
@@ -334,6 +335,25 @@ function SessionDetail() {
           value={session.bounty}
           creatures={h.kills.slice().sort((a, b) => b.count - a.count)}
           onSave={(next) => updateSession(session.id, { bounty: next })}
+        />
+      </div>
+
+      {/* Setup (arma, skills, Wheel, stance, Runas de Charm) */}
+      <div className="card-surface mt-6 border-rubi-blue/25 p-5">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold">
+          <Wrench className="h-4 w-4 text-rubi-blue" /> Setup da sessão
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Arma, skills, Wheel, postura e Runas de Charm — aparece na Comunidade (se a sessão for
+          pública) e na comparação de sessões.
+        </p>
+        <SetupEditor
+          key={session.id}
+          value={session.setup}
+          vocation={char?.vocation}
+          creatures={h.kills.slice().sort((a, b) => b.count - a.count).map((k) => k.name)}
+          misc={session.misc}
+          onSave={(next) => updateSession(session.id, { setup: next })}
         />
       </div>
 
