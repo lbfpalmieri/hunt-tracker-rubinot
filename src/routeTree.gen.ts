@@ -34,6 +34,7 @@ import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_auth
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 import { Route as AuthenticatedBossesIdRouteImport } from './routes/_authenticated/bosses.$id'
+import { Route as AuthenticatedAdminNotesRouteImport } from './routes/_authenticated/admin.notes'
 import { Route as AuthenticatedAdminHuntsRouteImport } from './routes/_authenticated/admin.hunts'
 
 const AuthRoute = AuthRouteImport.update({
@@ -170,6 +171,11 @@ const AuthenticatedBossesIdRoute = AuthenticatedBossesIdRouteImport.update({
   path: '/bosses/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminNotesRoute = AuthenticatedAdminNotesRouteImport.update({
+  id: '/admin/notes',
+  path: '/admin/notes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminHuntsRoute = AuthenticatedAdminHuntsRouteImport.update({
   id: '/admin/hunts',
   path: '/admin/hunts',
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
   '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
+  '/admin/notes': typeof AuthenticatedAdminNotesRoute
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
   '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
+  '/admin/notes': typeof AuthenticatedAdminNotesRoute
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/_authenticated/admin/hunts': typeof AuthenticatedAdminHuntsRoute
+  '/_authenticated/admin/notes': typeof AuthenticatedAdminNotesRoute
   '/_authenticated/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/wiki'
     | '/admin/hunts'
+    | '/admin/notes'
     | '/bosses/$id'
     | '/community/$id'
     | '/sessions/$id'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/wiki'
     | '/admin/hunts'
+    | '/admin/notes'
     | '/bosses/$id'
     | '/community/$id'
     | '/sessions/$id'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sessions'
     | '/_authenticated/wiki'
     | '/_authenticated/admin/hunts'
+    | '/_authenticated/admin/notes'
     | '/_authenticated/bosses/$id'
     | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
@@ -527,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBossesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/notes': {
+      id: '/_authenticated/admin/notes'
+      path: '/admin/notes'
+      fullPath: '/admin/notes'
+      preLoaderRoute: typeof AuthenticatedAdminNotesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/hunts': {
       id: '/_authenticated/admin/hunts'
       path: '/admin/hunts'
@@ -564,6 +583,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
   AuthenticatedAdminHuntsRoute: typeof AuthenticatedAdminHuntsRoute
+  AuthenticatedAdminNotesRoute: typeof AuthenticatedAdminNotesRoute
   AuthenticatedBossesIdRoute: typeof AuthenticatedBossesIdRoute
   AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
   AuthenticatedToolsCompareRoute: typeof AuthenticatedToolsCompareRoute
@@ -588,6 +608,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
   AuthenticatedAdminHuntsRoute: AuthenticatedAdminHuntsRoute,
+  AuthenticatedAdminNotesRoute: AuthenticatedAdminNotesRoute,
   AuthenticatedBossesIdRoute: AuthenticatedBossesIdRoute,
   AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
   AuthenticatedToolsCompareRoute: AuthenticatedToolsCompareRoute,
