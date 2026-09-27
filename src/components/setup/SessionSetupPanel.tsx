@@ -51,8 +51,6 @@ export function SessionSetupPanel({
   creatures,
   activatedCharms = [],
   mode = "session",
-  sessionGearUrl,
-  onPresetApplied,
 }: {
   value: SessionSetup;
   onChange: (next: SessionSetup) => void;
@@ -66,10 +64,6 @@ export function SessionSetupPanel({
   activatedCharms?: string[];
   /** "preset" = editando um set na tela Meus sets: sem escolha de set e sem charms. */
   mode?: "session" | "preset";
-  /** Print do equipamento da sessão — vai junto se salvar como set daqui. */
-  sessionGearUrl?: string | null;
-  /** Avisado quando um set é escolhido (ex. pra usar o print dele na sessão). */
-  onPresetApplied?: (preset: SetupPreset) => void;
 }) {
   const set = (patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
 
@@ -91,17 +85,12 @@ export function SessionSetupPanel({
   const applyPreset = (preset: SetupPreset) => {
     setPresetId(preset.id);
     onChange({ ...preset.setup, charms: value.charms });
-    onPresetApplied?.(preset);
   };
 
   const confirmSave = async () => {
     if (!naming?.trim()) return;
     try {
-      await savePreset.mutateAsync({
-        name: naming,
-        setup: value,
-        ...(sessionGearUrl ? { gearUrl: sessionGearUrl } : {}),
-      });
+      await savePreset.mutateAsync({ name: naming, setup: value });
       toast.success(`Preset "${naming.trim()}" salvo`);
       setNaming(null);
     } catch (e) {
@@ -192,9 +181,7 @@ export function SessionSetupPanel({
                     }
                   >
                     <div className="flex h-20 items-center justify-center bg-background/70">
-                      {pr.gearUrl ? (
-                        <img src={pr.gearUrl} alt="" className="h-full w-full object-contain" />
-                      ) : pr.setup.weapon ? (
+                      {pr.setup.weapon ? (
                         <GameIcon
                           name={findWeapon(pr.setup.weapon)?.icon ?? pr.setup.weapon}
                           size={40}
@@ -261,92 +248,100 @@ export function SessionSetupPanel({
         </section>
       )}
 
-      {/* Equipamento (boneco do inventário: arma, aljava/escudo e o resto) */}
+      {/* Equipamento (boneco do inventário) com tier/skills/postura na coluna do lado */}
       <section>
         <span className={LABEL}>Equipamento</span>
-        <EquipmentDoll value={value} onChange={set} vocation={vocation} />
-      </section>
+        <EquipmentDoll
+          value={value}
+          onChange={set}
+          vocation={vocation}
+          aside={
+            <div className="space-y-3 border-t border-border/60 pt-3">
+              <section className="grid grid-cols-2 gap-3">
+                <label>
+                  <span className={LABEL}>Tier da arma</span>
+                  <select
+                    value={value.weaponTier ?? ""}
+                    onChange={(e) =>
+                      set({ weaponTier: e.target.value === "" ? null : Number(e.target.value) })
+                    }
+                    className={FIELD}
+                  >
+                    <option value="">—</option>
+                    {Array.from(
+                      { length: (findWeapon(value.weapon)?.maxTier ?? 10) + 1 },
+                      (_, i) => (
+                        <option key={i} value={i}>
+                          T{i}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+                <label>
+                  <span className={LABEL}>Crítico extra %</span>
+                  <input
+                    inputMode="decimal"
+                    value={value.critDamage ?? ""}
+                    onChange={(e) => set({ critDamage: toNum(e.target.value) })}
+                    placeholder="14,9"
+                    className={FIELD}
+                  />
+                </label>
+                {skillLabel && (
+                  <label>
+                    <span className={LABEL}>{skillLabel}</span>
+                    <input
+                      inputMode="numeric"
+                      value={value.skill ?? ""}
+                      onChange={(e) => set({ skill: toNum(e.target.value) })}
+                      placeholder="219"
+                      className={FIELD}
+                    />
+                  </label>
+                )}
+                <label>
+                  <span className={LABEL}>Magic Level</span>
+                  <input
+                    inputMode="numeric"
+                    value={value.magicLevel ?? ""}
+                    onChange={(e) => set({ magicLevel: toNum(e.target.value) })}
+                    placeholder="47"
+                    className={FIELD}
+                  />
+                </label>
+              </section>
 
-      {/* Tier da arma + skills */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <label>
-          <span className={LABEL}>Tier da arma</span>
-          <select
-            value={value.weaponTier ?? ""}
-            onChange={(e) =>
-              set({ weaponTier: e.target.value === "" ? null : Number(e.target.value) })
-            }
-            className={FIELD}
-          >
-            <option value="">—</option>
-            {Array.from({ length: (findWeapon(value.weapon)?.maxTier ?? 10) + 1 }, (_, i) => (
-              <option key={i} value={i}>
-                T{i}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span className={LABEL}>Crítico extra %</span>
-          <input
-            inputMode="decimal"
-            value={value.critDamage ?? ""}
-            onChange={(e) => set({ critDamage: toNum(e.target.value) })}
-            placeholder="14,9"
-            className={FIELD}
-          />
-        </label>
-        {skillLabel && (
-          <label>
-            <span className={LABEL}>{skillLabel}</span>
-            <input
-              inputMode="numeric"
-              value={value.skill ?? ""}
-              onChange={(e) => set({ skill: toNum(e.target.value) })}
-              placeholder="219"
-              className={FIELD}
-            />
-          </label>
-        )}
-        <label>
-          <span className={LABEL}>Magic Level</span>
-          <input
-            inputMode="numeric"
-            value={value.magicLevel ?? ""}
-            onChange={(e) => set({ magicLevel: toNum(e.target.value) })}
-            placeholder="47"
-            className={FIELD}
-          />
-        </label>
+              {stances.length > 0 && (
+                <section>
+                  <span className={LABEL}>Postura</span>
+                  <div className="flex flex-wrap gap-2">
+                    {stances.map((st) => {
+                      const on = value.stance === st;
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => set({ stance: on ? null : st })}
+                          className={
+                            "inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors " +
+                            (on
+                              ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
+                              : "border-border text-muted-foreground hover:text-foreground")
+                          }
+                        >
+                          <GameIcon name={st} size={24} />
+                          {st}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+            </div>
+          }
+        />
       </section>
-
-      {/* Postura */}
-      {stances.length > 0 && (
-        <section>
-          <span className={LABEL}>Postura</span>
-          <div className="flex flex-wrap gap-2">
-            {stances.map((st) => {
-              const on = value.stance === st;
-              return (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => set({ stance: on ? null : st })}
-                  className={
-                    "inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors " +
-                    (on
-                      ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
-                      : "border-border text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  <GameIcon name={st} size={24} />
-                  {st}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       {/* Wheel of Destiny */}
       <section className="rounded-xl border border-rubi-gold/25 bg-rubi-gold/[0.04] p-3">

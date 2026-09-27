@@ -117,12 +117,15 @@ export function EquipmentDoll({
   vocation,
   size = 52,
   showSummary = true,
+  aside,
 }: {
   value: SessionSetup;
   onChange?: (patch: Partial<SessionSetup>) => void;
   vocation: SetupVocation | null;
   size?: number;
   showSummary?: boolean;
+  /** Conteúdo extra na coluna da direita, abaixo do resumo (ex.: tier/skills/postura no setup). */
+  aside?: React.ReactNode;
 }) {
   const [editing, setEditing] = useState<DollSlot | null>(null);
   const weapon = findWeapon(value.weapon);
@@ -170,7 +173,7 @@ export function EquipmentDoll({
 
   const cell = size + 8;
   return (
-    <div className={showSummary ? "flex flex-col gap-4 sm:flex-row sm:items-start" : ""}>
+    <div className={showSummary ? "flex min-w-0 flex-col gap-4 md:flex-row md:items-start" : ""}>
       <div
         className="inline-grid flex-none gap-1.5 self-start rounded-xl border border-border bg-[linear-gradient(180deg,oklch(0.24_0.02_260),oklch(0.18_0.02_260))] p-2 shadow-inner"
         style={{ gridTemplateColumns: `repeat(3, ${cell}px)` }}
@@ -231,7 +234,7 @@ export function EquipmentDoll({
       </div>
 
       {showSummary && (
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 flex-1 space-y-3">
           {equipped.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               {onChange
@@ -239,7 +242,7 @@ export function EquipmentDoll({
                 : "Sem equipamentos registrados."}
             </p>
           ) : (
-            <ul className="space-y-1">
+            <ul className="grid gap-x-4 gap-y-1.5 lg:grid-cols-2">
               {equipped.map((slot) => {
                 const it = itemIn(slot)!;
                 const e = findEquipment(it.name);
@@ -250,14 +253,16 @@ export function EquipmentDoll({
                       ? equipmentSummary(e)
                       : "";
                 return (
-                  <li key={slot} className="flex min-w-0 items-baseline gap-2 text-xs">
-                    <span className="w-16 flex-none text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <li key={slot} className="min-w-0 text-xs leading-snug">
+                    <span className="mr-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                       {slotLabel(slot, vocation)}
                     </span>
-                    <span className="min-w-0 truncate">
-                      <b className="font-semibold">{it.name}</b>
-                      {summary && <span className="text-muted-foreground"> · {summary}</span>}
-                    </span>
+                    <b className="font-semibold">{it.name}</b>
+                    {summary && (
+                      <span className="block break-words text-[11px] text-muted-foreground">
+                        {summary}
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -280,6 +285,7 @@ export function EquipmentDoll({
               ))}
             </div>
           )}
+          {aside}
         </div>
       )}
 

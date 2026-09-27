@@ -4,8 +4,6 @@ import { toast } from "sonner";
 import { Pencil, Plus, Shirt, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
-import { GameIcon } from "@/components/GameIcon";
-import { PasteImageBox } from "@/components/PasteImage";
 import { SessionSetupPanel } from "@/components/setup/SessionSetupPanel";
 import { SetupCard } from "@/components/setup/SetupCard";
 import {
@@ -25,7 +23,6 @@ import {
   type SetupPreset,
 } from "@/lib/setup-presets";
 import { useAppStore } from "@/lib/store";
-import { findWeapon } from "@/lib/weapons";
 
 export const Route = createFileRoute("/_authenticated/equipamentos")({
   head: () => ({
@@ -34,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/equipamentos")({
       {
         name: "description",
         content:
-          "Monte seus sets de equipamento (arma, skills, Wheel, postura e print) e escolha na hora de adicionar a sessão.",
+          "Monte seus sets de equipamento (boneco do inventário, skills, Wheel e postura) e escolha na hora de adicionar a sessão.",
       },
     ],
   }),
@@ -43,8 +40,8 @@ export const Route = createFileRoute("/_authenticated/equipamentos")({
 
 /**
  * Tela dedicada aos sets (presets de setup) do personagem ativo: monta com calma antes de caçar,
- * com o print do equipamento. No assistente de Nova sessão o set escolhido preenche o setup e o
- * print da sessão. Dados em setup_presets (ver src/lib/setup-presets.ts).
+ * no boneco de equipamentos. No assistente de Nova sessão o set escolhido preenche o setup.
+ * Dados em setup_presets (ver src/lib/setup-presets.ts).
  */
 function EquipamentosPage() {
   const active = useAppStore((s) => s.characters.find((c) => c.id === s.activeCharacterId) ?? null);
@@ -84,9 +81,9 @@ function EquipamentosPage() {
           <span className="text-gradient-brand">sets</span>
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Monte cada set uma vez — arma, skills, Wheel, postura e o print do equipamento. Na hora de
-          adicionar a sessão é só escolher o set, e o print vai junto (aparece pra Comunidade se a
-          sessão for pública). Tem mais de uma arma elemental? Faça um set pra cada.
+          Monte cada set uma vez — equipamentos no boneco, skills, Wheel e postura. Na hora de
+          adicionar a sessão é só escolher o set. Tem mais de uma arma elemental? Faça um set pra
+          cada.
         </p>
       </div>
 
@@ -100,19 +97,6 @@ function EquipamentosPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {presets.map((p) => (
             <div key={p.id} className="card-surface flex flex-col overflow-hidden">
-              <div className="flex h-40 items-center justify-center border-b border-border/60 bg-background/60">
-                {p.gearUrl ? (
-                  <img
-                    src={p.gearUrl}
-                    alt={`Equipamento do set ${p.name}`}
-                    className="h-full w-full object-contain"
-                  />
-                ) : p.setup.weapon ? (
-                  <GameIcon name={findWeapon(p.setup.weapon)?.icon ?? p.setup.weapon} size={64} />
-                ) : (
-                  <Shirt className="h-10 w-10 text-muted-foreground/40" />
-                )}
-              </div>
               <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="font-display text-lg font-bold leading-tight">{p.name}</h2>
@@ -178,12 +162,11 @@ function PresetDialog({
   const save = useSaveSetupPreset(characterId);
   const [setup, setSetup] = useState<SessionSetup>(preset?.setup ?? EMPTY_SETUP);
   const [name, setName] = useState(preset?.name ?? "");
-  const [gearUrl, setGearUrl] = useState<string | null>(preset?.gearUrl ?? null);
 
   const submit = async () => {
     const finalName = name.trim() || suggestedPresetName(setup);
     try {
-      await save.mutateAsync({ id: preset?.id, name: finalName, setup, gearUrl });
+      await save.mutateAsync({ id: preset?.id, name: finalName, setup });
       toast.success(`Set "${finalName}" salvo`);
       onClose();
     } catch (e) {
@@ -193,7 +176,7 @@ function PresetDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && !save.isPending && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto overflow-x-hidden sm:max-w-4xl [&>*]:min-w-0">
         <DialogHeader>
           <DialogTitle className="font-display">{preset ? "Editar set" : "Novo set"}</DialogTitle>
           <DialogDescription>
@@ -202,26 +185,18 @@ function PresetDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)]">
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Nome do set
-            </span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={40}
-              placeholder={suggestedPresetName(setup)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
-            />
-          </label>
-          <div>
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Print do equipamento
-            </span>
-            <PasteImageBox value={gearUrl} onChange={setGearUrl} label="Cole o print (Ctrl+V)" />
-          </div>
-        </div>
+        <label className="block">
+          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Nome do set
+          </span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={40}
+            placeholder={suggestedPresetName(setup)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue sm:max-w-sm"
+          />
+        </label>
 
         <SessionSetupPanel
           mode="preset"

@@ -39,7 +39,7 @@ Analyser, parser.ts, sem OCR; salvar = assistente em Dialog: Hunt → Bounty (Bo
 estilo Task Board, coluna bounty_creature) → Prey (PreyPicker inline) → Setup → Finalizar).
 Setup da sessão: hunt_sessions.setup jsonb (src/lib/session-setup.ts) — SÓ campos estruturados de listas
 da TibiaWiki (charms, posturas, perks de Convicção/Revelação da Wheel por vocação; ícones via GameIcon) + nome da arma sanitizado; é público com a sessão.
-Presets do setup ("sets", sem charms, com gear_url = print) por personagem em public.setup_presets
+Presets do setup ("sets", sem charms; o print do set foi REMOVIDO — o boneco de equipamentos substitui, gear_url não é lido) por personagem em public.setup_presets
 (setup-presets.ts); tela dedicada /equipamentos (Meus sets).
 Armas: src/data/weapons-data.ts (530 armas extraídas da TibiaWiki BR — categorias Espadas/Machados/Clavas,
 Bows/Crossbows/Armas de Arremesso, Wands, Rods, Punhos (monk), Aljavas; sem obsoletas), lidas por

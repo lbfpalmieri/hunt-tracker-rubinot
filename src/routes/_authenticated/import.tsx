@@ -773,7 +773,7 @@ function ImportPage() {
       </div>
 
       <Dialog open={wizardOpen} onOpenChange={(o) => !saving && setWizardOpen(o)}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="max-h-[92vh] overflow-y-auto overflow-x-hidden sm:max-w-4xl [&>*]:min-w-0">
           <DialogHeader>
             <DialogTitle className="font-display">Adicionar sessão</DialogTitle>
             <DialogDescription>
@@ -1046,11 +1046,6 @@ function ImportPage() {
                 onChange={setSetup}
                 vocation={setupVocation(activeChar?.vocation)}
                 characterId={effectiveCharId || null}
-                sessionGearUrl={gearUrl}
-                onPresetApplied={(p) => {
-                  // Print do set entra na sessão se ela ainda não tiver um próprio.
-                  if (p.gearUrl && !gearUrl) setGearUrl(p.gearUrl);
-                }}
                 creatures={(parsed.hunting?.kills ?? [])
                   .slice()
                   .sort((a, b) => b.count - a.count)

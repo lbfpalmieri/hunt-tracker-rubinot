@@ -4,8 +4,9 @@ import { normalizeSetup, presetPart, type SessionSetup } from "./session-setup";
 
 /**
  * Presets de setup ("sets") por personagem (tabela setup_presets): a pessoa preenche arma,
- * skills, Wheel e postura uma vez — com o print do equipamento, opcional — salva com um nome
- * (normalmente o da arma) e nas próximas sessões só escolhe. Um EK com 3 armas elementais faz 3
+ * skills, equipamentos (boneco), Wheel e postura uma vez, salva com um nome (normalmente o da
+ * arma) e nas próximas sessões só escolhe. (O print do set foi removido em 2026-09-27 — o boneco
+ * de equipamentos substitui; a coluna gear_url não é mais lida nem escrita.) Um EK com 3 armas elementais faz 3
  * sets. Charms não entram — dependem das criaturas de cada hunt. Tela dedicada: /equipamentos.
  */
 
@@ -17,8 +18,6 @@ export interface SetupPreset {
   id: string;
   name: string;
   setup: SessionSetup;
-  /** Print do equipamento (data URL WebP comprimido, igual ao gear_url da sessão). */
-  gearUrl: string | null;
 }
 
 const key = (characterId: string) => ["setup-presets", characterId] as const;
@@ -28,18 +27,17 @@ export function useSetupPresets(characterId: string | null) {
     queryKey: key(characterId ?? ""),
     enabled: !!characterId,
     queryFn: async (): Promise<SetupPreset[]> => {
-      const fetchCols = (cols: string) =>
-        db.from("setup_presets").select(cols).eq("character_id", characterId).order("name");
-      // gear_url veio depois: sem a coluna ainda, busca sem ela.
-      let { data, error } = await fetchCols("id, name, setup, gear_url");
-      if (error) ({ data, error } = await fetchCols("id, name, setup"));
+      const { data, error } = await db
+        .from("setup_presets")
+        .select("id, name, setup")
+        .eq("character_id", characterId)
+        .order("name");
       if (error) return []; // tabela ainda não criada: sem presets, o resto funciona
       return (data ?? [])
-        .map((r: { id: string; name: string; setup: unknown; gear_url?: string | null }) => ({
+        .map((r: { id: string; name: string; setup: unknown }) => ({
           id: r.id,
           name: r.name,
           setup: normalizeSetup(r.setup),
-          gearUrl: r.gear_url ?? null,
         }))
         .filter((p: { setup: SessionSetup | null }): p is SetupPreset => !!p.setup);
     },
@@ -49,18 +47,7 @@ export function useSetupPresets(characterId: string | null) {
 export function useSaveSetupPreset(characterId: string | null) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      name,
-      setup,
-      gearUrl,
-    }: {
-      id?: string;
-      name: string;
-      setup: SessionSetup;
-      /** undefined = não mexe na imagem; null = remove. */
-      gearUrl?: string | null;
-    }) => {
+    mutationFn: async ({ id, name, setup }: { id?: string; name: string; setup: SessionSetup }) => {
       if (!characterId) throw new Error("Sem personagem ativo.");
       const clean = normalizeSetup(presetPart(setup));
       if (!clean) throw new Error("Preencha pelo menos um campo antes de salvar o preset.");
@@ -72,7 +59,6 @@ export function useSaveSetupPreset(characterId: string | null) {
         character_id: characterId,
         name: name.trim().slice(0, 40),
         setup: clean,
-        ...(gearUrl !== undefined ? { gear_url: gearUrl } : {}),
         updated_at: new Date().toISOString(),
       };
       // Com id = editar aquele set (inclusive renomear); sem id = cria ou sobrescreve pelo nome.

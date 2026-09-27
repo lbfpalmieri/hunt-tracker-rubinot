@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "sets-no-print",
+    date: "2026-09-27",
+    title: "Tela de sets mais enxuta",
+    description:
+      "O print do set saiu — o boneco de equipamentos faz esse papel. A descrição de cada item agora quebra linha (sem rolar pro lado) e tier, skills e postura ficam ao lado do boneco, com bem menos rolagem.",
+  },
+  {
     id: "party-hunt-analyser",
     date: "2026-09-27",
     title: "Modo Grupo com Party Hunt Analyser e LootSplitter",
