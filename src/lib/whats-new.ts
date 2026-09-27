@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "boss-total-loot",
+    date: "2026-09-27",
+    title: "Rotação de Bosses: loot total do analyser",
+    description:
+      "Ao registrar uma rotação agora dá pra escolher o que entra no lucro: só o loot que cai de boss (padrão) ou o Loot total do Hunting Analyser, com o caminho incluído. A escolha fica lembrada pras próximas.",
+  },
+  {
     id: "item-prices",
     date: "2026-09-27",
     title: "Meus preços na Rotação de Bosses",

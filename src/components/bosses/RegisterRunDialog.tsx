@@ -17,6 +17,17 @@ import { parseHunting, parseSessionStamp } from "@/lib/parser";
 import { parseGoldInput } from "@/lib/rc-calc";
 import { priceMap, useItemPrices, useSaveItemPrices } from "@/lib/item-prices";
 
+/** Base do lucro: só itens que caem de boss (padrão) ou o "Loot" total do analyser. */
+type LootBasis = "boss" | "total";
+const BASIS_KEY = "boss-run-loot-basis";
+const readBasis = (): LootBasis => {
+  try {
+    return localStorage.getItem(BASIS_KEY) === "total" ? "total" : "boss";
+  } catch {
+    return "boss";
+  }
+};
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,7 +49,8 @@ interface Props {
  * de fora (mas dá pra incluir na mão: token, item de delivery...). O analyser não diz o preço de
  * cada item: a pessoa escolhe calcular com "Meus preços" (tabela user_item_prices do servidor dela,
  * ver item-prices.ts) ou com o preço de NPC da TibiaWiki, e pode corrigir item a item — o que ela
- * digita vira "meu preço" pras próximas.
+ * digita vira "meu preço" pras próximas. Quem prefere o número do jogo escolhe "Loot total do
+ * analyser" (lembrado no navegador): o lucro usa o Loot do export inteiro, caminho incluído.
  */
 export function RegisterRunDialog({
   open,
@@ -59,6 +71,15 @@ export function RegisterRunDialog({
   const [mode, setMode] = useState<"mine" | "npc">("mine");
   const [included, setIncluded] = useState<Set<string>>(new Set());
   const [rememberPrices, setRememberPrices] = useState(true);
+  const [basis, setBasisState] = useState<LootBasis>(readBasis);
+  const setBasis = (b: LootBasis) => {
+    setBasisState(b);
+    try {
+      localStorage.setItem(BASIS_KEY, b);
+    } catch {
+      /* sem storage: vale só nessa abertura */
+    }
+  };
   const { data: myPriceList } = useItemPrices(world);
   const myPrices = useMemo(() => priceMap(myPriceList), [myPriceList]);
   const savePrices = useSaveItemPrices(world);
@@ -127,7 +148,9 @@ export function RegisterRunDialog({
   };
   const bossLoot = lines.reduce((a, l) => a + l.count * unitOf(l.name), 0);
   const supplies = parsed?.supplies ?? 0;
-  const profit = bossLoot - supplies;
+  const analyserLoot = parsed?.loot ?? 0;
+  const loot = basis === "total" ? analyserLoot : bossLoot;
+  const profit = loot - supplies;
 
   const reset = () => {
     setText("");
@@ -154,7 +177,7 @@ export function RegisterRunDialog({
         characterId,
         ranAt: new Date(end ?? Date.now()).toISOString(),
         durationSec: parsed.durationSec,
-        loot: bossLoot,
+        loot,
         supplies,
         balance: profit,
         xp: parsed.xpGain || parsed.rawXp,
@@ -358,8 +381,41 @@ export function RegisterRunDialog({
               </p>
             </div>
 
+            <div>
+              <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Loot que entra no lucro
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {(
+                  [
+                    ["boss", "Só loot de boss", bossLoot, "itens acima"],
+                    ["total", "Loot total do analyser", analyserLoot, "tudo, caminho incluído"],
+                  ] as const
+                ).map(([b, label, value, hint]) => (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => setBasis(b)}
+                    className={
+                      "rounded-lg border px-2 py-1.5 text-left transition-colors " +
+                      (basis === b
+                        ? "border-rubi-gold/60 bg-rubi-gold/10"
+                        : "border-border text-muted-foreground hover:border-rubi-gold/40")
+                    }
+                  >
+                    <span className="block text-xs font-semibold">{label}</span>
+                    <span className="block text-sm font-bold text-rubi-gold">{fmtGold(value)}</span>
+                    <span className="block text-[10px] text-muted-foreground">{hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-2 text-center text-sm">
-              <Mini label="Loot dos bosses" value={fmtGold(bossLoot)} />
+              <Mini
+                label={basis === "total" ? "Loot total" : "Loot dos bosses"}
+                value={fmtGold(loot)}
+              />
               <Mini label="Supplies" value={fmtGold(supplies)} />
               <Mini
                 label="Lucro"
