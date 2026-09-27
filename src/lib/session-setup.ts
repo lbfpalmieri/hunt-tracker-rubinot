@@ -8,7 +8,7 @@
  * (jsonb). A parte "fixa" (sem charms) pode virar preset do personagem — ver setup-presets.ts.
  */
 
-import { normalizeGear, type SetupGear } from "./equipment";
+import { normalizeGear, normalizeGearTier, type SetupGear, type SetupGearTier } from "./equipment";
 
 export type SetupVocation = "knight" | "paladin" | "sorcerer" | "druid" | "monk";
 
@@ -39,6 +39,8 @@ export interface SessionSetup {
   quiver: string | null;
   /** Equipamentos do boneco (capacete, armadura...) — nomes da lista da TibiaWiki (equipment.ts). */
   gear: SetupGear;
+  /** Tier (Exaltation Forge) do capacete/armadura/calça/bota — até o máximo de cada item (forge.ts). */
+  gearTier: SetupGearTier;
   /** Skill principal: Distance (paladino), Melee (knight), Fist (monk). Mago não usa. */
   skill: number | null;
   magicLevel: number | null;
@@ -57,6 +59,7 @@ export const EMPTY_SETUP: SessionSetup = {
   weaponTier: null,
   quiver: null,
   gear: {},
+  gearTier: {},
   skill: null,
   magicLevel: null,
   critDamage: null,
@@ -256,6 +259,7 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
     weaponTier: num(v.weaponTier, 0, 10),
     quiver: cleanWeaponName(v.quiver),
     gear: normalizeGear(v.gear),
+    gearTier: normalizeGearTier(v.gearTier, normalizeGear(v.gear)),
     skill: num(v.skill, 0, 400),
     magicLevel: num(v.magicLevel, 0, 200),
     critDamage: num(v.critDamage, 0, 500),
@@ -299,6 +303,7 @@ export function isEmptySetup(s: SessionSetup | null | undefined): boolean {
     s.weaponTier == null &&
     !s.quiver &&
     !Object.values(s.gear ?? {}).some(Boolean) &&
+    !Object.values(s.gearTier ?? {}).some(Boolean) &&
     s.skill == null &&
     s.magicLevel == null &&
     s.critDamage == null &&

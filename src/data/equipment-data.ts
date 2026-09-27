@@ -251,7 +251,7 @@ Energy Ring|r|KPM|0|0
 Energy Robe|a|M|200|9||Fist Fighting +4|Energy +8%, Earth -8%||2
 Engraved Wedding Ring|r||0|0
 Envenomed Arrow|m||70|||||||27 Physical
-Ethereal Coned Hat|h|M|400|7||Fist Fighting +3, Magic Level +2|Physical +4%, Fire +8%|2|12
+Ethereal Coned Hat|h|M|400|7||Fist Fighting +3, Magic Level +2|Physical +4%, Fire +8%|2|10
 Ethereal Ring|r|M|400|0|||Physical 1%, Fire +4%, Earth +4%, Energy +4%, Ice +4%
 Ethno Coat|a|SD||7||Magic Level +1|||1
 Exotic Amulet|n||180|0|||Physical +4%, Earth +5%
@@ -350,7 +350,7 @@ Goo Shell|a|||12|||Earth +2%, Fire -2%||3
 Grasshopper Legs|l||75|7||Speed +10|||2
 Great Shield|s||||50|||1
 Greater Garlic Necklace|n|||0|||Life Drain +50%
-Green Demon Armor|a|||16||||2|2
+Green Demon Armor|a|||16||||2|10
 Green Demon Helmet|h|||10||||2|2
 Green Demon Legs|l|||9|||||10
 Green Demon Slippers|b|||0||||1|10
@@ -826,7 +826,7 @@ Wooden Spellbook|k|SD|80||26|Magic Level +2|Earth +5%|1
 Worn Firewalker Boots|b||130|0
 Worn Soft Boots|b
 Yalahari Armor|a|K|80|16|||Death +3%||2
-Yalahari Footwraps|b|M|80|1||Fist Fighting +2|Death +3%|1|10
+Yalahari Footwraps|b|M|80|1||Fist Fighting +2|Death +3%|1|2
 Yalahari Leg Piece|l|P|80|8||Distance Fighting +2|Death +5%||2
 Yalahari Mask|h|SD|80|5||Magic Level +2||1|2
 Yetislippers|b|||0|||||2

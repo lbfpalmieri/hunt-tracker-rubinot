@@ -71,7 +71,7 @@ Cobra Rod|r|D|220|||||90 Earth|5|ML +2|2|10
 Cobra Sword|s|K|220|1|52||31|||Sword +3|2|10
 Cobra Wand|w|S|270|||||95 Energy|4|ML +2|2|10
 Combat Knife|s||0|1|8||6|||||1
-Composite Hornbow|b|P|50|2|+2||||6||3|0|+2
+Composite Hornbow|b|P|50|2|+2||||6||3|2|+2
 Cowtana|s||25|1|34||19|||||2
 Cranial Basher|c||60|1|44||20||||2|2
 Crimson Sword|s||0|1|18||10|||||1||Crimson Sword (Rashid)

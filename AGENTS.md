@@ -47,7 +47,10 @@ src/lib/weapons.ts e filtradas por vocação. Equipamentos: src/data/equipment-d
 Capacetes, Armaduras, Calças, Botas, Escudos, Spellbooks, Amuletos e Colares, Anéis, Munição, Extra Slot; sem
 "Removido na versão ..."), lidos por src/lib/equipment.ts; setup.gear {head,neck,armor,legs,feet,ring,shield,ammo}
 (normalizeGear só aceita nome da lista no slot certo). UI = EquipmentDoll (layout do inventário do jogo, cada
-slot filtra tipo + vocação; arma → setup.weapon, aljava → setup.quiver). Item novo do jogo = refazer a extração. Escolher set no assistente preenche o setup e o
+slot filtra tipo + vocação; arma → setup.weapon, aljava → setup.quiver). Item novo do jogo = refazer a extração.
+Tier (Exaltation Forge, src/lib/forge.ts, tabela da página "Exaltation Forge" da TibiaWiki BR): só arma/capacete/
+armadura/calça/bota; habilidades Onslaught/Momentum/Ruse/Transcendence/Amplification com % por tier; tier máx pela
+classe do item (campo "tier máx" dos dados, conferido contra "Forja Classe N"). setup.weaponTier + setup.gearTier. Escolher set no assistente preenche o setup e o
 print da sessão (se ela ainda não tiver). Dashboard: RendimentoNudge + SetsNudge com horários defasados.
 Observações (notes) continuam privadas — não exibir texto livre na Comunidade.; imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
 (linked_task_progress, barras geral/por sala, marcar tudo); tools.compare.tsx (até 4

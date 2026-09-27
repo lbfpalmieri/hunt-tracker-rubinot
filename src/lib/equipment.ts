@@ -166,6 +166,30 @@ export function gearBonuses(names: (string | null | undefined)[]) {
   return { armor, skills: sorted(skills), resist: sorted(resist) };
 }
 
+/** Slots do boneco com tier (Exaltation Forge) — além da arma, que usa setup.weaponTier. */
+export type TierGearSlot = "head" | "armor" | "legs" | "feet";
+export const TIER_GEAR_SLOTS: TierGearSlot[] = ["head", "armor", "legs", "feet"];
+export type SetupGearTier = Partial<Record<TierGearSlot, number>>;
+
+/** Tier máximo do item (0 = não aceita tier). Só capacete/armadura/calça/bota têm tier. */
+export function gearMaxTier(slot: GearSlot, name: string | null | undefined): number {
+  if (!(TIER_GEAR_SLOTS as string[]).includes(slot)) return 0;
+  return findEquipment(name)?.maxTier ?? 0;
+}
+
+/** Tier de cada item equipado, entre 1 e o máximo daquele item (resto some). */
+export function normalizeGearTier(v: unknown, gear: SetupGear): SetupGearTier {
+  const out: SetupGearTier = {};
+  if (!v || typeof v !== "object") return out;
+  const r = v as Record<string, unknown>;
+  for (const slot of TIER_GEAR_SLOTS) {
+    const t = Math.round(Number(r[slot]));
+    const max = gearMaxTier(slot, gear[slot]);
+    if (Number.isFinite(t) && t >= 1 && t <= max) out[slot] = t;
+  }
+  return out;
+}
+
 /** Só itens que existem na lista e no slot certo (é o que vai pro banco e pra Comunidade). */
 export function normalizeGear(v: unknown): SetupGear {
   const out: SetupGear = {};

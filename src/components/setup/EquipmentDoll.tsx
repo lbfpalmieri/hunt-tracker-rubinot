@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Flame, Search, X } from "lucide-react";
 import { GameIcon } from "@/components/GameIcon";
 import {
   Dialog,
@@ -13,9 +13,13 @@ import {
   equipmentSummary,
   findEquipment,
   gearBonuses,
+  gearMaxTier,
   shortSkills,
+  TIER_GEAR_SLOTS,
   type GearSlot,
+  type TierGearSlot,
 } from "@/lib/equipment";
+import { fmtPct, forgeLines } from "@/lib/forge";
 import type { SessionSetup, SetupVocation } from "@/lib/session-setup";
 import { WEAPON_KIND_LABEL, findWeapon, weaponSummary, weaponsForVocation } from "@/lib/weapons";
 
@@ -109,6 +113,8 @@ interface PickItem {
  * Boneco de equipamentos do set, no layout do inventário do RubinOT: toca no quadrado e escolhe o
  * item — cada quadrado só lista o que encaixa nele e o que a vocação usa (item sem vocação na wiki
  * aparece pra todos). Arma → setup.weapon; aljava → setup.quiver; o resto → setup.gear.
+ * Tier (Exaltation Forge): arma → setup.weaponTier; capacete/armadura/calça/bota → setup.gearTier,
+ * até o máximo de cada item; o bloco "Forja" mostra a habilidade e a % de cada um (forge.ts).
  * `onChange` ausente = só leitura (Comunidade, comparação).
  */
 export function EquipmentDoll({
@@ -143,6 +149,27 @@ export function EquipmentDoll({
 
   const shieldBlocked = twoHanded && vocation !== "paladin";
 
+  // ---------- tier (Exaltation Forge) ----------
+  const gearTier = value.gearTier ?? {};
+  const isTierSlot = (s: DollSlot): s is TierGearSlot | "weapon" =>
+    s === "weapon" || (TIER_GEAR_SLOTS as string[]).includes(s);
+  const tierOf = (s: DollSlot): number =>
+    s === "weapon" ? (value.weaponTier ?? 0) : isTierSlot(s) ? (gearTier[s] ?? 0) : 0;
+  const maxTierOf = (s: DollSlot): number =>
+    s === "weapon" ? (weapon?.maxTier ?? 0) : isTierSlot(s) ? gearMaxTier(s, gear[s]) : 0;
+  const setTier = (s: DollSlot, t: number) => {
+    if (!onChange) return;
+    if (s === "weapon") onChange({ weaponTier: t > 0 ? t : null });
+    else if (isTierSlot(s)) onChange({ gearTier: { ...gearTier, [s]: t > 0 ? t : undefined } });
+  };
+  const forge = forgeLines({
+    weapon: tierOf("weapon"),
+    head: tierOf("head"),
+    armor: tierOf("armor"),
+    legs: tierOf("legs"),
+    feet: tierOf("feet"),
+  });
+
   const pick = (slot: DollSlot, name: string | null) => {
     if (!onChange || slot === "bag") return;
     if (slot === "weapon") {
@@ -160,7 +187,13 @@ export function EquipmentDoll({
       if (e?.isQuiver) onChange({ quiver: e.name, gear: { ...gear, shield: undefined } });
       else onChange({ quiver: null, gear: { ...gear, shield: name ?? undefined } });
     } else {
-      onChange({ gear: { ...gear, [slot]: name ?? undefined } });
+      const patch: Partial<SessionSetup> = { gear: { ...gear, [slot]: name ?? undefined } };
+      // Item novo aceita tier menor (ou nenhum)? Ajusta.
+      if (isTierSlot(slot)) {
+        const max = gearMaxTier(slot, name);
+        if ((gearTier[slot] ?? 0) > max) patch.gearTier = { ...gearTier, [slot]: undefined };
+      }
+      onChange(patch);
     }
     setEditing(null);
   };
@@ -223,9 +256,9 @@ export function EquipmentDoll({
                   2 mãos
                 </span>
               )}
-              {slot === "weapon" && item && value.weaponTier != null && (
+              {item && tierOf(slot) > 0 && (
                 <span className="absolute right-0.5 top-0.5 rounded bg-rubi-gold/90 px-1 text-[9px] font-bold leading-tight text-background">
-                  T{value.weaponTier}
+                  T{tierOf(slot)}
                 </span>
               )}
             </button>
@@ -252,12 +285,38 @@ export function EquipmentDoll({
                     : e
                       ? equipmentSummary(e)
                       : "";
+                const max = maxTierOf(slot);
+                const tier = tierOf(slot);
                 return (
                   <li key={slot} className="min-w-0 text-xs leading-snug">
                     <span className="mr-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                       {slotLabel(slot, vocation)}
                     </span>
                     <b className="font-semibold">{it.name}</b>
+                    {max > 0 && onChange ? (
+                      <select
+                        aria-label={`Tier de ${it.name}`}
+                        title={`Tier (Exaltation Forge) — esse item vai até T${max}`}
+                        value={tier}
+                        onChange={(ev) => setTier(slot, Number(ev.target.value))}
+                        className={
+                          "ml-1.5 rounded border px-1 py-px align-baseline text-[10px] font-bold outline-none " +
+                          (tier > 0
+                            ? "border-rubi-gold/60 bg-rubi-gold/15 text-rubi-gold"
+                            : "border-border bg-background text-muted-foreground")
+                        }
+                      >
+                        {Array.from({ length: max + 1 }, (_, t) => (
+                          <option key={t} value={t}>
+                            {t === 0 ? "sem tier" : `T${t}`}
+                          </option>
+                        ))}
+                      </select>
+                    ) : tier > 0 ? (
+                      <span className="ml-1.5 rounded bg-rubi-gold/15 px-1 text-[10px] font-bold text-rubi-gold">
+                        T{tier}
+                      </span>
+                    ) : null}
                     {summary && (
                       <span className="block break-words text-[11px] text-muted-foreground">
                         {summary}
@@ -285,6 +344,7 @@ export function EquipmentDoll({
               ))}
             </div>
           )}
+          {forge.length > 0 && <ForgeBlock lines={forge} />}
           {aside}
         </div>
       )}
@@ -298,6 +358,57 @@ export function EquipmentDoll({
           onPick={(name) => editing && pick(editing, name)}
           onClose={() => setEditing(null)}
         />
+      )}
+    </div>
+  );
+}
+
+/** Habilidades de tier do set (Exaltation Forge) com a chance de cada uma. */
+function ForgeBlock({ lines }: { lines: ReturnType<typeof forgeLines> }) {
+  const amp = lines.find((l) => l.slot === "feet");
+  return (
+    <div className="rounded-lg border border-rubi-gold/30 bg-rubi-gold/[0.05] p-2.5">
+      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-rubi-gold">
+        <Flame className="h-3.5 w-3.5" /> Forja (tier)
+      </div>
+      <ul className="space-y-1.5">
+        {lines.map((l) => (
+          <li key={l.slot} className="flex gap-2 text-xs leading-snug">
+            {l.skill.icon ? (
+              <img
+                src={l.skill.icon}
+                alt=""
+                className="h-5 w-5 flex-none [image-rendering:pixelated]"
+              />
+            ) : (
+              <Flame className="h-5 w-5 flex-none text-rubi-gold" />
+            )}
+            <span className="min-w-0">
+              <b>{l.skill.name}</b>{" "}
+              <span className="text-muted-foreground">
+                ({l.skill.item} T{l.tier}) ·{" "}
+              </span>
+              <b className="text-rubi-gold">{fmtPct(l.base)}</b>
+              {l.slot === "feet" ? (
+                <span className="text-muted-foreground"> a mais na chance das outras</span>
+              ) : (
+                <span className="text-muted-foreground"> de chance</span>
+              )}
+              {l.amplified != null && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  → <b className="text-foreground">{fmtPct(l.amplified)}</b> com a bota
+                </span>
+              )}
+              <span className="block text-[11px] text-muted-foreground">{l.skill.effect}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {amp == null && lines.length > 0 && (
+        <p className="mt-1.5 text-[10px] text-muted-foreground">
+          Bota com tier (Amplification) aumenta essas chances.
+        </p>
       )}
     </div>
   );

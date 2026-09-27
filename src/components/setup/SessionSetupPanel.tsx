@@ -259,26 +259,6 @@ export function SessionSetupPanel({
             <div className="space-y-3 border-t border-border/60 pt-3">
               <section className="grid grid-cols-2 gap-3">
                 <label>
-                  <span className={LABEL}>Tier da arma</span>
-                  <select
-                    value={value.weaponTier ?? ""}
-                    onChange={(e) =>
-                      set({ weaponTier: e.target.value === "" ? null : Number(e.target.value) })
-                    }
-                    className={FIELD}
-                  >
-                    <option value="">—</option>
-                    {Array.from(
-                      { length: (findWeapon(value.weapon)?.maxTier ?? 10) + 1 },
-                      (_, i) => (
-                        <option key={i} value={i}>
-                          T{i}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </label>
-                <label>
                   <span className={LABEL}>Crítico extra %</span>
                   <input
                     inputMode="decimal"

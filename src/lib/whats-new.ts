@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "gear-tiers",
+    date: "2026-09-27",
+    title: "Tier nos equipamentos do set",
+    description:
+      "Agora dá pra marcar o tier (Exaltation Forge) da arma, capacete, armadura, calça e bota — cada item só vai até o tier máximo da classe dele, igual no jogo. O set mostra a habilidade de cada tier (Onslaught, Momentum, Ruse, Transcendence e Amplification) com a chance de ativação da tabela da TibiaWiki, já somando o bônus da bota.",
+  },
+  {
     id: "group-session-party-only",
     date: "2026-09-27",
     title: "Modo Grupo: sessão só com o Party Hunt Analyser",
