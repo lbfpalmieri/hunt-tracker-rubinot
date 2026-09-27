@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "meus-sets",
+    date: "2026-09-27",
+    title: "Meus sets de equipamento",
+    description:
+      "Tela nova (menu Herói → Meus sets e o ícone azul no Dashboard): monte cada set com arma, skills, Wheel, postura e o print do equipamento, antes de caçar. Na hora de adicionar a sessão é só escolher o set — o setup e o print vão juntos, e aparecem na Comunidade se a sessão for pública.",
+  },
+  {
     id: "setup-presets-wheel",
     date: "2026-09-26",
     title: "Setup: presets, Wheel e charms mais fáceis",

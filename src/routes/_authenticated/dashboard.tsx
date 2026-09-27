@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
 import { InfoHint } from "@/components/InfoHint";
-import { RendimentoNudge } from "@/components/RendimentoNudge";
+import { RendimentoNudge, SetsNudge } from "@/components/RendimentoNudge";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { totalXpLost } from "@/lib/deaths";
@@ -133,7 +133,12 @@ function Dashboard() {
             ) : (
               <>Bem-vindo, caçador</>
             )}
-            {active && <RendimentoNudge />}
+            {active && (
+              <span className="ml-1 inline-flex items-center gap-2">
+                <RendimentoNudge />
+                <SetsNudge />
+              </span>
+            )}
           </h1>
           {active && (
             <p className="mt-1 text-sm text-muted-foreground">

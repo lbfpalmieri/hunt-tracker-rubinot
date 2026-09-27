@@ -922,6 +922,11 @@ function ImportPage() {
                 onChange={setSetup}
                 vocation={setupVocation(activeChar?.vocation)}
                 characterId={effectiveCharId || null}
+                sessionGearUrl={gearUrl}
+                onPresetApplied={(p) => {
+                  // Print do set entra na sessão se ela ainda não tiver um próprio.
+                  if (p.gearUrl && !gearUrl) setGearUrl(p.gearUrl);
+                }}
                 creatures={(parsed.hunting?.kills ?? [])
                   .slice()
                   .sort((a, b) => b.count - a.count)

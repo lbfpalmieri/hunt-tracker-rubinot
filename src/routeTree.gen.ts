@@ -9,86 +9,52 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
-import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
-import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
-import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
-import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
-import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
-import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
-import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
-import { Route as AuthenticatedBossesIndexRouteImport } from './routes/_authenticated/bosses.index'
-import { Route as AuthenticatedToolsRubiniCoinsRouteImport } from './routes/_authenticated/tools.rubini-coins'
-import { Route as AuthenticatedToolsRankingRouteImport } from './routes/_authenticated/tools.ranking'
-import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
-import { Route as AuthenticatedToolsLinkedTasksRouteImport } from './routes/_authenticated/tools.linked-tasks'
-import { Route as AuthenticatedToolsComparisonsRouteImport } from './routes/_authenticated/tools.comparisons'
-import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authenticated/tools.compare'
-import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_authenticated/sessions.compare'
-import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
-import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
-import { Route as AuthenticatedBossesIdRouteImport } from './routes/_authenticated/bosses.$id'
-import { Route as AuthenticatedAdminNotesRouteImport } from './routes/_authenticated/admin.notes'
+import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEquipamentosRouteImport } from './routes/_authenticated/equipamentos'
+import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
+import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authenticated/imbuements'
+import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
+import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
+import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as AuthenticatedAdminHuntsRouteImport } from './routes/_authenticated/admin.hunts'
+import { Route as AuthenticatedAdminNotesRouteImport } from './routes/_authenticated/admin.notes'
+import { Route as AuthenticatedBossesIndexRouteImport } from './routes/_authenticated/bosses.index'
+import { Route as AuthenticatedBossesIdRouteImport } from './routes/_authenticated/bosses.$id'
+import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
+import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
+import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
+import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_authenticated/sessions.compare'
+import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authenticated/tools.compare'
+import { Route as AuthenticatedToolsComparisonsRouteImport } from './routes/_authenticated/tools.comparisons'
+import { Route as AuthenticatedToolsLinkedTasksRouteImport } from './routes/_authenticated/tools.linked-tasks'
+import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
+import { Route as AuthenticatedToolsRankingRouteImport } from './routes/_authenticated/tools.ranking'
+import { Route as AuthenticatedToolsRubiniCoinsRouteImport } from './routes/_authenticated/tools.rubini-coins'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
-  id: '/wiki',
-  path: '/wiki',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRendimentoRoute = AuthenticatedRendimentoRouteImport.update({
-  id: '/rendimento',
-  path: '/rendimento',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
-  id: '/overview',
-  path: '/overview',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedImbuementsRoute = AuthenticatedImbuementsRouteImport.update({
-  id: '/imbuements',
-  path: '/imbuements',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
@@ -96,9 +62,71 @@ const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
   path: '/characters',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEquipamentosRoute =
+  AuthenticatedEquipamentosRouteImport.update({
+    id: '/equipamentos',
+    path: '/equipamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImbuementsRoute = AuthenticatedImbuementsRouteImport.update({
+  id: '/imbuements',
+  path: '/imbuements',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRendimentoRoute = AuthenticatedRendimentoRouteImport.update({
+  id: '/rendimento',
+  path: '/rendimento',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
+  id: '/wiki',
+  path: '/wiki',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminHuntsRoute = AuthenticatedAdminHuntsRouteImport.update({
+  id: '/admin/hunts',
+  path: '/admin/hunts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminNotesRoute = AuthenticatedAdminNotesRouteImport.update({
+  id: '/admin/notes',
+  path: '/admin/notes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBossesIndexRoute =
+  AuthenticatedBossesIndexRouteImport.update({
+    id: '/bosses/',
+    path: '/bosses/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBossesIdRoute = AuthenticatedBossesIdRouteImport.update({
+  id: '/bosses/$id',
+  path: '/bosses/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCommunityIndexRoute =
@@ -107,34 +135,27 @@ const AuthenticatedCommunityIndexRoute =
     path: '/community/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedBossesIndexRoute =
-  AuthenticatedBossesIndexRouteImport.update({
-    id: '/bosses/',
-    path: '/bosses/',
+const AuthenticatedCommunityIdRoute =
+  AuthenticatedCommunityIdRouteImport.update({
+    id: '/community/$id',
+    path: '/community/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedToolsRubiniCoinsRoute =
-  AuthenticatedToolsRubiniCoinsRouteImport.update({
-    id: '/tools/rubini-coins',
-    path: '/tools/rubini-coins',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedSessionsRoute,
+} as any)
+const AuthenticatedSessionsCompareRoute =
+  AuthenticatedSessionsCompareRouteImport.update({
+    id: '/compare',
+    path: '/compare',
+    getParentRoute: () => AuthenticatedSessionsRoute,
   } as any)
-const AuthenticatedToolsRankingRoute =
-  AuthenticatedToolsRankingRouteImport.update({
-    id: '/tools/ranking',
-    path: '/tools/ranking',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedToolsMonsterCalculatorRoute =
-  AuthenticatedToolsMonsterCalculatorRouteImport.update({
-    id: '/tools/monster-calculator',
-    path: '/tools/monster-calculator',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedToolsLinkedTasksRoute =
-  AuthenticatedToolsLinkedTasksRouteImport.update({
-    id: '/tools/linked-tasks',
-    path: '/tools/linked-tasks',
+const AuthenticatedToolsCompareRoute =
+  AuthenticatedToolsCompareRouteImport.update({
+    id: '/tools/compare',
+    path: '/tools/compare',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedToolsComparisonsRoute =
@@ -143,44 +164,30 @@ const AuthenticatedToolsComparisonsRoute =
     path: '/tools/comparisons',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedToolsCompareRoute =
-  AuthenticatedToolsCompareRouteImport.update({
-    id: '/tools/compare',
-    path: '/tools/compare',
+const AuthenticatedToolsLinkedTasksRoute =
+  AuthenticatedToolsLinkedTasksRouteImport.update({
+    id: '/tools/linked-tasks',
+    path: '/tools/linked-tasks',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSessionsCompareRoute =
-  AuthenticatedSessionsCompareRouteImport.update({
-    id: '/compare',
-    path: '/compare',
-    getParentRoute: () => AuthenticatedSessionsRoute,
-  } as any)
-const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedSessionsRoute,
-} as any)
-const AuthenticatedCommunityIdRoute =
-  AuthenticatedCommunityIdRouteImport.update({
-    id: '/community/$id',
-    path: '/community/$id',
+const AuthenticatedToolsMonsterCalculatorRoute =
+  AuthenticatedToolsMonsterCalculatorRouteImport.update({
+    id: '/tools/monster-calculator',
+    path: '/tools/monster-calculator',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedBossesIdRoute = AuthenticatedBossesIdRouteImport.update({
-  id: '/bosses/$id',
-  path: '/bosses/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminNotesRoute = AuthenticatedAdminNotesRouteImport.update({
-  id: '/admin/notes',
-  path: '/admin/notes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminHuntsRoute = AuthenticatedAdminHuntsRouteImport.update({
-  id: '/admin/hunts',
-  path: '/admin/hunts',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedToolsRankingRoute =
+  AuthenticatedToolsRankingRouteImport.update({
+    id: '/tools/ranking',
+    path: '/tools/ranking',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedToolsRubiniCoinsRoute =
+  AuthenticatedToolsRubiniCoinsRouteImport.update({
+    id: '/tools/rubini-coins',
+    path: '/tools/rubini-coins',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/equipamentos': typeof AuthenticatedEquipamentosRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
@@ -216,6 +224,7 @@ export interface FileRoutesByTo {
   '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/equipamentos': typeof AuthenticatedEquipamentosRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
   '/imbuements': typeof AuthenticatedImbuementsRoute
   '/import': typeof AuthenticatedImportRoute
@@ -246,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/about': typeof AuthenticatedAboutRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/equipamentos': typeof AuthenticatedEquipamentosRoute
   '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
   '/_authenticated/imbuements': typeof AuthenticatedImbuementsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/characters'
     | '/dashboard'
+    | '/equipamentos'
     | '/feedback'
     | '/imbuements'
     | '/import'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/characters'
     | '/dashboard'
+    | '/equipamentos'
     | '/feedback'
     | '/imbuements'
     | '/import'
@@ -333,6 +345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/about'
     | '/_authenticated/characters'
     | '/_authenticated/dashboard'
+    | '/_authenticated/equipamentos'
     | '/_authenticated/feedback'
     | '/_authenticated/imbuements'
     | '/_authenticated/import'
@@ -364,11 +377,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -378,67 +391,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/wiki': {
-      id: '/_authenticated/wiki'
-      path: '/wiki'
-      fullPath: '/wiki'
-      preLoaderRoute: typeof AuthenticatedWikiRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/sessions': {
-      id: '/_authenticated/sessions'
-      path: '/sessions'
-      fullPath: '/sessions'
-      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rendimento': {
-      id: '/_authenticated/rendimento'
-      path: '/rendimento'
-      fullPath: '/rendimento'
-      preLoaderRoute: typeof AuthenticatedRendimentoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/overview': {
-      id: '/_authenticated/overview'
-      path: '/overview'
-      fullPath: '/overview'
-      preLoaderRoute: typeof AuthenticatedOverviewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/import': {
-      id: '/_authenticated/import'
-      path: '/import'
-      fullPath: '/import'
-      preLoaderRoute: typeof AuthenticatedImportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/imbuements': {
-      id: '/_authenticated/imbuements'
-      path: '/imbuements'
-      fullPath: '/imbuements'
-      preLoaderRoute: typeof AuthenticatedImbuementsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/feedback': {
-      id: '/_authenticated/feedback'
-      path: '/feedback'
-      fullPath: '/feedback'
-      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/about': {
+      id: '/_authenticated/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AuthenticatedAboutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/characters': {
@@ -448,95 +412,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCharactersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/about': {
-      id: '/_authenticated/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AuthenticatedAboutRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/community/': {
-      id: '/_authenticated/community/'
-      path: '/community'
-      fullPath: '/community/'
-      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
+    '/_authenticated/equipamentos': {
+      id: '/_authenticated/equipamentos'
+      path: '/equipamentos'
+      fullPath: '/equipamentos'
+      preLoaderRoute: typeof AuthenticatedEquipamentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/bosses/': {
-      id: '/_authenticated/bosses/'
-      path: '/bosses'
-      fullPath: '/bosses/'
-      preLoaderRoute: typeof AuthenticatedBossesIndexRouteImport
+    '/_authenticated/feedback': {
+      id: '/_authenticated/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/rubini-coins': {
-      id: '/_authenticated/tools/rubini-coins'
-      path: '/tools/rubini-coins'
-      fullPath: '/tools/rubini-coins'
-      preLoaderRoute: typeof AuthenticatedToolsRubiniCoinsRouteImport
+    '/_authenticated/imbuements': {
+      id: '/_authenticated/imbuements'
+      path: '/imbuements'
+      fullPath: '/imbuements'
+      preLoaderRoute: typeof AuthenticatedImbuementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/ranking': {
-      id: '/_authenticated/tools/ranking'
-      path: '/tools/ranking'
-      fullPath: '/tools/ranking'
-      preLoaderRoute: typeof AuthenticatedToolsRankingRouteImport
+    '/_authenticated/import': {
+      id: '/_authenticated/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof AuthenticatedImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/monster-calculator': {
-      id: '/_authenticated/tools/monster-calculator'
-      path: '/tools/monster-calculator'
-      fullPath: '/tools/monster-calculator'
-      preLoaderRoute: typeof AuthenticatedToolsMonsterCalculatorRouteImport
+    '/_authenticated/overview': {
+      id: '/_authenticated/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof AuthenticatedOverviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/linked-tasks': {
-      id: '/_authenticated/tools/linked-tasks'
-      path: '/tools/linked-tasks'
-      fullPath: '/tools/linked-tasks'
-      preLoaderRoute: typeof AuthenticatedToolsLinkedTasksRouteImport
+    '/_authenticated/rendimento': {
+      id: '/_authenticated/rendimento'
+      path: '/rendimento'
+      fullPath: '/rendimento'
+      preLoaderRoute: typeof AuthenticatedRendimentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/comparisons': {
-      id: '/_authenticated/tools/comparisons'
-      path: '/tools/comparisons'
-      fullPath: '/tools/comparisons'
-      preLoaderRoute: typeof AuthenticatedToolsComparisonsRouteImport
+    '/_authenticated/sessions': {
+      id: '/_authenticated/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tools/compare': {
-      id: '/_authenticated/tools/compare'
-      path: '/tools/compare'
-      fullPath: '/tools/compare'
-      preLoaderRoute: typeof AuthenticatedToolsCompareRouteImport
+    '/_authenticated/wiki': {
+      id: '/_authenticated/wiki'
+      path: '/wiki'
+      fullPath: '/wiki'
+      preLoaderRoute: typeof AuthenticatedWikiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/sessions/compare': {
-      id: '/_authenticated/sessions/compare'
-      path: '/compare'
-      fullPath: '/sessions/compare'
-      preLoaderRoute: typeof AuthenticatedSessionsCompareRouteImport
-      parentRoute: typeof AuthenticatedSessionsRoute
-    }
-    '/_authenticated/sessions/$id': {
-      id: '/_authenticated/sessions/$id'
-      path: '/$id'
-      fullPath: '/sessions/$id'
-      preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
-      parentRoute: typeof AuthenticatedSessionsRoute
-    }
-    '/_authenticated/community/$id': {
-      id: '/_authenticated/community/$id'
-      path: '/community/$id'
-      fullPath: '/community/$id'
-      preLoaderRoute: typeof AuthenticatedCommunityIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/bosses/$id': {
-      id: '/_authenticated/bosses/$id'
-      path: '/bosses/$id'
-      fullPath: '/bosses/$id'
-      preLoaderRoute: typeof AuthenticatedBossesIdRouteImport
+    '/_authenticated/admin/hunts': {
+      id: '/_authenticated/admin/hunts'
+      path: '/admin/hunts'
+      fullPath: '/admin/hunts'
+      preLoaderRoute: typeof AuthenticatedAdminHuntsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/notes': {
@@ -546,11 +489,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminNotesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/hunts': {
-      id: '/_authenticated/admin/hunts'
-      path: '/admin/hunts'
-      fullPath: '/admin/hunts'
-      preLoaderRoute: typeof AuthenticatedAdminHuntsRouteImport
+    '/_authenticated/bosses/': {
+      id: '/_authenticated/bosses/'
+      path: '/bosses'
+      fullPath: '/bosses/'
+      preLoaderRoute: typeof AuthenticatedBossesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bosses/$id': {
+      id: '/_authenticated/bosses/$id'
+      path: '/bosses/$id'
+      fullPath: '/bosses/$id'
+      preLoaderRoute: typeof AuthenticatedBossesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/community/': {
+      id: '/_authenticated/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/community/$id': {
+      id: '/_authenticated/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof AuthenticatedCommunityIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sessions/$id': {
+      id: '/_authenticated/sessions/$id'
+      path: '/$id'
+      fullPath: '/sessions/$id'
+      preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
+      parentRoute: typeof AuthenticatedSessionsRoute
+    }
+    '/_authenticated/sessions/compare': {
+      id: '/_authenticated/sessions/compare'
+      path: '/compare'
+      fullPath: '/sessions/compare'
+      preLoaderRoute: typeof AuthenticatedSessionsCompareRouteImport
+      parentRoute: typeof AuthenticatedSessionsRoute
+    }
+    '/_authenticated/tools/compare': {
+      id: '/_authenticated/tools/compare'
+      path: '/tools/compare'
+      fullPath: '/tools/compare'
+      preLoaderRoute: typeof AuthenticatedToolsCompareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools/comparisons': {
+      id: '/_authenticated/tools/comparisons'
+      path: '/tools/comparisons'
+      fullPath: '/tools/comparisons'
+      preLoaderRoute: typeof AuthenticatedToolsComparisonsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools/linked-tasks': {
+      id: '/_authenticated/tools/linked-tasks'
+      path: '/tools/linked-tasks'
+      fullPath: '/tools/linked-tasks'
+      preLoaderRoute: typeof AuthenticatedToolsLinkedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools/monster-calculator': {
+      id: '/_authenticated/tools/monster-calculator'
+      path: '/tools/monster-calculator'
+      fullPath: '/tools/monster-calculator'
+      preLoaderRoute: typeof AuthenticatedToolsMonsterCalculatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools/ranking': {
+      id: '/_authenticated/tools/ranking'
+      path: '/tools/ranking'
+      fullPath: '/tools/ranking'
+      preLoaderRoute: typeof AuthenticatedToolsRankingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools/rubini-coins': {
+      id: '/_authenticated/tools/rubini-coins'
+      path: '/tools/rubini-coins'
+      fullPath: '/tools/rubini-coins'
+      preLoaderRoute: typeof AuthenticatedToolsRubiniCoinsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -575,6 +595,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAboutRoute: typeof AuthenticatedAboutRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEquipamentosRoute: typeof AuthenticatedEquipamentosRoute
   AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
   AuthenticatedImbuementsRoute: typeof AuthenticatedImbuementsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
@@ -600,6 +621,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAboutRoute: AuthenticatedAboutRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEquipamentosRoute: AuthenticatedEquipamentosRoute,
   AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
   AuthenticatedImbuementsRoute: AuthenticatedImbuementsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,

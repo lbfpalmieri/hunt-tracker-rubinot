@@ -39,7 +39,9 @@ Analyser, parser.ts, sem OCR; salvar = assistente em Dialog: Hunt → Bounty (Bo
 estilo Task Board, coluna bounty_creature) → Prey (PreyPicker inline) → Setup → Finalizar).
 Setup da sessão: hunt_sessions.setup jsonb (src/lib/session-setup.ts) — SÓ campos estruturados de listas
 da TibiaWiki (charms, posturas, perks de Convicção/Revelação da Wheel por vocação; ícones via GameIcon) + nome da arma sanitizado; é público com a sessão.
-Presets do setup (sem charms) por personagem em public.setup_presets (setup-presets.ts).
+Presets do setup ("sets", sem charms, com gear_url = print) por personagem em public.setup_presets
+(setup-presets.ts); tela dedicada /equipamentos (Meus sets). Escolher set no assistente preenche o setup e o
+print da sessão (se ela ainda não tiver). Dashboard: RendimentoNudge + SetsNudge com horários defasados.
 Observações (notes) continuam privadas — não exibir texto livre na Comunidade.; imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
 (linked_task_progress, barras geral/por sala, marcar tudo); tools.compare.tsx (até 4
 hunts) e tools.comparisons.tsx (salvos privados); community.index.tsx (feed público,

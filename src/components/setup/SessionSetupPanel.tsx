@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Check, Plus, Save, Trash2, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Check, Plus, Save, Shirt, X } from "lucide-react";
 import { toast } from "sonner";
 import { GameIcon } from "@/components/GameIcon";
 import {
@@ -18,9 +19,9 @@ import {
 } from "@/lib/session-setup";
 import {
   suggestedPresetName,
-  useDeleteSetupPreset,
   useSaveSetupPreset,
   useSetupPresets,
+  type SetupPreset,
 } from "@/lib/setup-presets";
 
 const FIELD =
@@ -48,6 +49,9 @@ export function SessionSetupPanel({
   characterId,
   creatures,
   activatedCharms = [],
+  mode = "session",
+  sessionGearUrl,
+  onPresetApplied,
 }: {
   value: SessionSetup;
   onChange: (next: SessionSetup) => void;
@@ -59,6 +63,12 @@ export function SessionSetupPanel({
   creatures: string[];
   /** Charms que ativaram na sessão (bloco "Charm" do Miscellaneous). */
   activatedCharms?: string[];
+  /** "preset" = editando um set na tela Meus sets: sem escolha de set e sem charms. */
+  mode?: "session" | "preset";
+  /** Print do equipamento da sessão — vai junto se salvar como set daqui. */
+  sessionGearUrl?: string | null;
+  /** Avisado quando um set é escolhido (ex. pra usar o print dele na sessão). */
+  onPresetApplied?: (preset: SetupPreset) => void;
 }) {
   const set = (patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
 
@@ -74,20 +84,23 @@ export function SessionSetupPanel({
   // ---------- presets ----------
   const { data: presets = [] } = useSetupPresets(characterId);
   const savePreset = useSaveSetupPreset(characterId);
-  const deletePreset = useDeleteSetupPreset(characterId);
   const [presetId, setPresetId] = useState("");
   const [naming, setNaming] = useState<string | null>(null);
 
-  const applyPreset = (id: string) => {
-    setPresetId(id);
-    const p = presets.find((x) => x.id === id);
-    if (p) onChange({ ...p.setup, charms: value.charms });
+  const applyPreset = (preset: SetupPreset) => {
+    setPresetId(preset.id);
+    onChange({ ...preset.setup, charms: value.charms });
+    onPresetApplied?.(preset);
   };
 
   const confirmSave = async () => {
     if (!naming?.trim()) return;
     try {
-      await savePreset.mutateAsync({ name: naming, setup: value });
+      await savePreset.mutateAsync({
+        name: naming,
+        setup: value,
+        ...(sessionGearUrl ? { gearUrl: sessionGearUrl } : {}),
+      });
       toast.success(`Preset "${naming.trim()}" salvo`);
       setNaming(null);
     } catch (e) {
@@ -149,81 +162,100 @@ export function SessionSetupPanel({
 
   return (
     <div className="space-y-5">
-      {/* Preset */}
-      <section className="rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.05] p-3">
-        <span className={LABEL}>Preset do personagem</span>
-        {naming == null ? (
-          <div className="flex flex-wrap gap-2">
-            <select
-              value={presetId}
-              onChange={(e) => applyPreset(e.target.value)}
-              className={FIELD + " min-w-0 flex-1"}
+      {/* Sets salvos do personagem */}
+      {mode === "session" && (
+        <section className="rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.05] p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className={LABEL + " mb-0"}>Meus sets</span>
+            <Link
+              to="/equipamentos"
+              className="text-[11px] font-medium text-rubi-blue hover:underline"
             >
-              <option value="">
-                {presets.length ? "Escolher preset salvo…" : "Nenhum preset salvo ainda"}
-              </option>
-              {presets.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              Gerenciar sets
+            </Link>
+          </div>
+          {presets.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {presets.map((pr) => {
+                const on = presetId === pr.id;
+                return (
+                  <button
+                    key={pr.id}
+                    type="button"
+                    onClick={() => applyPreset(pr)}
+                    className={
+                      "overflow-hidden rounded-lg border text-left transition-colors " +
+                      (on
+                        ? "border-rubi-blue ring-1 ring-rubi-blue"
+                        : "border-border hover:border-rubi-blue/60")
+                    }
+                  >
+                    <div className="flex h-20 items-center justify-center bg-background/70">
+                      {pr.gearUrl ? (
+                        <img src={pr.gearUrl} alt="" className="h-full w-full object-contain" />
+                      ) : pr.setup.weapon ? (
+                        <GameIcon name={pr.setup.weapon} size={40} />
+                      ) : (
+                        <Shirt className="h-7 w-7 text-muted-foreground/50" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 px-2 py-1.5 text-xs font-semibold">
+                      {on && <Check className="h-3.5 w-3.5 flex-none text-rubi-blue" />}
+                      <span className="truncate">{pr.name}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Nenhum set salvo. Preencha abaixo e salve — ou monte seus sets com calma em{" "}
+              <Link to="/equipamentos" className="text-rubi-blue hover:underline">
+                Meus sets
+              </Link>
+              .
+            </p>
+          )}
+          {naming == null ? (
             <button
               type="button"
               onClick={() => setNaming(suggestedPresetName(value))}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-rubi-blue/50 px-3 py-2 text-sm font-semibold text-rubi-blue hover:bg-rubi-blue/10"
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-rubi-blue hover:underline"
             >
-              <Save className="h-4 w-4" /> Salvar como preset
+              <Save className="h-3.5 w-3.5" /> Salvar o que está abaixo como set
             </button>
-            {presetId && (
+          ) : (
+            <div className="mt-2 flex gap-2">
+              <input
+                autoFocus
+                value={naming}
+                onChange={(e) => setNaming(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && confirmSave()}
+                maxLength={40}
+                placeholder="Nome do set (ex: Soulbleeder T0)"
+                className={FIELD}
+              />
               <button
                 type="button"
-                onClick={() => {
-                  deletePreset.mutate(presetId);
-                  setPresetId("");
-                }}
-                aria-label="Excluir preset"
-                className="rounded-lg border border-border px-2.5 text-muted-foreground hover:text-rubi-danger"
+                onClick={confirmSave}
+                disabled={savePreset.isPending}
+                aria-label="Confirmar"
+                className="rounded-lg bg-rubi-blue px-3 text-primary-foreground disabled:opacity-50"
               >
-                <Trash2 className="h-4 w-4" />
+                <Check className="h-4 w-4" />
               </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              autoFocus
-              value={naming}
-              onChange={(e) => setNaming(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && confirmSave()}
-              maxLength={40}
-              placeholder="Nome do preset (ex: Soulbleeder T0)"
-              className={FIELD}
-            />
-            <button
-              type="button"
-              onClick={confirmSave}
-              disabled={savePreset.isPending}
-              aria-label="Confirmar"
-              className="rounded-lg bg-rubi-blue px-3 text-primary-foreground disabled:opacity-50"
-            >
-              <Check className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setNaming(null)}
-              aria-label="Cancelar"
-              className="rounded-lg border border-border px-3 text-muted-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-        <p className="mt-1.5 text-[10px] text-muted-foreground">
-          Preencha uma vez e salve (arma, skills, Wheel e postura). Nas próximas sessões é só
-          escolher o preset. Charms não entram — dependem da hunt.
-        </p>
-      </section>
+              <button
+                type="button"
+                onClick={() => setNaming(null)}
+                aria-label="Cancelar"
+                className="rounded-lg border border-border px-3 text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Arma + skills */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -380,125 +412,134 @@ export function SessionSetupPanel({
         </div>
       </section>
 
-      {/* Runas de Charm */}
-      <section>
-        <span className={LABEL}>Runas de Charm</span>
-        {rows.length === 0 ? (
-          <p className="mb-2 text-xs text-muted-foreground">
-            {activatedCharms.length === 0
-              ? "Cole o Miscellaneous da sessão pra ver quais charms ativaram — aí é só ligar cada um às criaturas."
-              : ""}
-          </p>
-        ) : (
-          <div className="mb-2 space-y-2">
-            {rows.map((charm) => {
-              const linked = new Set(
-                entries(charm)
-                  .map((e) => e.creature)
-                  .filter(Boolean),
-              );
-              const lvl = rowLevel(charm);
-              return (
-                <div key={charm} className="rounded-lg border border-border bg-surface/60 p-2.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <img src={charmIcon(charm)} alt="" className="h-8 w-8" />
-                    <span className="font-semibold text-rubi-gold">{charm}</span>
-                    {activatedCharms.includes(charm) && (
-                      <span className="rounded bg-rubi-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-rubi-success">
-                        ativou nesta sessão
-                      </span>
-                    )}
-                    <div className="ml-auto flex items-center gap-1">
-                      {([1, 2, 3] as const).map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setCharmLevel(charm, n)}
-                          title={n === 1 ? "Bronze" : n === 2 ? "Prata" : "Ouro"}
-                          className={
-                            "rounded-md border px-2 py-0.5 text-[11px] font-semibold " +
-                            (lvl === n && entries(charm).length
-                              ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
-                              : "border-border text-muted-foreground hover:text-foreground")
-                          }
-                        >
-                          Nv{n}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => removeRow(charm)}
-                        aria-label={`Tirar ${charm}`}
-                        className="ml-1 rounded p-1 text-muted-foreground hover:text-rubi-danger"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+      {mode === "session" && (
+        <>
+          {/* Runas de Charm */}
+          <section>
+            <span className={LABEL}>Runas de Charm</span>
+            {rows.length === 0 ? (
+              <p className="mb-2 text-xs text-muted-foreground">
+                {activatedCharms.length === 0
+                  ? "Cole o Miscellaneous da sessão pra ver quais charms ativaram — aí é só ligar cada um às criaturas."
+                  : ""}
+              </p>
+            ) : (
+              <div className="mb-2 space-y-2">
+                {rows.map((charm) => {
+                  const linked = new Set(
+                    entries(charm)
+                      .map((e) => e.creature)
+                      .filter(Boolean),
+                  );
+                  const lvl = rowLevel(charm);
+                  return (
+                    <div
+                      key={charm}
+                      className="rounded-lg border border-border bg-surface/60 p-2.5"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <img src={charmIcon(charm)} alt="" className="h-8 w-8" />
+                        <span className="font-semibold text-rubi-gold">{charm}</span>
+                        {activatedCharms.includes(charm) && (
+                          <span className="rounded bg-rubi-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-rubi-success">
+                            ativou nesta sessão
+                          </span>
+                        )}
+                        <div className="ml-auto flex items-center gap-1">
+                          {([1, 2, 3] as const).map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setCharmLevel(charm, n)}
+                              title={n === 1 ? "Bronze" : n === 2 ? "Prata" : "Ouro"}
+                              className={
+                                "rounded-md border px-2 py-0.5 text-[11px] font-semibold " +
+                                (lvl === n && entries(charm).length
+                                  ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
+                                  : "border-border text-muted-foreground hover:text-foreground")
+                              }
+                            >
+                              Nv{n}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => removeRow(charm)}
+                            aria-label={`Tirar ${charm}`}
+                            className="ml-1 rounded p-1 text-muted-foreground hover:text-rubi-danger"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {creatures.map((cr) => {
+                          const on = linked.has(cr);
+                          return (
+                            <button
+                              key={cr}
+                              type="button"
+                              onClick={() => toggleCreature(charm, cr)}
+                              className={
+                                "inline-flex items-center gap-1 rounded-md border py-0.5 pl-0.5 pr-2 text-[11px] transition-colors " +
+                                (on
+                                  ? "border-rubi-gold bg-rubi-gold/15 text-foreground"
+                                  : "border-border text-muted-foreground hover:text-foreground")
+                              }
+                            >
+                              <GameIcon name={cr} size={20} /> {cr}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {linked.size === 0 && (
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          Toque nas criaturas em que esse charm estava.
+                        </p>
+                      )}
                     </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {creatures.map((cr) => {
-                      const on = linked.has(cr);
-                      return (
-                        <button
-                          key={cr}
-                          type="button"
-                          onClick={() => toggleCreature(charm, cr)}
-                          className={
-                            "inline-flex items-center gap-1 rounded-md border py-0.5 pl-0.5 pr-2 text-[11px] transition-colors " +
-                            (on
-                              ? "border-rubi-gold bg-rubi-gold/15 text-foreground"
-                              : "border-border text-muted-foreground hover:text-foreground")
-                          }
-                        >
-                          <GameIcon name={cr} size={20} /> {cr}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {linked.size === 0 && (
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      Toque nas criaturas em que esse charm estava.
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                  );
+                })}
+              </div>
+            )}
 
-        {pickerOpen ? (
-          <div className="rounded-lg border border-border p-2">
-            <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9">
-              {CHARMS.filter((c) => !rows.includes(c.name)).map((c) => (
-                <button
-                  key={c.name}
-                  type="button"
-                  title={c.name}
-                  onClick={() => {
-                    setExtraCharms((x) => [...x, c.name]);
-                    setPickerOpen(false);
-                  }}
-                  className="flex flex-col items-center gap-0.5 rounded-md p-1 hover:bg-accent"
-                >
-                  <img src={c.icon} alt="" className="h-8 w-8" />
-                  <span className="line-clamp-1 text-[9px] text-muted-foreground">{c.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <Plus className="h-3.5 w-3.5" /> Outro charm que não apareceu
-          </button>
-        )}
-        <p className="mt-1.5 text-[10px] text-muted-foreground">
-          Nv1 = Bronze, Nv2 = Prata, Nv3 = Ouro (TibiaWiki).
-        </p>
-      </section>
+            {pickerOpen ? (
+              <div className="rounded-lg border border-border p-2">
+                <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9">
+                  {CHARMS.filter((c) => !rows.includes(c.name)).map((c) => (
+                    <button
+                      key={c.name}
+                      type="button"
+                      title={c.name}
+                      onClick={() => {
+                        setExtraCharms((x) => [...x, c.name]);
+                        setPickerOpen(false);
+                      }}
+                      className="flex flex-col items-center gap-0.5 rounded-md p-1 hover:bg-accent"
+                    >
+                      <img src={c.icon} alt="" className="h-8 w-8" />
+                      <span className="line-clamp-1 text-[9px] text-muted-foreground">
+                        {c.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-3.5 w-3.5" /> Outro charm que não apareceu
+              </button>
+            )}
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              Nv1 = Bronze, Nv2 = Prata, Nv3 = Ouro (TibiaWiki).
+            </p>
+          </section>
+        </>
+      )}
     </div>
   );
 }

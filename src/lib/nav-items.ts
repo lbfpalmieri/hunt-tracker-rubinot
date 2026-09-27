@@ -12,6 +12,7 @@ import {
   Scale,
   ScrollText,
   ShieldUser,
+  Shirt,
   Skull,
   Swords,
   Target,
@@ -151,6 +152,14 @@ export const NAV_ITEMS = [
     label: "Todos os personagens",
     short: "Todos",
     icon: Users,
+    group: "heroi",
+  },
+  {
+    id: "equipment",
+    to: "/equipamentos",
+    label: "Meus sets",
+    short: "Sets",
+    icon: Shirt,
     group: "heroi",
   },
   {

@@ -51,6 +51,10 @@ const SECTIONS: Section[] = [
         text: "Escolhe até 4 sessões específicas (sem médias) lado a lado — bom pra testar runas, magias ou rotações diferentes na mesma spot.",
       },
       {
+        label: "Meus sets",
+        text: "Em Meus sets (menu Herói) você monta cada set de equipamento — arma, skills, Wheel, postura e o print — uma vez só. Ao adicionar a sessão, é só escolher o set: o setup e o print entram na sessão.",
+      },
+      {
         label: "Setup da sessão",
         text: "Registre arma, skills, Wheel, postura, magias aumentadas e Runas de Charm (ao adicionar a sessão ou depois, na sessão salva). Aparece na comparação de sessões e, em sessões públicas, na Comunidade — tudo escolhido de listas, sem texto livre.",
       },
