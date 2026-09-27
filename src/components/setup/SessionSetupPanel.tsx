@@ -16,8 +16,8 @@ import {
   type SetupCharm,
   type SetupVocation,
 } from "@/lib/session-setup";
-import { WeaponPicker } from "@/components/setup/WeaponPicker";
-import { findWeapon, quivers } from "@/lib/weapons";
+import { EquipmentDoll } from "@/components/setup/EquipmentDoll";
+import { findWeapon } from "@/lib/weapons";
 import {
   suggestedPresetName,
   useSaveSetupPreset,
@@ -261,25 +261,16 @@ export function SessionSetupPanel({
         </section>
       )}
 
-      {/* Arma + skills */}
+      {/* Equipamento (boneco do inventário: arma, aljava/escudo e o resto) */}
+      <section>
+        <span className={LABEL}>Equipamento</span>
+        <EquipmentDoll value={value} onChange={set} vocation={vocation} />
+      </section>
+
+      {/* Tier da arma + skills */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="col-span-2 sm:col-span-4">
-          <span className={LABEL}>Arma</span>
-          <WeaponPicker
-            value={value.weapon}
-            vocation={vocation}
-            onChange={(weapon) => {
-              // Tier acima do máximo da arma nova não existe — zera.
-              const max = findWeapon(weapon)?.maxTier;
-              set({
-                weapon,
-                weaponTier: max != null && (value.weaponTier ?? 0) > max ? null : value.weaponTier,
-              });
-            }}
-          />
-        </div>
         <label>
-          <span className={LABEL}>Tier</span>
+          <span className={LABEL}>Tier da arma</span>
           <select
             value={value.weaponTier ?? ""}
             onChange={(e) =>
@@ -315,31 +306,6 @@ export function SessionSetupPanel({
               placeholder="219"
               className={FIELD}
             />
-          </label>
-        )}
-        {vocation === "paladin" && (
-          <label className="col-span-2">
-            <span className={LABEL}>Aljava</span>
-            <div className="flex items-center gap-2">
-              {value.quiver && (
-                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-border bg-background">
-                  <GameIcon name={value.quiver} size={32} />
-                </span>
-              )}
-              <select
-                value={value.quiver ?? ""}
-                onChange={(e) => set({ quiver: e.target.value || null })}
-                className={FIELD}
-              >
-                <option value="">—</option>
-                {quivers().map((qv) => (
-                  <option key={qv.name} value={qv.name}>
-                    {qv.name}
-                    {qv.level ? ` (Lv ${qv.level})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
           </label>
         )}
         <label>

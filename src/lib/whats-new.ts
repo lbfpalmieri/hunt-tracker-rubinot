@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "equipment-doll",
+    date: "2026-09-27",
+    title: "Equipamentos no set, igual ao inventário do jogo",
+    description:
+      "O setup e os seus sets ganharam o boneco de equipamentos no layout do inventário: toque no quadrado e escolha o item — cada um só mostra o que encaixa ali (capacete, armadura, anel...) e o que a sua vocação usa, com os 825 equipamentos da TibiaWiki. Paladino põe a aljava na mão do escudo, arma de duas mãos trava o escudo, e o app soma os bônus do set (skills e proteções). Aparece também na sessão, na comparação e na Comunidade.",
+  },
+  {
     id: "negative-balance-fix",
     date: "2026-09-27",
     title: "Correção: sessão com prejuízo aparecia como lucro",

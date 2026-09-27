@@ -117,12 +117,6 @@ export function weaponsForVocation(voc: SetupVocation | null): WeaponInfo[] {
   return [...filtered].sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
 }
 
-export function quivers(): WeaponInfo[] {
-  return allWeapons()
-    .filter((w) => w.kind === "q")
-    .sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
-}
-
 export function findWeapon(name: string | null | undefined): WeaponInfo | undefined {
   if (!name) return undefined;
   const key = name.trim().toLowerCase();

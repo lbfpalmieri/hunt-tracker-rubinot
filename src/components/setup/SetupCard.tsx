@@ -10,6 +10,7 @@ import {
 } from "@/lib/session-setup";
 
 import { findWeapon, weaponSummary } from "@/lib/weapons";
+import { EquipmentDoll } from "@/components/setup/EquipmentDoll";
 
 const ROMAN = ["", "I", "II", "III"];
 
@@ -42,9 +43,26 @@ export function SetupCard({
     };
   });
 
+  // Com equipamentos no boneco, mostra o boneco (arma e aljava já aparecem nele).
+  const hasGear = Object.values(setup.gear ?? {}).some(Boolean);
+
   return (
     <div className="space-y-3">
-      {(setup.weapon || setup.weaponTier != null || setup.stance || setup.quiver) && (
+      {hasGear && (
+        <EquipmentDoll
+          value={setup}
+          vocation={voc}
+          size={compact ? 26 : 36}
+          showSummary={!compact}
+        />
+      )}
+      {hasGear && setup.stance && (
+        <span className="inline-flex items-center gap-2 rounded-lg border border-rubi-blue/40 bg-rubi-blue/10 py-1 pl-1 pr-2.5 text-sm text-rubi-blue">
+          <GameIcon name={setup.stance} size={24} />
+          {setup.stance}
+        </span>
+      )}
+      {!hasGear && (setup.weapon || setup.weaponTier != null || setup.stance || setup.quiver) && (
         <div className="flex flex-wrap gap-2">
           {(setup.weapon || setup.weaponTier != null) && (
             <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 py-1 pl-1 pr-2.5 text-sm font-semibold">

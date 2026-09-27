@@ -43,7 +43,11 @@ Presets do setup ("sets", sem charms, com gear_url = print) por personagem em pu
 (setup-presets.ts); tela dedicada /equipamentos (Meus sets).
 Armas: src/data/weapons-data.ts (530 armas extraídas da TibiaWiki BR — categorias Espadas/Machados/Clavas,
 Bows/Crossbows/Armas de Arremesso, Wands, Rods, Punhos (monk), Aljavas; sem obsoletas), lidas por
-src/lib/weapons.ts e filtradas por vocação no WeaponPicker. Arma nova do jogo = refazer a extração. Escolher set no assistente preenche o setup e o
+src/lib/weapons.ts e filtradas por vocação. Equipamentos: src/data/equipment-data.ts (825 itens da TibiaWiki BR —
+Capacetes, Armaduras, Calças, Botas, Escudos, Spellbooks, Amuletos e Colares, Anéis, Munição, Extra Slot; sem
+"Removido na versão ..."), lidos por src/lib/equipment.ts; setup.gear {head,neck,armor,legs,feet,ring,shield,ammo}
+(normalizeGear só aceita nome da lista no slot certo). UI = EquipmentDoll (layout do inventário do jogo, cada
+slot filtra tipo + vocação; arma → setup.weapon, aljava → setup.quiver). Item novo do jogo = refazer a extração. Escolher set no assistente preenche o setup e o
 print da sessão (se ela ainda não tiver). Dashboard: RendimentoNudge + SetsNudge com horários defasados.
 Observações (notes) continuam privadas — não exibir texto livre na Comunidade.; imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
 (linked_task_progress, barras geral/por sala, marcar tudo); tools.compare.tsx (até 4
