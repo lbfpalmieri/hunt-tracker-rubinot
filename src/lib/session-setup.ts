@@ -82,7 +82,11 @@ export const CHARMS: { name: string; kind: "major" | "minor"; icon: string }[] =
 
 export const CHARM_LEVEL_LABEL: Record<1 | 2 | 3, string> = { 1: "Nv1", 2: "Nv2", 3: "Nv3" };
 
-/** "Postura" = magias de Stance. Knight não tem; monk usa as Virtues. */
+/**
+ * "Postura" = magia de buff que fica ativa (só uma por vez). Na wiki: paladino/sorcerer/druid em
+ * "Magias de Stance"; knight são Blood Rage (ofensiva) e Protector (defensiva), marcadas como
+ * "Suporte, Focus"; monk são as Virtudes (mesmo grupo de cooldown).
+ */
 export const STANCES: Record<SetupVocation, string[]> = {
   paladin: ["Sharpshooter", "Divine Defiance"],
   sorcerer: [
@@ -94,7 +98,7 @@ export const STANCES: Record<SetupVocation, string[]> = {
   ],
   druid: ["Elemental Synthesis", "Shared Conservation"],
   monk: ["Virtue of Harmony", "Virtue of Justice", "Virtue of Sustain"],
-  knight: [],
+  knight: ["Blood Rage", "Protector"],
 };
 
 /**
@@ -122,7 +126,6 @@ export const COMBAT_SPELLS: Record<SetupVocation, string[]> = {
     "Annihilation",
     "Avatar of Steel",
     "Berserk",
-    "Blood Rage",
     "Brutal Strike",
     "Chivalrous Challenge",
     "Combat Mastery",
@@ -134,7 +137,6 @@ export const COMBAT_SPELLS: Record<SetupVocation, string[]> = {
     "Intense Recovery",
     "Intense Wound Cleansing",
     "Inflict Wound",
-    "Protector",
     "Whirlwind Throw",
   ],
   sorcerer: [
