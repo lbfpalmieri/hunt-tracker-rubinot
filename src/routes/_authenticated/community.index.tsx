@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
+import { PartyBadge } from "@/components/party/PartyBadge";
+import { usePlayMode } from "@/lib/play-mode";
 import { GameIcon } from "@/components/GameIcon";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { Pagination } from "@/components/Pagination";
@@ -69,6 +71,7 @@ const HUNTS_PAGE_SIZE = 12;
 const SESSIONS_PAGE_SIZE = 20;
 
 function CommunityPage() {
+  const mode = usePlayMode();
   const [vocation, setVocation] = useState<string>("");
   const [huntQuery, setHuntQuery] = useState("");
   const [monster, setMonster] = useState("");
@@ -94,13 +97,14 @@ function CommunityPage() {
   // ficar "preso" numa página que não existe mais pro novo resultado).
   useEffect(() => {
     setPage(1);
-  }, [vocation, huntTerm, monster, sort, view]);
+  }, [vocation, huntTerm, monster, sort, view, mode]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["community", vocation, huntTerm, monster],
+    queryKey: ["community", vocation, huntTerm, monster, mode],
     queryFn: () =>
       fetchSessions({
         data: {
+          mode,
           vocation: vocation || undefined,
           hunt: huntTerm || undefined,
           monster: monster.trim() || undefined,
@@ -367,13 +371,23 @@ function CommunityPage() {
           <div className="min-w-0">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-rubi-gold">
               <Globe2 className="h-3 w-3" /> Comunidade RubinOT
+              {mode === "party" && <> · Modo Grupo</>}
             </span>
             <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Descubra as <span className="text-gradient-brand">melhores hunts</span> do servidor
+              {mode === "party" ? (
+                <>
+                  As <span className="text-gradient-brand">melhores hunts em grupo</span> do servidor
+                </>
+              ) : (
+                <>
+                  Descubra as <span className="text-gradient-brand">melhores hunts</span> do servidor
+                </>
+              )}
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Dados reais compartilhados por jogadores: Raw XP/h, lucro/h e kills/h de cada spot.
-              Filtre pela sua vocação e compare antes de escolher onde caçar.
+              {mode === "party"
+                ? "Hunts feitas em party: lucro/h é a parte de cada um na divisão do loot (Party Hunt Analyser), XP/h e kills/h de cada jogador. Troque pra Solo no topo pra ver as hunts solo."
+                : "Dados reais compartilhados por jogadores: Raw XP/h, lucro/h e kills/h de cada spot. Filtre pela sua vocação e compare antes de escolher onde caçar."}
             </p>
           </div>
 
@@ -733,6 +747,9 @@ function CommunityPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-semibold">{s.huntName}</span>
+                      {s.party && (
+                        <PartyBadge size={s.party.size} split={s.party.split} className="flex-none" />
+                      )}
                       {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
                       {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                     </div>
@@ -794,6 +811,9 @@ function CommunityPage() {
                         <span className="flex-none rounded-full bg-rubi-gold-soft px-1.5 py-0.5 text-[10px] font-semibold text-rubi-gold">
                           Lvl {fmtNum(s.level)}
                         </span>
+                      )}
+                      {s.party && (
+                        <PartyBadge size={s.party.size} split={s.party.split} className="flex-none" />
                       )}
                       {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
                       {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}

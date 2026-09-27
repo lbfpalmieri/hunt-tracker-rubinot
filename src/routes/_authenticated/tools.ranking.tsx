@@ -9,6 +9,7 @@ import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { useModeSessions, usePlayMode } from "@/lib/play-mode";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
@@ -65,7 +66,7 @@ const MEDAL = ["🥇", "🥈", "🥉"];
 
 function RankingPage() {
   const hydrated = useHydrated();
-  const sessions = useAppStore((s) => s.sessions);
+  const sessions = useModeSessions();
   const characters = useAppStore((s) => s.characters);
   const [tab, setTab] = useState<"own" | "community">("own");
   const [metric, setMetric] = useState<Metric>("gph");
@@ -78,9 +79,11 @@ function RankingPage() {
   const patch = latestPatch();
 
   const fetchCommunity = useServerFn(getCommunitySessions);
+  const mode = usePlayMode();
   const { data: communityData, isLoading: loadingCommunity } = useQuery({
-    queryKey: ["community-sessions", "ranking", vocation],
-    queryFn: () => fetchCommunity({ data: { limit: 200, vocation: vocation || undefined } }),
+    queryKey: ["community-sessions", "ranking", vocation, mode],
+    queryFn: () =>
+      fetchCommunity({ data: { limit: 200, vocation: vocation || undefined, mode } }),
     enabled: tab === "community",
   });
 

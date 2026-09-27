@@ -5,6 +5,9 @@ import { EmptyState } from "@/components/EmptyState";
 import { InfoHint } from "@/components/InfoHint";
 import { RendimentoNudge, SetsNudge } from "@/components/RendimentoNudge";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { useModeSessions, usePlayMode } from "@/lib/play-mode";
+import { ModeHint } from "@/components/party/ModeHint";
+import { PartyOverview } from "@/components/party/PartyOverview";
 import { aggregateImbuements, IMB_DURATION_HOURS } from "@/lib/imbuements";
 import { totalXpLost } from "@/lib/deaths";
 import { fmtGold, fmtNum, fmtDuration, fmtDate } from "@/lib/format";
@@ -13,7 +16,7 @@ import { MIN_HUNT_DURATION_SEC } from "@/lib/compare";
 import { aggregateSessions } from "@/lib/performance";
 import { filterByLatestPatch, latestPatch } from "@/lib/patches";
 import {
-  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, X, Skull,
+  Coins, Zap, Trophy, Swords, TrendingUp, Upload, ScrollText, Sparkles, Wallet, X, Skull, Users,
 } from "lucide-react";
 import { currentLevel } from "@/lib/level";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
@@ -40,7 +43,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
-  const sessions = useAppStore((s) => s.sessions);
+  // Sessões do modo (Solo/Grupo) pras métricas de hunt; o saldo de gold usa todas (o char é um só).
+  const allSessions = useAppStore((s) => s.sessions);
+  const sessions = useModeSessions();
+  const mode = usePlayMode();
   const imbuements = useAppStore((s) => s.imbuements);
   const expenses = useAppStore((s) => s.expenses);
   const deaths = useAppStore((s) => s.deaths);
@@ -90,15 +96,25 @@ function Dashboard() {
 
 
   const imbAgg = useMemo(
-    () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
-    [imbuements, sessions, active],
+    () => (active ? aggregateImbuements(imbuements, allSessions, active.id) : null),
+    [imbuements, allSessions, active],
   );
   const myExpenses = useMemo(
     () => (active ? expenses.filter((e) => e.characterId === active.id) : []),
     [expenses, active],
   );
   const totalSpentOnPurchases = useMemo(() => myExpenses.reduce((a, e) => a + e.amount, 0), [myExpenses]);
-  const netBalance = agg.balance - (imbAgg?.totalSpent ?? 0) - totalSpentOnPurchases;
+  // Gold do personagem = todas as sessões (solo + grupo), não só as do modo atual.
+  const charBalance = useMemo(
+    () =>
+      active
+        ? allSessions
+            .filter((s) => s.characterId === active.id)
+            .reduce((a, s) => a + s.hunting.balance, 0)
+        : 0,
+    [allSessions, active],
+  );
+  const netBalance = charBalance - (imbAgg?.totalSpent ?? 0) - totalSpentOnPurchases;
 
   const myDeaths = useMemo(
     () => (active ? deaths.filter((d) => d.characterId === active.id) : []),
@@ -142,9 +158,11 @@ function Dashboard() {
           </h1>
           {active && (
             <p className="mt-1 text-sm text-muted-foreground">
-              {active.vocation} · {active.world} · {mySessions.length} sessão(ões) registrada(s)
+              {active.vocation} · {active.world} · {mySessions.length} sessão(ões){" "}
+              {mode === "party" ? "em grupo" : "registrada(s)"}
             </p>
           )}
+          {active && <ModeHint characterId={active.id} className="mt-2" />}
         </div>
         <div className="flex flex-wrap gap-2 self-start sm:self-auto">
           <Link
@@ -206,13 +224,23 @@ function Dashboard() {
           ctaTo="/characters"
         />
       ) : mySessions.length === 0 ? (
-        <EmptyState
-          icon={Upload}
-          title="Nenhuma sessão importada ainda"
-          description="Cole os dados do Hunting Analyser, Damage Analyser e Miscellaneous do RubinOT para começar."
-          ctaLabel="Importar primeira sessão"
-          ctaTo="/import"
-        />
+        mode === "party" ? (
+          <EmptyState
+            icon={Users}
+            title="Nenhuma hunt em grupo ainda"
+            description="Na Nova sessão, marque que a hunt foi em party e cole o Party Hunt Analyser: o app divide o loot como o jogo e mostra seu lucro de verdade, mesmo sem ser o líder."
+            ctaLabel="Registrar hunt em grupo"
+            ctaTo="/import"
+          />
+        ) : (
+          <EmptyState
+            icon={Upload}
+            title="Nenhuma sessão importada ainda"
+            description="Cole os dados do Hunting Analyser, Damage Analyser e Miscellaneous do RubinOT para começar."
+            ctaLabel="Importar primeira sessão"
+            ctaTo="/import"
+          />
+        )
       ) : (
         <>
           {/* Hero: Balance em destaque */}
@@ -310,6 +338,8 @@ function Dashboard() {
               <StatCard label="Lucro / hora (média)" value={fmtGold(agg.gph)} hint="gold bruto por hora, sem descontar imbuements/gastos" icon={Coins} accent="gold" />
             </div>
           </div>
+
+          {mode === "party" && <PartyOverview sessions={mySessions} />}
 
           {imbAgg && imbAgg.rows.length > 0 && (
             <div className="mt-6">

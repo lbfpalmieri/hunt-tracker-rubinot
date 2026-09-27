@@ -17,6 +17,20 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "negative-balance-fix",
+    date: "2026-09-27",
+    title: "Correção: sessão com prejuízo aparecia como lucro",
+    description:
+      "Quando o Hunting Analyser fechava com Balance negativo (ex: -272k), o app salvava como +272k. Corrigido — e as sessões antigas já aparecem com o valor certo, sem precisar reimportar. Médias de lucro/h, saldo e rankings podem ter mudado por isso.",
+  },
+  {
+    id: "party-mode",
+    date: "2026-09-27",
+    title: "Modo Grupo: hunts em party",
+    description:
+      "Novo alternador Solo / Grupo no topo. No Modo Grupo o app inteiro mostra só as hunts em party — Dashboard, Sessões, Comparar, Ranking e Comunidade — e ganha o resumo do seu grupo (com quem você mais caça, tamanho médio da party, quantas vezes foi líder). Na Nova sessão tem o passo Grupo: cole o Party Hunt Analyser e o lucro salvo vira a sua parte da divisão, mesmo sem ser o líder, com as transferências de cada um. Sessões antigas feitas em pt podem ser marcadas na página da sessão. As hunts em grupo saem das médias das suas hunts solo.",
+  },
+  {
     id: "boss-total-loot",
     date: "2026-09-27",
     title: "Rotação de Bosses: loot total do analyser",

@@ -9,6 +9,7 @@ import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 
 import { useAppStore, useHydrated } from "@/lib/store";
+import { useModeSessions } from "@/lib/play-mode";
 import { MAX_COMPARE, fromOwnSession, type CompareHunt } from "@/lib/compare";
 import { fmtDate } from "@/lib/format";
 import {
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/sessions/compare")({
 
 function SessionsComparePage() {
   const hydrated = useHydrated();
-  const sessions = useAppStore((s) => s.sessions);
+  const sessions = useModeSessions();
   const characters = useAppStore((s) => s.characters);
   const activeId = useAppStore((s) => s.activeCharacterId);
 

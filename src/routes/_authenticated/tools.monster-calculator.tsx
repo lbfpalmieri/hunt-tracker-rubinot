@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { GameIcon } from "@/components/GameIcon";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { useModeSessions } from "@/lib/play-mode";
 import { fmtNum, fmtDuration } from "@/lib/format";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Calculator, Swords, Target, Clock, Link2, X } from "lucide-react";
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/tools/monster-calculator")
 function MonsterCalculatorPage() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
-  const sessions = useAppStore((s) => s.sessions);
+  const sessions = useModeSessions();
   const activeId = useAppStore((s) => s.activeCharacterId);
 
   const [charId, setCharId] = useState<string>("");

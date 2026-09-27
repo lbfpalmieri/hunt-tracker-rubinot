@@ -3,6 +3,10 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { useModeSessions, usePlayMode } from "@/lib/play-mode";
+import { isSplit } from "@/lib/party";
+import { ModeHint } from "@/components/party/ModeHint";
+import { PartyBadge } from "@/components/party/PartyBadge";
 import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
 import { huntRawXp } from "@/lib/bounty";
 import { aggregateByHunt, fromOwnSession, perHour } from "@/lib/compare";
@@ -40,7 +44,8 @@ function SessionsLayout() {
 function SessionsList() {
   const hydrated = useHydrated();
   const characters = useAppStore((s) => s.characters);
-  const sessions = useAppStore((s) => s.sessions);
+  const sessions = useModeSessions();
+  const mode = usePlayMode();
   const activeId = useAppStore((s) => s.activeCharacterId);
 
   const [q, setQ] = useState("");
@@ -130,7 +135,10 @@ function SessionsList() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Histórico</div>
-          <h1 className="mt-1 font-display text-3xl font-bold">Sessões</h1>
+          <h1 className="mt-1 font-display text-3xl font-bold">
+            {mode === "party" ? "Sessões em grupo" : "Sessões"}
+          </h1>
+          <ModeHint characterId={null} className="mt-2" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
@@ -151,8 +159,12 @@ function SessionsList() {
       {sessions.length === 0 ? (
         <EmptyState
           icon={ScrollText}
-          title="Nenhuma sessão registrada"
-          description="Importe seu primeiro hunt analyser para começar o histórico."
+          title={mode === "party" ? "Nenhuma sessão em grupo" : "Nenhuma sessão registrada"}
+          description={
+            mode === "party"
+              ? "Na Nova sessão, marque que a hunt foi em party (e cole o Party Hunt Analyser pra dividir o loot). Sessões antigas feitas em pt podem ser marcadas na página da sessão."
+              : "Importe seu primeiro hunt analyser para começar o histórico."
+          }
           ctaLabel="Importar sessão"
           ctaTo="/import"
         />
@@ -292,6 +304,9 @@ function SessionsList() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="truncate font-display text-base font-semibold">{s.huntName}</span>
+                        {s.party && (
+                          <PartyBadge size={s.party.size} split={isSplit(s.party)} className="flex-none" />
+                        )}
                         {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
                         {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                         {s.notes && (

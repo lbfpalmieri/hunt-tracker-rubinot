@@ -38,6 +38,7 @@ import {
   Crosshair,
   ChevronRight,
   Wrench,
+  Users,
 } from "lucide-react";
 import { PasteImageBox, blobToCompressedImage } from "@/components/PasteImage";
 import { BountyTaskPanel } from "@/components/BountyTaskPanel";
@@ -65,6 +66,17 @@ import type { PreySlot } from "@/lib/prey";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
 import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
+import {
+  applyPartySplit,
+  findSelf,
+  looksLikePartyHunt,
+  parsePartyHunt,
+  PARTY_MAX,
+  type PartyInfo,
+} from "@/lib/party";
+import { PartyEditor } from "@/components/party/PartyEditor";
+import { PartyBadge } from "@/components/party/PartyBadge";
+import { useNavPrefs } from "@/lib/nav-prefs";
 
 
 
@@ -101,13 +113,20 @@ function ImportPage() {
   const huntPickerRef = useRef<HTMLDivElement>(null);
   const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
-  // Assistente "Adicionar sessão": Hunt → Bounty → Prey → Setup → Finalizar. Bounty e Prey são perguntas
-  // Sim/Não (null = ainda não respondida).
+  // Assistente "Adicionar sessão": Hunt → Grupo → Bounty → Prey → Setup → Finalizar. Grupo, Bounty e
+  // Prey são perguntas Sim/Não (null = ainda não respondida).
   const [wizardOpen, setWizardOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [bountyAnswer, setBountyAnswer] = useState<"yes" | "no" | null>(null);
   const [bountyDraft, setBountyDraft] = useState<BountyDraft>(EMPTY_BOUNTY);
   const [preyAnswer, setPreyAnswer] = useState<"yes" | "no" | null>(null);
+  // Hunt em party (party.ts). No Modo Grupo já abre respondido "Sim".
+  const playMode = useNavPrefs((s) => s.mode);
+  const [partyAnswer, setPartyAnswer] = useState<"yes" | "no" | null>(null);
+  const [party, setParty] = useState<PartyInfo | null>(null);
+  const hasParty = partyAnswer === "yes" && !!party;
+  // Com o Party Hunt Analyser colado, precisa saber quem é você pra dividir.
+  const partyReady = partyAnswer === "no" || (!!party && (!party.members || !!party.self));
   const [setup, setSetup] = useState<SessionSetup>(EMPTY_SETUP);
   const hasBounty = bountyAnswer === "yes";
   const hasPrey = preyAnswer === "yes";
@@ -157,6 +176,26 @@ function ImportPage() {
     if (!text.trim()) {
       setNotice({ tone: "error", title: "Nada para colar", detail: "Sua área de transferência está vazia." });
       return;
+    }
+    // Party Hunt Analyser: não é bloco da sessão — vira a party do passo "Grupo".
+    if (looksLikePartyHunt(text)) {
+      const p = parsePartyHunt(text);
+      if (p) {
+        const members = p.members.slice(0, PARTY_MAX);
+        setParty({
+          size: members.length,
+          members,
+          self: findSelf(members, activeChar?.name),
+          personal: null,
+        });
+        setPartyAnswer("yes");
+        setNotice({
+          tone: "ok",
+          title: "Party Hunt Analyser reconhecido",
+          detail: `Party de ${members.length} — o lucro da sessão vai ser a sua parte da divisão.`,
+        });
+        return;
+      }
     }
     const kind = detectBlockKind(text);
     if (kind === "unknown") {
@@ -338,12 +377,19 @@ function ImportPage() {
   };
 
   const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
-  const huntingStatus: SlotStatus = !huntingText ? "empty" : parsed.hunting && durationOk ? "ok" : "error";
+  const huntingIsParty = !!huntingText && looksLikePartyHunt(huntingText);
+  const huntingStatus: SlotStatus = !huntingText
+    ? "empty"
+    : parsed.hunting && durationOk && !huntingIsParty
+      ? "ok"
+      : "error";
   const huntingSummary =
     parsed.hunting && durationOk
       ? `${fmtDuration(parsed.hunting.durationSec)} · ${fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} kills · ${fmtGold(parsed.hunting.balance)}`
       : undefined;
-  const huntingMessage = !parsed.hunting
+  const huntingMessage = huntingIsParty
+    ? "Esse é o Party Hunt Analyser — aqui vai o Hunting Analyser do seu personagem. O da party entra no passo \"Grupo\" ao adicionar a sessão."
+    : !parsed.hunting
     ? "Não reconheci esse bloco. Copie o Hunt Analyser completo do jogo."
     : "Duração não identificada. O texto precisa incluir \"Session data: From ... to ...\" e \"Session length\".";
 
@@ -354,11 +400,19 @@ function ImportPage() {
   const willRegisterDeath = detectedDeathLoss != null && !deathOptOut;
 
   const canSave = Boolean(
-    parsed.hunting && durationOk && effectiveCharId && selectedHuntName && bountyReady && preyReady,
+    parsed.hunting &&
+      durationOk &&
+      !huntingIsParty &&
+      effectiveCharId &&
+      selectedHuntName &&
+      partyReady &&
+      bountyReady &&
+      preyReady,
   );
 
   const stepOk = [
     Boolean(selectedHuntName),
+    partyAnswer !== null && partyReady,
     bountyAnswer !== null && bountyReady,
     preyAnswer !== null && preyReady,
     true,
@@ -387,10 +441,13 @@ function ImportPage() {
             xpPerHour: Math.max(0, parsed.hunting.xpPerHour),
           }
         : parsed.hunting;
+      // Em party com o Party Hunt Analyser: o lucro salvo é a parte do usuário na divisão.
+      const split = applyPartySplit(correctedHunting, hasParty ? party : null);
       const created = await addSession({
         characterId: effectiveCharId,
         huntName: selectedHuntName,
-        hunting: correctedHunting,
+        hunting: split.hunting,
+        party: split.party,
         damage: parsed.damage,
         misc: parsed.misc,
         gearUrl,
@@ -664,13 +721,17 @@ function ImportPage() {
             ) : (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Hunting Analyser pronto. Agora é só configurar: nome da hunt, Bounty Task, Prey e,
-                  se quiser, level e equipamento.
+                  Hunting Analyser pronto. Agora é só configurar: nome da hunt, party, Bounty Task,
+                  Prey e, se quiser, level e equipamento.
                 </p>
                 <button
                   type="button"
                   onClick={() => {
                     setStep(0);
+                    if (partyAnswer === null && playMode === "party") {
+                      setPartyAnswer("yes");
+                      setParty((p) => p ?? { size: 2, members: null, self: null, personal: null });
+                    }
                     setWizardOpen(true);
                   }}
                   className="group/save relative mt-4 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-rubi-gold via-rubi-gold to-rubi-blue px-4 py-3 font-display text-sm font-bold uppercase tracking-wider text-background shadow-glow-gold transition-all hover:brightness-110 active:scale-[0.98]"
@@ -862,13 +923,44 @@ function ImportPage() {
           {step === 1 && (
             <div className="space-y-4">
               <YesNo
+                icon={Users}
+                question="Essa hunt foi em party?"
+                hint="Em party o loot fica com quem pega (normalmente o líder). Cole o Party Hunt Analyser e o lucro salvo vira a sua parte da divisão — e a sessão vai pro Modo Grupo, sem bagunçar as médias das suas hunts solo."
+                value={partyAnswer}
+                onChange={(v) => {
+                  setPartyAnswer(v);
+                  if (v === "yes") {
+                    setParty((p) => p ?? { size: 2, members: null, self: null, personal: null });
+                  } else {
+                    setParty(null);
+                    setStep(2);
+                  }
+                }}
+              />
+              {partyAnswer === "yes" && (
+                <PartyEditor
+                  value={party}
+                  onChange={(p) => {
+                    setParty(p);
+                    if (!p) setPartyAnswer("no");
+                  }}
+                  charName={activeChar?.name ?? null}
+                  personalBalance={parsed.hunting?.balance ?? 0}
+                />
+              )}
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4">
+              <YesNo
                 icon={Trophy}
                 question="Essa sessão teve Bounty Task?"
                 hint="A XP da recompensa da task entra no Hunting Analyser — separamos ela da Raw XP da hunt."
                 value={bountyAnswer}
                 onChange={(v) => {
                   setBountyAnswer(v);
-                  if (v === "no") setStep(2);
+                  if (v === "no") setStep(3);
                 }}
               />
               {hasBounty && (
@@ -881,7 +973,7 @@ function ImportPage() {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <div className="space-y-4">
               <YesNo
                 icon={Crosshair}
@@ -890,7 +982,7 @@ function ImportPage() {
                 value={preyAnswer}
                 onChange={(v) => {
                   setPreyAnswer(v);
-                  if (v === "no") setStep(3);
+                  if (v === "no") setStep(4);
                 }}
               />
               {hasPrey && (
@@ -910,7 +1002,7 @@ function ImportPage() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div>
               <p className="mb-4 text-sm text-muted-foreground">
                 <b className="text-foreground">Opcional.</b> Arma, skills, Wheel, postura e Runas de
@@ -936,12 +1028,15 @@ function ImportPage() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div>
               <div className="mb-4 flex flex-wrap gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1">
                   <MapPin className="h-3.5 w-3.5 text-rubi-gold" /> {selectedHuntName}
                 </span>
+                {hasParty && party && (
+                  <PartyBadge size={party.size} split={!!party.members && !!party.self} />
+                )}
                 {hasBounty && bountyFromDraft(bountyDraft) && (
                   <BountyBadge bounty={bountyFromDraft(bountyDraft)!} />
                 )}
@@ -1046,7 +1141,7 @@ function ImportPage() {
             )}
               <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="mt-3 text-xs text-muted-foreground hover:text-foreground hover:underline"
               >
                 ← Voltar
@@ -1054,7 +1149,7 @@ function ImportPage() {
             </div>
           )}
 
-          {step < 4 && (
+          {step < 5 && (
             <DialogFooter className="gap-2 sm:justify-between">
               <button
                 type="button"
@@ -1069,7 +1164,7 @@ function ImportPage() {
                 onClick={() => setStep(step + 1)}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rubi-blue px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
               >
-                {step === 3 && !normalizeSetup(setup) ? "Pular" : "Próximo"}{" "}
+                {step === 4 && !normalizeSetup(setup) ? "Pular" : "Próximo"}{" "}
                 <ChevronRight className="h-4 w-4" />
               </button>
             </DialogFooter>
@@ -1270,11 +1365,11 @@ function PreviewRow({ label, value, positive }: { label: string; value: string; 
   );
 }
 
-const WIZARD_STEPS = ["Hunt", "Bounty Task", "Prey", "Setup", "Finalizar"];
+const WIZARD_STEPS = ["Hunt", "Grupo", "Bounty Task", "Prey", "Setup", "Finalizar"];
 
 function WizardSteps({ step, onJump }: { step: number; onJump: (i: number) => void }) {
   return (
-    <ol className="mb-2 grid grid-cols-5 gap-1.5">
+    <ol className="mb-2 grid grid-cols-6 gap-1.5">
       {WIZARD_STEPS.map((label, i) => (
         <li key={label}>
           <button

@@ -10,6 +10,7 @@ import { NavCustomizeDialog } from "./nav/NavCustomizeDialog";
 import { SidebarNav } from "./nav/SidebarNav";
 import { PatchAnnouncementBanner } from "./PatchAnnouncementBanner";
 import { PatchAnnouncementBell } from "./PatchAnnouncementBell";
+import { PlayModeSwitch } from "./PlayModeSwitch";
 import { WhatsNewBell } from "./WhatsNewBell";
 import { supabase } from "@/integrations/supabase/client";
 import { NAV_GROUPS, navItemForPath } from "@/lib/nav-items";
@@ -107,6 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="ml-auto flex min-w-0 items-center justify-end gap-1 sm:gap-2">
+            <PlayModeSwitch />
             <PatchAnnouncementBell />
             <WhatsNewBell />
             <Link

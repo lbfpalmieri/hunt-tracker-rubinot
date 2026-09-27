@@ -83,6 +83,20 @@ export interface MiscData {
   itemUpgrade: Record<string, number>;
 }
 
+/**
+ * Sessões salvas antes da correção do parser têm o Balance negativo gravado como positivo (o sinal
+ * era invertido duas vezes). No analyser Balance = Loot − Supplies, então quando o valor salvo é
+ * exatamente o oposto disso, o certo é o negativo. Corrige na leitura, sem mexer no banco.
+ */
+export function fixBalanceSign<T extends { loot?: number; supplies?: number; balance?: number }>(h: T): T {
+  const loot = Number(h?.loot ?? 0);
+  const supplies = Number(h?.supplies ?? 0);
+  const balance = Number(h?.balance ?? 0);
+  const real = loot - supplies;
+  if (real < 0 && balance > 0 && Math.abs(balance + real) <= 1) return { ...h, balance: real };
+  return h;
+}
+
 export function parseHunting(text: string): HuntingData {
   const get = (re: RegExp) => text.match(re)?.[1]?.trim() ?? "";
   const rangeMatch = text.match(
@@ -126,11 +140,8 @@ export function parseHunting(text: string): HuntingData {
     rawXpPerHour: toNum(get(/Raw XP\/h:\s*(-?[\d.,]+)/)),
     loot: toNum(get(/^Loot:\s*([\d.,]+)/m)),
     supplies: toNum(get(/Supplies:\s*([\d.,]+)/)),
-    balance: (() => {
-      const raw = get(/Balance:\s*(-?[\d.,]+)/);
-      const n = toNum(raw);
-      return raw.trim().startsWith("-") ? -n : n;
-    })(),
+    // toNum já mantém o "-" — inverter de novo aqui transformava prejuízo em lucro.
+    balance: toNum(get(/Balance:\s*(-?[\d.,]+)/)),
     damage: toNum(get(/^Damage:\s*([\d.,]+)/m)),
     damagePerHour: toNum(get(/Damage\/h:\s*([\d.,]+)/)),
     healing: toNum(get(/^Healing:\s*([\d.,]+)/m)),

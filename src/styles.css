@@ -86,6 +86,19 @@
   --rubi-danger: oklch(0.68 0.22 20);
 }
 
+/* Modo Grupo (play-mode.ts): o azul de destaque vira violeta e o fundo puxa pro roxo — dá pra
+   saber de relance que o app está mostrando as hunts em party. */
+html[data-play-mode="party"] {
+  --background: oklch(0.16 0.025 285);
+  --surface: oklch(0.20 0.03 285);
+  --surface-elevated: oklch(0.235 0.035 285);
+  --card: oklch(0.20 0.03 285);
+  --primary: oklch(0.72 0.17 300);
+  --ring: oklch(0.72 0.17 300);
+  --rubi-blue: oklch(0.72 0.17 300);
+  --rubi-blue-soft: oklch(0.72 0.17 300 / 0.15);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);

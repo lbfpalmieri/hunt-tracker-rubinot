@@ -15,10 +15,14 @@ import { GameIcon } from "@/components/GameIcon";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { preyMarkLabel, preyMarkTitle } from "@/lib/prey";
 import { fromOwnSession } from "@/lib/compare";
+import { isSplit } from "@/lib/party";
+import { sessionInMode } from "@/lib/play-mode";
+import { PartyBadge } from "@/components/party/PartyBadge";
+import { SessionPartyEditor } from "@/components/party/SessionPartyEditor";
 
 import { Sparkles, Wrench } from "lucide-react";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard, Users,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -59,11 +63,15 @@ function SessionDetail() {
   const char = session ? characters.find((c) => c.id === session.characterId) : null;
 
   const [showDashboard, setShowDashboard] = useState(false);
-  /** Sessões cruas de todas as MINHAS sessões com esse mesmo nome de hunt (qualquer personagem) — o dialog agrega. */
+  /** Sessões cruas de todas as MINHAS sessões com esse mesmo nome de hunt (qualquer personagem) — o dialog agrega.
+   *  Só do mesmo modo (solo com solo, grupo com grupo) — misturar distorce as médias. */
   const huntDashboardSessions = useMemo(() => {
     if (!session) return [];
+    const mode = session.party ? "party" : "solo";
     const rows = sessions.filter(
-      (s) => s.huntName.trim().toLowerCase() === session.huntName.trim().toLowerCase(),
+      (s) =>
+        s.huntName.trim().toLowerCase() === session.huntName.trim().toLowerCase() &&
+        sessionInMode(s, mode),
     );
     return rows.map((r) => {
       const c = characters.find((x) => x.id === r.characterId);
@@ -127,6 +135,9 @@ function SessionDetail() {
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Sessão</div>
           <div className="mt-1 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
+            {session.party && (
+              <PartyBadge size={session.party.size} split={isSplit(session.party)} />
+            )}
             {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
             {session.prey && <PreyBadge prey={session.prey} detailed />}
           </div>
@@ -178,9 +189,14 @@ function SessionDetail() {
           accent={session.bounty ? "gold" : "blue"}
         />
         <StatCard
-          label="Lucro"
+          label={isSplit(session.party) ? "Lucro (sua parte)" : "Lucro"}
           value={fmtGold(h.balance)}
           perHour={fmtGold(gph)}
+          hint={
+            isSplit(session.party) && session.party?.personal
+              ? `seu analyser: ${fmtGold(session.party.personal.balance)} · party de ${session.party.size}`
+              : undefined
+          }
           mark={preyMarkLabel(session.prey, "loot")}
           markTitle={preyMarkTitle(session.prey, "loot")}
           icon={Coins}
@@ -319,6 +335,23 @@ function SessionDetail() {
               ))}
           </div>
         )}
+      </div>
+
+      {/* Hunt em grupo */}
+      <div className="card-surface mt-6 border-rubi-blue/25 p-5">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold">
+          <Users className="h-4 w-4 text-rubi-blue" /> Party
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Foi em pt? Marque aqui (e cole o Party Hunt Analyser pra dividir o loot como o jogo). A
+          sessão passa a contar no Modo Grupo e sai das médias das suas hunts solo.
+        </p>
+        <SessionPartyEditor
+          key={session.id}
+          session={session}
+          charName={char?.name ?? null}
+          onSave={(patch) => updateSession(session.id, patch)}
+        />
       </div>
 
       {/* Bounty Task bonus */}

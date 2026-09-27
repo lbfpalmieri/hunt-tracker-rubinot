@@ -1,9 +1,20 @@
-import { resolveDurationSec } from "./parser";
+import { fixBalanceSign, resolveDurationSec } from "./parser";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { normalizePrey } from "./prey";
 import { normalizeSetup } from "./session-setup";
+import { isSplit, normalizeParty } from "./party";
+
+/**
+ * Party exposta na Comunidade: só o tamanho e se o lucro é a parte dividida. Os NOMES dos
+ * membros (outros jogadores) nunca saem daqui.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function publicParty(raw: any): { size: number; split: boolean } | null {
+  const p = normalizeParty(raw);
+  return p ? { size: p.size, split: isSplit(p) } : null;
+}
 
 /** Columns that are safe to expose publicly. Never include user_id/character_id. */
 const LIST_COLUMNS =
@@ -34,13 +45,15 @@ const listInput = z.object({
   hunt: z.string().trim().max(120).optional(),
   monster: z.string().trim().max(120).optional(),
   limit: z.number().int().min(1).max(400).optional(),
+  /** Modo Solo/Grupo: só sessões sem party / só em party. Sem = todas. */
+  mode: z.enum(["solo", "party"]).optional(),
 });
 
 export const getCommunitySessions = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => listInput.parse(input ?? {}))
   .handler(async ({ data }) => {
     const supabase = publicClient();
-    const query = (cols: string) => {
+    const query = (cols: string, byMode: boolean) => {
       let q = supabase
         .from("hunt_sessions")
         .select(cols)
@@ -49,13 +62,19 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
         .limit(data.limit ?? 300);
       if (data.vocation) q = q.eq("char_vocation", data.vocation);
       if (data.hunt) q = q.ilike("hunt_name", `%${data.hunt}%`);
+      if (byMode && data.mode === "party") q = q.not("party", "is", null);
+      if (byMode && data.mode === "solo") q = q.is("party", null);
       return q;
     };
 
-    // "setup" é estruturado (seguro de expor). Sem a coluna no banco ainda, busca sem ela.
-    let { data: rows, error } = await query(`${LIST_COLUMNS}, setup`);
-    if (error) ({ data: rows, error } = await query(LIST_COLUMNS));
+    // "setup"/"party" são estruturados (seguros de expor; party sem nomes — publicParty). Sem as
+    // colunas no banco ainda, busca sem elas (e aí não existe sessão em grupo).
+    let { data: rows, error } = await query(`${LIST_COLUMNS}, setup, party`, true);
+    const hasParty = !error;
+    if (error) ({ data: rows, error } = await query(`${LIST_COLUMNS}, setup`, false));
+    if (error) ({ data: rows, error } = await query(LIST_COLUMNS, false));
     if (error) return { sessions: [], error: error.message };
+    if (!hasParty && data.mode === "party") rows = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let list = (rows ?? []) as any[];
@@ -88,7 +107,8 @@ export const getCommunitySessions = createServerFn({ method: "GET" })
           : null,
         prey: normalizePrey(r.prey),
         setup: normalizeSetup(r.setup),
-        balance: Number(r.hunting?.balance ?? 0),
+        party: publicParty(r.party),
+        balance: Number(fixBalanceSign(r.hunting ?? {}).balance ?? 0),
         loot: Number(r.hunting?.loot ?? 0),
         supplies: Number(r.hunting?.supplies ?? 0),
         damage: Number(r.hunting?.damage ?? 0),
@@ -166,8 +186,9 @@ export const getCommunitySession = createServerFn({ method: "GET" })
     const supabase = publicClient();
     const fetchRow = (cols: string) =>
       supabase.from("hunt_sessions").select(cols).eq("is_public", true).eq("id", data.id).maybeSingle();
-    // "setup" (estruturado, seguro de expor) — se a coluna ainda não existir no banco, busca sem.
-    let { data: row, error } = await fetchRow(`${DETAIL_COLUMNS}, setup`);
+    // "setup"/"party" (estruturados, seguros de expor) — se a coluna ainda não existir, busca sem.
+    let { data: row, error } = await fetchRow(`${DETAIL_COLUMNS}, setup, party`);
+    if (error) ({ data: row, error } = await fetchRow(`${DETAIL_COLUMNS}, setup`));
     if (error) ({ data: row, error } = await fetchRow(DETAIL_COLUMNS));
     if (error || !row) return { session: null };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -181,7 +202,7 @@ export const getCommunitySession = createServerFn({ method: "GET" })
         vocation: (r.char_vocation ?? "—") as string,
         level: r.char_level == null ? null : Number(r.char_level),
         gearUrl: (r.gear_url ?? null) as string | null,
-        hunting: r.hunting,
+        hunting: r.hunting ? fixBalanceSign(r.hunting) : r.hunting,
         damage: r.damage ?? null,
         misc: r.misc ?? null,
         bounty: r.bounty_difficulty && r.bounty_tier
@@ -193,6 +214,7 @@ export const getCommunitySession = createServerFn({ method: "GET" })
           : null,
         prey: normalizePrey(r.prey),
         setup: normalizeSetup(r.setup),
+        party: publicParty(r.party),
       },
     };
   });
@@ -229,7 +251,7 @@ export const getCommunityStats = createServerFn({ method: "GET" }).handler(async
     if (row.hunt_name) hunts.add(String(row.hunt_name).toLowerCase());
     hours += resolveDurationSec(row.hunting ?? {}, row.misc?.sessionSec ?? null) / 3600;
     rawXp += Number(row.hunting?.rawXp ?? row.hunting?.xpGain ?? 0);
-    gold += Number(row.hunting?.balance ?? 0);
+    gold += Number(fixBalanceSign(row.hunting ?? {}).balance ?? 0);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const k of (row.hunting?.kills ?? []) as any[]) kills += Number(k.count) || 0;
   }

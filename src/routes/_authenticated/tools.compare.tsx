@@ -9,6 +9,7 @@ import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { useModeSessions, usePlayMode } from "@/lib/play-mode";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { confirmDialog } from "@/lib/confirm-dialog";
 import {
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/_authenticated/tools/compare")({
 
 function ComparePage() {
   const hydrated = useHydrated();
-  const sessions = useAppStore((s) => s.sessions);
+  const sessions = useModeSessions();
   const characters = useAppStore((s) => s.characters);
   const [tab, setTab] = useState<"own" | "community">("own");
   const [q, setQ] = useState("");
@@ -62,9 +63,10 @@ function ComparePage() {
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const fetchCommunity = useServerFn(getCommunitySessions);
+  const mode = usePlayMode();
   const { data: communityData, isLoading: loadingCommunity } = useQuery({
-    queryKey: ["community-sessions", "compare"],
-    queryFn: () => fetchCommunity({ data: { limit: 200 } }),
+    queryKey: ["community-sessions", "compare", mode],
+    queryFn: () => fetchCommunity({ data: { limit: 200, mode } }),
     enabled: tab === "community",
   });
 

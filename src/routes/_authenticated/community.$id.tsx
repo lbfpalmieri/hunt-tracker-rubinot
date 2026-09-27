@@ -10,6 +10,7 @@ import {
   ArrowLeft, Coins, Globe2, Heart, Package, Shield, ShoppingCart, Skull, Swords, Timer, Zap, Trophy, Wrench } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
+import { PartyBadge } from "@/components/party/PartyBadge";
 import { SetupCard } from "@/components/setup/SetupCard";
 import { bountyLabel } from "@/lib/bounty";
 
@@ -93,6 +94,7 @@ function SessionView({ session }: { session: any }) {
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Comunidade</div>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
+          {session.party && <PartyBadge size={session.party.size} split={session.party.split} />}
           {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
           {session.prey && <PreyBadge prey={session.prey} detailed />}
         </div>

@@ -62,6 +62,14 @@ em boss_rotations / boss_rotation_runs; ajuste solo/time em user_boss_prefs. Tem
 monstros do caminho não conta (a menos que a pessoa escolha "Loot total do analyser" no registro — lembrado em localStorage). NÃO usar lucro/h nessa área (boss tem cooldown).
 Preço dos itens no registro: "Meus preços" (public.user_item_prices por user+world, item-prices.ts; aba
 "Meus preços" do Covil) ou "Preço NPC" da wiki; digitado no registro é salvo na tabela.
+Modo Solo/Grupo (play-mode.ts): hunt_sessions.party jsonb (party.ts: size, members do Party Hunt Analyser,
+self, personal). Com o analyser da party, hunting é salvo JÁ DIVIDIDO (balance = total ÷ membros, loot =
+parte + supplies próprios; números pessoais em party.personal — resplit/unsplitHunting pra editar). Modo
+fica em user_nav_prefs.play_mode (nav-prefs.ts) e muda o visual via html[data-play-mode="party"] (styles.css).
+Telas de hunt (Dashboard, Sessões, Comparar, Ranking, Calculadora, Comunidade) usam useModeSessions() /
+mode no getCommunitySessions; telas do personagem (Meu rendimento, Imbuements, Todos os personagens, saldo
+de gold) usam todas as sessões. Nomes dos membros NUNCA vão pra Comunidade (publicParty em
+community.functions.ts expõe só size/split).
 Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
 entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros
