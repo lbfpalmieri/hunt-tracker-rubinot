@@ -300,15 +300,15 @@ export function EquipmentDoll({
                         value={tier}
                         onChange={(ev) => setTier(slot, Number(ev.target.value))}
                         className={
-                          "ml-1.5 rounded border px-1 py-px align-baseline text-[10px] font-bold outline-none " +
+                          "ml-1.5 cursor-pointer rounded-md border px-1.5 py-0.5 align-baseline text-[11px] font-bold outline-none transition-colors focus:ring-2 focus:ring-rubi-gold/50 " +
                           (tier > 0
-                            ? "border-rubi-gold/60 bg-rubi-gold/15 text-rubi-gold"
-                            : "border-border bg-background text-muted-foreground")
+                            ? "border-rubi-gold bg-rubi-gold text-background shadow-[0_0_10px_-2px_var(--rubi-gold)]"
+                            : "border-dashed border-rubi-gold/80 bg-rubi-gold/10 text-rubi-gold hover:bg-rubi-gold/20")
                         }
                       >
                         {Array.from({ length: max + 1 }, (_, t) => (
                           <option key={t} value={t}>
-                            {t === 0 ? "sem tier" : `T${t}`}
+                            {t === 0 ? `+ Tier (até T${max})` : `Tier ${t}`}
                           </option>
                         ))}
                       </select>
