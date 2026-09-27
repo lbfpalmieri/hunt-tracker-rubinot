@@ -315,6 +315,38 @@ export function isEmptySetup(s: SessionSetup | null | undefined): boolean {
   );
 }
 
+/** Blocos do set que dá pra copiar de um set pro outro (Meus sets → "Copiar de outro set"). */
+export type SetupPart = "equipment" | "stance" | "wheel";
+
+export const SETUP_PART_LABEL: Record<SetupPart, string> = {
+  equipment: "Equipamento",
+  stance: "Postura",
+  wheel: "Wheel",
+};
+
+/** `target` com os blocos escolhidos trazidos de `source` (o resto fica como está). */
+export function copySetupParts(
+  target: SessionSetup,
+  source: SessionSetup,
+  parts: SetupPart[],
+): SessionSetup {
+  const next = { ...target };
+  if (parts.includes("equipment")) {
+    next.weapon = source.weapon;
+    next.weaponTier = source.weaponTier;
+    next.quiver = source.quiver;
+    next.gear = { ...(source.gear ?? {}) };
+    next.gearTier = { ...(source.gearTier ?? {}) };
+  }
+  if (parts.includes("stance")) next.stance = source.stance;
+  if (parts.includes("wheel")) {
+    next.conviction = source.conviction.map((c) => ({ ...c }));
+    next.revelation = source.revelation.map((r) => ({ ...r }));
+    next.wheelDmgHeal = source.wheelDmgHeal;
+  }
+  return next;
+}
+
 /** Parte do setup que vira preset (tudo menos os charms, que dependem das criaturas da hunt). */
 export function presetPart(s: SessionSetup): SessionSetup {
   return { ...s, charms: [] };

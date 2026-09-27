@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Pencil, Plus, Shirt, Trash2 } from "lucide-react";
+import { Check, Copy, CopyPlus, Pencil, Plus, Shirt, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { SessionSetupPanel } from "@/components/setup/SessionSetupPanel";
@@ -14,7 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EMPTY_SETUP, setupVocation, type SessionSetup } from "@/lib/session-setup";
+import {
+  EMPTY_SETUP,
+  SETUP_PART_LABEL,
+  copySetupParts,
+  setupVocation,
+  type SessionSetup,
+  type SetupPart,
+} from "@/lib/session-setup";
 import {
   suggestedPresetName,
   useDeleteSetupPreset,
@@ -47,7 +54,10 @@ function EquipamentosPage() {
   const active = useAppStore((s) => s.characters.find((c) => c.id === s.activeCharacterId) ?? null);
   const { data: presets = [], isLoading } = useSetupPresets(active?.id ?? null);
   const deletePreset = useDeleteSetupPreset(active?.id ?? null);
-  const [editing, setEditing] = useState<SetupPreset | "new" | null>(null);
+  // "new" = set vazio; { copyOf } = set novo já preenchido com outro (Duplicar).
+  const [editing, setEditing] = useState<SetupPreset | "new" | { copyOf: SetupPreset } | null>(
+    null,
+  );
 
   if (!active) {
     return (
@@ -81,9 +91,9 @@ function EquipamentosPage() {
           <span className="text-gradient-brand">sets</span>
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Monte cada set uma vez — equipamentos no boneco, skills, Wheel e postura. Na hora de
-          adicionar a sessão é só escolher o set. Tem mais de uma arma elemental? Faça um set pra
-          cada.
+          Monte cada set uma vez — equipamentos no boneco (com tier), postura e Wheel. Na hora de
+          adicionar a sessão é só escolher o set. Tem mais de uma arma elemental? Duplique o set e
+          troque só a arma.
         </p>
       </div>
 
@@ -101,6 +111,15 @@ function EquipamentosPage() {
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="font-display text-lg font-bold leading-tight">{p.name}</h2>
                   <div className="flex flex-none gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ copyOf: p })}
+                      aria-label={`Duplicar ${p.name}`}
+                      title="Duplicar (novo set já preenchido com este)"
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-blue"
+                    >
+                      <CopyPlus className="h-4 w-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => setEditing(p)}
@@ -137,8 +156,16 @@ function EquipamentosPage() {
 
       {editing && (
         <PresetDialog
-          key={editing === "new" ? "new" : editing.id}
-          preset={editing === "new" ? null : editing}
+          key={
+            editing === "new"
+              ? "new"
+              : "copyOf" in editing
+                ? `copy-${editing.copyOf.id}`
+                : editing.id
+          }
+          preset={editing === "new" || "copyOf" in editing ? null : editing}
+          copyOf={editing !== "new" && "copyOf" in editing ? editing.copyOf : null}
+          presets={presets}
           characterId={active.id}
           vocation={active.vocation}
           onClose={() => setEditing(null)}
@@ -150,18 +177,24 @@ function EquipamentosPage() {
 
 function PresetDialog({
   preset,
+  copyOf,
+  presets,
   characterId,
   vocation,
   onClose,
 }: {
   preset: SetupPreset | null;
+  /** Set novo que já começa igual a esse (Duplicar). */
+  copyOf: SetupPreset | null;
+  presets: SetupPreset[];
   characterId: string;
   vocation: string;
   onClose: () => void;
 }) {
   const save = useSaveSetupPreset(characterId);
-  const [setup, setSetup] = useState<SessionSetup>(preset?.setup ?? EMPTY_SETUP);
-  const [name, setName] = useState(preset?.name ?? "");
+  const [setup, setSetup] = useState<SessionSetup>(preset?.setup ?? copyOf?.setup ?? EMPTY_SETUP);
+  const [name, setName] = useState(preset?.name ?? (copyOf ? `${copyOf.name} (cópia)` : ""));
+  const others = presets.filter((p) => p.id !== preset?.id);
 
   const submit = async () => {
     const finalName = name.trim() || suggestedPresetName(setup);
@@ -198,6 +231,13 @@ function PresetDialog({
           />
         </label>
 
+        {others.length > 0 && (
+          <CopyFromSet
+            presets={others}
+            onApply={(from, parts) => setSetup((s) => copySetupParts(s, from.setup, parts))}
+          />
+        )}
+
         <SessionSetupPanel
           mode="preset"
           value={setup}
@@ -226,5 +266,91 @@ function PresetDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+const PARTS: SetupPart[] = ["equipment", "stance", "wheel"];
+
+/**
+ * "Copiar de outro set": escolhe o set e o que trazer (equipamento, postura, Wheel) — dá pra montar
+ * juntando a Wheel de um set com o equipamento de outro e só ajustar o resto.
+ */
+function CopyFromSet({
+  presets,
+  onApply,
+}: {
+  presets: SetupPreset[];
+  onApply: (from: SetupPreset, parts: SetupPart[]) => void;
+}) {
+  const [fromId, setFromId] = useState<string | null>(null);
+  const [parts, setParts] = useState<SetupPart[]>(["equipment"]);
+  const from = presets.find((p) => p.id === fromId) ?? null;
+  const toggle = (p: SetupPart) =>
+    setParts((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
+
+  const apply = () => {
+    if (!from || parts.length === 0) return;
+    onApply(from, parts);
+    toast.success(
+      `Copiado de "${from.name}": ${parts.map((p) => SETUP_PART_LABEL[p].toLowerCase()).join(", ")}`,
+    );
+  };
+
+  return (
+    <section className="rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.05] p-3">
+      <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-rubi-blue">
+        <Copy className="h-3.5 w-3.5" /> Copiar de outro set
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {presets.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => setFromId(p.id === fromId ? null : p.id)}
+            className={
+              "rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors " +
+              (p.id === fromId
+                ? "border-rubi-blue bg-rubi-blue text-primary-foreground"
+                : "border-border bg-background/60 text-muted-foreground hover:border-rubi-blue/60 hover:text-foreground")
+            }
+          >
+            {p.name}
+          </button>
+        ))}
+      </div>
+      {from && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2.5">
+          <span className="mr-1 text-xs text-muted-foreground">Trazer:</span>
+          {PARTS.map((p) => {
+            const on = parts.includes(p);
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => toggle(p)}
+                aria-pressed={on}
+                className={
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors " +
+                  (on
+                    ? "border-rubi-gold/60 bg-rubi-gold/15 text-rubi-gold"
+                    : "border-border text-muted-foreground hover:text-foreground")
+                }
+              >
+                {on && <Check className="h-3 w-3" />}
+                {SETUP_PART_LABEL[p]}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={apply}
+            disabled={parts.length === 0}
+            className="ml-auto rounded-lg bg-rubi-blue px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+          >
+            Copiar pra este set
+          </button>
+        </div>
+      )}
+    </section>
   );
 }

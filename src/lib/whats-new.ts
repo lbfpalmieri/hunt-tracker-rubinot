@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "sets-copy",
+    date: "2026-09-27",
+    title: "Duplicar e copiar partes de um set",
+    description:
+      "Em Meus sets, o botão Duplicar cria um set novo já igual ao escolhido — é só trocar o que muda (ex: a arma elemental). E dentro do set tem \"Copiar de outro set\": escolha o set e o que trazer (equipamento, postura ou Wheel), inclusive juntando a Wheel de um com o equipamento de outro.",
+  },
+  {
     id: "setup-no-skills",
     date: "2026-09-27",
     title: "Setup mais simples",
