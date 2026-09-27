@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { errorMessage } from "@/lib/errors";
 import { fmtDate } from "@/lib/format";
-import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download, History, ChevronDown, Pencil } from "lucide-react";
+import { Bug, Lightbulb, MessageSquare, Send, Inbox, Loader2, Download, History, ChevronDown, Pencil, StickyNote } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/feedback")({

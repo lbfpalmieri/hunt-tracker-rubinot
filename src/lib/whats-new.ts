@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "admin-session-notes",
+    date: "2026-09-27",
+    title: "Observações lidas pela administração",
+    description:
+      "As observações das suas sessões continuam privadas para os outros jogadores, mas agora a administração consegue lê-las para transformar dicas de hunt (runas, skills, postura) em dados do app. Quanto mais detalhe você escrever, melhor a base de comparação fica.",
+  },
+  {
     id: "admin-hunt-rename",
     date: "2026-09-26",
     title: "Nomes de hunt organizados",
