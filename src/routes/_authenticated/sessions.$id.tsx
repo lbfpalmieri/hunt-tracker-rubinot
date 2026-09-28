@@ -19,10 +19,11 @@ import { isSplit } from "@/lib/party";
 import { sessionInMode } from "@/lib/play-mode";
 import { PartyBadge } from "@/components/party/PartyBadge";
 import { SessionPartyEditor } from "@/components/party/SessionPartyEditor";
+import { ExportAnalyserDialog } from "@/components/ExportAnalyserDialog";
 
 import { Sparkles, Wrench } from "lucide-react";
 import {
-  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard, Users,
+  ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard, Users, FileOutput,
 } from "lucide-react";
 import { PasteImageBox } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -63,6 +64,18 @@ function SessionDetail() {
   const char = session ? characters.find((c) => c.id === session.characterId) : null;
 
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  /** Sessões dessa hunt, desse personagem e do mesmo modo (solo/grupo) — base da "média da hunt". */
+  const sameHuntSessions = useMemo(() => {
+    if (!session) return [];
+    const mode = session.party ? "party" : "solo";
+    return sessions.filter(
+      (s) =>
+        s.characterId === session.characterId &&
+        s.huntName.trim().toLowerCase() === session.huntName.trim().toLowerCase() &&
+        sessionInMode(s, mode),
+    );
+  }, [session, sessions]);
   /** Sessões cruas de todas as MINHAS sessões com esse mesmo nome de hunt (qualquer personagem) — o dialog agrega.
    *  Só do mesmo modo (solo com solo, grupo com grupo) — misturar distorce as médias. */
   const huntDashboardSessions = useMemo(() => {
@@ -156,6 +169,12 @@ function SessionDetail() {
             <LayoutDashboard className="h-4 w-4" /> Dashboard da hunt
           </button>
           <button
+            onClick={() => setShowExport(true)}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rubi-blue/40 bg-rubi-blue-soft px-3 py-2 text-sm font-semibold text-rubi-blue hover:border-rubi-blue"
+          >
+            <FileOutput className="h-4 w-4" /> Exportar Analyser
+          </button>
+          <button
             onClick={async () => {
               const ok = await confirmDialog({ description: "Excluir esta sessão?", tone: "danger" });
               if (ok) {
@@ -171,6 +190,12 @@ function SessionDetail() {
       </div>
 
       <HuntDashboardDialog sessions={huntDashboardSessions} open={showDashboard} onOpenChange={setShowDashboard} />
+      <ExportAnalyserDialog
+        session={session}
+        huntSessions={sameHuntSessions}
+        open={showExport}
+        onOpenChange={setShowExport}
+      />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(h.durationSec)} icon={Timer} accent="muted" />

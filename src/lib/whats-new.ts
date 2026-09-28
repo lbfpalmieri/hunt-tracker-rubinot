@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "export-analyser",
+    date: "2026-09-28",
+    title: "Exportar o Hunting Analyser",
+    description:
+      "Na página da sessão tem o botão Exportar Analyser: gera o texto no mesmo formato do Copy to Clipboard do jogo — da sessão ou da média da hunt (1 hora no seu ritmo médio, com monstros por hora). Dá pra colar em sites que leem o analyser, como o Guia de Build do Miguelnut (Hunt personalizada).",
+  },
+  {
     id: "sets-copy",
     date: "2026-09-27",
     title: "Duplicar e copiar partes de um set",
