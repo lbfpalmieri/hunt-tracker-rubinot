@@ -84,6 +84,12 @@ Telas de hunt (Dashboard, Sessões, Comparar, Ranking, Calculadora, Comunidade) 
 mode no getCommunitySessions; telas do personagem (Meu rendimento, Imbuements, Todos os personagens, saldo
 de gold) usam todas as sessões. Nomes dos membros NUNCA vão pra Comunidade (publicParty em
 community.functions.ts expõe só size/split).
+Páginas PÚBLICAS (modo visitante, sem login): /community, /community/$id, /tools/compare e /about ficam em
+src/routes/ (fora de _authenticated) e usam SiteShell (components/SiteShell.tsx): logado = AppShell normal; sem conta
+= cabeçalho de visitante + convite "Entrar com Google". Dados da Comunidade vêm de server fns públicas (sem login).
+Visitante só pesquisa/vê/compara/exporta analyser; nada pessoal. robots.txt/sitemap.xml em public/ liberam essas páginas
+pro Google. Exportar Analyser (analyser-export.ts, formato do Copy to Clipboard do jogo): sessão própria, sessão pública
+e média da hunt da Comunidade (hunt + vocação).
 Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
 entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros

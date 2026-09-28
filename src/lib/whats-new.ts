@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "visitor-community",
+    date: "2026-09-28",
+    title: "Comunidade aberta pra visitantes + exportar analyser da Comunidade",
+    description:
+      "A Comunidade, o Comparar hunts e o Sobre agora abrem sem conta: quem chega pode pesquisar as hunts, comparar e exportar o analyser — e aparecer no Google. Nas hunts da Comunidade tem o botão Analyser, que exporta a média de todos os jogadores daquela vocação (ótimo pro Guia de Build do Miguelnut), e cada sessão pública também exporta. Atenção: sessão marcada como Compartilhar na Comunidade fica visível pra qualquer pessoa, mesmo sem conta — dá pra desmarcar na página da sessão.",
+  },
+  {
     id: "export-analyser",
     date: "2026-09-28",
     title: "Exportar o Hunting Analyser",

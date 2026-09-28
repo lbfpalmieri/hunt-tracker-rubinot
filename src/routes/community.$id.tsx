@@ -1,20 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { AppShell } from "@/components/AppShell";
+import { SiteShell } from "@/components/SiteShell";
 import { StatCard } from "@/components/StatCard";
 import { GameIcon } from "@/components/GameIcon";
-import { getCommunitySession } from "@/lib/community.functions";
+import { getCommunitySession, getCommunitySessions } from "@/lib/community.functions";
+import { ExportAnalyserDialog } from "@/components/ExportAnalyserDialog";
+import { communityExportable } from "@/lib/analyser-export";
+import { usePlayMode } from "@/lib/play-mode";
 import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import {
-  ArrowLeft, Coins, Globe2, Heart, Package, Shield, ShoppingCart, Skull, Swords, Timer, Zap, Trophy, Wrench } from "lucide-react";
+  ArrowLeft, Coins, FileOutput, Globe2, Heart, Package, Shield, ShoppingCart, Skull, Swords, Timer, Zap, Trophy, Wrench } from "lucide-react";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PartyBadge } from "@/components/party/PartyBadge";
 import { SetupCard } from "@/components/setup/SetupCard";
 import { bountyLabel } from "@/lib/bounty";
 
-export const Route = createFileRoute("/_authenticated/community/$id")({
+export const Route = createFileRoute("/community/$id")({
   head: () => ({
     meta: [
       { title: "Sessão da comunidade — RubinOT Hunt Tracker" },
@@ -42,7 +46,7 @@ function CommunitySessionPage() {
   const session = data?.session ?? null;
 
   return (
-    <AppShell>
+    <SiteShell>
       <Link
         to="/community"
         className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
@@ -63,13 +67,32 @@ function CommunitySessionPage() {
       ) : (
         <SessionView session={session} />
       )}
-    </AppShell>
+    </SiteShell>
   );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SessionView({ session }: { session: any }) {
   const h = session.hunting ?? {};
+  // Exportar: a sessão e a média da hunt com as sessões públicas de todos os jogadores (mesma
+  // vocação e mesmo modo Solo/Grupo — igual ao card da hunt na Comunidade).
+  const [showExport, setShowExport] = useState(false);
+  const mode = usePlayMode();
+  const fetchSessions = useServerFn(getCommunitySessions);
+  const { data: huntData, isLoading: huntLoading } = useQuery({
+    queryKey: ["community-hunt-export", session.huntName, session.vocation, mode],
+    queryFn: () =>
+      fetchSessions({ data: { hunt: session.huntName, vocation: session.vocation, mode, limit: 400 } }),
+    enabled: showExport,
+    staleTime: 60_000,
+  });
+  const huntSessions = useMemo(
+    () =>
+      (huntData?.sessions ?? [])
+        .filter((r) => r.huntName.trim().toLowerCase() === String(session.huntName).trim().toLowerCase())
+        .map(communityExportable),
+    [huntData, session.huntName],
+  );
   const durationSec = Number(h.durationSec ?? 0);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const kills: { name: string; count: number }[] = (h.kills ?? []) as any[];
@@ -102,7 +125,26 @@ function SessionView({ session }: { session: any }) {
           {session.charName} · {session.vocation}
           {session.level != null ? ` · Lvl ${fmtNum(session.level)}` : ""} · {fmtDate(session.createdAt)}
         </p>
+        <button
+          type="button"
+          onClick={() => setShowExport(true)}
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-rubi-blue/40 bg-rubi-blue-soft px-3 py-2 text-sm font-semibold text-rubi-blue hover:border-rubi-blue"
+        >
+          <FileOutput className="h-4 w-4" /> Exportar Analyser
+        </button>
       </div>
+
+      <ExportAnalyserDialog
+        session={{ createdAt: session.createdAt, hunting: { ...h, lootedItems: h.lootedItems ?? [] } }}
+        hunt={{
+          name: session.huntName,
+          sessions: huntSessions,
+          source: `de todos os ${session.vocation} da Comunidade`,
+          loading: huntLoading,
+        }}
+        open={showExport}
+        onOpenChange={setShowExport}
+      />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Duração" value={fmtDuration(durationSec)} icon={Timer} accent="muted" />

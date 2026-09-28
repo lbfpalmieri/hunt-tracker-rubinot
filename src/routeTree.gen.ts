@@ -11,8 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEquipamentosRouteImport } from './routes/_authenticated/equipamentos'
@@ -23,15 +23,15 @@ import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
+import { Route as CommunityIndexRouteImport } from './routes/community.index'
+import { Route as CommunityIdRouteImport } from './routes/community.$id'
+import { Route as ToolsCompareRouteImport } from './routes/tools.compare'
 import { Route as AuthenticatedAdminHuntsRouteImport } from './routes/_authenticated/admin.hunts'
 import { Route as AuthenticatedAdminNotesRouteImport } from './routes/_authenticated/admin.notes'
 import { Route as AuthenticatedBossesIndexRouteImport } from './routes/_authenticated/bosses.index'
 import { Route as AuthenticatedBossesIdRouteImport } from './routes/_authenticated/bosses.$id'
-import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
-import { Route as AuthenticatedCommunityIdRouteImport } from './routes/_authenticated/community.$id'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_authenticated/sessions.compare'
-import { Route as AuthenticatedToolsCompareRouteImport } from './routes/_authenticated/tools.compare'
 import { Route as AuthenticatedToolsComparisonsRouteImport } from './routes/_authenticated/tools.comparisons'
 import { Route as AuthenticatedToolsLinkedTasksRouteImport } from './routes/_authenticated/tools.linked-tasks'
 import { Route as AuthenticatedToolsMonsterCalculatorRouteImport } from './routes/_authenticated/tools.monster-calculator'
@@ -47,15 +47,15 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
   id: '/characters',
@@ -108,6 +108,21 @@ const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const CommunityIndexRoute = CommunityIndexRouteImport.update({
+  id: '/community/',
+  path: '/community/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityIdRoute = CommunityIdRouteImport.update({
+  id: '/community/$id',
+  path: '/community/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsCompareRoute = ToolsCompareRouteImport.update({
+  id: '/tools/compare',
+  path: '/tools/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminHuntsRoute = AuthenticatedAdminHuntsRouteImport.update({
   id: '/admin/hunts',
   path: '/admin/hunts',
@@ -129,18 +144,6 @@ const AuthenticatedBossesIdRoute = AuthenticatedBossesIdRouteImport.update({
   path: '/bosses/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCommunityIndexRoute =
-  AuthenticatedCommunityIndexRouteImport.update({
-    id: '/community/',
-    path: '/community/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCommunityIdRoute =
-  AuthenticatedCommunityIdRouteImport.update({
-    id: '/community/$id',
-    path: '/community/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -151,12 +154,6 @@ const AuthenticatedSessionsCompareRoute =
     id: '/compare',
     path: '/compare',
     getParentRoute: () => AuthenticatedSessionsRoute,
-  } as any)
-const AuthenticatedToolsCompareRoute =
-  AuthenticatedToolsCompareRouteImport.update({
-    id: '/tools/compare',
-    path: '/tools/compare',
-    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedToolsComparisonsRoute =
   AuthenticatedToolsComparisonsRouteImport.update({
@@ -191,8 +188,8 @@ const AuthenticatedToolsRubiniCoinsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/equipamentos': typeof AuthenticatedEquipamentosRoute
@@ -203,25 +200,25 @@ export interface FileRoutesByFullPath {
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
+  '/community/$id': typeof CommunityIdRoute
+  '/tools/compare': typeof ToolsCompareRoute
+  '/community/': typeof CommunityIndexRoute
   '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/admin/notes': typeof AuthenticatedAdminNotesRoute
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
-  '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
-  '/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/tools/linked-tasks': typeof AuthenticatedToolsLinkedTasksRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
   '/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
   '/bosses/': typeof AuthenticatedBossesIndexRoute
-  '/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/about': typeof AuthenticatedAboutRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/equipamentos': typeof AuthenticatedEquipamentosRoute
@@ -232,27 +229,27 @@ export interface FileRoutesByTo {
   '/rendimento': typeof AuthenticatedRendimentoRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
+  '/community/$id': typeof CommunityIdRoute
+  '/tools/compare': typeof ToolsCompareRoute
+  '/community': typeof CommunityIndexRoute
   '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/admin/notes': typeof AuthenticatedAdminNotesRoute
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
-  '/community/$id': typeof AuthenticatedCommunityIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
-  '/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/tools/linked-tasks': typeof AuthenticatedToolsLinkedTasksRoute
   '/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/tools/ranking': typeof AuthenticatedToolsRankingRoute
   '/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
   '/bosses': typeof AuthenticatedBossesIndexRoute
-  '/community': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/_authenticated/about': typeof AuthenticatedAboutRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/equipamentos': typeof AuthenticatedEquipamentosRoute
@@ -263,27 +260,27 @@ export interface FileRoutesById {
   '/_authenticated/rendimento': typeof AuthenticatedRendimentoRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
+  '/community/$id': typeof CommunityIdRoute
+  '/tools/compare': typeof ToolsCompareRoute
+  '/community/': typeof CommunityIndexRoute
   '/_authenticated/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/_authenticated/admin/notes': typeof AuthenticatedAdminNotesRoute
   '/_authenticated/bosses/$id': typeof AuthenticatedBossesIdRoute
-  '/_authenticated/community/$id': typeof AuthenticatedCommunityIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/sessions/compare': typeof AuthenticatedSessionsCompareRoute
-  '/_authenticated/tools/compare': typeof AuthenticatedToolsCompareRoute
   '/_authenticated/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/_authenticated/tools/linked-tasks': typeof AuthenticatedToolsLinkedTasksRoute
   '/_authenticated/tools/monster-calculator': typeof AuthenticatedToolsMonsterCalculatorRoute
   '/_authenticated/tools/ranking': typeof AuthenticatedToolsRankingRoute
   '/_authenticated/tools/rubini-coins': typeof AuthenticatedToolsRubiniCoinsRoute
   '/_authenticated/bosses/': typeof AuthenticatedBossesIndexRoute
-  '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
     | '/about'
+    | '/auth'
     | '/characters'
     | '/dashboard'
     | '/equipamentos'
@@ -294,25 +291,25 @@ export interface FileRouteTypes {
     | '/rendimento'
     | '/sessions'
     | '/wiki'
+    | '/community/$id'
+    | '/tools/compare'
+    | '/community/'
     | '/admin/hunts'
     | '/admin/notes'
     | '/bosses/$id'
-    | '/community/$id'
     | '/sessions/$id'
     | '/sessions/compare'
-    | '/tools/compare'
     | '/tools/comparisons'
     | '/tools/linked-tasks'
     | '/tools/monster-calculator'
     | '/tools/ranking'
     | '/tools/rubini-coins'
     | '/bosses/'
-    | '/community/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
     | '/about'
+    | '/auth'
     | '/characters'
     | '/dashboard'
     | '/equipamentos'
@@ -323,26 +320,26 @@ export interface FileRouteTypes {
     | '/rendimento'
     | '/sessions'
     | '/wiki'
+    | '/community/$id'
+    | '/tools/compare'
+    | '/community'
     | '/admin/hunts'
     | '/admin/notes'
     | '/bosses/$id'
-    | '/community/$id'
     | '/sessions/$id'
     | '/sessions/compare'
-    | '/tools/compare'
     | '/tools/comparisons'
     | '/tools/linked-tasks'
     | '/tools/monster-calculator'
     | '/tools/ranking'
     | '/tools/rubini-coins'
     | '/bosses'
-    | '/community'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/auth'
-    | '/_authenticated/about'
     | '/_authenticated/characters'
     | '/_authenticated/dashboard'
     | '/_authenticated/equipamentos'
@@ -353,26 +350,30 @@ export interface FileRouteTypes {
     | '/_authenticated/rendimento'
     | '/_authenticated/sessions'
     | '/_authenticated/wiki'
+    | '/community/$id'
+    | '/tools/compare'
+    | '/community/'
     | '/_authenticated/admin/hunts'
     | '/_authenticated/admin/notes'
     | '/_authenticated/bosses/$id'
-    | '/_authenticated/community/$id'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/sessions/compare'
-    | '/_authenticated/tools/compare'
     | '/_authenticated/tools/comparisons'
     | '/_authenticated/tools/linked-tasks'
     | '/_authenticated/tools/monster-calculator'
     | '/_authenticated/tools/ranking'
     | '/_authenticated/tools/rubini-coins'
     | '/_authenticated/bosses/'
-    | '/_authenticated/community/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  CommunityIdRoute: typeof CommunityIdRoute
+  ToolsCompareRoute: typeof ToolsCompareRoute
+  CommunityIndexRoute: typeof CommunityIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -391,19 +392,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/about': {
-      id: '/_authenticated/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AuthenticatedAboutRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/characters': {
       id: '/_authenticated/characters'
@@ -475,6 +476,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWikiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/community/': {
+      id: '/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof CommunityIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/$id': {
+      id: '/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof CommunityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/compare': {
+      id: '/tools/compare'
+      path: '/tools/compare'
+      fullPath: '/tools/compare'
+      preLoaderRoute: typeof ToolsCompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/hunts': {
       id: '/_authenticated/admin/hunts'
       path: '/admin/hunts'
@@ -503,20 +525,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBossesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/community/': {
-      id: '/_authenticated/community/'
-      path: '/community'
-      fullPath: '/community/'
-      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/community/$id': {
-      id: '/_authenticated/community/$id'
-      path: '/community/$id'
-      fullPath: '/community/$id'
-      preLoaderRoute: typeof AuthenticatedCommunityIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/sessions/$id': {
       id: '/_authenticated/sessions/$id'
       path: '/$id'
@@ -530,13 +538,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/sessions/compare'
       preLoaderRoute: typeof AuthenticatedSessionsCompareRouteImport
       parentRoute: typeof AuthenticatedSessionsRoute
-    }
-    '/_authenticated/tools/compare': {
-      id: '/_authenticated/tools/compare'
-      path: '/tools/compare'
-      fullPath: '/tools/compare'
-      preLoaderRoute: typeof AuthenticatedToolsCompareRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tools/comparisons': {
       id: '/_authenticated/tools/comparisons'
@@ -592,7 +593,6 @@ const AuthenticatedSessionsRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAboutRoute: typeof AuthenticatedAboutRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEquipamentosRoute: typeof AuthenticatedEquipamentosRoute
@@ -606,19 +606,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminHuntsRoute: typeof AuthenticatedAdminHuntsRoute
   AuthenticatedAdminNotesRoute: typeof AuthenticatedAdminNotesRoute
   AuthenticatedBossesIdRoute: typeof AuthenticatedBossesIdRoute
-  AuthenticatedCommunityIdRoute: typeof AuthenticatedCommunityIdRoute
-  AuthenticatedToolsCompareRoute: typeof AuthenticatedToolsCompareRoute
   AuthenticatedToolsComparisonsRoute: typeof AuthenticatedToolsComparisonsRoute
   AuthenticatedToolsLinkedTasksRoute: typeof AuthenticatedToolsLinkedTasksRoute
   AuthenticatedToolsMonsterCalculatorRoute: typeof AuthenticatedToolsMonsterCalculatorRoute
   AuthenticatedToolsRankingRoute: typeof AuthenticatedToolsRankingRoute
   AuthenticatedToolsRubiniCoinsRoute: typeof AuthenticatedToolsRubiniCoinsRoute
   AuthenticatedBossesIndexRoute: typeof AuthenticatedBossesIndexRoute
-  AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAboutRoute: AuthenticatedAboutRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEquipamentosRoute: AuthenticatedEquipamentosRoute,
@@ -632,8 +628,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminHuntsRoute: AuthenticatedAdminHuntsRoute,
   AuthenticatedAdminNotesRoute: AuthenticatedAdminNotesRoute,
   AuthenticatedBossesIdRoute: AuthenticatedBossesIdRoute,
-  AuthenticatedCommunityIdRoute: AuthenticatedCommunityIdRoute,
-  AuthenticatedToolsCompareRoute: AuthenticatedToolsCompareRoute,
   AuthenticatedToolsComparisonsRoute: AuthenticatedToolsComparisonsRoute,
   AuthenticatedToolsLinkedTasksRoute: AuthenticatedToolsLinkedTasksRoute,
   AuthenticatedToolsMonsterCalculatorRoute:
@@ -641,7 +635,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedToolsRankingRoute: AuthenticatedToolsRankingRoute,
   AuthenticatedToolsRubiniCoinsRoute: AuthenticatedToolsRubiniCoinsRoute,
   AuthenticatedBossesIndexRoute: AuthenticatedBossesIndexRoute,
-  AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -650,7 +643,11 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  CommunityIdRoute: CommunityIdRoute,
+  ToolsCompareRoute: ToolsCompareRoute,
+  CommunityIndexRoute: CommunityIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

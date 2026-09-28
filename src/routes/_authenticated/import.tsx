@@ -1157,7 +1157,7 @@ function ImportPage() {
               />
               <span>
                 Compartilhar esta sessão na <b className="text-foreground">Comunidade</b> (personagem,
-                vocação, hunt e equipamento ficam visíveis para outros jogadores).
+                vocação, hunt e equipamento ficam visíveis pra qualquer pessoa, mesmo sem conta).
               </span>
             </label>
             <button

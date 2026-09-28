@@ -81,6 +81,12 @@ function Landing() {
 
           <div className="ml-auto flex items-center gap-2">
             <Link
+              to="/community"
+              className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Comunidade
+            </Link>
+            <Link
               to="/about"
               className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
             >
@@ -121,7 +127,17 @@ function Landing() {
             >
               Entrar com Google <ArrowRight className="h-4 w-4" />
             </Link>
+            <Link
+              to="/community"
+              className="inline-flex items-center gap-2 rounded-lg border border-rubi-blue/50 bg-rubi-blue-soft px-5 py-3 text-sm font-semibold text-rubi-blue hover:opacity-90"
+            >
+              <Globe2 className="h-4 w-4" /> Ver a Comunidade sem conta
+            </Link>
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Como visitante você pesquisa as hunts da comunidade, compara e exporta o analyser — a
+            conta é só pra registrar as suas.
+          </p>
         </div>
 
         {/* Community numbers */}
@@ -148,7 +164,7 @@ function Landing() {
 
           <div className="mt-6 flex justify-center">
             <Link
-              to="/auth"
+              to="/community"
               className="inline-flex items-center gap-2 rounded-lg border border-rubi-blue/50 bg-rubi-blue-soft px-4 py-2.5 text-sm font-semibold text-rubi-blue hover:opacity-90"
             >
               Ver hunts da comunidade <ArrowRight className="h-4 w-4" />

@@ -3,13 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { GitCompareArrows, Search, X, ArrowDown, Clock, Trophy, Sparkles, AlertTriangle, BookmarkCheck } from "lucide-react";
-import { AppShell } from "@/components/AppShell";
+import { SiteShell } from "@/components/SiteShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { useModeSessions, usePlayMode } from "@/lib/play-mode";
+import { useAuthState } from "@/lib/use-auth-state";
 import { getCommunitySessions } from "@/lib/community.functions";
 import { confirmDialog } from "@/lib/confirm-dialog";
 import {
@@ -26,7 +27,7 @@ import {
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
 import { fmtDuration } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/tools/compare")({
+export const Route = createFileRoute("/tools/compare")({
   head: () => ({
     meta: [
       { title: "Comparar hunts — RubinOT Hunt Tracker" },
@@ -51,7 +52,10 @@ function ComparePage() {
   const hydrated = useHydrated();
   const sessions = useModeSessions();
   const characters = useAppStore((s) => s.characters);
-  const [tab, setTab] = useState<"own" | "community">("own");
+  // Página pública: visitante (sem conta) só compara hunts da Comunidade e não salva comparação.
+  const visitor = useAuthState() === "out";
+  const [ownTab, setTab] = useState<"own" | "community">("own");
+  const tab = visitor ? "community" : ownTab;
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
   const [includeBounty, setIncludeBounty] = useState(true);
@@ -174,7 +178,7 @@ function ComparePage() {
     });
 
   return (
-    <AppShell>
+    <SiteShell>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Ferramentas</div>
@@ -188,12 +192,14 @@ function ComparePage() {
 
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {!visitor && (
           <Link
             to="/tools/comparisons"
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-rubi-blue/40 hover:text-foreground"
           >
             <BookmarkCheck className="h-4 w-4" /> Comparações salvas
           </Link>
+          )}
         {selected.length > 0 && (
           <button
             type="button"
@@ -207,6 +213,7 @@ function ComparePage() {
       </div>
 
       <div className="card-surface mb-4 flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
+        {!visitor && (
         <div className="grid flex-none grid-cols-2 gap-1 rounded-lg border border-border p-1">
           {(["own", "community"] as const).map((t) => (
             <button
@@ -222,6 +229,7 @@ function ComparePage() {
             </button>
           ))}
         </div>
+        )}
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -333,11 +341,13 @@ function ComparePage() {
               </span>
             </div>
             <CompareTable hunts={selected} />
-            <SaveComparisonPanel
-              hunts={selected}
-              includeBounty={includeBounty}
-              includePrey={includePrey}
-            />
+            {!visitor && (
+              <SaveComparisonPanel
+                hunts={selected}
+                includeBounty={includeBounty}
+                includePrey={includePrey}
+              />
+            )}
           </>
 
         )}
@@ -356,6 +366,6 @@ function ComparePage() {
           </button>
         </div>
       )}
-    </AppShell>
+    </SiteShell>
   );
 }

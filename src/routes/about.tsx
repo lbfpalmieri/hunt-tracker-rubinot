@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/AppShell";
+import { SiteShell } from "@/components/SiteShell";
 import logo from "@/assets/dragon-logo.png.asset.json";
 import avatar from "@/assets/channel-avatar.png.asset.json";
 import { Youtube, Instagram, Heart } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/about")({
+export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "Sobre — RubinOT Hunt Tracker" },
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/about")({
 
 function About() {
   return (
-    <AppShell>
+    <SiteShell>
       <div className="mx-auto max-w-2xl text-center">
         <img src={logo.url} alt="RubinOT Hunt Tracker" className="mx-auto h-40 w-auto object-contain" />
         <h1 className="mt-6 font-display text-4xl font-bold">
@@ -74,6 +74,6 @@ function About() {
           Feito com <Heart className="h-3 w-3 text-rubi-danger" /> pela comunidade RubinOT
         </p>
       </div>
-    </AppShell>
+    </SiteShell>
   );
 }

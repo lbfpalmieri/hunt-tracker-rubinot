@@ -192,7 +192,11 @@ function SessionDetail() {
       <HuntDashboardDialog sessions={huntDashboardSessions} open={showDashboard} onOpenChange={setShowDashboard} />
       <ExportAnalyserDialog
         session={session}
-        huntSessions={sameHuntSessions}
+        hunt={{
+          name: session.huntName,
+          sessions: sameHuntSessions,
+          source: "nesse personagem",
+        }}
         open={showExport}
         onOpenChange={setShowExport}
       />
@@ -474,7 +478,9 @@ function SessionDetail() {
               className="h-4 w-4 accent-[var(--rubi-blue)]"
             />
             <Globe2 className="h-3.5 w-3.5" />
-            {session.isPublic ? "Compartilhada na Comunidade" : "Sessão privada"}
+            {session.isPublic
+              ? "Compartilhada na Comunidade (qualquer pessoa vê, mesmo sem conta)"
+              : "Sessão privada"}
           </label>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">

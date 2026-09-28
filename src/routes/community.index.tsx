@@ -2,13 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { SiteShell } from "@/components/SiteShell";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PartyBadge } from "@/components/party/PartyBadge";
 import { usePlayMode } from "@/lib/play-mode";
 import { GameIcon } from "@/components/GameIcon";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
+import { ExportAnalyserDialog } from "@/components/ExportAnalyserDialog";
+import { communityExportable } from "@/lib/analyser-export";
 import { Pagination } from "@/components/Pagination";
 import {
   getCommunitySessions,
@@ -34,6 +36,7 @@ import {
   Coins,
   LayoutList,
   LayoutDashboard,
+  FileOutput,
   Layers,
   Calculator,
   Target,
@@ -42,7 +45,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/community/")({
+export const Route = createFileRoute("/community/")({
   head: () => ({
     meta: [
       { title: "Comunidade — RubinOT Hunt Tracker" },
@@ -81,6 +84,7 @@ function CommunityPage() {
   const [quantity, setQuantity] = useState<number>(400);
   const [openHunt, setOpenHunt] = useState<string | null>(null);
   const [dashboardHunt, setDashboardHunt] = useState<string | null>(null);
+  const [exportHunt, setExportHunt] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   const fetchSessions = useServerFn(getCommunitySessions);
@@ -298,6 +302,15 @@ function CommunityPage() {
     return rows.map((r) => fromCommunityRow(r as CommunityRow));
   }, [dashboardHunt, sessions]);
 
+  /** Sessões da hunt (hunt + vocação, igual ao card) pra exportar a média no formato do analyser. */
+  const exportRows = useMemo(() => {
+    if (!exportHunt) return null;
+    const rows = sessions.filter((s) => `${s.huntName.toLowerCase()}__${s.vocation}` === exportHunt);
+    return rows.length
+      ? { name: rows[0].huntName, vocation: rows[0].vocation, sessions: rows.map(communityExportable) }
+      : null;
+  }, [exportHunt, sessions]);
+
   /** Community benchmark for the selected monster, grouped by hunt. */
   const calcRows = useMemo(() => {
     const needle = monster.trim().toLowerCase();
@@ -360,7 +373,7 @@ function CommunityPage() {
 
 
   return (
-    <AppShell>
+    <SiteShell>
       {/* Hero */}
       <div className="relative mb-6 overflow-hidden rounded-2xl border border-rubi-blue/30 p-6 sm:p-8">
         <div
@@ -724,6 +737,15 @@ function CommunityPage() {
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setExportHunt(h.key)}
+                  title="Exportar a média dessa hunt no formato do Hunting Analyser"
+                  aria-label={`Exportar analyser de ${h.huntName}`}
+                  className="inline-flex flex-none items-center justify-center gap-1 rounded-lg border border-rubi-blue/40 bg-rubi-blue-soft px-2.5 py-1.5 text-rubi-blue transition-colors hover:border-rubi-blue"
+                >
+                  <FileOutput className="h-3.5 w-3.5" /> Analyser
+                </button>
               </div>
             </div>
           ))}
@@ -835,12 +857,27 @@ function CommunityPage() {
         </DialogContent>
       </Dialog>
 
+      {exportRows && (
+        <ExportAnalyserDialog
+          key={exportHunt}
+          hunt={{
+            name: exportRows.name,
+            sessions: exportRows.sessions,
+            source: `de todos os ${exportRows.vocation} da Comunidade`,
+          }}
+          open={!!exportHunt}
+          onOpenChange={(o) => {
+            if (!o) setExportHunt(null);
+          }}
+        />
+      )}
+
       <HuntDashboardDialog
         sessions={dashboardSessions}
         open={!!dashboardHunt}
         onOpenChange={(o) => { if (!o) setDashboardHunt(null); }}
       />
-    </AppShell>
+    </SiteShell>
 
   );
 }

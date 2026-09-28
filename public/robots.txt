@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Allow: /community
+Allow: /tools/compare
+Allow: /about
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /import
+Disallow: /sessions
+Disallow: /rendimento
+Disallow: /imbuements
+Disallow: /characters
+Disallow: /overview
+Disallow: /equipamentos
+Disallow: /bosses
+Disallow: /feedback
+Disallow: /admin
+
+Sitemap: https://hunt-tracker-rubinot.lovable.app/sitemap.xml
