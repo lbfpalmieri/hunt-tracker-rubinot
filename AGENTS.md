@@ -74,10 +74,13 @@ self, personal, extraCost/removed por membro, lootType, splitterShare). Formatos
 (OTClient: game_analyser/PartyHuntAnalyser.lua "Copy to Clipboard" e game_lootsplitter/lootsplitter.lua) —
 "Copy to LootSplitter" NÃO copia, só abre a janela do cliente; a divisão (computeSplit) replica o LootSplitter
 (líder primeiro, média, maior→menor com floor), exceto que membro removido sai do total.
-MODO GRUPO = sessão SÓ do texto da party (import.tsx: parsed.hunting vem de huntingFromParty; sem
-Hunting/Input/Misc; assistente pula Bounty/Prey). Resultado do LootSplitter do RubinOT (formato real:
+MODO GRUPO = sessão do texto da party + OPCIONAL o Hunting/Input/Misc pessoal (import.tsx: parsed.hunting
+vem de mergePartyHunting — duração/lucro da party, XP/kills/itens do analyser pessoal, "/h" pela duração da
+PARTY; self achado pelo nome ou por findSelfByHunting). O "Copy to Clipboard" da Party Hunt do RubinOT sai NO
+FORMATO do Hunting Analyser (XP 0, Killed Monsters/Looted Items "None", sem membros) → looksLikeRubinotPartyHunt,
+vira party.own (sua linha, sem divisão; tamanho informado no passo Grupo). Sem o Hunting pessoal o assistente pula Bounty/Prey. Resultado do LootSplitter do RubinOT (formato real:
 "Nome: balance", "Profit: X (Y each)", "- A transfers N to B") também vira party. party.noHuntingAnalyser
-= sem XP → huntRawXp() null (fora das médias de XP). Modo Solo não cria party (colar o da party troca de modo). Com o analyser da party, hunting é salvo JÁ DIVIDIDO (balance = total ÷ membros, loot =
+= sessão de grupo salva sem o Hunting pessoal = sem XP → huntRawXp() null (fora das médias de XP). Modo Solo não cria party (colar o da party troca de modo). Com o analyser da party, hunting é salvo JÁ DIVIDIDO (balance = total ÷ membros, loot =
 parte + supplies próprios; números pessoais em party.personal — resplit/unsplitHunting pra editar). Modo
 fica em user_nav_prefs.play_mode (nav-prefs.ts) e muda o visual via html[data-play-mode="party"] (styles.css).
 Telas de hunt (Dashboard, Sessões, Comparar, Ranking, Calculadora, Comunidade) usam useModeSessions() /

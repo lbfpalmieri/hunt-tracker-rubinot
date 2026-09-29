@@ -68,8 +68,10 @@ import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
 import {
   applyPartySplit,
-  huntingFromParty,
+  findSelfByHunting,
   looksLikePartyText,
+  looksLikeRubinotPartyHunt,
+  mergePartyHunting,
   partyFromText,
   selfShare,
   type PartyInfo,
@@ -120,9 +122,10 @@ function ImportPage() {
   const [bountyAnswer, setBountyAnswer] = useState<"yes" | "no" | null>(null);
   const [bountyDraft, setBountyDraft] = useState<BountyDraft>(EMPTY_BOUNTY);
   const [preyAnswer, setPreyAnswer] = useState<"yes" | "no" | null>(null);
-  // Hunt em party (party.ts). No MODO GRUPO a sessão vem SÓ do Party Hunt Analyser (ou do resultado
-  // do LootSplitter): sem Hunting/Input/Misc, e o assistente pula Bounty e Prey (dependem de XP e
-  // criaturas, que o analyser da party não traz). No Modo Solo não tem party.
+  // Hunt em party (party.ts). No MODO GRUPO a sessão vem do Party Hunt Analyser (ou do resultado do
+  // LootSplitter) + opcionalmente o SEU Hunting/Input/Misc (mergePartyHunting: XP e criaturas do seu
+  // analyser, duração e lucro da party). Sem o Hunting Analyser pessoal o assistente pula Bounty e
+  // Prey (dependem de XP e criaturas). No Modo Solo não tem party.
   const playMode = useNavPrefs((s) => s.mode);
   const groupMode = playMode === "party";
   const [party, setParty] = useState<PartyInfo | null>(null);
@@ -130,7 +133,8 @@ function ImportPage() {
   const [partyText, setPartyText] = useState("");
   const hasParty = groupMode && !!party;
   // Precisa saber quem é você entre os membros (é a sua linha que vira a sessão).
-  const partyReady = !groupMode || (!!party?.members?.length && !!party.self);
+  // Party Hunt Analyser do RubinOT (`own`) já é a sua linha — não tem membros pra escolher.
+  const partyReady = !groupMode || !!party?.own || (!!party?.members?.length && !!party.self);
   const [setup, setSetup] = useState<SessionSetup>(EMPTY_SETUP);
   const hasBounty = bountyAnswer === "yes";
   const hasPrey = preyAnswer === "yes";
@@ -176,7 +180,7 @@ function ImportPage() {
       setParty(null);
       return;
     }
-    const p = partyFromText(text, activeChar?.name);
+    const p = partyFromText(text, activeChar?.name, { rubinotAnalyser: true });
     if (p) {
       setParty(p);
     }
@@ -194,7 +198,7 @@ function ImportPage() {
       setNotice({ tone: "error", title: "Nada para colar", detail: "Sua área de transferência está vazia." });
       return;
     }
-    const kind = detectBlockKind(text);
+    const kind = detectBlockKind(text, { groupMode });
     if (kind === "unknown") {
       setNotice({
         tone: "error",
@@ -210,16 +214,8 @@ function ImportPage() {
       setNotice({
         tone: "ok",
         title: "Party Hunt Analyser — mudamos pro Modo Grupo",
-        detail: "Hunt em grupo é registrada só com o Party Hunt Analyser, no Modo Grupo.",
-      });
-      return;
-    }
-    if (kind !== "party" && groupMode) {
-      setNotice({
-        tone: "error",
-        title: `${BLOCK_LABEL[kind]} não é usado no Modo Grupo`,
         detail:
-          'No Modo Grupo a sessão vem só do Party Hunt Analyser (janela Party Hunt → botão direito → "Copy to Clipboard"). Pra hunt solo, troque pro Modo Solo no topo.',
+          "Hunt em grupo é registrada no Modo Grupo — se quiser XP e monstros/h, cole também o seu Hunting Analyser.",
       });
       return;
     }
@@ -314,19 +310,51 @@ function ImportPage() {
     return () => document.removeEventListener("paste", onPaste);
   });
 
+  // Modo Grupo: `personal` = o Hunting Analyser pessoal colado (opcional; só entra com
+  // XP/criaturas/itens — ver mergePartyHunting). Modo Solo: exatamente como sempre foi.
   const parsed = useMemo(() => {
     if (groupMode) {
-      return { hunting: party?.members?.length ? huntingFromParty(party) : null, damage: null, misc: null };
+      const safe = <T,>(text: string, fn: (t: string) => T): T | null => {
+        if (!text.trim()) return null;
+        try {
+          return fn(text);
+        } catch {
+          return null;
+        }
+      };
+      const personalRaw = safe(huntingText, parseHunting);
+      const personal =
+        personalRaw &&
+        personalRaw.durationSec > 0 &&
+        !looksLikePartyText(huntingText) &&
+        !looksLikeRubinotPartyHunt(huntingText)
+          ? personalRaw
+          : null;
+      const hunting = party?.members?.length || party?.own ? mergePartyHunting(party, personal) : null;
+      return {
+        hunting,
+        personal,
+        damage: safe(damageText, parseDamage),
+        misc: safe(miscText, parseMiscellaneous),
+      };
     }
     try {
       const hunting = huntingText.trim() ? parseHunting(huntingText) : null;
       const damage = damageText.trim() ? parseDamage(damageText) : null;
       const misc = miscText.trim() ? parseMiscellaneous(miscText) : null;
-      return { hunting, damage, misc };
+      return { hunting, personal: null, damage, misc };
     } catch {
-      return { hunting: null, damage: null, misc: null };
+      return { hunting: null, personal: null, damage: null, misc: null };
     }
   }, [huntingText, damageText, miscText, groupMode, party]);
+
+  // Modo Grupo: o nome do char não bateu com ninguém da party → tenta achar você pelos números do
+  // seu Hunting Analyser (dá pra trocar no passo Grupo).
+  useEffect(() => {
+    if (!groupMode || !party?.members?.length || party.self || !parsed.personal) return;
+    const self = findSelfByHunting(party.members, parsed.personal);
+    if (self) setParty({ ...party, self });
+  }, [groupMode, party, parsed.personal]);
 
   // Suggests which hunt this session belongs to by matching the monsters just
   // killed against monsters seen before under each hunt name.
@@ -399,23 +427,48 @@ function ImportPage() {
   };
 
   const durationOk = (parsed.hunting?.durationSec ?? 0) > 0;
-  const huntingIsParty = !groupMode && !!huntingText && looksLikePartyText(huntingText);
+  const killCount = (h: { kills: { count: number }[] }) => h.kills.reduce((a, k) => a + k.count, 0);
+  // Modo Solo: bloco Hunting Analyser exatamente como sempre foi. Modo Grupo: o bloco é o SEU
+  // analyser (opcional) e o texto da party colado nele é recusado.
+  const huntingIsParty = groupMode
+    ? !!huntingText && (looksLikePartyText(huntingText) || looksLikeRubinotPartyHunt(huntingText))
+    : !!huntingText && looksLikePartyText(huntingText);
   const huntingStatus: SlotStatus = !huntingText
     ? "empty"
-    : parsed.hunting && durationOk && !huntingIsParty
-      ? "ok"
-      : "error";
+    : groupMode
+      ? parsed.personal
+        ? "ok"
+        : "error"
+      : parsed.hunting && durationOk && !huntingIsParty
+        ? "ok"
+        : "error";
+  // Modo Grupo: resumo do bloco do seu Hunting Analyser (a sessão em si vem da party).
+  const personalSummary = parsed.personal
+    ? `${fmtDuration(parsed.personal.durationSec)} · ${fmtNum(killCount(parsed.personal))} kills · ${fmtGold(parsed.personal.balance)}`
+    : undefined;
   const huntingSummary =
     parsed.hunting && durationOk
       ? groupMode
-        ? `${fmtDuration(parsed.hunting.durationSec)} · party de ${party?.size ?? "?"}`
+        ? `${fmtDuration(parsed.hunting.durationSec)} · party de ${party?.size ?? "?"}` +
+          (parsed.personal ? ` · ${fmtNum(killCount(parsed.hunting))} kills` : "")
         : `${fmtDuration(parsed.hunting.durationSec)} · ${fmtNum(parsed.hunting.kills.reduce((a, k) => a + k.count, 0))} kills · ${fmtGold(parsed.hunting.balance)}`
       : undefined;
-  const huntingMessage = huntingIsParty
+  const huntingMessage = groupMode
+    ? huntingIsParty
+      ? "Esse é o Party Hunt Analyser — cole ele no bloco Party Hunt Analyser."
+      : "Não reconheci esse bloco ou a duração. Copie o Hunt Analyser completo, com \"Session data: From ... to ...\" e \"Session length\"."
+    : huntingIsParty
     ? "Esse é o Party Hunt Analyser — hunt em grupo é registrada no Modo Grupo (alternador no topo)."
     : !parsed.hunting
     ? "Não reconheci esse bloco. Copie o Hunt Analyser completo do jogo."
     : "Duração não identificada. O texto precisa incluir \"Session data: From ... to ...\" e \"Session length\".";
+  // Modo Grupo: Hunting Analyser pessoal é opcional, mas colado quebrado não salva (perderia a XP sem aviso).
+  const personalBroken = groupMode && !!huntingText.trim() && !parsed.personal;
+  // Duração da sessão = a da party; avisa se o seu analyser for de outra janela de tempo.
+  const partyDurationMismatch =
+    groupMode && parsed.personal && parsed.hunting
+      ? Math.abs(parsed.hunting.durationSec - parsed.personal.durationSec) > 15 * 60
+      : false;
 
   // Raw XP ou XP com bônus negativa normalmente só acontece por um motivo: uma
   // morte durante a sessão. O valor observado já É a perda líquida — não
@@ -423,19 +476,21 @@ function ImportPage() {
   const detectedDeathLoss = parsed.hunting ? detectDeathLoss(parsed.hunting) : null;
   const willRegisterDeath = detectedDeathLoss != null && !deathOptOut;
 
+  const bountyPreyOn = !groupMode || !!parsed.personal;
   const canSave = Boolean(
     parsed.hunting &&
       durationOk &&
       !huntingIsParty &&
+      !personalBroken &&
       effectiveCharId &&
       selectedHuntName &&
       partyReady &&
-      bountyReady &&
-      preyReady,
+      (!bountyPreyOn || (bountyReady && preyReady)),
   );
 
-  // Modo Grupo: sem Bounty e Prey (sem XP/criaturas no analyser da party). Modo Solo: sem Grupo.
-  const skipSteps = groupMode ? [2, 3] : [1];
+  // Modo Grupo sem o seu Hunting Analyser: sem Bounty e Prey (sem XP/criaturas no analyser da
+  // party). Modo Solo: sem Grupo.
+  const skipSteps = groupMode ? (bountyPreyOn ? [] : [2, 3]) : [1];
   const stepNext = (s: number) => {
     let n = s + 1;
     while (skipSteps.includes(n)) n++;
@@ -481,7 +536,9 @@ function ImportPage() {
       // Em party com o Party Hunt Analyser: o lucro salvo é a parte do usuário na divisão.
       const split = applyPartySplit(
         correctedHunting,
-        hasParty && party ? { ...party, noHuntingAnalyser: true } : null,
+        hasParty && party
+          ? { ...party, ...(parsed.personal ? {} : { noHuntingAnalyser: true }) }
+          : null,
       );
       const created = await addSession({
         characterId: effectiveCharId,
@@ -492,8 +549,8 @@ function ImportPage() {
         misc: parsed.misc,
         gearUrl,
         isPublic,
-        bounty: hasBounty ? bountyFromDraft(bountyDraft) : null,
-        prey: hasPrey ? prey : null,
+        bounty: bountyPreyOn && hasBounty ? bountyFromDraft(bountyDraft) : null,
+        prey: bountyPreyOn && hasPrey ? prey : null,
         setup: normalizeSetup(setup),
         notes: notes.trim() || null,
       });
@@ -524,7 +581,8 @@ function ImportPage() {
 
 
   // Bloco do Party Hunt Analyser: 2º no Modo Grupo (recomendado), último no Solo.
-  const partyParsed = !!party && (!!party.members?.length || party.splitterShare != null);
+  const partyParsed =
+    !!party && (!!party.members?.length || !!party.own || party.splitterShare != null);
   const partyShareNow = partyParsed ? selfShare(party) : null;
   const partySlot = (
     <PasteSlot
@@ -538,7 +596,9 @@ function ImportPage() {
       onPasteBtn={handleClipboardButton}
       summary={
         partyParsed && party
-          ? `Party de ${party.size}` +
+          ? party.own
+            ? `${fmtDuration(party.sessionSec ?? 0)} · balance ${fmtGold(party.own.balance)} · informe o tamanho da party no passo Grupo`
+            : `Party de ${party.size}` +
             (partyShareNow != null
               ? ` · sua parte ${fmtGold(partyShareNow)}`
               : " · escolha quem é você no passo Grupo")
@@ -644,8 +704,9 @@ function ImportPage() {
         {groupMode ? (
           <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
             <Users className="mt-0.5 h-3.5 w-3.5 flex-none text-rubi-blue" />
-            Modo Grupo: a sessão vem só do Party Hunt Analyser (ou do resultado do LootSplitter) — o
-            lucro salvo é a sua parte da divisão, igual ao LootSplitter do jogo.
+            Modo Grupo: o lucro salvo é a sua parte da divisão do Party Hunt Analyser (ou do resultado
+            do LootSplitter), igual ao LootSplitter do jogo. Cole também o seu Hunting Analyser
+            (opcional) pra guardar XP/h e monstros/h — a duração da sessão é a da party.
           </p>
         ) : (
           <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
@@ -658,19 +719,23 @@ function ImportPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-2 lg:col-span-2">
-          {groupMode ? partySlot : (
-          <>
+          {groupMode && partySlot}
           <PasteSlot
             label="Hunting Analyser"
-            help="Cole aqui o bloco do Hunt Analyser (obrigatório)."
+            help={
+              groupMode
+                ? "O SEU Hunt Analyser: XP, monstros e itens da sessão (o lucro continua vindo da party)."
+                : "Cole aqui o bloco do Hunt Analyser (obrigatório)."
+            }
             value={huntingText}
             onChange={setHuntingText}
             status={huntingStatus}
             expect="hunting"
             onPasteEvent={handlePasteEvent}
             onPasteBtn={handleClipboardButton}
-            summary={huntingSummary}
+            summary={groupMode ? personalSummary : huntingSummary}
             message={huntingMessage}
+            optional={groupMode}
           />
           <PasteSlot
             label="Input Analyser"
@@ -700,11 +765,23 @@ function ImportPage() {
             message="Não reconheci esse bloco. Copie o Miscellaneous completo."
             optional
           />
-          </>
-          )}
-          {parsed.hunting && !groupMode && (
+          {parsed.hunting && (!groupMode || parsed.personal) && (
             <div className="card-surface p-5">
               <h3 className="mb-3 text-sm font-semibold">Preview</h3>
+              {groupMode && (
+                <p className="-mt-1.5 mb-3 text-xs text-muted-foreground">
+                  Duração e lucro da party (sua linha, antes da divisão); XP e kills do seu Hunting
+                  Analyser, por hora na duração da party.
+                </p>
+              )}
+              {partyDurationMismatch && parsed.personal && (
+                <p className="mb-3 flex items-start gap-1.5 rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 p-2 text-[11px] text-rubi-gold">
+                  <AlertTriangle className="mt-px h-3.5 w-3.5 flex-none" />
+                  A party durou {fmtDuration(parsed.hunting.durationSec)} e o seu Hunting Analyser{" "}
+                  {fmtDuration(parsed.personal.durationSec)} — confira se são da mesma hunt (resete os
+                  dois juntos no começo).
+                </p>
+              )}
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <PreviewRow label="Duração" value={fmtDuration(parsed.hunting.durationSec)} />
                 <PreviewRow
@@ -713,6 +790,12 @@ function ImportPage() {
                   positive={parsed.hunting.rawXp >= 0}
                 />
                 <PreviewRow label="Raw XP/h" value={fmtNum(parsed.hunting.rawXpPerHour || parsed.hunting.rawXp / (parsed.hunting.durationSec / 3600 || 1))} />
+                {groupMode && (
+                  <PreviewRow
+                    label="Kills/h"
+                    value={fmtNum(killCount(parsed.hunting) / (parsed.hunting.durationSec / 3600 || 1))}
+                  />
+                )}
 
                 <PreviewRow label="Loot" value={fmtGold(parsed.hunting.loot)} />
                 <PreviewRow label="Supplies" value={fmtGold(parsed.hunting.supplies)} />
@@ -789,7 +872,8 @@ function ImportPage() {
               groupMode ? (
                 <p className="text-sm text-muted-foreground">
                   Cole o <b className="text-foreground">Party Hunt Analyser</b> — no jogo, janela
-                  Party Hunt → botão direito → "Copy to Clipboard".
+                  Party Hunt → botão direito → "Copy to Clipboard". Hunting, Input e Miscellaneous
+                  são opcionais.
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">
@@ -806,7 +890,9 @@ function ImportPage() {
               <>
                 <p className="text-sm text-muted-foreground">
                   {groupMode
-                    ? "Party Hunt Analyser pronto. Agora é só configurar: nome da hunt, quem é você na party e, se quiser, setup, level e equipamento."
+                    ? parsed.personal
+                      ? "Party Hunt e Hunting Analyser prontos. Agora é só configurar: nome da hunt, quem é você na party, Bounty Task, Prey e, se quiser, setup, level e equipamento."
+                      : "Party Hunt Analyser pronto. Agora é só configurar: nome da hunt, quem é você na party e, se quiser, setup, level e equipamento. Sem o seu Hunting Analyser a sessão fica sem XP e monstros."
                     : "Hunting Analyser pronto. Agora é só configurar: nome da hunt, Bounty Task, Prey e, se quiser, level e equipamento."}
                 </p>
                 <button
@@ -1007,7 +1093,8 @@ function ImportPage() {
               value={party}
               onChange={(p) => p && setParty(p)}
               charName={activeChar?.name ?? null}
-              personalBalance={parsed.hunting?.balance ?? 0}
+              personalBalance={parsed.personal?.balance ?? parsed.hunting?.balance ?? 0}
+              personalDurationSec={parsed.personal?.durationSec}
             />
           )}
 
@@ -1189,6 +1276,8 @@ function ImportPage() {
                     : "Cole o Hunting Analyser para continuar."
                   : !partyReady
                     ? "Escolha quem é você na party (passo Grupo)."
+                  : personalBroken
+                    ? "Não reconheci o seu Hunting Analyser — cole o bloco completo ou apague ele."
                   : !durationOk
                     ? "Não foi possível identificar a duração da sessão. Cole o Hunting Analyser completo, incluindo as linhas \"Session data: From ... to ...\" e \"Session length: HH:MMh\"."
                     : !selectedHuntName

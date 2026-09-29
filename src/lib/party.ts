@@ -1,4 +1,4 @@
-import { resolveDurationSec, type HuntingData } from "./parser";
+import { parseHunting, resolveDurationSec, type HuntingData } from "./parser";
 
 /**
  * Hunt em grupo (party) — segue o que o cliente do RubinOT faz (OTClient, módulos
@@ -35,11 +35,29 @@ import { resolveDurationSec, type HuntingData } from "./parser";
  *   Bank transfers:
  *   - Zork Ligth transfers 3,910,967 to Emplacado
  * (o OTClient base usa "- Total profit: X $ (Y $ each)" e "should transfer" — também aceito).
- * Os dois textos (Party Hunt e resultado) são aceitos aqui.
  *
- * MODO GRUPO: a sessão é registrada SÓ com esse texto (sem Hunting Analyser) — duração e datas da
- * sessão da party, loot/supplies/dano/cura da linha do usuário e o lucro = parte da divisão. Sem XP
- * nem criaturas (o analyser da party não traz): `noHuntingAnalyser` tira a sessão das médias de XP.
+ * PARTY HUNT ANALYSER DO RUBINOT (export real enviado pelo usuário em 2026-09-29): o "Copy to
+ * Clipboard" do cliente do RubinOT sai no MESMO formato do Hunting Analyser, sem membros — só a
+ * linha do próprio jogador, com XP zerada e sem criaturas/itens:
+ *   Session data: From 2026-09-29, 10:27:27 to 2026-09-29, 11:39:37
+ *   Session: 01:12h
+ *   Raw XP Gain: 0 / XP Gain: 0 / XP/h: 0 / Raw XP/h: 0
+ *   Loot: 1,942,481 / Supplies: 152,970 / Balance: 1,789,511
+ *   Damage: 5,021,554 / Damage/h: ... / Healing: 981,433 / Healing/h: ...
+ *   Killed Monsters:
+ *   	None
+ *   Looted Items:
+ *   	None
+ * Diferença pro Hunting Analyser (looksLikeRubinotPartyHunt): XP toda 0 e "None" nas criaturas e
+ * nos itens, mas com loot ou dano. Só vale no Modo Grupo (no Solo continua Hunting Analyser). Vira `own` (sem membros → sem divisão; o tamanho da party é
+ * informado no passo Grupo). XP, criaturas e itens vêm do Hunting Analyser pessoal.
+ * Os textos (Party Hunt e resultado) são aceitos aqui.
+ *
+ * MODO GRUPO: a sessão é registrada com esse texto — duração e datas da sessão da party,
+ * loot/supplies/dano/cura da linha do usuário e o lucro = parte da divisão. Opcionalmente o usuário
+ * cola também o SEU Hunting/Input/Miscellaneous (mergePartyHunting): XP, criaturas e itens vêm do
+ * analyser pessoal, com os "/h" pela duração da party. Sem o Hunting Analyser pessoal não há XP nem
+ * criaturas: `noHuntingAnalyser` tira a sessão das médias de XP.
  *
  * DIVISÃO (igual ao LootSplitter do cliente): líder primeiro, depois os membros na ordem do texto;
  * cada um com balance − "extra cost" (gasto extra informado — ex. quem pagou imbuement/bless da
@@ -89,9 +107,13 @@ export interface PartyInfo {
   /** "2026-09-27, 06:21:19" — início/fim da sessão da party. */
   startedAt?: string | null;
   endedAt?: string | null;
-  /** Sessão registrada só com o texto da party (Modo Grupo): sem XP, criaturas e loot por item. */
+  /** Party Hunt Analyser do RubinOT (formato do Hunting Analyser, sem membros): a sua linha. */
+  own?: PartyOwnLine | null;
+  /** Sessão do Modo Grupo sem o Hunting Analyser pessoal: sem XP, criaturas e loot por item. */
   noHuntingAnalyser?: boolean;
 }
+
+export type PartyOwnLine = Pick<PartyMember, "loot" | "supplies" | "balance" | "damage" | "healing">;
 
 export interface PartyTransfer {
   from: string;
@@ -244,6 +266,25 @@ export function parseSplitterResult(text: string): ParsedSplitterResult | null {
   };
 }
 
+/**
+ * Party Hunt Analyser do RubinOT (ver cabeçalho): formato do Hunting Analyser com XP toda 0,
+ * "None" em Killed Monsters e Looted Items, e loot ou dano. Um Hunting Analyser de verdade com
+ * loot/dano sempre lista criaturas e itens.
+ */
+export function looksLikeRubinotPartyHunt(text: string): boolean {
+  const t = text.replace(/\r/g, "");
+  if (!/Raw XP Gain\s*:/i.test(t) || !/Killed Monsters\s*:/i.test(t)) return false;
+  const xpLines = [...t.matchAll(/^\s*(?:Raw XP Gain|XP Gain|XP\/h|Raw XP\/h)\s*:\s*(-?[\d.,]+)/gim)];
+  if (!xpLines.length || xpLines.some((m) => toNum(m[1]) !== 0)) return false;
+  if (!/Killed Monsters\s*:\s*None\b/i.test(t) || !/Looted Items\s*:\s*None\b/i.test(t)) return false;
+  const num = (re: RegExp) => toNum(t.match(re)?.[1] ?? "0");
+  return (
+    num(/^\s*Loot\s*:\s*(-?[\d.,]+)/im) !== 0 ||
+    num(/^\s*Supplies\s*:\s*(-?[\d.,]+)/im) !== 0 ||
+    num(/^\s*Damage\s*:\s*(-?[\d.,]+)/im) !== 0
+  );
+}
+
 /** Parece o Party Hunt Analyser (e não o Hunting Analyser pessoal)? */
 export function looksLikePartyHunt(text: string): boolean {
   if (/Killed Monsters:|Raw XP Gain:|XP Gain:/i.test(text)) return false;
@@ -267,8 +308,36 @@ export function findSelf(
   return members.find((m) => norm(m.name) === norm(charName))?.name ?? null;
 }
 
-/** Party a partir de qualquer um dos textos (null = não reconheceu). */
-export function partyFromText(text: string, charName: string | null | undefined): PartyInfo | null {
+/**
+ * Party a partir de qualquer um dos textos (null = não reconheceu). `rubinotAnalyser` = aceita também
+ * o Party Hunt Analyser do RubinOT (formato do Hunting Analyser) — SÓ na Nova sessão do Modo Grupo;
+ * no Modo Solo esse texto continua sendo Hunting Analyser.
+ */
+export function partyFromText(
+  text: string,
+  charName: string | null | undefined,
+  opts: { rubinotAnalyser?: boolean } = {},
+): PartyInfo | null {
+  if (opts.rubinotAnalyser && looksLikeRubinotPartyHunt(text)) {
+    const h = parseHunting(text);
+    return {
+      size: PARTY_MIN,
+      members: null,
+      self: null,
+      personal: null,
+      own: {
+        loot: h.loot,
+        supplies: h.supplies,
+        balance: h.balance,
+        damage: h.damage,
+        healing: h.healing,
+      },
+      sessionSec: h.durationSec || null,
+      startedAt: h.startedAt,
+      endedAt: h.endedAt,
+      source: "analyser",
+    };
+  }
   const hunt = looksLikePartyHunt(text) ? parsePartyHunt(text) : null;
   if (hunt) {
     const members = hunt.members.slice(0, PARTY_MAX);
@@ -329,7 +398,7 @@ export function partyFromText(text: string, charName: string | null | undefined)
  * usuário (a divisão entra depois, em applyPartySplit). Sem XP, criaturas e itens.
  */
 export function huntingFromParty(party: PartyInfo): HuntingData {
-  const me = party.members?.find((m) => m.name === party.self);
+  const me = party.members?.find((m) => m.name === party.self) ?? party.own ?? undefined;
   const startedAt = party.startedAt ?? null;
   const endedAt = party.endedAt ?? null;
   const durationSec =
@@ -354,6 +423,59 @@ export function huntingFromParty(party: PartyInfo): HuntingData {
     kills: [],
     lootedItems: [],
   };
+}
+
+/**
+ * Modo Grupo com o Hunting Analyser PESSOAL também colado (opcional): a base continua sendo a party
+ * (duração e horário da party, loot/supplies/balance/dano/cura da sua linha — a divisão entra depois,
+ * em applyPartySplit) e do seu analyser vêm XP, criaturas e itens. Todo "/h" é recalculado pela
+ * duração da PARTY. Resultado do LootSplitter não traz loot/supplies/dano de verdade: aí esses
+ * números vêm do seu analyser.
+ */
+export function mergePartyHunting(party: PartyInfo, personal: HuntingData | null): HuntingData {
+  const base = huntingFromParty(party);
+  if (!personal) return base;
+  const durationSec = base.durationSec || personal.durationSec;
+  const perHour = (v: number) => Math.round(v / (durationSec / 3600 || 1));
+  const fromSplitter = party.source === "splitter";
+  const money = fromSplitter
+    ? { loot: personal.loot, supplies: personal.supplies, balance: personal.balance }
+    : { loot: base.loot, supplies: base.supplies, balance: base.balance };
+  const damage = fromSplitter ? personal.damage : base.damage;
+  const healing = fromSplitter ? personal.healing : base.healing;
+  return {
+    startedAt: base.startedAt ?? personal.startedAt,
+    endedAt: base.endedAt ?? personal.endedAt,
+    durationSec,
+    rawXp: personal.rawXp,
+    xpGain: personal.xpGain,
+    rawXpPerHour: perHour(personal.rawXp),
+    xpPerHour: perHour(personal.xpGain),
+    ...money,
+    damage,
+    damagePerHour: perHour(damage),
+    healing,
+    healingPerHour: perHour(healing),
+    kills: personal.kills,
+    lootedItems: personal.lootedItems,
+  };
+}
+
+/**
+ * Acha "você" na party pelos números do seu Hunting Analyser (quando o nome não bateu): balance
+ * igual, ou loot + supplies a até 3% da sua linha. Só devolve se houver um único candidato.
+ */
+export function findSelfByHunting(
+  members: PartyMember[],
+  personal: Pick<HuntingData, "loot" | "supplies" | "balance">,
+): string | null {
+  const exact = members.filter((m) => m.balance === personal.balance);
+  if (exact.length === 1) return exact[0].name;
+  const close = (a: number, b: number) => Math.abs(a - b) <= Math.max(1000, Math.abs(b) * 0.03);
+  const near = members.filter(
+    (m) => close(m.loot, personal.loot) && close(m.supplies, personal.supplies),
+  );
+  return near.length === 1 ? near[0].name : null;
 }
 
 /** Membros na ordem do LootSplitter do cliente: líder primeiro, depois a ordem do texto. */
@@ -482,6 +604,17 @@ export function normalizeParty(raw: unknown): PartyInfo | null {
         .slice(0, PARTY_MAX)
     : null;
   const p = r.personal as Record<string, unknown> | null | undefined;
+  const o = r.own as Record<string, unknown> | null | undefined;
+  const own: PartyOwnLine | null =
+    o && typeof o === "object"
+      ? {
+          loot: Number(o.loot) || 0,
+          supplies: Number(o.supplies) || 0,
+          balance: Number(o.balance) || 0,
+          damage: Number(o.damage) || 0,
+          healing: Number(o.healing) || 0,
+        }
+      : null;
   const transfers = Array.isArray(r.splitterTransfers)
     ? (r.splitterTransfers as Record<string, unknown>[])
         .filter((t) => t && typeof t.from === "string" && typeof t.to === "string")
@@ -507,6 +640,7 @@ export function normalizeParty(raw: unknown): PartyInfo | null {
     source: r.source === "analyser" || r.source === "splitter" ? r.source : null,
     startedAt: typeof r.startedAt === "string" ? r.startedAt.slice(0, 30) : null,
     endedAt: typeof r.endedAt === "string" ? r.endedAt.slice(0, 30) : null,
+    ...(own ? { own } : {}),
     ...(r.noHuntingAnalyser === true ? { noHuntingAnalyser: true } : {}),
   };
 }

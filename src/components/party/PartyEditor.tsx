@@ -86,7 +86,7 @@ export function PartyEditor({
     );
   }
 
-  const hasData = !!value.members?.length || value.splitterShare != null;
+  const hasData = !!value.members?.length || !!value.own || value.splitterShare != null;
   const durationMismatch =
     value.sessionSec && personalDurationSec
       ? Math.abs(value.sessionSec - personalDurationSec) > 15 * 60
@@ -138,6 +138,14 @@ export function PartyEditor({
         <SizeStepper value={value} onChange={onChange} />
       )}
 
+      {value.own && (
+        <p className="text-[11px] text-muted-foreground">
+          O Party Hunt Analyser do RubinOT traz só a sua linha (balance{" "}
+          <b className="text-foreground">{fmtGold(value.own.balance)}</b>), sem os outros membros —
+          então a sessão fica com esse lucro, sem divisão. Informe quantos jogadores tinha a party.
+        </p>
+      )}
+
       {!hasData ? (
         <>
           <label className="block">
@@ -168,6 +176,7 @@ export function PartyEditor({
               ...value,
               members: null,
               self: null,
+              own: null,
               splitterShare: null,
               splitterTransfers: null,
               lootType: null,

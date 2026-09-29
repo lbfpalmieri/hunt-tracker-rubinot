@@ -1,4 +1,4 @@
-import { looksLikePartyText } from "./party";
+import { looksLikePartyText, looksLikeRubinotPartyHunt } from "./party";
 
 /**
  * Identifica qual export do Tibia foi colado, para impedir que o usuário cole
@@ -18,11 +18,13 @@ function score(text: string, patterns: RegExp[]): number {
   return patterns.reduce((acc, re) => (re.test(text) ? acc + 1 : acc), 0);
 }
 
-export function detectBlockKind(raw: string): BlockKind {
+export function detectBlockKind(raw: string, opts: { groupMode?: boolean } = {}): BlockKind {
   const text = raw.replace(/\r/g, "");
   if (!text.trim()) return "unknown";
   // Antes do Hunting: o da party também tem Session data/Supplies/Balance.
   if (looksLikePartyText(text)) return "party";
+  // Party Hunt Analyser do RubinOT (formato do Hunting Analyser) — só no Modo Grupo.
+  if (opts.groupMode && looksLikeRubinotPartyHunt(text)) return "party";
 
   const hunting = score(text, [
     /Session data\s*:/i,

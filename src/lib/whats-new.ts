@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "group-session-personal-analysers",
+    date: "2026-09-29",
+    title: "Modo Grupo: XP/h e monstros/h com o seu Hunting Analyser",
+    description:
+      "Na Nova sessão do Modo Grupo, além do Party Hunt Analyser, agora dá pra colar (opcional) o seu Hunting Analyser, Input Analyser e Miscellaneous — igual no Modo Solo. XP, monstros e itens vêm do seu analyser; o lucro continua sendo a sua parte da divisão da party, e a duração é a da party (os valores por hora usam ela). Com o seu Hunting Analyser a sessão volta pras médias de XP, o assistente pergunta Bounty e Prey e, se o nome do personagem não bater com ninguém da party, o app te acha pelos números do seu analyser. O Party Hunt Analyser do RubinOT (que sai igual ao Hunting Analyser, com XP 0 e sem monstros/itens) agora é reconhecido como da party. Vale pras sessões novas.",
+  },
+  {
     id: "visitor-community",
     date: "2026-09-28",
     title: "Comunidade aberta pra visitantes + exportar analyser da Comunidade",
