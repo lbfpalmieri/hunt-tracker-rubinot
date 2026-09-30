@@ -52,7 +52,10 @@ Tier (Exaltation Forge, src/lib/forge.ts, tabela da página "Exaltation Forge" d
 armadura/calça/bota; habilidades Onslaught/Momentum/Ruse/Transcendence/Amplification com % por tier; tier máx pela
 classe do item (campo "tier máx" dos dados, conferido contra "Forja Classe N"). setup.weaponTier + setup.gearTier. Escolher set no assistente preenche o setup e o
 print da sessão (se ela ainda não tiver). Dashboard: RendimentoNudge + SetsNudge com horários defasados.
-Observações (notes) continuam privadas — não exibir texto livre na Comunidade.; imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
+Observações (notes) continuam privadas — não exibir texto livre na Comunidade. Formatação leve (notes-format.ts:
+**negrito**, *itálico*, ~~riscado~~, ==destaque==, # título, listas, - [ ] checklist, > citação, ---) editada em
+NotesEditor e mostrada em NotesView (elementos React, nunca innerHTML); limite NOTES_MAX. Nova sessão NÃO tem mais
+print do equipamento (gearUrl salvo null); imbuements.tsx (20h, horas+minutos); tools.linked-tasks.tsx
 (linked_task_progress, barras geral/por sala, marcar tudo); tools.compare.tsx (até 4
 hunts) e tools.comparisons.tsx (salvos privados); community.index.tsx (feed público,
 vocações em grade); feedback.tsx (tickets com imagem no bucket feedback-attachments,

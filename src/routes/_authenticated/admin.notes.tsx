@@ -6,6 +6,7 @@ import { ArrowLeft, Search, StickyNote } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { listAllSessionNotes } from "@/lib/admin-notes.functions";
 import { fmtDate } from "@/lib/format";
+import { NotesView } from "@/components/notes/NotesView";
 
 export const Route = createFileRoute("/_authenticated/admin/notes")({
   head: () => ({
@@ -84,7 +85,7 @@ function AdminNotesPage() {
                 <span>·</span>
                 <span>{fmtDate(r.createdAt)}</span>
               </div>
-              <p className="whitespace-pre-wrap text-sm">{r.notes}</p>
+              <NotesView value={r.notes} />
             </li>
           ))}
         </ul>

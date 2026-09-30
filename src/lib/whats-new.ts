@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "notes-editor-level-highlight",
+    date: "2026-09-30",
+    title: "Nova sessão: observação com formatação e level em destaque",
+    description:
+      "No último passo da Nova sessão, a observação ganhou uma barra de formatação: negrito, itálico, riscado, destaque, título, listas, checklist, citação e separador (Ctrl+B / Ctrl+I; Enter continua a lista), com a aba Visualizar. Na página da sessão ela aparece formatada e dá pra marcar os itens da checklist. O level do personagem ficou em destaque, com botões − e + pra atualizar rapidinho. O campo de print do equipamento saiu — o boneco de equipamentos do Setup já registra o que você usou.",
+  },
+  {
     id: "group-session-personal-analysers",
     date: "2026-09-29",
     title: "Modo Grupo: XP/h e monstros/h com o seu Hunting Analyser",

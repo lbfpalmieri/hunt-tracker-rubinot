@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { NotesEditor } from "@/components/notes/NotesEditor";
 
 /**
  * Editor inline da observação de uma sessão — mesmo padrão do BountyEditor/
  * PreyEditor: estado local inicializado do valor salvo, "Salvar" só habilita
  * quando o texto muda. Sempre monte com `key={session.id}` no chamador, senão
  * trocar de sessão sem desmontar deixa o texto do registro anterior aqui.
+ * Abre em "Visualizar" (texto formatado) quando já tem observação.
  */
 export function SessionNotesEditor({
   value,
@@ -29,13 +31,7 @@ export function SessionNotesEditor({
 
   return (
     <div>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Ex: testei essa build de runas, rendeu bem no prey de dano"
-        rows={3}
-        className="w-full resize-none rounded-lg border border-border bg-background/60 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-rubi-blue"
-      />
+      <NotesEditor value={text} onChange={setText} initialTab="preview" />
       <button
         type="button"
         onClick={handleSave}

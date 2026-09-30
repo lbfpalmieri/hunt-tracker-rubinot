@@ -5,6 +5,7 @@ import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { useModeSessions, usePlayMode } from "@/lib/play-mode";
 import { isSplit } from "@/lib/party";
+import { notesPlainText } from "@/lib/notes-format";
 import { ModeHint } from "@/components/party/ModeHint";
 import { PartyBadge } from "@/components/party/PartyBadge";
 import { fmtDuration, fmtGold, fmtNum, fmtDate } from "@/lib/format";
@@ -310,7 +311,7 @@ function SessionsList() {
                         {s.bounty && <BountyBadge bounty={s.bounty} className="flex-none" />}
                         {s.prey && <PreyBadge prey={s.prey} className="flex-none" />}
                         {s.notes && (
-                          <span title={s.notes} className="flex-none text-rubi-gold">
+                          <span title={notesPlainText(s.notes)} className="flex-none text-rubi-gold">
                             <StickyNote className="h-3.5 w-3.5" />
                           </span>
                         )}

@@ -39,8 +39,8 @@ import {
   ChevronRight,
   Wrench,
   Users,
+  StickyNote,
 } from "lucide-react";
-import { PasteImageBox, blobToCompressedImage } from "@/components/PasteImage";
 import { BountyTaskPanel } from "@/components/BountyTaskPanel";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
@@ -64,6 +64,7 @@ import {
 } from "@/lib/session-setup";
 import type { PreySlot } from "@/lib/prey";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
+import { NotesEditor } from "@/components/notes/NotesEditor";
 import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
 import {
@@ -113,7 +114,6 @@ function ImportPage() {
   const [huntQuery, setHuntQuery] = useState("");
   const [huntPickerOpen, setHuntPickerOpen] = useState(false);
   const huntPickerRef = useRef<HTMLDivElement>(null);
-  const [gearUrl, setGearUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   // Assistente "Adicionar sessão": Hunt → Grupo → Bounty → Prey → Setup → Finalizar. Grupo, Bounty e
   // Prey são perguntas Sim/Não (null = ainda não respondida).
@@ -232,66 +232,18 @@ function ImportPage() {
     });
   };
 
-  // Detecta imagem na área de transferência → equipamento; senão trata como texto.
-  const hasImageItem = (items?: DataTransferItemList | null): boolean => {
-    if (!items) return false;
-    return Array.from(items).some((it) => it.type.startsWith("image/"));
-  };
-
-  const gearNotice = () =>
-    setNotice({
-      tone: "ok",
-      title: "Equipamento detectado",
-      detail: "Print do equipamento adicionado à sessão.",
-    });
-
-  // Cola via evento (Ctrl+V no card ou global): imagem vai pro equipamento, texto é roteado.
+  // Cola via evento (Ctrl+V no card ou global): o texto é roteado pro bloco certo.
   const handlePasteEvent = (e: ClipboardEvent, from?: Exclude<BlockKind, "unknown">) => {
     const el = e.target as HTMLElement | null;
-    if (el && el.closest("input, textarea, [contenteditable='true']")) return;
-    if (hasImageItem(e.clipboardData?.items)) {
-      e.preventDefault();
-      // O campo de equipamento só aparece no último passo do assistente — então o print colado
-      // na tela vai direto pra sessão aqui.
-      const file = Array.from(e.clipboardData?.items ?? [])
-        .find((it) => it.type.startsWith("image/"))
-        ?.getAsFile();
-      if (file) {
-        blobToCompressedImage(file)
-          .then((img) => {
-            setGearUrl(img);
-            gearNotice();
-          })
-          .catch(() => toast.error("Não consegui ler a imagem colada."));
-      }
-      return;
-    }
+    if (el?.closest?.("input, textarea, [contenteditable='true']")) return;
     const text = e.clipboardData?.getData("text") ?? "";
     if (!text.trim()) return;
     e.preventDefault();
     routePaste(text, from);
   };
 
-  // Botão "Colar": lê a área de transferência (imagem primeiro, depois texto).
+  // Botão "Colar": lê o texto da área de transferência.
   const handleClipboardButton = async (from: Exclude<BlockKind, "unknown">) => {
-    try {
-      const clipItems = await navigator.clipboard.read?.();
-      if (clipItems) {
-        for (const item of clipItems) {
-          for (const type of item.types) {
-            if (type.startsWith("image/")) {
-              const blob = await item.getType(type);
-              const compressed = await blobToCompressedImage(blob);
-              setGearUrl(compressed);
-              gearNotice();
-              return;
-            }
-          }
-        }
-      }
-    } catch {
-      // read() pode ser indisponível/negado — segue para texto.
-    }
     try {
       const text = await navigator.clipboard.readText();
       routePaste(text, from);
@@ -302,7 +254,7 @@ function ImportPage() {
 
   // Ctrl+V em qualquer lugar da tela (fora de campos de texto) já vai pro bloco correto.
   useEffect(() => {
-    // Com o assistente aberto, o Ctrl+V é dele (equipamento no último passo) — não reencaminha blocos.
+    // Com o assistente aberto, o Ctrl+V é dos campos dele — não reencaminha blocos.
     const onPaste = (e: ClipboardEvent) => {
       if (!wizardOpen) handlePasteEvent(e);
     };
@@ -547,7 +499,7 @@ function ImportPage() {
         party: split.party,
         damage: parsed.damage,
         misc: parsed.misc,
-        gearUrl,
+        gearUrl: null,
         isPublic,
         bounty: bountyPreyOn && hasBounty ? bountyFromDraft(bountyDraft) : null,
         prey: bountyPreyOn && hasPrey ? prey : null,
@@ -1190,50 +1142,49 @@ function ImportPage() {
                 )}
               </div>
             {activeChar && (
-              <div
-                className={
-                  "mb-4 rounded-xl border p-3 " +
-                  (activeCharLevel == null
-                    ? "border-rubi-gold/40 bg-rubi-gold/[0.05]"
-                    : "border-border/60 bg-background/30")
-                }
-              >
-                <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  <Swords className="h-3.5 w-3.5 text-rubi-blue" />
-                  Level de {activeChar.name} (opcional)
-                </div>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  {activeCharLevel == null
-                    ? "Ainda não registramos o level desse personagem — preencha aqui, sem precisar ir em Meu rendimento."
-                    : `Registrado: Level ${activeCharLevel}. Atualize aqui rapidinho depois dessa sessão.`}
-                </p>
-                <div className="mt-2">
+              <div className="relative mb-4 overflow-hidden rounded-xl border border-rubi-gold/45 bg-gradient-to-br from-rubi-gold/[0.12] via-rubi-gold/[0.04] to-transparent p-4 shadow-glow-gold">
+                <Swords className="pointer-events-none absolute -right-3 -top-3 h-24 w-24 rotate-12 text-rubi-gold/[0.07]" />
+                <div className="relative flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-14 w-14 flex-none flex-col items-center justify-center rounded-xl border border-rubi-gold/50 bg-background/70">
+                      <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Lvl
+                      </span>
+                      <span className="font-display text-lg font-bold leading-none tabular-nums text-rubi-gold">
+                        {activeCharLevel ?? "?"}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-display text-sm font-bold uppercase tracking-wider text-rubi-gold">
+                        Level de {activeChar.name}
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {activeCharLevel == null
+                          ? "Ainda não registramos o level — preencha aqui, sem ir em Meu rendimento."
+                          : "Subiu de level na hunt? Atualize aqui — alimenta o Meu rendimento."}
+                      </p>
+                    </div>
+                  </div>
                   {/* key força remontar ao trocar de personagem — sem isso o input ficava com o
                       valor (e o level) do personagem anterior mesmo depois da troca. */}
-                  <LevelQuickAdd key={effectiveCharId} characterId={effectiveCharId} currentLevel={activeCharLevel} />
+                  <LevelQuickAdd
+                    key={effectiveCharId}
+                    size="lg"
+                    characterId={effectiveCharId}
+                    currentLevel={activeCharLevel}
+                  />
                 </div>
               </div>
             )}
             <div className="mt-4">
-              <span className="text-xs font-medium text-muted-foreground">
-                Equipamento (opcional)
-              </span>
-              <PasteImageBox
-                value={gearUrl}
-                onChange={(v) => setGearUrl(v)}
-                label="Tire um print do equipamento e cole aqui (Ctrl+V)"
-                className="mt-1"
-              />
-            </div>
-            <div className="mt-4">
-              <label className="text-xs font-medium text-muted-foreground">Observação (opcional)</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ex: testei essa build de runas, rendeu bem no prey de dano"
-                rows={2}
-                className="mt-1 w-full resize-none rounded-lg border border-border bg-input px-3 py-2 text-sm placeholder:text-muted-foreground/60"
-              />
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <StickyNote className="h-3.5 w-3.5 text-rubi-gold" /> Observação
+                  <span className="font-normal normal-case tracking-normal">(opcional)</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground">Só você vê — nunca vai pra Comunidade.</span>
+              </div>
+              <NotesEditor value={notes} onChange={setNotes} />
             </div>
             <label className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
               <input
