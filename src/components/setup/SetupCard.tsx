@@ -12,6 +12,8 @@ import { findWeapon, weaponSummary } from "@/lib/weapons";
 import { EquipmentDoll } from "@/components/setup/EquipmentDoll";
 
 const ROMAN = ["", "I", "II", "III"];
+const WHEEL_CHIP =
+  "inline-flex items-center gap-1 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 py-0.5 pl-0.5 pr-2 text-xs font-medium";
 
 /** Setup da sessão em modo leitura (sessão privada, Comunidade e comparação). */
 export function SetupCard({
@@ -110,27 +112,36 @@ export function SetupCard({
         </dl>
       )}
 
+      {/* Tudo que aparece aqui está MARCADO — mesmo destaque dourado do editor pros dois grupos
+          (Convicção em cinza parecia "desmarcado"). Ordem igual à do editor: Convicção, Revelação. */}
       {(setup.conviction.length > 0 || setup.revelation.length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
           <img src={WHEEL_ICON} alt="Wheel" title="Wheel of Destiny" className="h-5 w-5" />
+          {setup.conviction.map((c) => {
+            const name = c.perk.replace(/^Augmented /, "");
+            const staged = convictionMaxLevel(c.perk) === 2;
+            return (
+              <span
+                key={c.perk}
+                title={`Convicção: ${name}${staged ? ` (estágio ${ROMAN[c.level]})` : ""}`}
+                className={WHEEL_CHIP}
+              >
+                <GameIcon name={c.perk} size={18} /> {name}
+                {staged && <b className="text-rubi-gold">{ROMAN[c.level]}</b>}
+              </span>
+            );
+          })}
+          {setup.conviction.length > 0 && setup.revelation.length > 0 && (
+            <span className="mx-0.5 h-4 w-px bg-border" aria-hidden />
+          )}
           {setup.revelation.map((r) => (
             <span
               key={r.perk}
-              className="inline-flex items-center gap-1 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 py-0.5 pl-0.5 pr-2 text-xs"
+              title={`Revelação: ${r.perk} (estágio ${ROMAN[r.stage]})`}
+              className={WHEEL_CHIP}
             >
               <GameIcon name={r.perk} size={18} /> {r.perk}
               <b className="text-rubi-gold">{ROMAN[r.stage]}</b>
-            </span>
-          ))}
-          {setup.conviction.map((c) => (
-            <span
-              key={c.perk}
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-background/40 py-0.5 pl-0.5 pr-2 text-xs"
-            >
-              <GameIcon name={c.perk} size={18} /> {c.perk.replace(/^Augmented /, "")}
-              {convictionMaxLevel(c.perk) === 2 && (
-                <b className="text-rubi-gold">{ROMAN[c.level]}</b>
-              )}
             </span>
           ))}
         </div>

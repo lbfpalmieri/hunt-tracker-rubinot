@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "wheel-card-conviction-highlight",
+    date: "2026-10-03",
+    title: "Wheel: habilidades de Convicção marcadas agora aparecem destacadas",
+    description:
+      "No card do set (Meus sets, sessão, Comunidade e Comparar), as habilidades de Convicção da Wheel — Groundshaker, Front Sweep, Battle Healing... — apareciam em cinza e pareciam desmarcadas, mesmo salvas certinho. Agora todas as marcadas ficam em dourado como no editor, com a Convicção primeiro e a Revelação depois (passe o mouse pra ver o grupo e o estágio).",
+  },
+  {
     id: "notes-editor-level-highlight",
     date: "2026-09-30",
     title: "Nova sessão: observação com formatação e level em destaque",
