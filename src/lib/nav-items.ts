@@ -4,6 +4,7 @@ import {
   BookmarkCheck,
   Castle,
   Coins,
+  Compass,
   Crown,
   Gauge,
   Gem,
@@ -78,6 +79,14 @@ export const NAV_ITEMS = [
     label: "Comparar hunts",
     short: "Comparar",
     icon: Scale,
+    group: "cacada",
+  },
+  {
+    id: "hunt-advisor",
+    to: "/tools/hunt-advisor",
+    label: "Hunt Advisor",
+    short: "Advisor",
+    icon: Compass,
     group: "cacada",
   },
   {

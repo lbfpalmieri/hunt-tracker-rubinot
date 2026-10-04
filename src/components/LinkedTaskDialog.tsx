@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Swords, Gift, Repeat, Target } from "lucide-react";
+import { Compass, Swords, Gift, Repeat, Target } from "lucide-react";
 import { fmtNum } from "@/lib/format";
 import { getMonsterWeaknesses } from "@/lib/monster-weakness.functions";
 import { rankElementsAgainstHunt } from "@/lib/monster-weakness";
@@ -150,6 +151,21 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
               </>
             )}
           </Section>
+
+          {/* Hunt Advisor com as criaturas da task: set, imbuements e charms recomendados. */}
+          <Link
+            to="/tools/hunt-advisor"
+            search={{ m: task.creatures.map((c) => `${c.name}:1`).join(",") }}
+            className="flex items-center gap-3 rounded-xl border border-rubi-gold/40 bg-rubi-gold/[0.07] px-3 py-2.5 transition-colors hover:border-rubi-gold hover:bg-rubi-gold/[0.12]"
+          >
+            <Compass className="h-5 w-5 flex-none text-rubi-gold" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-rubi-gold">Abrir no Hunt Advisor</span>
+              <span className="block text-[11px] text-muted-foreground">
+                Set recomendado (defensivo, equilibrado ou ofensivo), imbuements e charms pra essas criaturas
+              </span>
+            </span>
+          </Link>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Section icon={Gift} label="Recompensa (1ª vez)" tone="gold">

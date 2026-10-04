@@ -96,6 +96,15 @@ src/routes/ (fora de _authenticated) e usam SiteShell (components/SiteShell.tsx)
 Visitante só pesquisa/vê/compara/exporta analyser; nada pessoal. robots.txt/sitemap.xml em public/ liberam essas páginas
 pro Google. Exportar Analyser (analyser-export.ts, formato do Copy to Clipboard do jogo): sessão própria, sessão pública
 e média da hunt da Comunidade (hunt + vocação).
+HUNT ADVISOR (/tools/hunt-advisor, PÚBLICA, SiteShell): criaturas da TibiaWiki em src/data/monsters-data.ts (1458, extraídas
+no navegador: HP, XP, charm, fraqueza por elemento, maior dano de cada ataque; SEM loot) lidas por src/lib/monsters.ts. Motor
+em src/lib/hunt-advisor.ts: dano recebido = Input Analyser das sessões públicas (communityIncoming) ou estimado pela wiki
+(estimateIncoming); fraqueza = média ponderada por kills × HP; set = melhor item por slot (equipment/weapons, vocação + level)
+com score defesa (resist% × fatia do dano + armor) e ataque (skills) pesados pelo modo Defensivo/Equilibrado/Ofensivo;
+itens de carga (Stone Skin, Might Ring, amuletos de 60%...) e de mergulho ficam FORA do set (CHARGED) e viram
+"Pra levar na BP" (emergencyItems); melhor elemento só entre os que a vocação usa (VOC_ELEMENTS); imbuements/charms por
+regra simples. Comunidade (hunt-advisor-community.ts): catálogo de hunts, criaturas, XP/lucro por vocação, uso de setup,
+hunts recomendadas por level (±25%). Estado na URL (?hunt=&m=&voc=&lvl=&mode=&kind=&hands=). Sem tabela nova.
 Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
 entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros
