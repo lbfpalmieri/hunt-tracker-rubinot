@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "casa-nova-2026-10-05",
+    date: "2026-10-05",
+    title: "O site mudou de casa",
+    description:
+      "O Hunt Tracker agora roda em servidores próprios (Supabase + Cloudflare). Suas sessões, personagens e configurações vieram junto — é só entrar com o mesmo Google de sempre. Também ganhamos uma página de Privacidade explicando quais dados guardamos.",
+  },
+  {
     id: "site-mais-leve-2026-10-05",
     date: "2026-10-05",
     title: "Site mais leve e rápido",
