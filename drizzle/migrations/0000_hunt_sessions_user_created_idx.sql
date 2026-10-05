@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS hunt_sessions_user_created_idx ON public.hunt_sessions (user_id, created_at DESC);
