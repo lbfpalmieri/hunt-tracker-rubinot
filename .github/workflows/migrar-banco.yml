@@ -2,6 +2,7 @@
 # Rodado manualmente (Actions → Migrar banco → Run workflow).
 #   modo=listar   → só mostra o que tem no arquivo de backup (nada é gravado)
 #   modo=restaurar → grava estrutura + dados no Supabase novo
+# O backup vem criptografado em dados/backup.dump.enc (branch migracao-dados).
 # Segredo necessário: SUPABASE_DB_URL (connection string "Session pooler" do Supabase novo,
 # com a senha do banco).
 name: Migrar banco
@@ -12,8 +13,8 @@ on:
     paths: ['.github/workflows/migrar-banco.yml']
   workflow_dispatch:
     inputs:
-      dump_url:
-        description: "Link temporário de download do backup do Lovable (.backup)"
+      chave:
+        description: "Chave para abrir o backup criptografado (dados/backup.dump.enc)"
         required: true
       modo:
         description: "listar ou restaurar"
@@ -36,12 +37,12 @@ jobs:
           sudo apt-get install -y -qq postgresql-client-17
           echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
 
-      - name: Baixar backup
+      - name: Abrir backup criptografado
         env:
-          DUMP_URL: ${{ inputs.dump_url }}
+          CHAVE: ${{ inputs.chave }}
         run: |
-          echo "::add-mask::$DUMP_URL"
-          curl -fsSL "$DUMP_URL" -o backup.dump
+          echo "::add-mask::$CHAVE"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dados/backup.dump.enc -out backup.dump -pass env:CHAVE
           ls -la backup.dump
           pg_restore -l backup.dump > lista.txt
           echo "Itens no backup: $(grep -vc '^;' lista.txt)"
