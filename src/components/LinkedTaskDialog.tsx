@@ -1,7 +1,4 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { Link } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -9,12 +6,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Compass, Swords, Gift, Repeat, Target } from "lucide-react";
+import { Swords, Gift, Repeat, Target } from "lucide-react";
 import { fmtNum } from "@/lib/format";
-import { getMonsterWeaknesses } from "@/lib/monster-weakness.functions";
-import { rankElementsAgainstHunt } from "@/lib/monster-weakness";
+import { huntWeakness } from "@/lib/hunt-advisor";
+import { findMonster } from "@/lib/monsters";
 import { damageElementInfo } from "@/lib/damage-elements";
 import type { LinkedTaskEntry, LinkedTaskRoom } from "@/lib/linked-tasks.functions";
+import { LinkedTaskAdvice } from "@/components/advisor/LinkedTaskAdvice";
 
 interface Props {
   room: LinkedTaskRoom | null;
@@ -24,33 +22,23 @@ interface Props {
 }
 
 export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
-  const fetchWeaknesses = useServerFn(getMonsterWeaknesses);
-  // Cap em 8 (mesmo limite do HuntDashboardDialog) — algumas tasks (ex. Warzone) têm 11 criaturas,
-  // e não vale a pena disparar tantas requisições paralelas pra TibiaWiki de uma vez.
-  const creatureNames = useMemo(() => task?.creatures.slice(0, 8).map((c) => c.name) ?? [], [task]);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["monster-weaknesses", creatureNames.slice().sort().join("|")],
-    queryFn: () => fetchWeaknesses({ data: { names: creatureNames } }),
-    enabled: open && creatureNames.length > 0,
-  });
-
+  // Fraquezas da base local de criaturas (src/data/monsters-data.ts, da TibiaWiki) — sem
+  // consultar a wiki na hora. Cada criatura da task pesa igual (× vida, ver huntWeakness).
   const ranking = useMemo(
     () =>
-      data
-        ? rankElementsAgainstHunt(
-            creatureNames.map((name) => ({ name, count: 1 })),
-            data.weaknesses,
-          )
-        : [],
-    [data, creatureNames],
+      huntWeakness(
+        (task?.creatures ?? [])
+          .filter((c) => findMonster(c.name))
+          .map((c) => ({ name: c.name, count: 1 })),
+      ).map((w) => ({ element: w.element, avgMod: w.mod })),
+    [task],
   );
 
   if (!task) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <img
@@ -74,11 +62,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
           <Section icon={Target} label={`Criaturas (${task.creatures.length})`}>
             <div className="flex flex-wrap gap-2">
               {task.creatures.map((c) => {
-                const hasData = !!data?.weaknesses[c.name];
-                // undefined (nem entrou na consulta, cap de 8) conta como "sem dado" mesmo
-                // sem termos consultado ainda — trata igual ao caso pendente.
-                const isPermanent = data?.permanent[c.name] ?? false;
-                const pending = !isLoading && !hasData;
+                const pending = !findMonster(c.name);
                 return (
                   <span
                     key={c.name}
@@ -100,7 +84,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
                     {c.name}
                     {pending && (
                       <span className="text-[10px] text-muted-foreground/70">
-                        · {isPermanent ? "sem dado na TibiaWiki" : "aguarde, em desenvolvimento"}
+                        · sem dado na TibiaWiki
                       </span>
                     )}
                   </span>
@@ -110,9 +94,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
           </Section>
 
           <Section icon={Swords} label="Elemento mais eficaz contra essas criaturas" tone="success">
-            {isLoading ? (
-              <div className="h-12 animate-pulse rounded-lg bg-muted/20" />
-            ) : ranking.length === 0 ? (
+            {ranking.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 Não achei dados de resistência pra essas criaturas na TibiaWiki.
               </p>
@@ -152,20 +134,8 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
             )}
           </Section>
 
-          {/* Hunt Advisor com as criaturas da task: set, imbuements e charms recomendados. */}
-          <Link
-            to="/tools/hunt-advisor"
-            search={{ m: task.creatures.map((c) => `${c.name}:1`).join(",") }}
-            className="flex items-center gap-3 rounded-xl border border-rubi-gold/40 bg-rubi-gold/[0.07] px-3 py-2.5 transition-colors hover:border-rubi-gold hover:bg-rubi-gold/[0.12]"
-          >
-            <Compass className="h-5 w-5 flex-none text-rubi-gold" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-rubi-gold">Abrir no Hunt Advisor</span>
-              <span className="block text-[11px] text-muted-foreground">
-                Set recomendado (defensivo, equilibrado ou ofensivo), imbuements e charms pra essas criaturas
-              </span>
-            </span>
-          </Link>
+          {/* Conselheiro: dano, set pra vocação/level do personagem, imbuements, charms, emergência. */}
+          <LinkedTaskAdvice creatures={task.creatures.map((c) => c.name)} />
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Section icon={Gift} label="Recompensa (1ª vez)" tone="gold">

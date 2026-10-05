@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Beer, Compass, Info, LogIn, Scale, Sparkles } from "lucide-react";
+import { Beer, Info, LogIn, Scale, Sparkles } from "lucide-react";
 import logo from "@/assets/dragon-logo.png.asset.json";
 import { AppShell } from "@/components/AppShell";
 import { PlayModeSwitch } from "@/components/PlayModeSwitch";
@@ -30,7 +30,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
 const VISITOR_NAV = [
   { to: "/community", label: "Comunidade", icon: Beer },
-  { to: "/tools/hunt-advisor", label: "Hunt Advisor", icon: Compass },
   { to: "/tools/compare", label: "Comparar hunts", icon: Scale },
   { to: "/about", label: "Sobre", icon: Info },
 ] as const;

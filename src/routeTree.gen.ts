@@ -26,7 +26,6 @@ import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/w
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
 import { Route as CommunityIdRouteImport } from './routes/community.$id'
 import { Route as ToolsCompareRouteImport } from './routes/tools.compare'
-import { Route as ToolsHuntAdvisorRouteImport } from './routes/tools.hunt-advisor'
 import { Route as AuthenticatedAdminHuntsRouteImport } from './routes/_authenticated/admin.hunts'
 import { Route as AuthenticatedAdminNotesRouteImport } from './routes/_authenticated/admin.notes'
 import { Route as AuthenticatedBossesIndexRouteImport } from './routes/_authenticated/bosses.index'
@@ -124,11 +123,6 @@ const ToolsCompareRoute = ToolsCompareRouteImport.update({
   path: '/tools/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ToolsHuntAdvisorRoute = ToolsHuntAdvisorRouteImport.update({
-  id: '/tools/hunt-advisor',
-  path: '/tools/hunt-advisor',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedAdminHuntsRoute = AuthenticatedAdminHuntsRouteImport.update({
   id: '/admin/hunts',
   path: '/admin/hunts',
@@ -208,7 +202,6 @@ export interface FileRoutesByFullPath {
   '/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof CommunityIdRoute
   '/tools/compare': typeof ToolsCompareRoute
-  '/tools/hunt-advisor': typeof ToolsHuntAdvisorRoute
   '/community/': typeof CommunityIndexRoute
   '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/admin/notes': typeof AuthenticatedAdminNotesRoute
@@ -238,7 +231,6 @@ export interface FileRoutesByTo {
   '/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof CommunityIdRoute
   '/tools/compare': typeof ToolsCompareRoute
-  '/tools/hunt-advisor': typeof ToolsHuntAdvisorRoute
   '/community': typeof CommunityIndexRoute
   '/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/admin/notes': typeof AuthenticatedAdminNotesRoute
@@ -270,7 +262,6 @@ export interface FileRoutesById {
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof CommunityIdRoute
   '/tools/compare': typeof ToolsCompareRoute
-  '/tools/hunt-advisor': typeof ToolsHuntAdvisorRoute
   '/community/': typeof CommunityIndexRoute
   '/_authenticated/admin/hunts': typeof AuthenticatedAdminHuntsRoute
   '/_authenticated/admin/notes': typeof AuthenticatedAdminNotesRoute
@@ -302,7 +293,6 @@ export interface FileRouteTypes {
     | '/wiki'
     | '/community/$id'
     | '/tools/compare'
-    | '/tools/hunt-advisor'
     | '/community/'
     | '/admin/hunts'
     | '/admin/notes'
@@ -332,7 +322,6 @@ export interface FileRouteTypes {
     | '/wiki'
     | '/community/$id'
     | '/tools/compare'
-    | '/tools/hunt-advisor'
     | '/community'
     | '/admin/hunts'
     | '/admin/notes'
@@ -363,7 +352,6 @@ export interface FileRouteTypes {
     | '/_authenticated/wiki'
     | '/community/$id'
     | '/tools/compare'
-    | '/tools/hunt-advisor'
     | '/community/'
     | '/_authenticated/admin/hunts'
     | '/_authenticated/admin/notes'
@@ -385,7 +373,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CommunityIdRoute: typeof CommunityIdRoute
   ToolsCompareRoute: typeof ToolsCompareRoute
-  ToolsHuntAdvisorRoute: typeof ToolsHuntAdvisorRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
 }
 
@@ -508,13 +495,6 @@ declare module '@tanstack/react-router' {
       path: '/tools/compare'
       fullPath: '/tools/compare'
       preLoaderRoute: typeof ToolsCompareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tools/hunt-advisor': {
-      id: '/tools/hunt-advisor'
-      path: '/tools/hunt-advisor'
-      fullPath: '/tools/hunt-advisor'
-      preLoaderRoute: typeof ToolsHuntAdvisorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/hunts': {
@@ -667,7 +647,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CommunityIdRoute: CommunityIdRoute,
   ToolsCompareRoute: ToolsCompareRoute,
-  ToolsHuntAdvisorRoute: ToolsHuntAdvisorRoute,
   CommunityIndexRoute: CommunityIndexRoute,
 }
 export const routeTree = rootRouteImport

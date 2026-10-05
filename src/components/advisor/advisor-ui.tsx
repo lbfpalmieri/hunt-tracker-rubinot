@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
 import { damageElementInfo } from "@/lib/damage-elements";
 import type { AttackElement } from "@/lib/monsters";
 import type { MixEntry } from "@/lib/hunt-advisor";
@@ -53,38 +52,6 @@ export function MixBar({ mix }: { mix: MixEntry[] }) {
         })}
       </div>
     </div>
-  );
-}
-
-/** Card de seção do Advisor: ícone + título + subtítulo opcional. */
-export function AdvisorCard({
-  icon: Icon,
-  title,
-  subtitle,
-  right,
-  children,
-  className = "",
-}: {
-  icon: LucideIcon;
-  title: string;
-  subtitle?: ReactNode;
-  right?: ReactNode;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={"card-surface min-w-0 p-4 sm:p-5 " + className}>
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-            <Icon className="h-4 w-4 flex-none text-rubi-gold" /> {title}
-          </h2>
-          {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
-        </div>
-        {right}
-      </div>
-      {children}
-    </section>
   );
 }
 

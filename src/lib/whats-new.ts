@@ -17,11 +17,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    id: "hunt-advisor",
-    date: "2026-10-04",
-    title: "Hunt Advisor: set recomendado, imbuements e charms pra cada hunt",
+    id: "linked-task-advice",
+    date: "2026-10-05",
+    title: "Linked Tasks: dano, set sugerido, imbuements e charms em cada task",
     description:
-      "Nova ferramenta em Caçada → Hunt Advisor (aberta até pra quem não tem conta). Escolha uma hunt — recomendada pro seu level e vocação, da comunidade, ou montada com as criaturas — e veja: o dano que você vai tomar (real, do Input Analyser das sessões públicas, ou estimado pela TibiaWiki), as fraquezas da hunt, o set recomendado no boneco de equipamentos em 3 estilos (Defensivo, Equilibrado, Ofensivo) com alternativas pra cada slot, a proteção do set contra aquela hunt, imbuements e charms sugeridos, itens de carga pra levar na BP e o que os jogadores da comunidade usaram ali. Dá pra salvar o set recomendado direto em Meus sets e compartilhar o link. Na Linked Task, o botão Abrir no Hunt Advisor já leva as criaturas da task.",
+      "Ao abrir uma Linked Task agora aparece, além do elemento mais eficaz: o dano que você vai tomar daquelas criaturas, o set sugerido pra vocação e level do seu personagem (Defensivo, Equilibrado ou Ofensivo — dá pra trocar a vocação), os imbuements (incluindo os de proteção), o charm certo pra cada criatura e os itens de carga pra levar na BP. O elemento mais eficaz agora sai na hora, sem esperar a wiki carregar. Dados da TibiaWiki.",
   },
   {
     id: "wheel-card-conviction-highlight",

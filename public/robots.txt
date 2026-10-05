@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 Allow: /community
 Allow: /tools/compare
-Allow: /tools/hunt-advisor
 Allow: /about
 Disallow: /auth
 Disallow: /dashboard

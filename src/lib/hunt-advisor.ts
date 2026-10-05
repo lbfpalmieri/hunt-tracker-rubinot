@@ -103,24 +103,6 @@ export function estimateIncoming(monsters: HuntMonster[]): MixEntry[] {
   return toEntries(normalize(mix));
 }
 
-/** Dano recebido de verdade (Input Analyser), média ponderada pela duração de cada sessão. */
-export function communityIncoming(
-  rows: { durationSec: number; damageTakenTypes?: { type: string; pct: number }[] }[],
-): { mix: MixEntry[]; sessions: number } {
-  const mix: Mix = {};
-  let sessions = 0;
-  for (const r of rows) {
-    const types = (r.damageTakenTypes ?? [])
-      .map((t) => ({ el: attackKey(t.type), pct: Number(t.pct) || 0 }))
-      .filter((t): t is { el: AttackElement; pct: number } => !!t.el && t.pct > 0);
-    if (!types.length) continue;
-    sessions++;
-    const w = Math.max(r.durationSec, 600);
-    for (const t of types) mix[t.el] = (mix[t.el] ?? 0) + t.pct * w;
-  }
-  return { mix: toEntries(normalize(mix)), sessions };
-}
-
 export interface WeaknessEntry {
   element: Element;
   /** % de dano que a hunt toma desse elemento (100 = normal), média ponderada. */
@@ -538,21 +520,6 @@ export function setProtection(setup: SessionSetup): Mix {
     if (!e) continue;
     for (const [el, v] of Object.entries(parseResist(e.resist)) as [AttackElement, number][])
       out[el] = (out[el] ?? 0) + v;
-  }
-  return out;
-}
-
-/** Skills somadas do set (arma + equipamentos). */
-export function setSkills(setup: SessionSetup): Record<string, number> {
-  const out: Record<string, number> = {};
-  const add = (s: string) => {
-    for (const [k, v] of Object.entries(parseSkills(s))) out[k] = (out[k] ?? 0) + v;
-  };
-  const w = findWeapon(setup.weapon);
-  if (w) add(w.skills);
-  for (const n of [...Object.values(setup.gear ?? {}), setup.quiver].filter(Boolean) as string[]) {
-    const e = findEquipment(n);
-    if (e) add(e.skills);
   }
   return out;
 }

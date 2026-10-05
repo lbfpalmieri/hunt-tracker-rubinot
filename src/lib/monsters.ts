@@ -81,25 +81,3 @@ export function findMonster(name: string | null | undefined): MonsterInfo | unde
   }
   return byName.get(norm(name));
 }
-
-/** Busca pra montar hunt personalizada: começa com o texto primeiro, depois contém; sem bosses por padrão. */
-export function searchMonsters(
-  q: string,
-  opts: { bosses?: boolean; limit?: number } = {},
-): MonsterInfo[] {
-  const needle = q.trim().toLowerCase();
-  if (needle.length < 2) return [];
-  const list = allMonsters().filter(
-    (m) =>
-      (opts.bosses || !m.boss) &&
-      !/\((nostalgia|anti-botter)\)/i.test(m.name) &&
-      m.name.toLowerCase().includes(needle),
-  );
-  return list
-    .sort(
-      (a, b) =>
-        Number(!a.name.toLowerCase().startsWith(needle)) -
-          Number(!b.name.toLowerCase().startsWith(needle)) || b.exp - a.exp,
-    )
-    .slice(0, opts.limit ?? 12);
-}
