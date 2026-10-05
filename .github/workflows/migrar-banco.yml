@@ -3,7 +3,7 @@
 #   modo=listar   → só mostra o que tem no arquivo de backup (nada é gravado)
 #   modo=restaurar → grava estrutura + dados no Supabase novo
 # O backup vem criptografado em dados/backup.dump.enc (branch migracao-dados).
-# Segredo necessário: SUPABASE_DB_URL (connection string "Session pooler" do Supabase novo,
+# Segredos necessários: BACKUP_KEY (chave do backup criptografado) e SUPABASE_DB_URL (connection string "Session pooler" do Supabase novo,
 # com a senha do banco).
 name: Migrar banco
 
@@ -13,9 +13,6 @@ on:
     paths: ['.github/workflows/migrar-banco.yml']
   workflow_dispatch:
     inputs:
-      chave:
-        description: "Chave para abrir o backup criptografado (dados/backup.dump.enc)"
-        required: true
       modo:
         description: "listar ou restaurar"
         required: true
@@ -39,9 +36,9 @@ jobs:
 
       - name: Abrir backup criptografado
         env:
-          CHAVE: ${{ inputs.chave }}
+          CHAVE: ${{ secrets.BACKUP_KEY }}
         run: |
-          echo "::add-mask::$CHAVE"
+          CHAVE=$(printf '%s' "$CHAVE" | tr -d '[:space:]')
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dados/backup.dump.enc -out backup.dump -pass env:CHAVE
           ls -la backup.dump
           pg_restore -l backup.dump > lista.txt
