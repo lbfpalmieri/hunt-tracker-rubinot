@@ -1,4 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { NavIcon } from "@/components/nav/NavIcon";
 import { BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/dragon-logo.png.asset.json";
@@ -76,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div
       className={
-        "min-h-screen transition-[padding] duration-200 " + (sidebarFixed ? "lg:pl-72" : "lg:pl-16")
+        "min-h-screen transition-[padding] duration-200 " + (sidebarFixed ? "lg:pl-72" : "lg:pl-[72px]")
       }
     >
       <SidebarNav
@@ -96,14 +97,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
           </Link>
 
-          <div className="hidden min-w-0 lg:block">
-            {currentGroup && (
-              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-rubi-gold/85">
-                {currentGroup.label}
+          <div className="hidden min-w-0 items-center gap-3 lg:flex">
+            {current && <NavIcon item={current} size={34} />}
+            <div className="min-w-0">
+              {currentGroup && (
+                <div className="font-brand text-[11px] font-bold uppercase tracking-[0.16em] text-rubi-gold">
+                  {currentGroup.label}
+                </div>
+              )}
+              <div className="truncate font-display text-lg font-bold leading-tight">
+                {current?.label ?? "RubinOT"}
               </div>
-            )}
-            <div className="truncate font-display text-lg font-bold leading-tight">
-              {current?.label ?? "RubinOT"}
             </div>
           </div>
 

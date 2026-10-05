@@ -123,7 +123,12 @@ function RendimentoPage() {
       [...visibleSessions].reverse().map((s, i) => ({
         i: i + 1,
         name: s.huntName,
-        "Raw XP/h": Math.round((huntRawXp(s) ?? 0) / (s.hunting.durationSec / 3600 || 1)),
+        // Sessão sem XP conhecido (bounty sem valor, party só com o Party Hunt) fica de fora do
+        // gráfico (null = sem ponto) em vez de aparecer como 0 e derrubar a linha.
+        "Raw XP/h":
+          huntRawXp(s) == null
+            ? null
+            : Math.round((huntRawXp(s) as number) / (s.hunting.durationSec / 3600 || 1)),
         "Lucro/h": Math.round(s.hunting.balance / (s.hunting.durationSec / 3600 || 1)),
       })),
     [visibleSessions],
@@ -427,7 +432,7 @@ function RendimentoPage() {
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
           {active.name} · {active.vocation}
         </div>
-        <h1 className="mt-1 flex items-center gap-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="mt-1 flex items-center gap-2 font-brand text-3xl font-bold tracking-tight sm:text-4xl">
           <Gauge className="h-7 w-7 text-rubi-blue" /> Meu <span className="text-gradient-brand">rendimento</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

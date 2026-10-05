@@ -106,7 +106,10 @@ Ofensivo; itens de carga (Stone Skin, Might Ring, amuletos de 60%...) e de mergu
 "Pra levar na BP" (emergencyItems); melhor elemento só entre os que a vocação usa (VOC_ELEMENTS); imbuements/charms por
 regra simples.
 Navegação: src/lib/nav-items.ts é a FONTE ÚNICA dos itens de menu (NAV_ITEMS/NAV_GROUPS) — página nova
-entra só lá (id, rota, label, short, ícone lucide, grupo). Desktop (≥1024px): menu lateral
+entra só lá (id, rota, label, short, ícone lucide, SPRITE do jogo, grupo). O menu mostra o sprite (TibiaWiki, via
+components/nav/NavIcon.tsx → GameIcon, estilo da wiki/site do RubinOT) e cai no ícone lucide se a imagem falhar.
+Visual: títulos de página (h1) e de seção do menu em Cinzel (font-brand, a fonte do site oficial); texto em Inter;
+números/títulos de card em Space Grotesk (font-display). color-scheme: dark nos controles nativos. Desktop (≥1024px): menu lateral
 (components/nav/SidebarNav.tsx; recolhido/hover/fixado). <1024px: barra de baixo com os 4 primeiros
 "fixados" + folha "Menu" em grade (MobileNav.tsx). O usuário personaliza fixados/ordem em
 NavCustomizeDialog; salvo em public.user_nav_prefs (1 linha/usuário, localStorage só como cache —

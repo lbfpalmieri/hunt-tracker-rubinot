@@ -379,7 +379,7 @@ function FeedbackPage() {
     <AppShell>
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Suporte</div>
-        <h1 className="mt-1 font-display text-3xl font-bold">Sugestões e bugs</h1>
+        <h1 className="mt-1 font-brand text-3xl font-bold">Sugestões e bugs</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Envie uma ideia ou relate um problema. Você acompanha o status aqui mesmo e recebe a resposta na conversa.
         </p>

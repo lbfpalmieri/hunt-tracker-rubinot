@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { NavIcon } from "@/components/nav/NavIcon";
 import { LogOut, Menu, SlidersHorizontal, X } from "lucide-react";
 import {
   MOBILE_BAR_SLOTS,
@@ -48,17 +49,19 @@ export function MobileNav({
         >
           {bar.map((n) => {
             const active = isNavActive(pathname, n.to);
-            const Icon = n.icon;
             return (
               <Link
                 key={n.id}
                 to={n.to}
                 className={
-                  "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight transition-colors " +
-                  (active ? "text-rubi-blue" : "text-muted-foreground")
+                  "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium leading-tight transition-colors " +
+                  (active ? "text-rubi-gold" : "text-foreground/75")
                 }
               >
-                <Icon className="h-5 w-5" />
+                {active && (
+                  <span className="absolute inset-x-3 top-0 h-[2px] rounded-b-full bg-rubi-gold" />
+                )}
+                <NavIcon item={n} size={26} />
                 <span className="w-full truncate px-0.5 text-center">{n.short}</span>
               </Link>
             );
@@ -123,13 +126,12 @@ export function MobileNav({
                 if (items.length === 0) return null;
                 return (
                   <div key={g.id} className="mb-3">
-                    <div className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-rubi-gold/85">
+                    <div className="mb-1.5 px-1 font-brand text-[11px] font-bold uppercase tracking-[0.16em] text-rubi-gold">
                       {g.label}
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {items.map((n) => {
                         const active = isNavActive(pathname, n.to);
-                        const Icon = n.icon;
                         const badge = n.id === "imbuements" && lowCount > 0 ? lowCount : 0;
                         return (
                           <Link
@@ -137,13 +139,13 @@ export function MobileNav({
                             to={n.to}
                             onClick={() => onOpenChange(false)}
                             className={
-                              "relative flex min-h-[4.75rem] flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2.5 text-center text-[11px] font-medium leading-tight transition-colors active:bg-accent " +
+                              "relative flex min-h-[5rem] flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2.5 text-center text-xs font-medium leading-tight transition-colors active:bg-accent " +
                               (active
-                                ? "border-rubi-blue/50 bg-rubi-blue-soft text-rubi-blue"
+                                ? "border-rubi-gold/60 bg-rubi-gold/10 text-rubi-gold"
                                 : "border-border/60 bg-surface/60 text-foreground")
                             }
                           >
-                            <Icon className={"h-6 w-6 " + (active ? "" : "text-rubi-blue")} />
+                            <NavIcon item={n} size={32} />
                             <span className="line-clamp-2">{n.short}</span>
                             {badge > 0 && (
                               <span className="absolute right-1.5 top-1.5 rounded-full bg-rubi-gold px-1.5 py-0.5 text-[10px] font-bold text-background">

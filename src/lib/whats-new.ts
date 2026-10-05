@@ -17,6 +17,20 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "visual-refresh-rubinot",
+    date: "2026-10-05",
+    title: "Visual novo no estilo do RubinOT: menu com itens do jogo e títulos em Cinzel",
+    description:
+      "O menu ganhou ícones com os sprites do próprio Tibia (como na wiki e no site do RubinOT), letra maior e mais clara, o item aberto destacado em dourado e as seções em Cinzel — a mesma fonte dos títulos do site oficial, que agora também aparece no título de cada página. No topo aparece o ícone da página em que você está. Os textos secundários e as bordas ficaram mais claros (antes tudo parecia apagado) e as listas de opções do navegador agora abrem no tema escuro.",
+  },
+  {
+    id: "calc-fixes-2026-10",
+    date: "2026-10-05",
+    title: "Correções nos cálculos de XP/h e nos dados dos personagens",
+    description:
+      "Médias de hunt (Sessões → Hunts, Comparar, Ranking): o Raw XP/h saía mais baixo quando a hunt tinha sessões sem XP conhecido (bounty sem o valor informado ou grupo só com o Party Hunt) — agora a conta usa só o tempo das sessões que têm XP. Nos cards da Comunidade o XP/h também não é mais puxado pra baixo por sessões de grupo sem XP. Nos gráficos de evolução essas sessões não aparecem mais como 0. Hunts escritas com maiúscula diferente (\"Asura\" e \"asura\") agora contam juntas no Top spot e na Calculadora de monstros/h. Renomear um personagem atualiza o nome nas sessões da Comunidade, excluir o personagem ativo já seleciona o próximo, e trocar a Bounty de uma sessão não deixa mais a criatura antiga gravada.",
+  },
+  {
     id: "linked-task-advice",
     date: "2026-10-05",
     title: "Linked Tasks: dano, set sugerido, imbuements e charms em cada task",

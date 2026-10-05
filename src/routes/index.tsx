@@ -112,7 +112,7 @@ function Landing() {
           <div className="mt-6 text-xs font-medium uppercase tracking-widest text-rubi-gold">
             É sobre RubinOT
           </div>
-          <h1 className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-6xl">
+          <h1 className="mt-3 font-brand text-4xl font-bold tracking-tight sm:text-6xl">
             Suas hunts, <span className="text-gradient-brand">acompanhadas</span>.
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">

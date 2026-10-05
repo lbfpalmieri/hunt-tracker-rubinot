@@ -4,9 +4,13 @@ import { useState } from "react";
 import logo from "@/assets/dragon-logo.png.asset.json";
 import { NAV_GROUPS, NAV_ITEMS, findNavItem, isNavActive, type NavItem } from "@/lib/nav-items";
 import { setSidebarExpanded, useNavPrefs } from "@/lib/nav-prefs";
+import { NavIcon } from "@/components/nav/NavIcon";
 
 const ROW =
-  "relative mx-2.5 flex h-10 items-center gap-3 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors";
+  "relative mx-2 flex h-11 items-center gap-3 whitespace-nowrap rounded-lg px-2.5 text-[15px] transition-colors";
+
+/** Largura do menu recolhido — o AppShell usa a mesma pra abrir espaço (lg:pl-[72px]). */
+const SIDEBAR_COLLAPSED = "w-[72px]";
 
 interface Props {
   pathname: string;
@@ -16,9 +20,9 @@ interface Props {
 }
 
 /**
- * Menu lateral do desktop (≥1024px). Recolhido = trilho de 64px só com ícones; ao passar o
- * mouse (ou tabular) abre por cima do conteúdo; o botão na borda fixa aberto e empurra a página
- * (AppShell lê `expanded` pra abrir espaço). Fixados do usuário ficam no topo.
+ * Menu lateral do desktop (≥1024px). Recolhido = trilho de 72px só com os ícones (sprites do
+ * jogo, como na wiki/site do RubinOT); ao passar o mouse (ou tabular) abre por cima do conteúdo;
+ * o botão na borda fixa aberto e empurra a página (AppShell lê `expanded`). Fixados no topo.
  */
 export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props) {
   const pinnedIds = useNavPrefs((s) => s.pinned);
@@ -28,43 +32,37 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
   const open = fixedOpen || hover || focus;
 
   const pinned = pinnedIds.map(findNavItem).filter((n): n is NavItem => !!n);
+  const fade = "transition-opacity duration-150 " + (open ? "opacity-100" : "opacity-0");
 
   const renderItem = (n: NavItem) => {
     const active = isNavActive(pathname, n.to);
-    const Icon = n.icon;
     const badge = n.id === "imbuements" && lowCount > 0 ? lowCount : 0;
     return (
       <Link
         key={n.id}
         to={n.to}
         title={open ? undefined : n.label}
+        aria-current={active ? "page" : undefined}
         className={
           ROW +
           " " +
           (active
-            ? "bg-rubi-blue-soft text-rubi-blue"
-            : "text-muted-foreground hover:bg-accent hover:text-foreground")
+            ? "bg-gradient-to-r from-rubi-gold/20 to-rubi-gold/[0.04] font-semibold text-rubi-gold ring-1 ring-inset ring-rubi-gold/35"
+            : "font-medium text-foreground/80 hover:bg-white/[0.06] hover:text-foreground")
         }
       >
         {active && (
-          <span className="absolute -left-2.5 bottom-2 top-2 w-[3px] rounded-r-full bg-rubi-gold" />
+          <span className="absolute -left-2 bottom-2 top-2 w-[3px] rounded-r-full bg-rubi-gold shadow-[0_0_8px_var(--rubi-gold)]" />
         )}
-        <Icon className="h-5 w-5 flex-none" />
-        <span
-          className={
-            "flex-1 truncate transition-opacity duration-150 " +
-            (open ? "opacity-100" : "opacity-0")
-          }
-        >
-          {n.label}
-        </span>
+        <NavIcon item={n} size={30} />
+        <span className={"flex-1 truncate " + fade}>{n.label}</span>
         {badge > 0 &&
           (open ? (
-            <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-[10px] font-bold text-background">
+            <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-[11px] font-bold text-background">
               {badge}
             </span>
           ) : (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rubi-gold px-1 text-[10px] font-bold text-background">
+            <span className="absolute right-1 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rubi-gold px-1 text-[10px] font-bold text-background">
               {badge}
             </span>
           ))}
@@ -74,12 +72,13 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
 
   const title = (label: string, icon?: boolean) =>
     open ? (
-      <div className="flex items-center gap-1.5 whitespace-nowrap px-5 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-rubi-gold/85">
+      <div className="flex items-center gap-2 whitespace-nowrap px-4 pb-1.5 pt-5 font-brand text-[11px] font-bold uppercase tracking-[0.18em] text-rubi-gold">
         {icon && <Pin className="h-3 w-3" />}
         {label}
+        <span className="h-px flex-1 bg-gradient-to-r from-rubi-gold/40 to-transparent" />
       </div>
     ) : (
-      <div className="mx-5 my-3 h-px bg-border" />
+      <div className="mx-4 my-3 h-px bg-rubi-gold/20" />
     );
 
   return (
@@ -90,36 +89,29 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
       onBlur={() => setFocus(false)}
       aria-label="Menu principal"
       className={
-        "fixed inset-y-0 left-0 z-40 hidden border-r border-rubi-gold/30 bg-surface/95 backdrop-blur-xl transition-[width,box-shadow] duration-200 lg:block " +
-        (open ? "w-72" : "w-16") +
+        "fixed inset-y-0 left-0 z-40 hidden border-r border-rubi-gold/30 bg-[color-mix(in_oklab,var(--background)_85%,black)] backdrop-blur-xl transition-[width,box-shadow] duration-200 lg:block " +
+        (open ? "w-72" : SIDEBAR_COLLAPSED) +
         (open && !fixedOpen ? " shadow-[12px_0_40px_-12px_rgba(0,0,0,0.7)]" : "")
       }
     >
       <div className="flex h-full flex-col overflow-hidden">
         <Link
           to="/dashboard"
-          className="flex h-[72px] flex-none items-center gap-3 px-3.5"
+          className="flex h-[72px] flex-none items-center gap-3 border-b border-rubi-gold/15 px-4"
           title="Dashboard"
         >
           <img
             src={logo.url}
             alt="RubinOT Hunt Tracker"
-            className="h-9 w-9 flex-none object-contain"
+            className="h-10 w-10 flex-none object-contain drop-shadow-[0_0_8px_rgba(250,204,21,0.25)]"
           />
-          <span
-            className={
-              "min-w-0 whitespace-nowrap font-display leading-tight transition-opacity duration-150 " +
-              (open ? "opacity-100" : "opacity-0")
-            }
-          >
-            <span className="block text-sm font-bold text-foreground">RubinOT</span>
-            <span className="block text-xs text-muted-foreground">Hunt Tracker</span>
+          <span className={"min-w-0 whitespace-nowrap leading-tight " + fade}>
+            <span className="block font-brand text-base font-bold tracking-wide text-rubi-gold">
+              RubinOT
+            </span>
+            <span className="block text-xs font-medium text-foreground/70">Hunt Tracker</span>
           </span>
         </Link>
-
-        <div className="flex-none px-4 pb-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-rubi-gold/70">
-          <span className="whitespace-nowrap">{open ? "Menu de navegação" : "Menu"}</span>
-        </div>
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden pb-2 [scrollbar-width:thin]">
           {pinned.length > 0 && (
@@ -140,25 +132,20 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
           })}
         </nav>
 
-        <div className="flex-none space-y-0.5 border-t border-border py-2">
+        <div className="flex-none space-y-0.5 border-t border-rubi-gold/15 py-2">
           <button
             type="button"
             onClick={onCustomize}
             title={open ? undefined : "Personalizar menu"}
             className={
               ROW +
-              " w-[calc(100%-1.25rem)] text-muted-foreground hover:bg-accent hover:text-foreground"
+              " w-[calc(100%-1rem)] font-medium text-foreground/70 hover:bg-white/[0.06] hover:text-foreground"
             }
           >
-            <SlidersHorizontal className="h-5 w-5 flex-none" />
-            <span
-              className={
-                "flex-1 truncate text-left transition-opacity duration-150 " +
-                (open ? "opacity-100" : "opacity-0")
-              }
-            >
-              Personalizar menu
+            <span className="flex h-[30px] w-[30px] flex-none items-center justify-center">
+              <SlidersHorizontal className="h-5 w-5" />
             </span>
+            <span className={"flex-1 truncate text-left " + fade}>Personalizar menu</span>
           </button>
           <button
             type="button"
@@ -166,18 +153,13 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
             title={open ? undefined : "Sair"}
             className={
               ROW +
-              " w-[calc(100%-1.25rem)] text-muted-foreground hover:bg-accent hover:text-foreground"
+              " w-[calc(100%-1rem)] font-medium text-foreground/70 hover:bg-rubi-danger/10 hover:text-rubi-danger"
             }
           >
-            <LogOut className="h-5 w-5 flex-none" />
-            <span
-              className={
-                "flex-1 truncate text-left transition-opacity duration-150 " +
-                (open ? "opacity-100" : "opacity-0")
-              }
-            >
-              Sair
+            <span className="flex h-[30px] w-[30px] flex-none items-center justify-center">
+              <LogOut className="h-5 w-5" />
             </span>
+            <span className={"flex-1 truncate text-left " + fade}>Sair</span>
           </button>
         </div>
       </div>

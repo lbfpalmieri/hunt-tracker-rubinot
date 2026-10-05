@@ -136,7 +136,7 @@ function SessionsList() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Histórico</div>
-          <h1 className="mt-1 font-display text-3xl font-bold">
+          <h1 className="mt-1 font-brand text-3xl font-bold">
             {mode === "party" ? "Sessões em grupo" : "Sessões"}
           </h1>
           <ModeHint characterId={null} className="mt-2" />

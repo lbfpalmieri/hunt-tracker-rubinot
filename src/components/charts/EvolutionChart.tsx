@@ -3,7 +3,7 @@ import {
 } from "recharts";
 import { fmtGold } from "@/lib/format";
 
-export type EvolutionPoint = { i: number; "Raw XP/h": number; "Lucro/h": number };
+export type EvolutionPoint = { i: number; "Raw XP/h": number | null; "Lucro/h": number };
 
 /** Lazy-loaded so the dashboard paints before recharts is downloaded. */
 export default function EvolutionChart({ data }: { data: EvolutionPoint[] }) {
@@ -28,7 +28,7 @@ export default function EvolutionChart({ data }: { data: EvolutionPoint[] }) {
           contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
           formatter={(v) => fmtGold(Number(v))}
         />
-        <Area yAxisId="l" type="monotone" dataKey="Raw XP/h" stroke="var(--rubi-blue)" strokeWidth={2} fill="url(#gXp)" isAnimationActive={false} />
+        <Area yAxisId="l" type="monotone" dataKey="Raw XP/h" connectNulls stroke="var(--rubi-blue)" strokeWidth={2} fill="url(#gXp)" isAnimationActive={false} />
         <Area yAxisId="r" type="monotone" dataKey="Lucro/h" stroke="var(--rubi-gold)" strokeWidth={2} fill="url(#gGold)" isAnimationActive={false} />
       </AreaChart>
     </ResponsiveContainer>

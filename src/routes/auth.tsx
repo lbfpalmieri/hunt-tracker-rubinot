@@ -69,7 +69,7 @@ function AuthPage() {
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
             Bem-vindo
           </div>
-          <h1 className="mt-2 font-display text-3xl font-bold">Entrar na sua conta</h1>
+          <h1 className="mt-2 font-brand text-3xl font-bold">Entrar na sua conta</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Suas hunts ficam salvas na nuvem e disponíveis em qualquer dispositivo.
           </p>

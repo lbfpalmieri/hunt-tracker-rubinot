@@ -86,7 +86,7 @@ function EquipamentosPage() {
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
           {active.name} · {active.vocation}
         </div>
-        <h1 className="mt-1 flex items-center gap-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="mt-1 flex items-center gap-2 font-brand text-3xl font-bold tracking-tight sm:text-4xl">
           <Shirt className="h-7 w-7 text-rubi-blue" /> Meus{" "}
           <span className="text-gradient-brand">sets</span>
         </h1>

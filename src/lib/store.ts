@@ -220,8 +220,10 @@ export const useAppStore = create<State>()((set, get) => ({
       const { data: userData } = await supabase.auth.getSession();
       const uid = userData.session?.user?.id;
       if (!uid) throw new Error("Not signed in");
+      // Tudo filtrado pelo usuário (regra do projeto): não depende só do RLS — se alguma tabela
+      // ganhar política de leitura pública (como hunt_sessions), o histórico pessoal não mistura.
       const [charRes, sessRes, huntRes, imbRes] = await Promise.all([
-        db.from("characters").select("*").order("created_at", { ascending: true }),
+        db.from("characters").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
         // The public community policy also exposes other users' public sessions,
         // so scope the personal history explicitly to the signed-in user.
         db
@@ -229,8 +231,8 @@ export const useAppStore = create<State>()((set, get) => ({
           .select("*")
           .eq("user_id", uid)
           .order("created_at", { ascending: false }),
-        db.from("hunts").select("*").order("created_at", { ascending: true }),
-        db.from("imbuements").select("*").order("created_at", { ascending: false }),
+        db.from("hunts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
+        db.from("imbuements").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       ]);
 
       if (charRes.error) throw charRes.error;
@@ -244,8 +246,8 @@ export const useAppStore = create<State>()((set, get) => ({
       let goalRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
       try {
         [levelRes, goalRes] = await Promise.all([
-          db.from("level_snapshots").select("*").order("created_at", { ascending: true }),
-          db.from("goals").select("*").order("created_at", { ascending: false }),
+          db.from("level_snapshots").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
+          db.from("goals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         ]);
         if (levelRes.error) throw levelRes.error;
         if (goalRes.error) throw goalRes.error;
@@ -258,7 +260,7 @@ export const useAppStore = create<State>()((set, get) => ({
       // Mesma lógica defensiva: histórico de gastos é aditivo, não pode derrubar o resto do app.
       let expenseRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
       try {
-        expenseRes = await db.from("expenses").select("*").order("created_at", { ascending: false });
+        expenseRes = await db.from("expenses").select("*").eq("user_id", uid).order("created_at", { ascending: false });
         if (expenseRes.error) throw expenseRes.error;
       } catch (e) {
         console.error("[gastos] tabela expenses indisponível (migration ainda não aplicada?)", e);
@@ -268,7 +270,7 @@ export const useAppStore = create<State>()((set, get) => ({
       // Idem pro histórico de mortes.
       let deathRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
       try {
-        deathRes = await db.from("deaths").select("*").order("created_at", { ascending: false });
+        deathRes = await db.from("deaths").select("*").eq("user_id", uid).order("created_at", { ascending: false });
         if (deathRes.error) throw deathRes.error;
       } catch (e) {
         console.error("[mortes] tabela deaths indisponível (migration ainda não aplicada?)", e);
@@ -413,6 +415,23 @@ export const useAppStore = create<State>()((set, get) => ({
     if (patch.outfitUrl !== undefined) dbPatch.outfit_url = patch.outfitUrl;
     const { error } = await db.from("characters").update(dbPatch).eq("id", id);
     if (error) throw error;
+    // As sessões guardam uma cópia do nome/vocação (char_name/char_vocation) — é o que a Comunidade
+    // mostra. Sem isso, renomear o personagem deixava o nome antigo nas sessões públicas.
+    const sessPatch: Record<string, unknown> = {};
+    if (patch.name !== undefined) sessPatch.char_name = patch.name;
+    if (patch.vocation !== undefined) sessPatch.char_vocation = patch.vocation;
+    if (Object.keys(sessPatch).length) {
+      const { data: userData } = await supabase.auth.getSession();
+      const uid = userData.session?.user?.id;
+      if (uid) {
+        const { error: sErr } = await db
+          .from("hunt_sessions")
+          .update(sessPatch)
+          .eq("character_id", id)
+          .eq("user_id", uid);
+        if (sErr) console.error("[personagem] não atualizei o nome nas sessões", sErr);
+      }
+    }
     set((s) => ({
       characters: s.characters.map((c) => (c.id === id ? { ...c, ...patch } : c)),
     }));
@@ -430,7 +449,10 @@ export const useAppStore = create<State>()((set, get) => ({
       goals: s.goals.filter((g) => g.characterId !== id),
       expenses: s.expenses.filter((e) => e.characterId !== id),
       deaths: s.deaths.filter((d) => d.characterId !== id),
-      activeCharacterId: s.activeCharacterId === id ? null : s.activeCharacterId,
+      activeCharacterId:
+        s.activeCharacterId === id
+          ? (s.characters.find((c) => c.id !== id)?.id ?? null)
+          : s.activeCharacterId,
     }));
   },
 
@@ -556,7 +578,11 @@ export const useAppStore = create<State>()((set, get) => ({
       dbPatch.bounty_difficulty = patch.bounty?.difficulty ?? null;
       dbPatch.bounty_tier = patch.bounty?.tier ?? null;
       dbPatch.bounty_xp = patch.bounty?.xp ?? null;
+      // A criatura acompanha a bounty: sem criatura nova, limpa a antiga (só mexe na coluna se a
+      // sessão tinha alguma — sessões sem a coluna migrada continuam salvando).
+      const hadCreature = !!get().sessions.find((se) => se.id === id)?.bounty?.creature;
       if (patch.bounty?.creature) dbPatch.bounty_creature = patch.bounty.creature;
+      else if (hadCreature) dbPatch.bounty_creature = null;
     }
     if (patch.prey !== undefined) dbPatch.prey = patch.prey ?? null;
     if (patch.notes !== undefined) dbPatch.notes = patch.notes?.trim() || null;
@@ -566,8 +592,11 @@ export const useAppStore = create<State>()((set, get) => ({
     if (Object.keys(dbPatch).length === 0) return;
     const { error } = await db.from("hunt_sessions").update(dbPatch).eq("id", id);
     if (error) throw error;
+    const local: Partial<HuntSession> = { ...patch };
+    if (patch.setup !== undefined) local.setup = normalizeSetup(patch.setup);
+    if (patch.notes !== undefined) local.notes = patch.notes?.trim() || null;
     set((s) => ({
-      sessions: s.sessions.map((se) => (se.id === id ? { ...se, ...patch } : se)),
+      sessions: s.sessions.map((se) => (se.id === id ? { ...se, ...local } : se)),
     }));
   },
 

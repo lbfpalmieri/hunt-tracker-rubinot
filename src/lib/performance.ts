@@ -54,15 +54,17 @@ export function aggregateSessions(sessions: HuntSession[], bestHuntSessions: Hun
   const rawXph = totalRawXp / (xpTime / 3600 || 1);
   const gph = totalBal / hoursTotal;
 
-  const bySpot = new Map<string, { time: number; bal: number }>();
+  // Agrupa sem diferenciar maiúscula/espaço ("Asura" e "asura " são a mesma hunt), como o resto do app.
+  const bySpot = new Map<string, { name: string; time: number; bal: number }>();
   for (const s of bestHuntSessions) {
-    const cur = bySpot.get(s.huntName) ?? { time: 0, bal: 0 };
+    const key = s.huntName.trim().toLowerCase();
+    const cur = bySpot.get(key) ?? { name: s.huntName.trim(), time: 0, bal: 0 };
     cur.time += s.hunting.durationSec;
     cur.bal += s.hunting.balance;
-    bySpot.set(s.huntName, cur);
+    bySpot.set(key, cur);
   }
   let bestHunt: null | { name: string; gph: number } = null;
-  for (const [name, v] of bySpot) {
+  for (const { name, ...v } of bySpot.values()) {
     // Menos de 30min somados na hunt ainda não é dado suficiente pra virar "top spot".
     if (v.time < MIN_HUNT_DURATION_SEC) continue;
     const g = v.bal / (v.time / 3600 || 1);

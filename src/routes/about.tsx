@@ -22,7 +22,7 @@ function About() {
     <SiteShell>
       <div className="mx-auto max-w-2xl text-center">
         <img src={logo.url} alt="RubinOT Hunt Tracker" className="mx-auto h-40 w-auto object-contain" />
-        <h1 className="mt-6 font-display text-4xl font-bold">
+        <h1 className="mt-6 font-brand text-4xl font-bold">
           <span className="text-gradient-brand">RubinOT</span> Hunt Tracker
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">

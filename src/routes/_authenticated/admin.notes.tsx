@@ -46,7 +46,7 @@ function AdminNotesPage() {
 
       <div className="mb-4">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Admin</div>
-        <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Observações dos jogadores</h1>
+        <h1 className="mt-1 font-brand text-2xl font-bold sm:text-3xl">Observações dos jogadores</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           As observações continuam privadas para os jogadores — só você vê esta lista. Use-a para captar
           informações de hunt que valem virar dado do app.

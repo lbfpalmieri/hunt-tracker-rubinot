@@ -44,6 +44,8 @@ interface NavItemDef {
   /** Rótulo curto pros blocos do celular (cabe em 2 linhas). */
   short: string;
   icon: LucideIcon;
+  /** Sprite do jogo (TibiaWiki, via GameIcon) mostrado no menu — `icon` é o reserva se a imagem falhar. */
+  sprite: string;
   group: NavGroupId;
 }
 
@@ -54,6 +56,7 @@ export const NAV_ITEMS = [
     label: "Dashboard",
     short: "Início",
     icon: Castle,
+    sprite: "Crystal Ball",
     group: "cacada",
   },
   {
@@ -62,6 +65,7 @@ export const NAV_ITEMS = [
     label: "Nova sessão",
     short: "Nova",
     icon: Swords,
+    sprite: "Quill",
     group: "cacada",
   },
   {
@@ -70,6 +74,7 @@ export const NAV_ITEMS = [
     label: "Sessões",
     short: "Sessões",
     icon: ScrollText,
+    sprite: "Red Tome",
     group: "cacada",
   },
   {
@@ -78,6 +83,7 @@ export const NAV_ITEMS = [
     label: "Comparar hunts",
     short: "Comparar",
     icon: Scale,
+    sprite: "Treasure Map",
     group: "cacada",
   },
   {
@@ -86,6 +92,7 @@ export const NAV_ITEMS = [
     label: "Ranking de hunts",
     short: "Ranking",
     icon: Trophy,
+    sprite: "Medal of Valiance",
     group: "cacada",
   },
   {
@@ -94,6 +101,7 @@ export const NAV_ITEMS = [
     label: "Comparações salvas",
     short: "Salvas",
     icon: BookmarkCheck,
+    sprite: "Silken Bookmark",
     group: "cacada",
   },
   {
@@ -102,6 +110,7 @@ export const NAV_ITEMS = [
     label: "Rotação de Bosses",
     short: "Bosses",
     icon: Crown,
+    sprite: "Dragon Figurine",
     group: "covil",
   },
 
@@ -111,6 +120,7 @@ export const NAV_ITEMS = [
     label: "Calculadora de monstros/h",
     short: "Monstros/h",
     icon: Skull,
+    sprite: "Hourglass",
     group: "oficina",
   },
   {
@@ -119,6 +129,7 @@ export const NAV_ITEMS = [
     label: "Calculadora de Rubini Coins",
     short: "Rubini Coins",
     icon: Coins,
+    sprite: "Tibia Coins",
     group: "oficina",
   },
   {
@@ -127,6 +138,7 @@ export const NAV_ITEMS = [
     label: "Linked Tasks",
     short: "Linked Tasks",
     icon: Target,
+    sprite: "Scroll of Heroic Deeds",
     group: "oficina",
   },
   {
@@ -135,6 +147,7 @@ export const NAV_ITEMS = [
     label: "Imbuements",
     short: "Imbuements",
     icon: Gem,
+    sprite: "Blank Imbuement Scroll",
     group: "oficina",
   },
 
@@ -144,6 +157,7 @@ export const NAV_ITEMS = [
     label: "Meu rendimento",
     short: "Rendimento",
     icon: Gauge,
+    sprite: "Golden Goblet",
     group: "heroi",
   },
   {
@@ -152,6 +166,7 @@ export const NAV_ITEMS = [
     label: "Todos os personagens",
     short: "Todos",
     icon: Users,
+    sprite: "Crown",
     group: "heroi",
   },
   {
@@ -160,6 +175,7 @@ export const NAV_ITEMS = [
     label: "Meus sets",
     short: "Sets",
     icon: Shirt,
+    sprite: "Magic Plate Armor",
     group: "heroi",
   },
   {
@@ -168,6 +184,7 @@ export const NAV_ITEMS = [
     label: "Personagens",
     short: "Personagens",
     icon: ShieldUser,
+    sprite: "Royal Helmet",
     group: "heroi",
   },
 
@@ -177,19 +194,37 @@ export const NAV_ITEMS = [
     label: "Comunidade",
     short: "Comunidade",
     icon: Beer,
+    sprite: "Beer Barrel",
     group: "taverna",
   },
 
-  { id: "wiki", to: "/wiki", label: "Wiki", short: "Wiki", icon: BookOpen, group: "biblioteca" },
+  {
+    id: "wiki",
+    to: "/wiki",
+    label: "Wiki",
+    short: "Wiki",
+    icon: BookOpen,
+    sprite: "Gemmed Book",
+    group: "biblioteca",
+  },
   {
     id: "feedback",
     to: "/feedback",
     label: "Sugestões e bugs",
     short: "Sugestões",
     icon: MessageSquarePlus,
+    sprite: "Letter",
     group: "biblioteca",
   },
-  { id: "about", to: "/about", label: "Sobre", short: "Sobre", icon: Info, group: "biblioteca" },
+  {
+    id: "about",
+    to: "/about",
+    label: "Sobre",
+    short: "Sobre",
+    icon: Info,
+    sprite: "Parchment",
+    group: "biblioteca",
+  },
 ] as const satisfies readonly NavItemDef[];
 
 export type NavItem = (typeof NAV_ITEMS)[number];

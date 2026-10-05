@@ -646,7 +646,7 @@ function ImportPage() {
 
       <div className="mb-8">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Importar</div>
-        <h1 className="mt-1 font-display text-3xl font-bold">Nova sessão de hunt</h1>
+        <h1 className="mt-1 font-brand text-3xl font-bold">Nova sessão de hunt</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Dê <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">Ctrl</kbd>
           <span className="mx-px">+</span>

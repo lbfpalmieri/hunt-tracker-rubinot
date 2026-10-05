@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, Plus, RotateCcw, X } from "lucide-react";
+import { NavIcon } from "@/components/nav/NavIcon";
 import {
   Dialog,
   DialogContent,
@@ -53,13 +54,12 @@ export function NavCustomizeDialog({
           ) : (
             <ul className="space-y-1.5">
               {pinned.map((n, i) => {
-                const Icon = n.icon;
                 return (
                   <li
                     key={n.id}
                     className="flex items-center gap-2 rounded-lg border border-border bg-surface/60 py-1 pl-3 pr-1"
                   >
-                    <Icon className="h-4 w-4 flex-none text-rubi-blue" />
+                    <NavIcon item={n} size={24} />
                     <span className="min-w-0 flex-1 truncate text-sm">{n.label}</span>
                     {i < MOBILE_BAR_SLOTS && (
                       <span className="flex-none rounded bg-accent px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -111,7 +111,6 @@ export function NavCustomizeDialog({
                 <div className="mb-1 text-xs font-medium text-muted-foreground">{g.label}</div>
                 <ul className="space-y-1">
                   {items.map((n) => {
-                    const Icon = n.icon;
                     return (
                       <li key={n.id}>
                         <button
@@ -119,7 +118,7 @@ export function NavCustomizeDialog({
                           onClick={() => togglePinned(n.id)}
                           className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-accent"
                         >
-                          <Icon className="h-4 w-4 flex-none text-muted-foreground" />
+                          <NavIcon item={n} size={24} />
                           <span className="min-w-0 flex-1 truncate">{n.label}</span>
                           <Plus className="h-4 w-4 flex-none text-rubi-gold" />
                         </button>

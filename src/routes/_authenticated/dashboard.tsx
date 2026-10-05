@@ -130,7 +130,12 @@ function Dashboard() {
       [...mySessions].reverse().map((s, i) => ({
         i: i + 1,
         name: s.huntName,
-        "Raw XP/h": Math.round((huntRawXp(s) ?? 0) / (s.hunting.durationSec / 3600 || 1)),
+        // Sessão sem XP conhecido (bounty sem valor, party só com o Party Hunt) fica de fora do
+        // gráfico (null = sem ponto) em vez de aparecer como 0 e derrubar a linha.
+        "Raw XP/h":
+          huntRawXp(s) == null
+            ? null
+            : Math.round((huntRawXp(s) as number) / (s.hunting.durationSec / 3600 || 1)),
         "Lucro/h": Math.round(s.hunting.balance / (s.hunting.durationSec / 3600 || 1)),
       })),
     [mySessions],
@@ -143,14 +148,14 @@ function Dashboard() {
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
             RubinOT Hunt Tracker
           </div>
-          <h1 className="mt-1 flex items-center gap-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="mt-1 flex items-center gap-2 font-brand text-3xl font-bold tracking-tight sm:text-4xl">
             {active ? (
               <>Olá, <span className="text-gradient-brand">{active.name}</span></>
             ) : (
               <>Bem-vindo, caçador</>
             )}
             {active && (
-              <span className="ml-1 inline-flex items-center gap-2">
+              <span className="ml-1 inline-flex items-center gap-2 font-body text-base font-normal tracking-normal">
                 <RendimentoNudge />
                 <SetsNudge />
               </span>

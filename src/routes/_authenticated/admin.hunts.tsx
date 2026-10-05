@@ -67,7 +67,7 @@ function AdminHuntsPage() {
       </Link>
       <div className="mb-5">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Administrador</div>
-        <h1 className="mt-1 font-display text-3xl font-bold">Nomes de hunt</h1>
+        <h1 className="mt-1 font-brand text-3xl font-bold">Nomes de hunt</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Renomeie hunts de todos os jogadores. Se o novo nome já existir, as sessões são juntadas na hunt existente.
         </p>

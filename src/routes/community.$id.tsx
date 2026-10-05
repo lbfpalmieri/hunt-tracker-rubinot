@@ -116,7 +116,7 @@ function SessionView({ session }: { session: any }) {
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Comunidade</div>
         <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="font-display text-3xl font-bold">{session.huntName}</h1>
+          <h1 className="font-brand text-3xl font-bold">{session.huntName}</h1>
           {session.party && <PartyBadge size={session.party.size} split={session.party.split} />}
           {session.bounty && <BountyBadge bounty={session.bounty} showXp />}
           {session.prey && <PreyBadge prey={session.prey} detailed />}

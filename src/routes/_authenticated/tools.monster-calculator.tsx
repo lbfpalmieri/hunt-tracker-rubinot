@@ -72,7 +72,13 @@ function MonsterCalculatorPage() {
     const needles = targets.map((t) => t.toLowerCase());
     const byHunt = new Map<
       string,
-      { totalSec: number; totalKills: number; sessionCount: number; perMonster: Map<string, number> }
+      {
+        huntName: string;
+        totalSec: number;
+        totalKills: number;
+        sessionCount: number;
+        perMonster: Map<string, number>;
+      }
     >();
     for (const s of charSessions) {
       const sessionPer = new Map<string, number>();
@@ -84,16 +90,24 @@ function MonsterCalculatorPage() {
         sessionKills += k.count;
       }
       if (sessionKills <= 0) continue;
-      const key = s.huntName;
-      const cur = byHunt.get(key) ?? { totalSec: 0, totalKills: 0, sessionCount: 0, perMonster: new Map() };
+      // Mesma hunt com grafia diferente ("Asura" / "asura ") conta junto, como no resto do app.
+      const key = s.huntName.trim().toLowerCase();
+      const cur = byHunt.get(key) ?? {
+        huntName: s.huntName.trim(),
+        totalSec: 0,
+        totalKills: 0,
+        sessionCount: 0,
+        perMonster: new Map(),
+      };
       cur.totalSec += s.hunting.durationSec;
       cur.totalKills += sessionKills;
       cur.sessionCount += 1;
       for (const [name, n] of sessionPer) cur.perMonster.set(name, (cur.perMonster.get(name) ?? 0) + n);
       byHunt.set(key, cur);
     }
-    return Array.from(byHunt.entries())
-      .map(([huntName, v]) => {
+    return Array.from(byHunt.values())
+      .map((v) => {
+        const huntName = v.huntName;
         const hours = v.totalSec / 3600;
         const perHour = hours > 0 ? v.totalKills / hours : 0;
         const estSec = perHour > 0 ? (quantity / perHour) * 3600 : Infinity;
@@ -153,7 +167,7 @@ function MonsterCalculatorPage() {
     <AppShell>
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Ferramentas</div>
-        <h1 className="mt-1 font-display text-3xl font-bold">Calculadora de Bounty / Linked Task</h1>
+        <h1 className="mt-1 font-brand text-3xl font-bold">Calculadora de Bounty / Linked Task</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {mode === "bounty"
             ? "Informe o monstro da bounty e a quantidade a derrotar — mostramos em qual hunt você finaliza mais rápido, com base no seu histórico."

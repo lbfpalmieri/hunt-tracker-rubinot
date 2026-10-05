@@ -135,7 +135,7 @@ function CharactersPage() {
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
           Personagens
         </div>
-        <h1 className="mt-1 font-display text-3xl font-bold">Seus chars</h1>
+        <h1 className="mt-1 font-brand text-3xl font-bold">Seus chars</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Cadastre seus personagens e adicione um print do outfit para representá-los.
         </p>

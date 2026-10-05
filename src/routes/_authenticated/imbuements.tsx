@@ -307,7 +307,7 @@ function ImbuementsPage() {
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
             RubinOT · Imbuements
           </div>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="mt-1 font-brand text-3xl font-bold tracking-tight sm:text-4xl">
             Imbuements por <span className="text-gradient-brand">item</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

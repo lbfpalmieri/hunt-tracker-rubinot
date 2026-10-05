@@ -7,6 +7,7 @@ import { PlayModeSwitch } from "@/components/PlayModeSwitch";
 import { initNavPrefs } from "@/lib/nav-prefs";
 import { useAppStore } from "@/lib/store";
 import { useAuthState } from "@/lib/use-auth-state";
+import { NavIcon } from "@/components/nav/NavIcon";
 
 /**
  * Casca das páginas PÚBLICAS (Comunidade, Comparar hunts, Sobre): com conta logada é o app normal
@@ -29,9 +30,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
 }
 
 const VISITOR_NAV = [
-  { to: "/community", label: "Comunidade", icon: Beer },
-  { to: "/tools/compare", label: "Comparar hunts", icon: Scale },
-  { to: "/about", label: "Sobre", icon: Info },
+  { to: "/community", label: "Comunidade", icon: Beer, sprite: "Beer Barrel" },
+  { to: "/tools/compare", label: "Comparar hunts", icon: Scale, sprite: "Treasure Map" },
+  { to: "/about", label: "Sobre", icon: Info, sprite: "Parchment" },
 ] as const;
 
 function VisitorShell({ children }: { children: ReactNode }) {
@@ -53,20 +54,21 @@ function VisitorShell({ children }: { children: ReactNode }) {
             />
           </Link>
           <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-            {VISITOR_NAV.map(({ to, label, icon: Icon }) => {
+            {VISITOR_NAV.map((item) => {
+              const { to, label } = item;
               const active = pathname === to || pathname.startsWith(to + "/");
               return (
                 <Link
                   key={to}
                   to={to}
                   className={
-                    "inline-flex flex-none items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors " +
+                    "inline-flex flex-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors " +
                     (active
-                      ? "bg-rubi-blue-soft text-rubi-blue"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground")
+                      ? "bg-rubi-gold/15 font-semibold text-rubi-gold ring-1 ring-inset ring-rubi-gold/35"
+                      : "text-foreground/80 hover:bg-white/[0.06] hover:text-foreground")
                   }
                 >
-                  <Icon className="h-4 w-4 flex-none" />
+                  <NavIcon item={item} size={26} />
                   <span className="hidden sm:inline">{label}</span>
                 </Link>
               );

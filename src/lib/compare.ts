@@ -199,12 +199,31 @@ export function filterByBonusInclusion(
 const avg = (values: number[]): number =>
   values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
 
-const avgOrNull = (values: (number | null)[]): number | null => {
-  const nums = values.filter((v): v is number => v != null);
-  return nums.length ? avg(nums) : null;
-};
-
 const uniq = (values: string[]): string[] => Array.from(new Set(values.filter(Boolean)));
+
+/**
+ * Total "equivalente" de uma métrica que só algumas sessões têm (XP da hunt sem bônus, dano
+ * recebido), na escala da duração média do grupo. As telas fazem total ÷ durationSec; se a média
+ * do valor viesse só das sessões com dado e a duração média de TODAS, o "/h" saía errado (ex.: 1h
+ * com 10M de XP + 3h sem XP conhecido = 5M/h em vez de 10M/h). Aqui: taxa das sessões com dado ×
+ * duração média → a divisão nas telas devolve a taxa certa.
+ */
+function scaledTotal(
+  group: CompareHunt[],
+  pick: (s: CompareHunt) => number | null,
+  avgDurationSec: number,
+): number | null {
+  let value = 0;
+  let sec = 0;
+  for (const s of group) {
+    const v = pick(s);
+    if (v == null) continue;
+    value += v;
+    sec += s.durationSec;
+  }
+  if (sec <= 0) return null;
+  return (value / sec) * avgDurationSec;
+}
 
 /**
  * Agrupa sessões pelo nome da hunt e devolve a MÉDIA de cada métrica.
@@ -272,6 +291,7 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
     const chars = uniq(group.map((s) => s.charName));
     const vocs = uniq(group.map((s) => s.vocation));
     const preySlots = group.flatMap((s) => s.prey ?? []);
+    const avgDurationSec = avg(group.map((s) => s.durationSec));
 
     out.push({
       key: `${first.source}:hunt:${slug}`,
@@ -285,10 +305,16 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
         (acc, s) => (new Date(s.createdAt) > new Date(acc) ? s.createdAt : acc),
         first.createdAt,
       ),
-      durationSec: avg(group.map((s) => s.durationSec)),
-      rawXpHunt: avgOrNull(group.map((s) => s.rawXpHunt)),
+      durationSec: avgDurationSec,
+      rawXpHunt: scaledTotal(group, (s) => s.rawXpHunt, avgDurationSec),
       rawXpTotal: avg(group.map((s) => s.rawXpTotal)),
-      xpGain: avg(group.map((s) => s.xpGain)),
+      // Sessão sem XP nenhuma (grupo só com o Party Hunt Analyser) não puxa o "XP com bônus/h" pra baixo.
+      xpGain:
+        scaledTotal(
+          group,
+          (s) => (s.xpGain === 0 && s.rawXpTotal === 0 ? null : s.xpGain),
+          avgDurationSec,
+        ) ?? 0,
       balance: avg(group.map((s) => s.balance)),
       loot: avg(group.map((s) => s.loot)),
       supplies: avg(group.map((s) => s.supplies)),
@@ -296,7 +322,7 @@ export function aggregateByHunt(sessions: CompareHunt[]): CompareHunt[] {
       kills,
       damageDealt: avg(group.map((s) => s.damageDealt)),
       healing: avg(group.map((s) => s.healing)),
-      damageReceived: avgOrNull(group.map((s) => s.damageReceived)),
+      damageReceived: scaledTotal(group, (s) => s.damageReceived, avgDurationSec),
       damageTypes,
       damageSources,
       bounty: null,

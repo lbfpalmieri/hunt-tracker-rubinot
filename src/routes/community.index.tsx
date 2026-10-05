@@ -174,7 +174,10 @@ function CommunityPage() {
    * so it can be excluded from averages instead of inflating them.
    */
   type PublicSession = (typeof sessions)[number];
+  // XP da hunt sem o bônus da bounty — null quando não dá pra saber (bounty sem valor ou sessão de
+  // grupo feita só com o Party Hunt Analyser, que não tem XP): fica fora das médias de XP/h.
   const netRaw = (s: PublicSession): number | null => {
+    if (s.party?.noXp) return null;
     const raw = s.rawXp || s.xpGain;
     if (!s.bounty) return raw;
     if (s.bounty.xp == null) return null;
@@ -191,6 +194,8 @@ function CommunityPage() {
         count: number;
         hours: number;
         xp: number;
+        /** Horas das sessões com XP (sessão de grupo só com o Party Hunt não tem). */
+        xpHours: number;
         rawXp: number;
         rawHours: number;
 
@@ -211,6 +216,7 @@ function CommunityPage() {
           count: 0,
           hours: 0,
           xp: 0,
+          xpHours: 0,
           rawXp: 0,
           rawHours: 0,
           balance: 0,
@@ -220,7 +226,10 @@ function CommunityPage() {
         };
       cur.count += 1;
       cur.hours += s.durationSec / 3600;
-      cur.xp += s.xpGain;
+      if (!s.party?.noXp) {
+        cur.xp += s.xpGain;
+        cur.xpHours += s.durationSec / 3600;
+      }
       const net = netRaw(s);
       if (net != null) {
         cur.rawXp += net;
@@ -238,7 +247,7 @@ function CommunityPage() {
     }
     const list = [...map.values()].map((h) => ({
       ...h,
-      xpPerHour: h.hours > 0 ? h.xp / h.hours : 0,
+      xpPerHour: h.xpHours > 0 ? h.xp / h.xpHours : 0,
       rawXpPerHour: h.rawHours > 0 ? h.rawXp / h.rawHours : 0,
       goldPerHour: h.hours > 0 ? h.balance / h.hours : 0,
       killsPerHour: h.hours > 0 ? h.kills / h.hours : 0,
@@ -386,7 +395,7 @@ function CommunityPage() {
               <Globe2 className="h-3 w-3" /> Comunidade RubinOT
               {mode === "party" && <> · Modo Grupo</>}
             </span>
-            <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="mt-3 font-brand text-3xl font-bold tracking-tight sm:text-4xl">
               {mode === "party" ? (
                 <>
                   As <span className="text-gradient-brand">melhores hunts em grupo</span> do servidor

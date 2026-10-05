@@ -74,7 +74,7 @@ function SavedComparisonsPage() {
     <AppShell>
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Ferramentas</div>
-        <h1 className="mt-1 flex items-center gap-2 font-display text-3xl font-bold">
+        <h1 className="mt-1 flex items-center gap-2 font-brand text-3xl font-bold">
           <BookmarkCheck className="h-7 w-7 text-rubi-gold" /> Comparações salvas
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
