@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Flame, LifeBuoy, Shirt, Sparkles, Target } from "lucide-react";
 import { GameIcon } from "@/components/GameIcon";
 import { MixBar, Segmented } from "@/components/advisor/advisor-ui";
+import { EquipmentDoll } from "@/components/setup/EquipmentDoll";
 import {
   MODE_LABEL,
   charmPicks,
@@ -14,7 +15,6 @@ import {
   type HuntMonster,
 } from "@/lib/hunt-advisor";
 import { findMonster } from "@/lib/monsters";
-import { findEquipment, type GearSlot } from "@/lib/equipment";
 import { getImbuementType } from "@/lib/imbuement-types";
 import { charmIcon, setupVocation, type SetupVocation } from "@/lib/session-setup";
 import { useAppStore } from "@/lib/store";
@@ -30,28 +30,6 @@ const VOC_LABEL: Record<SetupVocation, string> = {
   monk: "Monk",
 };
 
-const SLOT_ORDER: (GearSlot | "weapon")[] = [
-  "weapon",
-  "shield",
-  "head",
-  "armor",
-  "legs",
-  "feet",
-  "neck",
-  "ring",
-  "ammo",
-];
-const SLOT_LABEL: Record<GearSlot | "weapon", string> = {
-  weapon: "Arma",
-  head: "Capacete",
-  neck: "Amuleto",
-  armor: "Armadura",
-  legs: "Calça",
-  feet: "Bota",
-  ring: "Anel",
-  shield: "Escudo",
-  ammo: "Munição",
-};
 const IMBUE_SLOT: Record<string, string> = {
   weapon: "Arma",
   head: "Capacete",
@@ -91,13 +69,6 @@ export function LinkedTaskAdvice({ creatures }: { creatures: string[] }) {
 
   if (!monsters.length) return null;
 
-  const slotItem = (slot: GearSlot | "weapon") =>
-    slot === "weapon"
-      ? result.setup.weapon
-      : slot === "shield"
-        ? (result.setup.quiver ?? result.setup.gear?.shield)
-        : result.setup.gear?.[slot];
-
   return (
     <div className="space-y-4">
       <Block icon={Flame} label="Dano que você vai tomar" tone="text-rubi-danger">
@@ -129,30 +100,8 @@ export function LinkedTaskAdvice({ creatures }: { creatures: string[] }) {
             }))}
           />
         </div>
-        <ul className="grid gap-1 sm:grid-cols-2">
-          {SLOT_ORDER.map((slot) => {
-            const name = slotItem(slot);
-            if (!name) return null;
-            const e = findEquipment(name);
-            return (
-              <li
-                key={slot}
-                title={e ? [e.skills, e.resist].filter(Boolean).join(" · ") : undefined}
-                className="flex min-w-0 items-center gap-2 rounded-lg border border-border/50 bg-background/30 px-2 py-1"
-              >
-                <span className="flex h-7 w-7 flex-none items-center justify-center">
-                  <GameIcon name={name} size={26} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {SLOT_LABEL[slot]}
-                  </span>
-                  <span className="block truncate text-xs font-medium">{name}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        {/* Mesmo boneco do inventário do jogo usado nos sets (só leitura) + resumo das peças. */}
+        <EquipmentDoll value={result.setup} vocation={voc} size={34} />
         <p className="mt-1.5 text-[11px] text-muted-foreground">
           Proteção dos itens contra essas criaturas:{" "}
           <b className="text-rubi-blue">{weightedProtection(result.setup, incoming).toFixed(1)}%</b>
