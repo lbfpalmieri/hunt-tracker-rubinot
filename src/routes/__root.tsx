@@ -52,12 +52,12 @@ function reloadOnceForStaleChunk(): boolean {
   return true;
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: import("@tanstack/react-router").ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-    if (isStaleChunkError(error.message)) reloadOnceForStaleChunk();
+    if (isStaleChunkError(error instanceof Error ? error.message : String(error))) reloadOnceForStaleChunk();
   }, [error]);
 
   return (

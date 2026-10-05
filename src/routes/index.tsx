@@ -48,7 +48,7 @@ function Landing() {
   const { data: stats } = useQuery({
     queryKey: ["community-stats"],
     queryFn: () => fetchStats(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
   });
 
   // Signed-in visitors go straight to their dashboard.

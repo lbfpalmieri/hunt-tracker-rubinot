@@ -122,7 +122,7 @@ function CommunityPage() {
   const { data: catalog } = useQuery({
     queryKey: ["community-monsters"],
     queryFn: () => fetchMonsters(),
-    staleTime: 10 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
   });
 
   // Reverse lookup: monster -> which hunts have it, built from the hunt -> monsters catalog.
@@ -160,7 +160,7 @@ function CommunityPage() {
   const { data: stats } = useQuery({
     queryKey: ["community-stats"],
     queryFn: () => fetchStats(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
   });
 
 

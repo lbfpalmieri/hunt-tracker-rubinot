@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "site-mais-leve-2026-10-05",
+    date: "2026-10-05",
+    title: "Site mais leve e rápido",
+    description:
+      "Suas sessões abrem mais rápido e os números da Comunidade são reaproveitados por mais tempo, sem buscar tudo de novo a cada visita.",
+  },
+  {
     id: "visual-refresh-rubinot",
     date: "2026-10-05",
     title: "Visual novo no estilo do RubinOT: menu com itens do jogo e títulos em Cinzel",
