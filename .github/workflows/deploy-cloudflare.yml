@@ -1,0 +1,38 @@
+# Publica o site na Cloudflare Workers a cada push no branch de produção.
+# Segredo necessário no GitHub (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN  — token da Cloudflare com o modelo "Edit Cloudflare Workers"
+# As variáveis do servidor (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY,
+# SUPABASE_SERVICE_ROLE_KEY) ficam no painel da Cloudflare, no próprio Worker;
+# o --keep-vars garante que o deploy não apague essas variáveis.
+name: Deploy Cloudflare
+
+on:
+  push:
+    branches: [migracao-cloudflare]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cloudflare
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_ACCOUNT_ID: c77b3a300c2cbd6ac1d6e0f9d7c97fe0
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Build
+        run: npx vite build
+
+      - name: Publicar na Cloudflare
+        run: npx --yes wrangler@4 deploy --keep-vars
