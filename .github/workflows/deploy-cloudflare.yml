@@ -1,0 +1,59 @@
+# Publica o site na Cloudflare Workers a cada push no branch de produção.
+# Segredos necessários no GitHub (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN  — token da Cloudflare com o modelo "Edit Cloudflare Workers"
+#   SUPABASE_SECRET_KEY   — chave secreta (sb_secret_...) do Supabase, usada pelas funções de admin
+# As variáveis do servidor (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY,
+# SUPABASE_SERVICE_ROLE_KEY) ficam no painel da Cloudflare, no próprio Worker;
+# o --keep-vars garante que o deploy não apague essas variáveis.
+name: Deploy Cloudflare
+
+on:
+  push:
+    branches: [migracao-cloudflare]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cloudflare
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_ACCOUNT_ID: c77b3a300c2cbd6ac1d6e0f9d7c97fe0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Build
+        run: npx vite build
+
+      - name: Publicar na Cloudflare
+        env:
+          RAW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          # O segredo pode ter sido colado com quebras de linha ou espaços extras;
+          # usa só o trecho que tem formato de token.
+          TOKEN=$(printf '%s' "$RAW_TOKEN" | tr -s '[:space:]' '\n' | grep -E '^[A-Za-z0-9_-]{30,}$' | head -n1)
+          if [ -z "$TOKEN" ]; then echo "CLOUDFLARE_API_TOKEN inválido"; exit 1; fi
+          export CLOUDFLARE_API_TOKEN="$TOKEN"
+          npx --yes wrangler@4 deploy --keep-vars \
+            --var SUPABASE_URL:https://kapozquqbdfurncgqdnd.supabase.co \
+            --var SUPABASE_PUBLISHABLE_KEY:sb_publishable_fA119C6CY7k5a3tSUQ9ZBA_p_eQXW90
+          if [ -n "$SERVICE_KEY" ]; then
+            printf '%s' "$SERVICE_KEY" | tr -d '[:space:]' | npx --yes wrangler@4 secret put SUPABASE_SERVICE_ROLE_KEY --name lbfpalmieri-hunt-tracker-rubinot
+          else
+            echo "::warning::Segredo SUPABASE_SECRET_KEY não configurado no GitHub"
+          fi
+          # Endereço curto rubinothunt.pages.dev (repassa para o Worker acima)
+          rm -rf .wrangler/deploy
+          cd pages-proxy
+          npx --yes wrangler@4 pages project create rubinothunt --production-branch main 2>/dev/null || true
+          npx --yes wrangler@4 pages deploy --branch main --commit-dirty=true

@@ -16,4 +16,4 @@ Disallow: /bosses
 Disallow: /feedback
 Disallow: /admin
 
-Sitemap: https://hunt-tracker-rubinot.lovable.app/sitemap.xml
+Sitemap: https://rubinothunt.pages.dev/sitemap.xml
