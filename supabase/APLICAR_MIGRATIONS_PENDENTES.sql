@@ -121,3 +121,6 @@ ALTER TABLE public.monster_weakness_cache
 
 -- 8) Recarrega o cache de schema do PostgREST (o "schema cache" do erro) ------
 NOTIFY pgrst, 'reload schema';
+
+-- 9) Índice para carregar as sessões do usuário mais rápido
+CREATE INDEX IF NOT EXISTS hunt_sessions_user_created_idx ON public.hunt_sessions (user_id, created_at DESC);

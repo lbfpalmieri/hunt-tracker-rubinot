@@ -222,11 +222,6 @@ export const getCommunitySession = createServerFn({ method: "GET" })
 /** Aggregated public numbers used by the landing page and community hero. */
 export const getCommunityStats = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = publicClient();
-  const { count, error: countError } = await supabase
-    .from("hunt_sessions")
-    .select("id", { count: "exact", head: true })
-    .eq("is_public", true);
-
   const { data, error } = await supabase
     .from("hunt_sessions")
     .select("hunt_name, char_name, char_vocation, hunting")
@@ -234,7 +229,7 @@ export const getCommunityStats = createServerFn({ method: "GET" }).handler(async
     .order("created_at", { ascending: false })
     .limit(1000);
 
-  if (error || countError) {
+  if (error) {
     return { sessions: 0, players: 0, hunts: 0, kills: 0, hours: 0, rawXp: 0, gold: 0 };
   }
 
@@ -256,8 +251,18 @@ export const getCommunityStats = createServerFn({ method: "GET" }).handler(async
     for (const k of (row.hunting?.kills ?? []) as any[]) kills += Number(k.count) || 0;
   }
 
+  // A contagem sai da própria lista; só faz a consulta extra se bater no limite.
+  let count = data?.length ?? 0;
+  if (count >= 1000) {
+    const { count: exact } = await supabase
+      .from("hunt_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("is_public", true);
+    count = exact ?? count;
+  }
+
   return {
-    sessions: count ?? (data?.length ?? 0),
+    sessions: count,
     players: players.size,
     hunts: hunts.size,
     kills,
