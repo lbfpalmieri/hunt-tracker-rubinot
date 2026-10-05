@@ -2,8 +2,8 @@
 # Rodado manualmente (Actions → Migrar banco → Run workflow).
 #   modo=listar   → só mostra o que tem no arquivo de backup (nada é gravado)
 #   modo=restaurar → grava estrutura + dados no Supabase novo
-# O backup vem criptografado em dados/backup.dump.enc (branch migracao-dados).
-# Segredos necessários: BACKUP_KEY (chave do backup criptografado) e SUPABASE_DB_URL (connection string "Session pooler" do Supabase novo,
+# O backup é enviado pelo dono para o Storage do Supabase novo; o link vai no input.
+# Segredo necessário: SUPABASE_DB_URL (connection string "Session pooler" do Supabase novo,
 # com a senha do banco).
 name: Migrar banco
 
@@ -13,6 +13,9 @@ on:
     paths: ['.github/workflows/migrar-banco.yml']
   workflow_dispatch:
     inputs:
+      backup_url:
+        description: "Link do backup (.zip ou .backup) no Storage do Supabase novo (botão Get URL)"
+        required: true
       modo:
         description: "listar ou restaurar"
         required: true
@@ -34,12 +37,18 @@ jobs:
           sudo apt-get install -y -qq postgresql-client-17
           echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
 
-      - name: Abrir backup criptografado
+      - name: Baixar backup
         env:
-          CHAVE: ${{ secrets.BACKUP_KEY }}
+          BACKUP_URL: ${{ inputs.backup_url }}
         run: |
-          CHAVE=$(printf '%s' "$CHAVE" | tr -d '[:space:]')
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dados/backup.dump.enc -out backup.dump -pass env:CHAVE
+          echo "::add-mask::$BACKUP_URL"
+          curl -fsSL "$BACKUP_URL" -o baixado
+          if unzip -tq baixado >/dev/null 2>&1; then
+            unzip -o -q baixado -d extraido
+            mv "$(find extraido -type f -name '*.backup' | head -n1)" backup.dump
+          else
+            mv baixado backup.dump
+          fi
           ls -la backup.dump
           pg_restore -l backup.dump > lista.txt
           echo "Itens no backup: $(grep -vc '^;' lista.txt)"
