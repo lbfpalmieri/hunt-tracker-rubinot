@@ -53,6 +53,7 @@ jobs:
             echo "::warning::Segredo SUPABASE_SECRET_KEY não configurado no GitHub"
           fi
           # Endereço curto rubinothunt.pages.dev (repassa para o Worker acima)
+          rm -rf .wrangler/deploy
           cd pages-proxy
           npx --yes wrangler@4 pages project create rubinothunt --production-branch main 2>/dev/null || true
           npx --yes wrangler@4 pages deploy --branch main --commit-dirty=true
