@@ -166,7 +166,7 @@ function CommunityPage() {
 
 
 
-  const sessions = data?.sessions ?? [];
+  const sessions = useMemo(() => data?.sessions ?? [], [data]);
 
   /**
    * Raw XP attributable to the hunt: bounty completion bonus removed.

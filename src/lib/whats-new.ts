@@ -28,7 +28,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     date: "2026-10-05",
     title: "Correções nos cálculos de XP/h e nos dados dos personagens",
     description:
-      "Médias de hunt (Sessões → Hunts, Comparar, Ranking): o Raw XP/h saía mais baixo quando a hunt tinha sessões sem XP conhecido (bounty sem o valor informado ou grupo só com o Party Hunt) — agora a conta usa só o tempo das sessões que têm XP. Nos cards da Comunidade o XP/h também não é mais puxado pra baixo por sessões de grupo sem XP. Nos gráficos de evolução essas sessões não aparecem mais como 0. Hunts escritas com maiúscula diferente (\"Asura\" e \"asura\") agora contam juntas no Top spot e na Calculadora de monstros/h. Renomear um personagem atualiza o nome nas sessões da Comunidade, excluir o personagem ativo já seleciona o próximo, e trocar a Bounty de uma sessão não deixa mais a criatura antiga gravada.",
+      "Médias de hunt (Sessões → Hunts, Comparar, Ranking): o Raw XP/h saía mais baixo quando a hunt tinha sessões sem XP conhecido (bounty sem o valor informado ou grupo só com o Party Hunt) — agora a conta usa só o tempo das sessões que têm XP. Nos cards da Comunidade o XP/h também não é mais puxado pra baixo por sessões de grupo sem XP. Nos gráficos de evolução essas sessões não aparecem mais como 0. Hunts escritas com maiúscula diferente (\"Asura\" e \"asura\") agora contam juntas no Top spot e na Calculadora de monstros/h. Renomear um personagem atualiza o nome nas sessões da Comunidade, excluir o personagem ativo já seleciona o próximo, trocar a Bounty de uma sessão não deixa mais a criatura antiga gravada, e a sugestão de nome de hunt (pelas criaturas mortas) não separa mais a mesma criatura escrita com maiúscula diferente.",
   },
   {
     id: "linked-task-advice",

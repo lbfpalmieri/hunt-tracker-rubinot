@@ -67,14 +67,16 @@ export function groupMonstersByHunt(
     cur.sessionCount += 1;
     const seen = new Set<string>();
     for (const k of r.kills) {
-      const name = k.name;
-      const stat = cur.stats.get(name) ?? { name, sessions: 0, kills: 0 };
-      if (!seen.has(name)) {
+      // O analyser às vezes manda "hellflayer" e às vezes "Hellflayer": mesma criatura, uma conta só.
+      const name = k.name.trim();
+      const id = name.toLowerCase();
+      const stat = cur.stats.get(id) ?? { name, sessions: 0, kills: 0 };
+      if (!seen.has(id)) {
         stat.sessions += 1;
-        seen.add(name);
+        seen.add(id);
       }
       stat.kills += Number((k as { count?: number }).count ?? 0) || 0;
-      cur.stats.set(name, stat);
+      cur.stats.set(id, stat);
     }
     map.set(key, cur);
   }
