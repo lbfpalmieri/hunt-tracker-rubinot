@@ -48,7 +48,7 @@ jobs:
             --var SUPABASE_URL:https://kapozquqbdfurncgqdnd.supabase.co \
             --var SUPABASE_PUBLISHABLE_KEY:sb_publishable_fA119C6CY7k5a3tSUQ9ZBA_p_eQXW90
           if [ -n "$SERVICE_KEY" ]; then
-            printf '%s' "$SERVICE_KEY" | tr -d '[:space:]' | npx --yes wrangler@4 secret put SUPABASE_SERVICE_ROLE_KEY
+            printf '%s' "$SERVICE_KEY" | tr -d '[:space:]' | npx --yes wrangler@4 secret put SUPABASE_SERVICE_ROLE_KEY --name lbfpalmieri-hunt-tracker-rubinot
           else
             echo "::warning::Segredo SUPABASE_SECRET_KEY não configurado no GitHub"
           fi
