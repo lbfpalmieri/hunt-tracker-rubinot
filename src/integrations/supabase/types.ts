@@ -387,7 +387,9 @@ export type Database = {
           is_public: boolean
           misc: Json | null
           notes: string | null
+          party: Json | null
           prey: Json | null
+          setup: Json | null
           user_id: string
         }
         Insert: {
@@ -408,7 +410,9 @@ export type Database = {
           is_public?: boolean
           misc?: Json | null
           notes?: string | null
+          party?: Json | null
           prey?: Json | null
+          setup?: Json | null
           user_id: string
         }
         Update: {
@@ -429,7 +433,9 @@ export type Database = {
           is_public?: boolean
           misc?: Json | null
           notes?: string | null
+          party?: Json | null
           prey?: Json | null
+          setup?: Json | null
           user_id?: string
         }
         Relationships: [
@@ -687,6 +693,44 @@ export type Database = {
         }
         Relationships: []
       }
+      setup_presets: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          name: string
+          setup: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          name: string
+          setup: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          setup?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_presets_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_boss_prefs: {
         Row: {
           party: Json
@@ -705,21 +749,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_item_prices: {
+        Row: {
+          item: string
+          price: number
+          updated_at: string
+          user_id: string
+          world: string
+        }
+        Insert: {
+          item: string
+          price: number
+          updated_at?: string
+          user_id?: string
+          world: string
+        }
+        Update: {
+          item?: string
+          price?: number
+          updated_at?: string
+          user_id?: string
+          world?: string
+        }
+        Relationships: []
+      }
       user_nav_prefs: {
         Row: {
           pinned: string[]
+          play_mode: string
           sidebar_expanded: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           pinned?: string[]
+          play_mode?: string
           sidebar_expanded?: boolean
           updated_at?: string
           user_id?: string
         }
         Update: {
           pinned?: string[]
+          play_mode?: string
           sidebar_expanded?: boolean
           updated_at?: string
           user_id?: string
