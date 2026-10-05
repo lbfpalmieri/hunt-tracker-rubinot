@@ -6,13 +6,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Swords, Gift, Repeat, Target } from "lucide-react";
+import { Swords, Gift, Repeat, Shirt, Sparkles, Target } from "lucide-react";
 import { fmtNum } from "@/lib/format";
 import { huntWeakness } from "@/lib/hunt-advisor";
 import { findMonster } from "@/lib/monsters";
 import { damageElementInfo } from "@/lib/damage-elements";
 import type { LinkedTaskEntry, LinkedTaskRoom } from "@/lib/linked-tasks.functions";
-import { LinkedTaskAdvice } from "@/components/advisor/LinkedTaskAdvice";
+import {
+  AdviceCombat,
+  AdviceImbues,
+  AdviceSet,
+  useTaskAdvice,
+} from "@/components/advisor/LinkedTaskAdvice";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Props {
   room: LinkedTaskRoom | null;
@@ -93,58 +99,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
             </div>
           </Section>
 
-          <Section icon={Swords} label="Elemento mais eficaz contra essas criaturas" tone="success">
-            {ranking.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Não achei dados de resistência pra essas criaturas na TibiaWiki.
-              </p>
-            ) : (
-              <>
-                {(() => {
-                  const top = ranking[0];
-                  const info = damageElementInfo(top.element);
-                  return (
-                    <div className="flex items-center gap-2 rounded-lg border border-rubi-success/30 bg-rubi-success/10 px-3 py-2 text-sm">
-                      <span className="text-lg leading-none">{info.emoji}</span>
-                      <span>
-                        <strong className="text-foreground">{info.label}</strong> é o mais eficaz —
-                        dano médio de {Math.round(top.avgMod)}% nas criaturas dessa task
-                      </span>
-                    </div>
-                  );
-                })()}
-                <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-                  {ranking.slice(1, 6).map((r) => {
-                    const info = damageElementInfo(r.element);
-                    return (
-                      <span
-                        key={r.element}
-                        className="inline-flex items-center gap-1 rounded-full bg-accent/70 px-2 py-1"
-                      >
-                        {info.emoji} {info.label} · {Math.round(r.avgMod)}%
-                      </span>
-                    );
-                  })}
-                </div>
-                <p className="mt-1.5 text-[10px] text-muted-foreground/70">
-                  Baseado em dados da TibiaWiki (Tibia oficial) — o RubinOT pode ter valores
-                  diferentes.
-                </p>
-              </>
-            )}
-          </Section>
-
-          {/* Conselheiro: dano, set pra vocação/level do personagem, imbuements, charms, emergência. */}
-          <LinkedTaskAdvice creatures={task.creatures.map((c) => c.name)} />
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Section icon={Gift} label="Recompensa (1ª vez)" tone="gold">
-              <RewardList items={task.rewards} />
-            </Section>
-            <Section icon={Repeat} label="Recompensa (repetição)" tone="blue">
-              <RewardList items={task.repeatedRewards} />
-            </Section>
-          </div>
+          <TaskTabs task={task} ranking={ranking} />
         </div>
       </DialogContent>
     </Dialog>
@@ -192,5 +147,104 @@ function Section({
       </div>
       {children}
     </div>
+  );
+}
+
+const TAB_TRIGGER =
+  "flex-1 flex-col gap-0.5 rounded-md px-1 py-1.5 text-xs sm:flex-row sm:gap-1.5 sm:px-2 sm:text-sm data-[state=active]:bg-rubi-gold data-[state=active]:text-background data-[state=active]:shadow-glow-gold";
+
+/**
+ * Abas da task (menos coisa de uma vez, letra maior, melhor no celular): Combate (elemento + dano +
+ * charms), Set (boneco do inventário), Imbuements (+ itens de BP) e Recompensas. Monta só com a
+ * janela aberta — o hook pega a vocação do personagem ativo na hora.
+ */
+function TaskTabs({
+  task,
+  ranking,
+}: {
+  task: LinkedTaskEntry;
+  ranking: { element: string; avgMod: number }[];
+}) {
+  const names = useMemo(() => task.creatures.map((c) => c.name), [task]);
+  const advice = useTaskAdvice(names);
+  return (
+    <Tabs defaultValue="combat">
+      <TabsList className="grid h-auto w-full grid-cols-4 gap-1 bg-background/50 p-1">
+        <TabsTrigger value="combat" className={TAB_TRIGGER}>
+          <Swords className="h-3.5 w-3.5" /> Combate
+        </TabsTrigger>
+        <TabsTrigger value="set" className={TAB_TRIGGER}>
+          <Shirt className="h-3.5 w-3.5" /> Set
+        </TabsTrigger>
+        <TabsTrigger value="imbues" className={TAB_TRIGGER}>
+          <Sparkles className="h-3.5 w-3.5" /> <span className="sm:hidden">Imbue</span>
+          <span className="hidden sm:inline">Imbuements</span>
+        </TabsTrigger>
+        <TabsTrigger value="rewards" className={TAB_TRIGGER}>
+          <Gift className="h-3.5 w-3.5" /> <span className="sm:hidden">Prêmio</span>
+          <span className="hidden sm:inline">Recompensas</span>
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="combat" className="mt-4 space-y-5">
+        <Section icon={Swords} label="Elemento mais eficaz contra essas criaturas" tone="success">
+          {ranking.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Não achei dados de resistência pra essas criaturas na TibiaWiki.
+            </p>
+          ) : (
+            <>
+              {(() => {
+                const top = ranking[0];
+                const info = damageElementInfo(top.element);
+                return (
+                  <div className="flex items-center gap-2 rounded-lg border border-rubi-success/30 bg-rubi-success/10 px-3 py-2 text-sm">
+                    <span className="text-lg leading-none">{info.emoji}</span>
+                    <span>
+                      <strong className="text-foreground">{info.label}</strong> é o mais eficaz —
+                      dano médio de {Math.round(top.avgMod)}% nas criaturas dessa task
+                    </span>
+                  </div>
+                );
+              })()}
+              <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                {ranking.slice(1, 6).map((r) => {
+                  const info = damageElementInfo(r.element);
+                  return (
+                    <span
+                      key={r.element}
+                      className="inline-flex items-center gap-1 rounded-full bg-accent/70 px-2 py-1"
+                    >
+                      {info.emoji} {info.label} · {Math.round(r.avgMod)}%
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+                Baseado em dados da TibiaWiki (Tibia oficial) — o RubinOT pode ter valores
+                diferentes.
+              </p>
+            </>
+          )}
+        </Section>
+        <AdviceCombat advice={advice} />
+      </TabsContent>
+      <TabsContent value="set" className="mt-4">
+        <AdviceSet advice={advice} />
+      </TabsContent>
+      <TabsContent value="imbues" className="mt-4">
+        <AdviceImbues advice={advice} />
+      </TabsContent>
+      <TabsContent value="rewards" className="mt-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Section icon={Gift} label="Recompensa (1ª vez)" tone="gold">
+            <RewardList items={task.rewards} />
+          </Section>
+          <Section icon={Repeat} label="Recompensa (repetição)" tone="blue">
+            <RewardList items={task.repeatedRewards} />
+          </Section>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }

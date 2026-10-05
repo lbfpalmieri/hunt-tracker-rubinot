@@ -21,7 +21,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     date: "2026-10-05",
     title: "Linked Tasks: dano, set sugerido, imbuements e charms em cada task",
     description:
-      "Ao abrir uma Linked Task agora aparece, além do elemento mais eficaz: o dano que você vai tomar daquelas criaturas, o set sugerido pra vocação e level do seu personagem, no boneco de inventário do jogo (Defensivo, Equilibrado ou Ofensivo — dá pra trocar a vocação), os imbuements (incluindo os de proteção), o charm certo pra cada criatura e os itens de carga pra levar na BP. O elemento mais eficaz agora sai na hora, sem esperar a wiki carregar. Dados da TibiaWiki.",
+      "Ao abrir uma Linked Task, as informações agora ficam em abas (Combate, Set, Imbuements e Recompensas — mais fácil de ler, inclusive no celular). Além do elemento mais eficaz: o dano que você vai tomar daquelas criaturas, o set sugerido pra vocação e level do seu personagem, no boneco de inventário do jogo (Defensivo, Equilibrado ou Ofensivo — dá pra trocar a vocação), os imbuements (incluindo os de proteção), o charm certo pra cada criatura e os itens de carga pra levar na BP. O elemento mais eficaz agora sai na hora, sem esperar a wiki carregar. Dados da TibiaWiki.",
   },
   {
     id: "wheel-card-conviction-highlight",
