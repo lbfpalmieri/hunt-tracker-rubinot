@@ -1,6 +1,7 @@
 # Publica o site na Cloudflare Workers a cada push no branch de produção.
-# Segredo necessário no GitHub (Settings → Secrets and variables → Actions):
+# Segredos necessários no GitHub (Settings → Secrets and variables → Actions):
 #   CLOUDFLARE_API_TOKEN  — token da Cloudflare com o modelo "Edit Cloudflare Workers"
+#   SUPABASE_SECRET_KEY   — chave secreta (sb_secret_...) do Supabase, usada pelas funções de admin
 # As variáveis do servidor (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY,
 # SUPABASE_SERVICE_ROLE_KEY) ficam no painel da Cloudflare, no próprio Worker;
 # o --keep-vars garante que o deploy não apague essas variáveis.
@@ -36,9 +37,18 @@ jobs:
       - name: Publicar na Cloudflare
         env:
           RAW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |
           # O segredo pode ter sido colado com quebras de linha ou espaços extras;
           # usa só o trecho que tem formato de token.
           TOKEN=$(printf '%s' "$RAW_TOKEN" | tr -s '[:space:]' '\n' | grep -E '^[A-Za-z0-9_-]{30,}$' | head -n1)
           if [ -z "$TOKEN" ]; then echo "CLOUDFLARE_API_TOKEN inválido"; exit 1; fi
-          CLOUDFLARE_API_TOKEN="$TOKEN" npx --yes wrangler@4 deploy --keep-vars
+          export CLOUDFLARE_API_TOKEN="$TOKEN"
+          npx --yes wrangler@4 deploy --keep-vars \
+            --var SUPABASE_URL:https://kapozquqbdfurncgqdnd.supabase.co \
+            --var SUPABASE_PUBLISHABLE_KEY:sb_publishable_fA119C6CY7k5a3tSUQ9ZBA_p_eQXW90
+          if [ -n "$SERVICE_KEY" ]; then
+            printf '%s' "$SERVICE_KEY" | tr -d '[:space:]' | npx --yes wrangler@4 secret put SUPABASE_SERVICE_ROLE_KEY
+          else
+            echo "::warning::Segredo SUPABASE_SECRET_KEY não configurado no GitHub"
+          fi
