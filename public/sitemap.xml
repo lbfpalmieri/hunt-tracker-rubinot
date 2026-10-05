@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://lbfpalmieri-hunt-tracker-rubinot.lucas-palmieri.workers.dev/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://lbfpalmieri-hunt-tracker-rubinot.lucas-palmieri.workers.dev/community</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
-  <url><loc>https://lbfpalmieri-hunt-tracker-rubinot.lucas-palmieri.workers.dev/tools/compare</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
-  <url><loc>https://lbfpalmieri-hunt-tracker-rubinot.lucas-palmieri.workers.dev/about</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://rubinothunt.pages.dev/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://rubinothunt.pages.dev/community</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://rubinothunt.pages.dev/tools/compare</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://rubinothunt.pages.dev/about</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
 </urlset>

@@ -16,4 +16,4 @@ Disallow: /bosses
 Disallow: /feedback
 Disallow: /admin
 
-Sitemap: https://lbfpalmieri-hunt-tracker-rubinot.lucas-palmieri.workers.dev/sitemap.xml
+Sitemap: https://rubinothunt.pages.dev/sitemap.xml
