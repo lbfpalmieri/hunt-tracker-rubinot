@@ -1,0 +1,68 @@
+# Migração única do banco do Lovable Cloud para o Supabase próprio.
+# Rodado manualmente (Actions → Migrar banco → Run workflow).
+#   modo=listar   → só mostra o que tem no arquivo de backup (nada é gravado)
+#   modo=restaurar → grava estrutura + dados no Supabase novo
+# O backup é enviado pelo dono para o Storage do Supabase novo; o link vai no input.
+# Segredo necessário: SUPABASE_DB_URL (connection string "Session pooler" do Supabase novo,
+# com a senha do banco).
+name: Migrar banco
+
+on:
+  # o push só registra o workflow no GitHub; o job roda apenas manualmente
+  push:
+    paths: ['.github/workflows/migrar-banco.yml']
+  workflow_dispatch:
+    inputs:
+      backup_url:
+        description: "Link do backup (.zip ou .backup) no Storage do Supabase novo (botão Get URL)"
+        required: true
+      modo:
+        description: "listar ou restaurar"
+        required: true
+        default: listar
+
+jobs:
+  migrar:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar cliente Postgres 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Baixar backup
+        env:
+          BACKUP_URL: ${{ inputs.backup_url }}
+        run: |
+          echo "::add-mask::$BACKUP_URL"
+          curl -fsSL "$BACKUP_URL" -o baixado
+          if unzip -tq baixado >/dev/null 2>&1; then
+            unzip -o -q baixado -d extraido
+            mv "$(find extraido -type f -name '*.backup' | head -n1)" backup.dump
+          else
+            mv baixado backup.dump
+          fi
+          ls -la backup.dump
+          pg_restore -l backup.dump > lista.txt
+          echo "Itens no backup: $(grep -vc '^;' lista.txt)"
+
+      - name: Listar conteúdo (sem dados pessoais, só nomes de objetos)
+        if: inputs.modo == 'listar'
+        run: |
+          grep -v '^;' lista.txt | awk '{ $1=""; $2=""; $3=""; print }' | sed 's/^ *//' | sort | uniq -c | sort -k2 | head -400
+
+      - name: Restaurar no Supabase novo
+        if: inputs.modo == 'restaurar'
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DB_URL=$(printf '%s' "$DB_URL" | tr -d '\r\n' | sed 's/^ *//; s/ *$//')
+          python3 .github/scripts/migrar_banco.py lista.txt
+          bash .github/scripts/restaurar.sh "$DB_URL"
