@@ -1,21 +1,17 @@
-<!-- LOVABLE:BEGIN -->
 > [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+> Projeto NÃO usa mais o Lovable (desligado em 2026-10-05). Hospedagem: Cloudflare
+> (Worker `lbfpalmieri-hunt-tracker-rubinot` + endereço curto rubinothunt.pages.dev via
+> pages-proxy/). Banco/login: Supabase próprio (projeto kapozquqbdfurncgqdnd, São Paulo).
+> Todo push no `main` publica o site (GitHub Actions → .github/workflows/deploy-cloudflare.yml),
+> então mantenha o `main` funcionando.
 
 # RubinOT Hunt Tracker — contexto
 
 App pt-BR (tema dark) para jogadores do RubinOT (Tibia alternativo) acompanharem
 hunts: lucro, XP, monstros/h, sessões, comparativos, comunidade.
 
-Stack: TanStack Start v1 + React 19 + Tailwind v4 + shadcn; backend Lovable Cloud
-(Supabase: Google OAuth, Postgres RLS, Storage); server logic em createServerFn
+Stack: TanStack Start v1 + React 19 + Tailwind v4 + shadcn; backend Supabase próprio
+(Google OAuth direto no Supabase, Postgres RLS, Storage); server logic em createServerFn
 (*.functions.ts em src/lib); rotas autenticadas em src/routes/_authenticated/.
 
 Regras permanentes:

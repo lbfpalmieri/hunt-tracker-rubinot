@@ -9,7 +9,7 @@ name: Deploy Cloudflare
 
 on:
   push:
-    branches: [migracao-cloudflare]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
