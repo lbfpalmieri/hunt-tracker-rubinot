@@ -9,6 +9,7 @@
  */
 
 import { normalizeGear, normalizeGearTier, type SetupGear, type SetupGearTier } from "./equipment";
+import { isEmptyWheel, normalizeWheel, wheelSetupFields, type WheelBuild } from "./wheel";
 
 export type SetupVocation = "knight" | "paladin" | "sorcerer" | "druid" | "monk";
 
@@ -51,6 +52,11 @@ export interface SessionSetup {
   stance: string | null;
   conviction: SetupConviction[];
   revelation: SetupRevelation[];
+  /**
+   * Roda montada no planejador (pontos por fatia + gemas). Com ela, conviction/revelation/wheelDmgHeal
+   * passam a ser CALCULADOS dela (normalizeSetup) — os campos continuam pra sessões antigas e filtros.
+   */
+  wheel?: WheelBuild | null;
   charms: SetupCharm[];
 }
 
@@ -67,6 +73,7 @@ export const EMPTY_SETUP: SessionSetup = {
   stance: null,
   conviction: [],
   revelation: [],
+  wheel: null,
   charms: [],
 };
 
@@ -254,6 +261,7 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
     perk: `Augmented ${String(s.spell)}`,
     level: s.level,
   }));
+  const wheel = normalizeWheel(v.wheel);
   const setup: SessionSetup = {
     weapon: cleanWeaponName(v.weapon),
     weaponTier: num(v.weaponTier, 0, 10),
@@ -281,6 +289,7 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
       }))
       .filter((r, i, arr) => arr.findIndex((x) => x.perk === r.perk) === i)
       .slice(0, 6),
+    wheel,
     charms: objs(v.charms)
       .filter((c) => typeof c.charm === "string" && KNOWN_CHARMS.has(c.charm))
       .map((c) => ({
@@ -293,6 +302,7 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
       }))
       .slice(0, 24),
   };
+  if (wheel) Object.assign(setup, wheelSetupFields(wheel));
   return isEmptySetup(setup) ? null : setup;
 }
 
@@ -311,6 +321,7 @@ export function isEmptySetup(s: SessionSetup | null | undefined): boolean {
     !s.stance &&
     s.conviction.length === 0 &&
     s.revelation.length === 0 &&
+    isEmptyWheel(s.wheel) &&
     s.charms.length === 0
   );
 }
@@ -343,6 +354,7 @@ export function copySetupParts(
     next.conviction = source.conviction.map((c) => ({ ...c }));
     next.revelation = source.revelation.map((r) => ({ ...r }));
     next.wheelDmgHeal = source.wheelDmgHeal;
+    next.wheel = source.wheel ? structuredClone(source.wheel) : null;
   }
   return next;
 }

@@ -10,6 +10,7 @@ import {
 
 import { findWeapon, weaponSummary } from "@/lib/weapons";
 import { EquipmentDoll } from "@/components/setup/EquipmentDoll";
+import { WheelReadout } from "@/components/wheel/WheelReadout";
 
 const ROMAN = ["", "I", "II", "III"];
 const WHEEL_CHIP =
@@ -30,7 +31,9 @@ export function SetupCard({
   // Skill, Magic Level e crítico saíram do setup (confuso) — sessões antigas que têm esses campos não
   // mostram mais.
   const stats: [string, string][] = [];
-  if (setup.wheelDmgHeal != null) stats.push(["Wheel dano e cura", `+${setup.wheelDmgHeal}`]);
+  // Com a roda montada o "dano e cura" aparece junto dela.
+  if (setup.wheelDmgHeal != null && !setup.wheel)
+    stats.push(["Wheel dano e cura", `+${setup.wheelDmgHeal}`]);
 
   // Charms agrupados: "Freeze Nv2 · Vexclaw, Hellflayer"
   const charmGroups = [...new Set(setup.charms.map((c) => c.charm))].map((charm) => {
@@ -111,6 +114,8 @@ export function SetupCard({
           ))}
         </dl>
       )}
+
+      {setup.wheel && <WheelReadout build={setup.wheel} compact={compact} />}
 
       {/* Tudo que aparece aqui está MARCADO — mesmo destaque dourado do editor pros dois grupos
           (Convicção em cinza parecia "desmarcado"). Ordem igual à do editor: Convicção, Revelação. */}

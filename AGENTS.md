@@ -35,6 +35,13 @@ Analyser, parser.ts, sem OCR; salvar = assistente em Dialog: Hunt → Bounty (Bo
 estilo Task Board, coluna bounty_creature) → Prey (PreyPicker inline) → Setup → Finalizar).
 Setup da sessão: hunt_sessions.setup jsonb (src/lib/session-setup.ts) — SÓ campos estruturados de listas
 da TibiaWiki (charms, posturas, perks de Convicção/Revelação da Wheel por vocação; ícones via GameIcon) + nome da arma sanitizado; é público com a sessão.
+WHEEL OF DESTINY = planejador próprio (components/wheel/: WheelOfDestiny SVG, WheelPlanner, WheelDialog, WheelReadout) em
+setup.wheel {voc, points[36], gems{TL/TR/BL/BR: [mod1, mod2, supremo]}, level, scrolls, extra}. Dados do jogo em
+src/data/wheel-data.ts (fatias, pontos 50/75/100/150/200, perks por vocação, revelação por domínio, mods no Grau IV —
+levantados no planejador oficial do tibia.com em 2026-10-07; o código de compartilhamento de lá é binário fechado, NÃO
+importamos). Regras em src/lib/wheel.ts (fatia libera com vizinha CHEIA; revelação 250/500/1000 + Revelation Mastery;
+mod N liga com N Vessel Resonances; bônus de Vessel só quando bate com o tamanho da gema). Com wheel, normalizeSetup
+RECALCULA conviction/revelation/wheelDmgHeal a partir dela (wheelSetupFields).
 Presets do setup ("sets", sem charms; o print do set foi REMOVIDO — o boneco de equipamentos substitui, gear_url não é lido) por personagem em public.setup_presets
 (setup-presets.ts); tela dedicada /equipamentos (Meus sets).
 Armas: src/data/weapons-data.ts (530 armas extraídas da TibiaWiki BR — categorias Espadas/Machados/Clavas,

@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Check, Plus, Save, Shirt, X } from "lucide-react";
+import { Check, Pencil, Plus, Save, Shirt, X } from "lucide-react";
 import { toast } from "sonner";
 import { GameIcon } from "@/components/GameIcon";
 import {
   CHARMS,
   STANCES,
-  WHEEL_CONVICTION,
   WHEEL_ICON,
-  WHEEL_REVELATION,
   charmIcon,
   convictionMaxLevel,
   type SessionSetup,
@@ -16,6 +14,11 @@ import {
   type SetupVocation,
 } from "@/lib/session-setup";
 import { EquipmentDoll } from "@/components/setup/EquipmentDoll";
+import { WheelDialog } from "@/components/wheel/WheelDialog";
+import { WheelOfDestiny } from "@/components/wheel/WheelOfDestiny";
+import { useAppStore } from "@/lib/store";
+import { currentLevel } from "@/lib/level";
+import { wheelSetupFields } from "@/lib/wheel";
 import { findWeapon } from "@/lib/weapons";
 import {
   suggestedPresetName,
@@ -28,12 +31,6 @@ const FIELD =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue";
 const LABEL = "mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
 const ROMAN = ["", "I", "II", "III"];
-
-const toNum = (s: string): number | null => {
-  if (!s.trim()) return null;
-  const n = Number(s.replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-};
 
 const uniq = <T,>(a: T[]) => [...new Set(a)];
 
@@ -67,12 +64,6 @@ export function SessionSetupPanel({
   const set = (patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
 
   const stances = vocation ? STANCES[vocation] : uniq(Object.values(STANCES).flat());
-  const conviction = vocation
-    ? WHEEL_CONVICTION[vocation]
-    : uniq(Object.values(WHEEL_CONVICTION).flat());
-  const revelation = vocation
-    ? WHEEL_REVELATION[vocation]
-    : uniq(Object.values(WHEEL_REVELATION).flat());
 
   // ---------- presets ----------
   const { data: presets = [] } = useSetupPresets(characterId);
@@ -97,22 +88,9 @@ export function SessionSetupPanel({
   };
 
   // ---------- Wheel ----------
-  const cycleConviction = (perk: string) => {
-    const cur = value.conviction.find((c) => c.perk === perk);
-    const max = convictionMaxLevel(perk);
-    const rest = value.conviction.filter((c) => c.perk !== perk);
-    if (!cur) set({ conviction: [...rest, { perk, level: 1 }] });
-    else if (cur.level < max) set({ conviction: [...rest, { perk, level: 2 }] });
-    else set({ conviction: rest });
-  };
-  const cycleRevelation = (perk: string) => {
-    const cur = value.revelation.find((r) => r.perk === perk);
-    const rest = value.revelation.filter((r) => r.perk !== perk);
-    if (!cur) set({ revelation: [...rest, { perk, stage: 1 }] });
-    else if (cur.stage < 3)
-      set({ revelation: [...rest, { perk, stage: (cur.stage + 1) as 2 | 3 }] });
-    else set({ revelation: rest });
-  };
+  const [wheelOpen, setWheelOpen] = useState(false);
+  const levelSnapshots = useAppStore((st) => st.levelSnapshots);
+  const charLevel = characterId ? currentLevel(levelSnapshots, characterId) : null;
 
   // ---------- charms ----------
   const [extraCharms, setExtraCharms] = useState<string[]>([]);
@@ -290,58 +268,79 @@ export function SessionSetupPanel({
 
       {/* Wheel of Destiny */}
       <section className="rounded-xl border border-rubi-gold/25 bg-rubi-gold/[0.04] p-3">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <span className="flex items-center gap-2 text-sm font-semibold">
             <img src={WHEEL_ICON} alt="" className="h-6 w-6 [image-rendering:pixelated]" />
             Wheel of Destiny
+            {value.wheelDmgHeal != null && (
+              <span className="rounded bg-rubi-gold/15 px-1.5 py-0.5 text-xs text-rubi-gold">
+                +{value.wheelDmgHeal} dano e cura
+              </span>
+            )}
           </span>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            Dano e cura +
-            <input
-              inputMode="numeric"
-              value={value.wheelDmgHeal ?? ""}
-              onChange={(e) => set({ wheelDmgHeal: toNum(e.target.value) })}
-              placeholder="21"
-              className="w-16 rounded-md border border-border bg-background px-2 py-1 text-sm outline-none focus:border-rubi-gold"
-            />
-          </label>
+          <button
+            type="button"
+            onClick={() => setWheelOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-rubi-gold px-3 py-1.5 text-sm font-bold text-background"
+          >
+            <Pencil className="h-4 w-4" /> {value.wheel ? "Editar a roda" : "Montar a roda"}
+          </button>
         </div>
-
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Convicção <span className="normal-case">(toque pra subir: I → II → desliga)</span>
-        </div>
-        <div className="mb-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-          {conviction.map((perk) => {
-            const cur = value.conviction.find((c) => c.perk === perk);
-            return (
-              <WheelTile
-                key={perk}
-                name={perk}
-                label={perk.replace(/^Augmented /, "")}
-                badge={cur ? (convictionMaxLevel(perk) === 1 ? "✓" : ROMAN[cur.level]) : null}
-                onClick={() => cycleConviction(perk)}
-              />
-            );
-          })}
-        </div>
-
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Revelação <span className="normal-case">(estágio 1 → 2 → 3 → desliga)</span>
-        </div>
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-          {revelation.map((perk) => {
-            const cur = value.revelation.find((r) => r.perk === perk);
-            return (
-              <WheelTile
-                key={perk}
-                name={perk}
-                label={perk}
-                badge={cur ? ROMAN[cur.stage] : null}
-                onClick={() => cycleRevelation(perk)}
-              />
-            );
-          })}
-        </div>
+        {value.wheel ? (
+          <button
+            type="button"
+            onClick={() => setWheelOpen(true)}
+            className="mx-auto block w-full max-w-[300px]"
+            aria-label="Editar a roda"
+          >
+            <WheelOfDestiny build={value.wheel} className="h-auto w-full" />
+          </button>
+        ) : value.conviction.length > 0 || value.revelation.length > 0 ? (
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              {value.revelation.map((r) => (
+                <span
+                  key={r.perk}
+                  className="inline-flex items-center gap-1 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 py-0.5 pl-0.5 pr-2 text-xs"
+                >
+                  <GameIcon name={r.perk} size={18} /> {r.perk} {ROMAN[r.stage]}
+                </span>
+              ))}
+              {value.conviction.map((c) => (
+                <span
+                  key={c.perk}
+                  className="inline-flex items-center gap-1 rounded-full border border-border py-0.5 pl-0.5 pr-2 text-xs"
+                >
+                  <GameIcon name={c.perk} size={18} /> {c.perk.replace(/^Augmented /, "")}
+                  {convictionMaxLevel(c.perk) === 2 && ` ${ROMAN[c.level]}`}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Lista do jeito antigo. Monte na roda pra ficar igual ao jogo (pontos, gemas e
+              Vessels).
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            A roda de verdade, igual ao planejador do tibia.com: coloque o level, distribua os
+            pontos e encaixe as gemas. Fica salva no set e aparece na sessão e nas comparações.
+          </p>
+        )}
+        <WheelDialog
+          open={wheelOpen}
+          onOpenChange={setWheelOpen}
+          value={value.wheel}
+          vocation={vocation}
+          defaultLevel={charLevel}
+          onApply={(wheel) =>
+            set(
+              wheel
+                ? { wheel, ...wheelSetupFields(wheel) }
+                : { wheel: null, conviction: [], revelation: [], wheelDmgHeal: null },
+            )
+          }
+        />
       </section>
 
       {mode === "session" && (
@@ -473,39 +472,5 @@ export function SessionSetupPanel({
         </>
       )}
     </div>
-  );
-}
-
-function WheelTile({
-  name,
-  label,
-  badge,
-  onClick,
-}: {
-  name: string;
-  label: string;
-  badge: string | null;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={name}
-      className={
-        "relative flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-[11px] leading-tight transition-colors " +
-        (badge
-          ? "border-rubi-gold bg-rubi-gold/15 text-foreground"
-          : "border-border text-muted-foreground opacity-80 hover:opacity-100")
-      }
-    >
-      <GameIcon name={name} size={28} className={badge ? "" : "grayscale"} />
-      <span className="line-clamp-2 min-w-0 flex-1">{label}</span>
-      {badge && (
-        <span className="flex-none rounded bg-rubi-gold px-1 text-[10px] font-bold text-background">
-          {badge}
-        </span>
-      )}
-    </button>
   );
 }

@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "wheel-of-destiny-planner",
+    date: "2026-10-07",
+    title: "Wheel of Destiny de verdade, igual ao planejador do tibia.com",
+    description:
+      "No setup da sessão e em Meus sets, a lista de perks virou a roda completa: coloque o level (e os Promotion Scrolls / pontos extras) que o app calcula quantos pontos você tem, distribua nas 36 fatias abrindo do centro pra fora, veja as Revelações subindo de estágio nos cantos e encaixe as gemas com os mods — os Vessels ligam cada mod e o bônus de dano e cura é calculado sozinho. A roda fica salva no set e aparece desenhada na sessão, na Comunidade e no Comparar, então dá pra ver direitinho o que mudou de uma hunt pra outra.",
+  },
+  {
     id: "casa-nova-2026-10-05",
     date: "2026-10-05",
     title: "O site mudou de casa",
