@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "wheel-one-click-2026-10-07",
+    date: "2026-10-07",
+    title: "Wheel of Destiny: um clique enche a fatia",
+    description:
+      "Agora é igual ao jogo: clique numa fatia (botão esquerdo ou direito) e ela enche na hora; clique de novo pra esvaziar. Pra pôr só alguns pontos, continua tendo a barra e os botões +1/+10 no painel ao lado.",
+  },
+  {
     id: "wheel-fixes-2026-10-07",
     date: "2026-10-07",
     title: "Wheel of Destiny: ajustes de rolagem e toque",

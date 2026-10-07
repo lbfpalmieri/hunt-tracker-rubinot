@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   WHEEL_DOMAINS,
   WHEEL_REVELATION_BY_DOMAIN,
@@ -147,7 +147,7 @@ export function WheelOfDestiny({
   build: WheelBuild;
   selected?: WheelSelection;
   onSelect?: (s: WheelSelection) => void;
-  /** Duplo clique numa fatia: enche / esvazia. */
+  /** Clique (esquerdo ou direito) numa fatia: enche / esvazia. */
   onToggleSlice?: (i: number) => void;
   className?: string;
 }) {
@@ -155,18 +155,11 @@ export function WheelOfDestiny({
   const avail = useMemo(() => availableSlices(build.points), [build.points]);
   const summary = useMemo(() => summarizeWheel(build), [build]);
   const [hover, setHover] = useState<number | null>(null);
-  // Duplo toque/clique feito na mão: o evento dblclick não chega em todo celular (iOS).
-  const lastTap = useRef<{ i: number; t: number } | null>(null);
-  const tapSlice = (i: number) => {
-    const now = Date.now();
-    const prev = lastTap.current;
-    if (prev && prev.i === i && now - prev.t < 350) {
-      lastTap.current = null;
-      onToggleSlice?.(i);
-      return;
-    }
-    lastTap.current = { i, t: now };
+  // Igual ao jogo: clique (esquerdo OU direito) enche a fatia; clicar de novo esvazia. O painel do lado
+  // continua pra ajuste fino (barra, +1/+10).
+  const clickSlice = (i: number) => {
     onSelect?.({ type: "slice", i });
+    onToggleSlice?.(i);
   };
   const gid = `w${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
@@ -176,7 +169,8 @@ export function WheelOfDestiny({
       className={className}
       role="img"
       aria-label="Wheel of Destiny"
-      // touch-action: manipulation = sem zoom no toque duplo (o duplo toque enche/esvazia a fatia).
+      // touch-action: manipulation = toque sem atraso nem zoom de toque duplo.
+      onContextMenu={interactive ? (e) => e.preventDefault() : undefined}
       style={{
         userSelect: "none",
         WebkitTapHighlightColor: "transparent",
@@ -238,7 +232,15 @@ export function WheelOfDestiny({
         return (
           <g
             key={s.id}
-            onClick={interactive ? () => tapSlice(s.i) : undefined}
+            onClick={interactive ? () => clickSlice(s.i) : undefined}
+            onContextMenu={
+              interactive
+                ? (e) => {
+                    e.preventDefault();
+                    clickSlice(s.i);
+                  }
+                : undefined
+            }
             // Só mouse: no toque o "hover" ficava preso na fatia.
             onPointerEnter={
               interactive ? (e) => e.pointerType === "mouse" && setHover(s.i) : undefined

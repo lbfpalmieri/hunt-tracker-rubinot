@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown, Eraser, Gem, Lock, RotateCcw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { GameIcon } from "@/components/GameIcon";
@@ -76,20 +76,7 @@ export function WheelPlanner({
   vocation: SetupVocation | null;
 }) {
   const [sel, setSel] = useState<WheelSelection>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => clearTimeout(scrollTimer.current ?? undefined), []);
-  // No celular o painel fica embaixo da roda: rola só o necessário pra ele aparecer. Espera passar a
-  // janela do toque duplo — rolar na hora fazia o 2º toque cair em outra fatia.
-  const select = (next: WheelSelection) => {
-    setSel(next);
-    clearTimeout(scrollTimer.current ?? undefined);
-    if (next && window.innerWidth < 1024)
-      scrollTimer.current = setTimeout(
-        () => panelRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }),
-        400,
-      );
-  };
+  const select = (next: WheelSelection) => setSel(next);
   const summary = useMemo(() => summarizeWheel(value), [value]);
 
   const apply = (i: number, v: number) => {
@@ -98,9 +85,20 @@ export function WheelPlanner({
     if (!r.ok) toast.error(r.reason, { id: "wheel-points" });
     else onChange(r.build);
   };
+  // Cheia → esvazia; senão enche. Se não dá pra encher (sem pontos sobrando) e ela já tem pontos,
+  // o clique esvazia — senão a fatia meio cheia ficava "presa".
   const toggleSlice = (i: number) => {
     const s = WHEEL_SLICES[i];
-    apply(i, value.points[i] === s.max ? 0 : s.max);
+    const p = value.points[i];
+    if (p === s.max) return apply(i, 0);
+    const r = setSlicePoints(value, i, s.max);
+    if (r.ok && r.build !== value) onChange(r.build);
+    else if (p > 0) apply(i, 0);
+    else if (!r.ok) toast.error(r.reason, { id: "wheel-points" });
+    else
+      toast.error("Sem pontos sobrando — suba o level ou tire de outra fatia.", {
+        id: "wheel-points",
+      });
   };
 
   return (
@@ -120,7 +118,7 @@ export function WheelPlanner({
       </div>
 
       <div className="min-w-0 space-y-3">
-        <div ref={panelRef} className="scroll-mb-24">
+        <div>
           <SelectionPanel
             sel={sel}
             value={value}
@@ -303,7 +301,8 @@ function Legend() {
         </span>
       ))}
       <span className="w-full text-center">
-        Toque numa fatia pra pôr pontos · dois toques enchem/esvaziam
+        Clique numa fatia (esquerdo ou direito) pra encher · clique de novo pra esvaziar · ajuste
+        fino no painel
       </span>
     </p>
   );
@@ -331,7 +330,12 @@ function SelectionPanel({
       <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
         <p className="font-medium text-foreground">Como montar</p>
         <ul className="mt-2 list-disc space-y-1 pl-4">
+          <li>
+            Clique numa fatia pra encher; clique de novo pra esvaziar (o botão direito também
+            funciona, como no jogo).
+          </li>
           <li>Comece pelas 4 fatias do centro; encher uma libera as vizinhas.</li>
+          <li>Pra pôr só alguns pontos, use a barra e os botões +1 / +10 no painel.</li>
           <li>
             O perk (ícone) só liga com a fatia cheia; a bolinha colorida é o bônus de cada ponto.
           </li>
