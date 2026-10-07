@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   WHEEL_DOMAINS,
   WHEEL_REVELATION_BY_DOMAIN,
@@ -155,6 +155,19 @@ export function WheelOfDestiny({
   const avail = useMemo(() => availableSlices(build.points), [build.points]);
   const summary = useMemo(() => summarizeWheel(build), [build]);
   const [hover, setHover] = useState<number | null>(null);
+  // Duplo toque/clique feito na mão: o evento dblclick não chega em todo celular (iOS).
+  const lastTap = useRef<{ i: number; t: number } | null>(null);
+  const tapSlice = (i: number) => {
+    const now = Date.now();
+    const prev = lastTap.current;
+    if (prev && prev.i === i && now - prev.t < 350) {
+      lastTap.current = null;
+      onToggleSlice?.(i);
+      return;
+    }
+    lastTap.current = { i, t: now };
+    onSelect?.({ type: "slice", i });
+  };
   const gid = `w${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
   return (
@@ -163,7 +176,12 @@ export function WheelOfDestiny({
       className={className}
       role="img"
       aria-label="Wheel of Destiny"
-      style={{ userSelect: "none", WebkitTapHighlightColor: "transparent" }}
+      // touch-action: manipulation = sem zoom no toque duplo (o duplo toque enche/esvazia a fatia).
+      style={{
+        userSelect: "none",
+        WebkitTapHighlightColor: "transparent",
+        touchAction: "manipulation",
+      }}
     >
       <defs>
         <radialGradient id={`${gid}-bg`} cx="50%" cy="50%" r="50%">
@@ -220,10 +238,12 @@ export function WheelOfDestiny({
         return (
           <g
             key={s.id}
-            onClick={interactive ? () => onSelect?.({ type: "slice", i: s.i }) : undefined}
-            onDoubleClick={interactive ? () => onToggleSlice?.(s.i) : undefined}
-            onMouseEnter={interactive ? () => setHover(s.i) : undefined}
-            onMouseLeave={interactive ? () => setHover(null) : undefined}
+            onClick={interactive ? () => tapSlice(s.i) : undefined}
+            // Só mouse: no toque o "hover" ficava preso na fatia.
+            onPointerEnter={
+              interactive ? (e) => e.pointerType === "mouse" && setHover(s.i) : undefined
+            }
+            onPointerLeave={interactive ? () => setHover(null) : undefined}
             style={{ cursor: interactive ? "pointer" : "default" }}
           >
             <title>{`${perk} — ${p}/${s.max}${open || p ? "" : " (bloqueada)"}`}</title>

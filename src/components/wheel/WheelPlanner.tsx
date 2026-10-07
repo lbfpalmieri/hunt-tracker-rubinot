@@ -1,16 +1,7 @@
-import { useMemo, useRef, useState } from "react";
-import { Check, ChevronsUpDown, Eraser, Gem, Lock, RotateCcw, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronsUpDown, Eraser, Gem, Lock, RotateCcw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { GameIcon } from "@/components/GameIcon";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   CONVICTION_INFO,
   DEDICATION_RATE,
@@ -86,19 +77,25 @@ export function WheelPlanner({
 }) {
   const [sel, setSel] = useState<WheelSelection>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  // No celular o painel fica embaixo da roda: rola só o necessário pra ele aparecer.
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => clearTimeout(scrollTimer.current ?? undefined), []);
+  // No celular o painel fica embaixo da roda: rola só o necessário pra ele aparecer. Espera passar a
+  // janela do toque duplo — rolar na hora fazia o 2º toque cair em outra fatia.
   const select = (next: WheelSelection) => {
     setSel(next);
+    clearTimeout(scrollTimer.current ?? undefined);
     if (next && window.innerWidth < 1024)
-      requestAnimationFrame(() =>
-        panelRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }),
+      scrollTimer.current = setTimeout(
+        () => panelRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }),
+        400,
       );
   };
   const summary = useMemo(() => summarizeWheel(value), [value]);
 
   const apply = (i: number, v: number) => {
     const r = setSlicePoints(value, i, v);
-    if (!r.ok) toast.error(r.reason);
+    // id fixo: arrastar a barra numa fatia bloqueada não empilha dezenas de avisos.
+    if (!r.ok) toast.error(r.reason, { id: "wheel-points" });
     else onChange(r.build);
   };
   const toggleSlice = (i: number) => {
@@ -154,7 +151,14 @@ function PointsBar({
 }) {
   const { used, budget } = summary;
   const over = budget != null && used > budget;
-  const pct = budget ? Math.min(100, (used / budget) * 100) : Math.min(100, (used / 4000) * 100);
+  const pct =
+    budget == null
+      ? Math.min(100, (used / 4000) * 100)
+      : budget > 0
+        ? Math.min(100, (used / budget) * 100)
+        : used > 0
+          ? 100
+          : 0;
   const numIn = (s: string, max: number) => {
     const n = Number(s.replace(/\D/g, ""));
     return s.trim() === "" ? null : Math.min(max, n);
@@ -299,7 +303,7 @@ function Legend() {
         </span>
       ))}
       <span className="w-full text-center">
-        Toque numa fatia pra pôr pontos · duplo clique enche/esvazia
+        Toque numa fatia pra pôr pontos · dois toques enchem/esvaziam
       </span>
     </p>
   );
@@ -339,7 +343,7 @@ function SelectionPanel({
   if (sel.type === "slice") return <SlicePanel i={sel.i} value={value} apply={apply} />;
   if (sel.type === "domain")
     return <DomainPanel d={sel.d} value={value} summary={summary} onSelect={onSelect} />;
-  return <GemPanel d={sel.d} value={value} summary={summary} onChange={onChange} />;
+  return <GemPanel key={sel.d} d={sel.d} value={value} summary={summary} onChange={onChange} />;
 }
 
 function PanelShell({ color, children }: { color: string; children: React.ReactNode }) {
@@ -686,6 +690,11 @@ function GemPanel({
   );
 }
 
+/**
+ * Seletor de mod embutido no painel (lista abre ali mesmo, com busca). Não usa Popover: dentro do
+ * Dialog a lista flutuante não rolava (o Dialog trava o scroll fora dele) e abria longe do botão no
+ * celular.
+ */
 function ModPicker({
   label,
   status,
@@ -702,66 +711,84 @@ function ModPicker({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
   const current = options.find((o) => o.id === value);
+  const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const shown = q.trim() ? options.filter((o) => norm(o.label).includes(norm(q.trim()))) : options;
+  const pick = (id: number | null) => {
+    onPick(id);
+    setOpen(false);
+    setQ("");
+  };
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         <span>{label}</span>
         {value != null && <span className="normal-case tracking-normal">{status}</span>}
       </div>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            className="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-left text-sm disabled:opacity-40"
-          >
-            <span className={current ? "" : "text-muted-foreground"}>
-              {current?.label ?? (disabled ? "Escolha o mod anterior primeiro" : "Sem mod")}
-            </span>
-            <ChevronsUpDown className="h-4 w-4 flex-none opacity-60" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-(--radix-popover-trigger-width) min-w-[280px] border-rubi-gold/40 bg-surface-elevated p-0"
-          align="start"
-        >
-          <Command>
-            <CommandInput placeholder="Buscar mod..." />
-            <CommandList className="max-h-72">
-              <CommandEmpty>Nada encontrado.</CommandEmpty>
-              <CommandGroup>
-                {value != null && (
-                  <CommandItem
-                    value="__none"
-                    onSelect={() => {
-                      onPick(null);
-                      setOpen(false);
-                    }}
-                  >
-                    <Eraser className="mr-2 h-4 w-4" /> Sem mod
-                  </CommandItem>
-                )}
-                {options.map((o) => (
-                  <CommandItem
-                    key={o.id}
-                    value={`${o.label} ${o.id}`}
-                    onSelect={() => {
-                      onPick(o.id);
-                      setOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={"mr-2 h-4 w-4 " + (o.id === value ? "opacity-100" : "opacity-0")}
-                    />
-                    {o.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <button
+        type="button"
+        disabled={disabled}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className={
+          "flex w-full items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 text-left text-sm disabled:opacity-40 " +
+          (open ? "border-rubi-gold" : "border-border")
+        }
+      >
+        <span className={current ? "" : "text-muted-foreground"}>
+          {current?.label ?? (disabled ? "Escolha o mod anterior primeiro" : "Sem mod")}
+        </span>
+        <ChevronsUpDown className="h-4 w-4 flex-none opacity-60" />
+      </button>
+      {open && !disabled && (
+        <div className="mt-1 overflow-hidden rounded-lg border border-rubi-gold/40 bg-surface-elevated">
+          <div className="flex items-center gap-2 border-b border-border px-3">
+            <Search className="h-4 w-4 flex-none opacity-50" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar mod (ex. vida, fogo)..."
+              className="h-10 w-full bg-transparent text-sm outline-none"
+            />
+          </div>
+          <ul className="max-h-64 overflow-y-auto overscroll-contain py-1">
+            {value != null && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => pick(null)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"
+                >
+                  <Eraser className="h-4 w-4" /> Sem mod
+                </button>
+              </li>
+            )}
+            {shown.map((o) => (
+              <li key={o.id}>
+                <button
+                  type="button"
+                  onClick={() => pick(o.id)}
+                  className={
+                    "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted " +
+                    (o.id === value ? "bg-rubi-gold/10 text-rubi-gold" : "")
+                  }
+                >
+                  <Check
+                    className={
+                      "h-4 w-4 flex-none " + (o.id === value ? "opacity-100" : "opacity-0")
+                    }
+                  />
+                  {o.label}
+                </button>
+              </li>
+            ))}
+            {shown.length === 0 && (
+              <li className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado.</li>
+            )}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

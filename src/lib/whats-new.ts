@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "wheel-fixes-2026-10-07",
+    date: "2026-10-07",
+    title: "Wheel of Destiny: ajustes de rolagem e toque",
+    description:
+      "A lista de mods das gemas agora rola normalmente (com o mouse e no celular) e abre logo abaixo do campo, com busca (ex. \"vida\", \"fogo\"). Dois toques numa fatia enchem/esvaziam também no iPhone, e no celular a tela não pula mais no meio do toque. Clicar fora da roda não fecha mais a janela sem querer — e se você mudou algo, o app pergunta antes de descartar.",
+  },
+  {
     id: "wheel-of-destiny-planner",
     date: "2026-10-07",
     title: "Wheel of Destiny de verdade, igual ao planejador do tibia.com",
