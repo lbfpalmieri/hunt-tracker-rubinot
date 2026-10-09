@@ -24,7 +24,9 @@ Regras permanentes:
   Roles NUNCA em profile/users.
 
 Cálculos: todo "/h" de sessão = total ÷ duração da própria sessão; nunca copiar o
-"/h" do Hunting Analyser do jogo (janela maior). Média da hunt = média das sessões
+"/h" do Hunting Analyser do jogo (janela maior). "Corrigir tempo" (DurationAdjust + withDuration em parser.ts) na
+Nova sessão e no registro de bosses troca a duração colada (totais iguais, /h e endedAt recalculados; em grupo
+também party.sessionSec). Média da hunt = média das sessões
 (aggregateByHunt em compare.ts). Imbuements: keyOf = `${gearSlot}::${label}` — tipos
 diferentes coexistem no item; mesmo tipo = renovação. Prey (prey.ts): 3 slots (2 liberados +
 1 "Permanent Prey Slot" da Store), 1 criatura por slot, 1 bônus por criatura, 10 estrelas:

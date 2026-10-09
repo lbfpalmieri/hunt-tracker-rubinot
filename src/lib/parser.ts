@@ -50,6 +50,32 @@ export const resolveDurationSec = (
 };
 
 
+/**
+ * Duração corrigida pela pessoa (ex. esqueceu de colar e o analyser ficou rodando parado: marcou 1h,
+ * a hunt foi 50min). Os totais ficam iguais; muda a duração, o fim da sessão e todo "/h".
+ */
+export function withDuration<T extends HuntingData>(h: T, sec: number): T {
+  const durationSec = Math.max(60, Math.round(sec));
+  const hours = durationSec / 3600;
+  const perHour = (v: number) => Math.round(v / hours);
+  const start = parseSessionStamp(h.startedAt);
+  let endedAt = h.endedAt;
+  if (start != null) {
+    const d = new Date(start + durationSec * 1000);
+    const p = (n: number) => String(n).padStart(2, "0");
+    endedAt = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}, ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  return {
+    ...h,
+    durationSec,
+    endedAt,
+    xpPerHour: perHour(h.xpGain),
+    rawXpPerHour: perHour(h.rawXp),
+    damagePerHour: perHour(h.damage),
+    healingPerHour: perHour(h.healing),
+  };
+}
+
 export interface HuntingData {
   startedAt: string | null;
   endedAt: string | null;

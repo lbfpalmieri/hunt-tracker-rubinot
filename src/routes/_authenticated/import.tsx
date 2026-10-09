@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
-import { parseHunting, parseDamage, parseMiscellaneous } from "@/lib/parser";
+import { parseHunting, parseDamage, parseMiscellaneous, withDuration } from "@/lib/parser";
+import { DurationAdjust } from "@/components/DurationAdjust";
 import { detectDeathLoss } from "@/lib/deaths";
 import { fmtGold, fmtNum, fmtDuration } from "@/lib/format";
 import { getCommunitySessions } from "@/lib/community.functions";
@@ -264,7 +265,7 @@ function ImportPage() {
 
   // Modo Grupo: `personal` = o Hunting Analyser pessoal colado (opcional; só entra com
   // XP/criaturas/itens — ver mergePartyHunting). Modo Solo: exatamente como sempre foi.
-  const parsed = useMemo(() => {
+  const parsedRaw = useMemo(() => {
     if (groupMode) {
       const safe = <T,>(text: string, fn: (t: string) => T): T | null => {
         if (!text.trim()) return null;
@@ -299,6 +300,20 @@ function ImportPage() {
       return { hunting: null, personal: null, damage: null, misc: null };
     }
   }, [huntingText, damageText, miscText, groupMode, party]);
+
+  // "Corrigir tempo": duração real da hunt quando o analyser ficou contando a mais (esqueceu de colar).
+  // Zera quando chega outro analyser.
+  const [durationFix, setDurationFix] = useState<number | null>(null);
+  useEffect(() => {
+    setDurationFix(null);
+  }, [huntingText, groupMode, party?.sessionSec, party?.startedAt]);
+  const parsed = useMemo(
+    () =>
+      durationFix && parsedRaw.hunting
+        ? { ...parsedRaw, hunting: withDuration(parsedRaw.hunting, durationFix) }
+        : parsedRaw,
+    [parsedRaw, durationFix],
+  );
 
   // Modo Grupo: o nome do char não bateu com ninguém da party → tenta achar você pelos números do
   // seu Hunting Analyser (dá pra trocar no passo Grupo).
@@ -489,7 +504,11 @@ function ImportPage() {
       const split = applyPartySplit(
         correctedHunting,
         hasParty && party
-          ? { ...party, ...(parsed.personal ? {} : { noHuntingAnalyser: true }) }
+          ? {
+              ...party,
+              ...(parsed.personal ? {} : { noHuntingAnalyser: true }),
+              ...(durationFix ? { sessionSec: durationFix } : {}),
+            }
           : null,
       );
       const created = await addSession({
@@ -734,8 +753,14 @@ function ImportPage() {
                   dois juntos no começo).
                 </p>
               )}
+              <div className="mb-3">
+                <DurationAdjust
+                  originalSec={parsedRaw.hunting?.durationSec ?? parsed.hunting.durationSec}
+                  value={durationFix}
+                  onChange={setDurationFix}
+                />
+              </div>
               <dl className="grid grid-cols-2 gap-3 text-sm">
-                <PreviewRow label="Duração" value={fmtDuration(parsed.hunting.durationSec)} />
                 <PreviewRow
                   label="Raw XP"
                   value={fmtNum(parsed.hunting.rawXp)}

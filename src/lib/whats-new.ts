@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "corrigir-tempo-analyser",
+    date: "2026-10-09",
+    title: "Corrigir o tempo do analyser na hora de colar",
+    description:
+      "Esqueceu de colar e o analyser ficou contando? Na Nova sessão (Solo e Grupo) e no registro da Rotação de Bosses agora tem \"Corrigir tempo\": ajuste as horas/minutos (ou use −5/−10/−15/−30 min e a barrinha) e XP/h, lucro/h e kills/h são recalculados com o tempo real. Loot, XP e kills continuam os do analyser.",
+  },
+  {
     id: "wheel-one-click-2026-10-07",
     date: "2026-10-07",
     title: "Wheel of Destiny: um clique enche a fatia",

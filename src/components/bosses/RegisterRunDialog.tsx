@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, ClipboardPaste, Plus, Skull } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -12,8 +12,9 @@ import {
 import { GameIcon } from "@/components/GameIcon";
 import { bossLinkedLoot, normName, type Boss, type BossCatalog } from "@/lib/boss-catalog";
 import { addRun, lastPrices, type BossRotationRun } from "@/lib/boss-rotations";
-import { fmtDuration, fmtGold } from "@/lib/format";
-import { parseHunting, parseSessionStamp } from "@/lib/parser";
+import { fmtGold } from "@/lib/format";
+import { parseHunting, parseSessionStamp, withDuration } from "@/lib/parser";
+import { DurationAdjust } from "@/components/DurationAdjust";
 import { parseGoldInput } from "@/lib/rc-calc";
 import { priceMap, useItemPrices, useSaveItemPrices } from "@/lib/item-prices";
 
@@ -84,7 +85,14 @@ export function RegisterRunDialog({
   const myPrices = useMemo(() => priceMap(myPriceList), [myPriceList]);
   const savePrices = useSaveItemPrices(world);
 
-  const parsed = useMemo(() => (text.trim() ? parseHunting(text) : null), [text]);
+  const parsedRaw = useMemo(() => (text.trim() ? parseHunting(text) : null), [text]);
+  // "Corrigir tempo" (analyser que ficou contando a mais); zera quando cola outro texto.
+  const [durationFix, setDurationFix] = useState<number | null>(null);
+  useEffect(() => setDurationFix(null), [text]);
+  const parsed = useMemo(
+    () => (parsedRaw && durationFix ? withDuration(parsedRaw, durationFix) : parsedRaw),
+    [parsedRaw, durationFix],
+  );
   const valid = !!parsed && (parsed.durationSec > 0 || parsed.loot > 0 || parsed.kills.length > 0);
 
   const detected = useMemo(() => {
@@ -424,9 +432,16 @@ export function RegisterRunDialog({
               />
             </div>
             <p className="-mt-2 text-[10px] text-muted-foreground">
-              Tempo da rotação: {fmtDuration(parsed.durationSec)}. Supplies são os da rotação
-              inteira (caminho incluído).
+              Supplies são os da rotação inteira (caminho incluído).
             </p>
+            {parsedRaw && parsedRaw.durationSec > 0 && (
+              <DurationAdjust
+                label="Tempo da rotação"
+                originalSec={parsedRaw.durationSec}
+                value={durationFix}
+                onChange={setDurationFix}
+              />
+            )}
 
             <label className="flex items-center justify-between gap-3 text-sm">
               <span className="text-muted-foreground">Jogadores na rotação</span>
