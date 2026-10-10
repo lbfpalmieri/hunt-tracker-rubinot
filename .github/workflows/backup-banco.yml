@@ -1,0 +1,38 @@
+# Backup semanal do banco do Hunt Tracker (Supabase). Roda aos domingos e também manualmente
+# (Actions → Backup do banco → Run workflow). O arquivo fica em "Artifacts" por 90 dias.
+# Como este repositório é PÚBLICO, o arquivo sai CRIPTOGRAFADO (AES-256) com a própria senha do banco
+# (segredo SUPABASE_DB_URL, o mesmo da migração). Sem essa senha o arquivo não abre.
+# Só lê o banco, não altera nada.
+name: Backup do banco
+on:
+  schedule:
+    - cron: "47 6 * * 0"
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente Postgres 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - name: Exportar e criptografar (schemas public, auth e storage; arquivos do Storage não entram)
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DB_URL=$(printf '%s' "$DB_URL" | tr -d '\r\n' | sed 's/^ *//; s/ *$//')
+          echo "::add-mask::$DB_URL"
+          pg_dump "$DB_URL" --no-owner --no-privileges --schema=public --schema=auth --schema=storage -Fc -f backup-hunt.dump
+          pg_restore -l backup-hunt.dump | grep -c 'TABLE DATA'
+          printf '%s' "$DB_URL" | openssl enc -aes-256-cbc -pbkdf2 -salt -pass stdin -in backup-hunt.dump -out backup-hunt.dump.enc
+          rm backup-hunt.dump
+          ls -la backup-hunt.dump.enc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backup-hunt-criptografado-${{ github.run_number }}
+          path: backup-hunt.dump.enc
+          retention-days: 90
