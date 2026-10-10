@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PartyKind } from "./boss-catalog";
+import { normalizeSetup, type SessionSetup } from "./session-setup";
 
 /**
  * Rotações de bosses do usuário e as execuções registradas (Hunting Analyser colado depois de
@@ -41,6 +42,11 @@ export interface BossRotationRun {
   bossesKilled: string[];
   drops: BossDrop[];
   notes: string | null;
+  /**
+   * Set (equipamento + postura) e roda usados na execução — mesmo formato do setup da sessão,
+   * escolhidos entre Meus sets e Minhas rodas (coluna setup jsonb). null = não informado.
+   */
+  setup: SessionSetup | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,6 +73,7 @@ const rowRun = (r: any): BossRotationRun => ({
   bossesKilled: r.bosses_killed ?? [],
   drops: Array.isArray(r.drops) ? r.drops : [],
   notes: r.notes,
+  setup: normalizeSetup(r.setup),
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,6 +135,9 @@ export async function addRun(run: NewRun): Promise<BossRotationRun> {
         bosses_killed: run.bossesKilled,
         drops: run.drops,
         notes: run.notes,
+        // Só manda a coluna quando tem o que salvar: sem set/roda, o registro funciona mesmo num
+        // banco que ainda não recebeu a coluna setup.
+        ...(normalizeSetup(run.setup) ? { setup: normalizeSetup(run.setup) } : {}),
       })
       .select()
       .single(),

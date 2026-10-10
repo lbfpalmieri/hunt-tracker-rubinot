@@ -22,6 +22,7 @@ import { Route as AuthenticatedImbuementsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedRendimentoRouteImport } from './routes/_authenticated/rendimento'
+import { Route as AuthenticatedRodasRouteImport } from './routes/_authenticated/rodas'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
@@ -102,6 +103,11 @@ const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
 const AuthenticatedRendimentoRoute = AuthenticatedRendimentoRouteImport.update({
   id: '/rendimento',
   path: '/rendimento',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRodasRoute = AuthenticatedRodasRouteImport.update({
+  id: '/rodas',
+  path: '/rodas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof AuthenticatedImportRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/rendimento': typeof AuthenticatedRendimentoRoute
+  '/rodas': typeof AuthenticatedRodasRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof CommunityIdRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/import': typeof AuthenticatedImportRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/rendimento': typeof AuthenticatedRendimentoRoute
+  '/rodas': typeof AuthenticatedRodasRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof CommunityIdRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/rendimento': typeof AuthenticatedRendimentoRoute
+  '/_authenticated/rodas': typeof AuthenticatedRodasRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/community/$id': typeof CommunityIdRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/overview'
     | '/rendimento'
+    | '/rodas'
     | '/sessions'
     | '/wiki'
     | '/community/$id'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/overview'
     | '/rendimento'
+    | '/rodas'
     | '/sessions'
     | '/wiki'
     | '/community/$id'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/_authenticated/import'
     | '/_authenticated/overview'
     | '/_authenticated/rendimento'
+    | '/_authenticated/rodas'
     | '/_authenticated/sessions'
     | '/_authenticated/wiki'
     | '/community/$id'
@@ -480,6 +492,13 @@ declare module '@tanstack/react-router' {
       path: '/rendimento'
       fullPath: '/rendimento'
       preLoaderRoute: typeof AuthenticatedRendimentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rodas': {
+      id: '/_authenticated/rodas'
+      path: '/rodas'
+      fullPath: '/rodas'
+      preLoaderRoute: typeof AuthenticatedRodasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sessions': {
@@ -621,6 +640,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedRendimentoRoute: typeof AuthenticatedRendimentoRoute
+  AuthenticatedRodasRoute: typeof AuthenticatedRodasRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
   AuthenticatedAdminHuntsRoute: typeof AuthenticatedAdminHuntsRoute
@@ -643,6 +663,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedRendimentoRoute: AuthenticatedRendimentoRoute,
+  AuthenticatedRodasRoute: AuthenticatedRodasRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
   AuthenticatedAdminHuntsRoute: AuthenticatedAdminHuntsRoute,

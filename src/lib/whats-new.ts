@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "minhas-rodas-2026-10-10",
+    date: "2026-10-10",
+    title: "Minhas rodas: a Wheel of Destiny agora é separada do set",
+    description:
+      "Novo item no menu Herói: Minhas rodas. Cadastre cada roda da Wheel of Destiny com um nome e, na hora de adicionar a sessão (Solo ou Grupo) ou de editar o setup de uma sessão salva, escolha o set de equipamento e a roda separadamente — dá pra testar várias rodas com o mesmo equipamento sem duplicar set. Também dá pra montar uma roda na hora e salvar ali mesmo. As rodas que estavam dentro dos seus sets viraram rodas salvas (com o nome do set), e os sets passam a guardar só equipamento e postura. Na Rotação de Bosses, o registro da execução ganhou a escolha de set e roda (opcional), que ficam guardados e aparecem na lista de execuções.",
+  },
+  {
     id: "dividir-lucro-boss-pt-2026-10-10",
     date: "2026-10-10",
     title: "Rotação de Bosses: dividir o lucro com a PT",

@@ -32,6 +32,8 @@ import {
 } from "@/components/bosses/BossUi";
 import { LootHighlightList } from "@/components/bosses/LootHighlightList";
 import { RegisterRunDialog } from "@/components/bosses/RegisterRunDialog";
+import { SetupCard } from "@/components/setup/SetupCard";
+import { usedPoints } from "@/lib/wheel";
 import {
   Dialog,
   DialogContent,
@@ -416,6 +418,25 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
                           </span>
                         ))}
                     </div>
+                  )}
+                  {r.setup && (
+                    <details className="mt-1.5 text-xs">
+                      <summary className="cursor-pointer select-none text-muted-foreground hover:text-foreground">
+                        {[
+                          r.setup.weapon ?? (Object.keys(r.setup.gear ?? {}).length ? "Set" : null),
+                          r.setup.wheel ? `Roda (${usedPoints(r.setup.wheel)} pts)` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "Setup"}
+                      </summary>
+                      <div className="mt-2 max-w-md rounded-lg border border-border/60 bg-background/40 p-3">
+                        <SetupCard
+                          setup={r.setup}
+                          vocation={characters.find((c) => c.id === r.characterId)?.vocation}
+                          compact
+                        />
+                      </div>
+                    </details>
                   )}
                 </div>
                 <div className="flex items-center gap-3 sm:justify-end">

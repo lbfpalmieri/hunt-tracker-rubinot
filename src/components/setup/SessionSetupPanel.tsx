@@ -7,6 +7,8 @@ import {
   CHARMS,
   STANCES,
   WHEEL_ICON,
+  applySet,
+  applyWheel,
   charmIcon,
   convictionMaxLevel,
   type SessionSetup,
@@ -18,7 +20,7 @@ import { WheelDialog } from "@/components/wheel/WheelDialog";
 import { WheelOfDestiny } from "@/components/wheel/WheelOfDestiny";
 import { useAppStore } from "@/lib/store";
 import { currentLevel } from "@/lib/level";
-import { wheelSetupFields } from "@/lib/wheel";
+import { WheelPresetPicker } from "@/components/wheel/WheelPresetPicker";
 import { findWeapon } from "@/lib/weapons";
 import {
   suggestedPresetName,
@@ -35,9 +37,10 @@ const ROMAN = ["", "I", "II", "III"];
 const uniq = <T,>(a: T[]) => [...new Set(a)];
 
 /**
- * Editor do setup da sessão (controlado). Preset do personagem no topo (arma, skills, Wheel e
- * postura de uma vez); Wheel com os perks de Convicção/Revelação da vocação (ícones da wiki);
- * charms: só os que ativaram no Miscellaneous, e a pessoa só liga cada um às criaturas mortas.
+ * Editor do setup da sessão (controlado). Set do personagem no topo (equipamento + postura de uma
+ * vez); Wheel escolhida à parte entre as rodas salvas (Minhas rodas) ou montada na hora — set e
+ * roda são independentes; charms: só os que ativaram no Miscellaneous, e a pessoa só liga cada um
+ * às criaturas mortas.
  */
 export function SessionSetupPanel({
   value,
@@ -58,7 +61,7 @@ export function SessionSetupPanel({
   creatures: string[];
   /** Charms que ativaram na sessão (bloco "Charm" do Miscellaneous). */
   activatedCharms?: string[];
-  /** "preset" = editando um set na tela Meus sets: sem escolha de set e sem charms. */
+  /** "preset" = editando um set na tela Meus sets: sem escolha de set, sem Wheel e sem charms. */
   mode?: "session" | "preset";
 }) {
   const set = (patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
@@ -73,7 +76,8 @@ export function SessionSetupPanel({
 
   const applyPreset = (preset: SetupPreset) => {
     setPresetId(preset.id);
-    onChange({ ...preset.setup, charms: value.charms });
+    // Set = equipamento + postura. A roda (e os charms) do setup atual ficam como estão.
+    onChange(applySet(value, preset.setup));
   };
 
   const confirmSave = async () => {
@@ -189,7 +193,7 @@ export function SessionSetupPanel({
               onClick={() => setNaming(suggestedPresetName(value))}
               className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-rubi-blue hover:underline"
             >
-              <Save className="h-3.5 w-3.5" /> Salvar o que está abaixo como set
+              <Save className="h-3.5 w-3.5" /> Salvar o equipamento abaixo como set
             </button>
           ) : (
             <div className="mt-2 flex gap-2">
@@ -266,8 +270,17 @@ export function SessionSetupPanel({
         />
       </section>
 
-      {/* Wheel of Destiny */}
+      {/* Wheel of Destiny — fora do set: escolhe entre as rodas salvas ou monta na hora */}
+      {mode === "session" && (
       <section className="rounded-xl border border-rubi-gold/25 bg-rubi-gold/[0.04] p-3">
+        <div className="mb-3 border-b border-rubi-gold/15 pb-3">
+          <WheelPresetPicker
+            characterId={characterId}
+            value={value.wheel}
+            onPick={(wheel) => onChange(applyWheel(value, wheel))}
+            allowSave
+          />
+        </div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <span className="flex items-center gap-2 text-sm font-semibold">
             <img src={WHEEL_ICON} alt="" className="h-6 w-6 [image-rendering:pixelated]" />
@@ -323,8 +336,8 @@ export function SessionSetupPanel({
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">
-            A roda de verdade, igual ao planejador do tibia.com: coloque o level, distribua os
-            pontos e encaixe as gemas. Fica salva no set e aparece na sessão e nas comparações.
+            Escolha uma das suas rodas salvas acima ou monte uma na hora, igual ao planejador do
+            tibia.com. A roda fica guardada na sessão e aparece nas comparações.
           </p>
         )}
         <WheelDialog
@@ -333,15 +346,10 @@ export function SessionSetupPanel({
           value={value.wheel}
           vocation={vocation}
           defaultLevel={charLevel}
-          onApply={(wheel) =>
-            set(
-              wheel
-                ? { wheel, ...wheelSetupFields(wheel) }
-                : { wheel: null, conviction: [], revelation: [], wheelDmgHeal: null },
-            )
-          }
+          onApply={(wheel) => onChange(applyWheel(value, wheel))}
         />
       </section>
+      )}
 
       {mode === "session" && (
         <>
