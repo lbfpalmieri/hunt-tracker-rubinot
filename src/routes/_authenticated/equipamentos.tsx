@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmDialog } from "@/lib/confirm-dialog";
 import { Check, Copy, CopyPlus, Pencil, Plus, Shirt, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
@@ -73,8 +74,13 @@ function EquipamentosPage() {
     );
   }
 
-  const remove = (p: SetupPreset) => {
-    if (!window.confirm(`Excluir o set "${p.name}"?`)) return;
+  const remove = async (p: SetupPreset) => {
+    const ok = await confirmDialog({
+      title: "Excluir set",
+      description: `Excluir o set "${p.name}"? Essa ação não pode ser desfeita.`,
+      tone: "danger",
+    });
+    if (!ok) return;
     deletePreset.mutate(p.id, {
       onError: (e) => toast.error("Não consegui excluir", { description: (e as Error).message }),
     });

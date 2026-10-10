@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "confirm-dialogs-themed",
+    date: "2026-10-10",
+    title: "Confirmações no visual do site",
+    description:
+      "Excluir um set (Meus sets), excluir uma rotação ou apagar uma execução (Rotação de Bosses) e fechar a Wheel of Destiny sem salvar agora pedem confirmação numa janela do próprio site, no tema escuro — antes aparecia o aviso padrão do navegador.",
+  },
+  {
     id: "corrigir-tempo-analyser",
     date: "2026-10-09",
     title: "Corrigir o tempo do analyser na hora de colar",

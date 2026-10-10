@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { confirmDialog } from "@/lib/confirm-dialog";
 import {
   ArrowLeft,
   Check,
@@ -157,12 +158,12 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
   };
 
   const remove = async () => {
-    if (
-      !window.confirm(
-        `Excluir a rotação "${rotation.name}" e as ${runs.length} execuções registradas?`,
-      )
-    )
-      return;
+    const ok = await confirmDialog({
+      title: "Excluir rotação",
+      description: `Excluir a rotação "${rotation.name}" e as ${runs.length} execuções registradas? Essa ação não pode ser desfeita.`,
+      tone: "danger",
+    });
+    if (!ok) return;
     try {
       await deleteRotation(rotation.id);
       refresh();
@@ -173,7 +174,13 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
   };
 
   const removeRun = async (runId: string) => {
-    if (!window.confirm("Apagar essa execução?")) return;
+    const ok = await confirmDialog({
+      title: "Apagar execução",
+      description: "Apagar essa execução? Essa ação não pode ser desfeita.",
+      confirmLabel: "Apagar",
+      tone: "danger",
+    });
+    if (!ok) return;
     try {
       await deleteRun(runId);
       refresh();
