@@ -19,7 +19,11 @@ Regras permanentes:
 - Nunca exibir e-mail de usuários; identificar pelo nome do personagem ativo.
 - Não alterar estrutura de banco sem pedido explícito; tabela public nova exige GRANT+RLS.
 - Queries filtradas por user_id; community.functions.ts usa allowlist de colunas.
-- Testar tudo no navegador (Playwright logado) antes de reportar; typecheck `bunx tsgo --noEmit`.
+- Testar tudo no navegador (Playwright logado) antes de reportar; typecheck `npm run typecheck` (tsgo).
+- Testes automáticos (Vitest) da lógica pura em src/lib/__tests__/*.test.ts (parser, party, cálculos "/h",
+  médias, imbuements, export) — `npm test`. Mexeu em cálculo/parser = ajustar ou criar teste junto. Textos de
+  exemplo (exports reais do RubinOT) em fixtures.ts. Todo PR roda .github/workflows/ci.yml: typecheck + testes +
+  build + `wrangler deploy --dry-run` (sem publicar). Lint (eslint) ainda NÃO entra no CI (milhares de erros de formatação).
 - Admin: lucasbuzioli@gmail.com, role em public.user_roles via has_role (schema private).
   Roles NUNCA em profile/users.
 

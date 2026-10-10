@@ -1,0 +1,59 @@
+# Verifica cada pull request ANTES do merge: tipos, testes e se o build/deploy continua de pé.
+# Não publica nada e não usa nenhum segredo — o deploy de verdade continua sendo o
+# deploy-cloudflare.yml, só no push pro main.
+#
+# Pra impedir merge com verificação falhando: GitHub → Settings → Branches → regra do `main` →
+# "Require status checks to pass before merging" → marcar "Testes" e "Build e deploy (simulação)".
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: Testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes
+        run: npm test
+
+  build:
+    name: Build e deploy (simulação)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      # Mesmo comando do deploy-cloudflare.yml.
+      - name: Build
+        run: npx vite build
+
+      # Monta o pacote do Worker como no deploy, mas sem enviar pra Cloudflare (não precisa de token).
+      - name: Simular deploy na Cloudflare
+        run: npx --yes wrangler@4 deploy --dry-run
