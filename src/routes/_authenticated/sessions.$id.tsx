@@ -25,7 +25,6 @@ import { Sparkles, Wrench } from "lucide-react";
 import {
   ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard, Users, FileOutput,
 } from "lucide-react";
-import { PasteImageBox } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
 
 
@@ -463,12 +462,11 @@ function SessionDetail() {
         />
       </div>
 
-      {/* Gear + community sharing */}
-
+      {/* Community sharing (o print do equipamento saiu: o setup da sessão o substitui) */}
       <div className="card-surface mt-6 p-5">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <h2 className="flex items-center gap-2 text-base font-semibold">
-            <Shield className="h-4 w-4 text-rubi-blue" /> Equipamento usado
+            <Globe2 className="h-4 w-4 text-rubi-blue" /> Comunidade
           </h2>
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <input
@@ -477,22 +475,31 @@ function SessionDetail() {
               onChange={(e) => updateSession(session.id, { isPublic: e.target.checked })}
               className="h-4 w-4 accent-[var(--rubi-blue)]"
             />
-            <Globe2 className="h-3.5 w-3.5" />
             {session.isPublic
               ? "Compartilhada na Comunidade (qualquer pessoa vê, mesmo sem conta)"
               : "Sessão privada"}
           </label>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Tire um print do seu equipamento no jogo e cole aqui com Ctrl+V. Ele aparece junto desta hunt
-          na Comunidade.
-        </p>
-        <PasteImageBox
-          value={session.gearUrl}
-          onChange={(v) => updateSession(session.id, { gearUrl: v })}
-          label="Cole o print do equipamento (Ctrl+V)"
-          className="mt-3 max-w-md"
-        />
+        {session.gearUrl && (
+          <div className="mt-3 max-w-md">
+            <p className="mb-2 text-xs text-muted-foreground">
+              Print de equipamento de antes do setup. Pode remover: o setup da sessão já mostra o equipamento.
+            </p>
+            <img
+              src={session.gearUrl}
+              alt="Print do equipamento"
+              loading="lazy"
+              className="w-full rounded-lg border border-border/60 object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => updateSession(session.id, { gearUrl: null })}
+              className="mt-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+            >
+              Remover print
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Misc */}
