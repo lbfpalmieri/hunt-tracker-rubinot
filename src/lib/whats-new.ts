@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "dividir-lucro-boss-pt-2026-10-10",
+    date: "2026-10-10",
+    title: "Rotação de Bosses: dividir o lucro com a PT",
+    description:
+      "Fez boss com PT fixa e o loot é dividido igualmente? No registro da rotação, informe quantos jogadores e marque \"Dividir o lucro com a PT\": loot, supplies e lucro salvos passam a ser só a sua parte, e o balanço de gold do personagem fica mais real. Sugestão do Lodrak.",
+  },
+  {
     id: "sem-print-equipamento-2026-10-10",
     date: "2026-10-10",
     title: "Sessão sem o print do equipamento",
