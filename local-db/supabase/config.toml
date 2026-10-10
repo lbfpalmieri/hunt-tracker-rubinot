@@ -1,0 +1,5 @@
+# Supabase LOCAL de desenvolvimento (Docker) — usado só por scripts/db-local.mjs (`npm run db:start`).
+# Fica numa pasta separada de supabase/ de propósito: aqui NÃO há migrations, porque o histórico em
+# supabase/migrations não roda limpo do zero (tem CREATE repetido); o script sobe o banco vazio e
+# aplica cada migration tolerando "já existe". Nada aqui tem ligação com o projeto de produção.
+project_id = "hunt-tracker-local"

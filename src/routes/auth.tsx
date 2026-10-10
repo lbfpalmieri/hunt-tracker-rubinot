@@ -20,6 +20,17 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+// Login de teste do banco LOCAL (`npm run dev:local` — scripts/dev-local.mjs). Só existe rodando o
+// servidor de desenvolvimento contra um Supabase em localhost; no site publicado isto é sempre null.
+const DEV_LOGIN = (() => {
+  if (!import.meta.env.DEV) return null;
+  const email = import.meta.env.VITE_DEV_LOGIN_EMAIL as string | undefined;
+  const password = import.meta.env.VITE_DEV_LOGIN_PASSWORD as string | undefined;
+  const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
+  const local = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(url);
+  return email && password && local ? { email, password } : null;
+})();
+
 function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -54,6 +65,19 @@ function AuthPage() {
     // Sem erro: redirecionamento para o Google em andamento.
   };
 
+  const handleDevLogin = async () => {
+    if (!DEV_LOGIN) return;
+    setLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword(DEV_LOGIN);
+    if (error) {
+      setError(errorMessage(error));
+      setLoading(false);
+      return;
+    }
+    navigate({ to: "/", replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60">
@@ -83,6 +107,22 @@ function AuthPage() {
             <GoogleGlyph />
             {loading ? "Conectando..." : "Continuar com Google"}
           </button>
+
+          {DEV_LOGIN && (
+            <div className="mt-4 rounded-lg border border-dashed border-rubi-gold/50 bg-rubi-gold/5 p-3">
+              <button
+                onClick={handleDevLogin}
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center rounded-lg border border-rubi-gold/60 px-4 py-2.5 text-sm font-semibold text-rubi-gold transition-colors hover:bg-rubi-gold/10 disabled:opacity-50"
+              >
+                Entrar como usuário de teste
+              </button>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Banco local de desenvolvimento — nada aqui vai pra produção. O Google não funciona
+                neste banco.
+              </p>
+            </div>
+          )}
 
           {error && (
             <p className="mt-4 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-3 text-xs text-rubi-danger">

@@ -129,6 +129,16 @@ números/títulos de card em Space Grotesk (font-display). color-scheme: dark no
 NavCustomizeDialog; salvo em public.user_nav_prefs (1 linha/usuário, localStorage só como cache —
 nav-prefs.ts). Não recrie arrays de nav no AppShell.
 
+Banco local (desenvolvimento, NUNCA produção): Supabase inteiro no Docker (banco + login + storage, vazio).
+`npm run db:start` (Docker Desktop aberto; scripts/db-local.mjs — sobe com --workdir local-db/, SEM migrations, e aplica
+supabase/migrations uma a uma tolerando "já existe", porque o histórico não roda limpo do zero) → `npm run dev:local`
+(scripts/dev-local.mjs: lê URL/chaves do `supabase status`, recusa URL que não seja localhost, cria o usuário de teste
+com papel admin + o bucket feedback-attachments e sobe o vite com as variáveis por ambiente, que vencem o .env).
+Login local = botão "Entrar como usuário de teste" em /auth (DEV_LOGIN em auth.tsx: só com import.meta.env.DEV +
+Supabase em localhost; o Google não existe no banco local). `npm run db:stop` guarda os dados; `npm run db:reset` apaga
+tudo; painel do banco (Studio) em http://127.0.0.1:54323. `npm run dev` puro continua usando o .env = PRODUÇÃO.
+Catálogo de bosses local começa vazio: sincronizar pela tela (o usuário de teste é admin).
+
 Banco (IAs externas): mudanças de estrutura são feitas via SQL, entregue pronto ao
 usuário. Toda tabela nova em public precisa GRANT + RLS + policies no mesmo script;
 queries sempre filtradas por user_id; roles NUNCA em profile/users.

@@ -9,6 +9,7 @@ import {
 import { WheelPlanner } from "@/components/wheel/WheelPlanner";
 import { WHEEL_ICON, type SetupVocation } from "@/lib/session-setup";
 import { emptyWheel, isEmptyWheel, type WheelBuild } from "@/lib/wheel";
+import { confirmDialog } from "@/lib/confirm-dialog";
 
 /**
  * Planejador da roda num Dialog grande (tela cheia no celular). Edita um rascunho; só grava no setup
@@ -47,9 +48,18 @@ export function WheelDialog({
   }, [open]);
 
   // Fechar sem "Usar esta roda" perde o que foi montado — pergunta antes se mudou alguma coisa.
-  const requestClose = () => {
+  const requestClose = async () => {
     const dirty = JSON.stringify(draft) !== initial.current;
-    if (!dirty || window.confirm("Fechar sem salvar? As mudanças na roda vão ser perdidas.")) {
+    if (
+      !dirty ||
+      (await confirmDialog({
+        title: "Fechar sem salvar?",
+        description: "As mudanças na roda vão ser perdidas.",
+        confirmLabel: "Fechar sem salvar",
+        cancelLabel: "Continuar editando",
+        tone: "danger",
+      }))
+    ) {
       onOpenChange(false);
     }
   };

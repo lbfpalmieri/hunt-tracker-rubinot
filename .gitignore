@@ -31,3 +31,8 @@ dist-ssr
 *.sln
 *.sw?
 supabase/.temp
+
+# Supabase local de desenvolvimento (scripts/db-local.mjs) — arquivos gerados pela CLI
+local-db/supabase/.temp
+local-db/supabase/.branches
+local-db/supabase/snippets
