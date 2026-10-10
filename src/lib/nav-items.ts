@@ -5,6 +5,7 @@ import {
   Castle,
   Coins,
   Crown,
+  Disc3,
   Gauge,
   Gem,
   Info,
@@ -176,6 +177,15 @@ export const NAV_ITEMS = [
     short: "Sets",
     icon: Shirt,
     sprite: "Magic Plate Armor",
+    group: "heroi",
+  },
+  {
+    id: "wheels",
+    to: "/rodas",
+    label: "Minhas rodas",
+    short: "Rodas",
+    icon: Disc3,
+    sprite: "Wheel of Destiny Icon",
     group: "heroi",
   },
   {

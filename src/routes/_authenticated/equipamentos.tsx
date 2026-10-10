@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Check, Copy, CopyPlus, Pencil, Plus, Shirt, Trash2 } from "lucide-react";
@@ -17,6 +17,7 @@ import {
 import {
   EMPTY_SETUP,
   SETUP_PART_LABEL,
+  SET_PARTS,
   copySetupParts,
   setupVocation,
   type SessionSetup,
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/equipamentos")({
       {
         name: "description",
         content:
-          "Monte seus sets de equipamento (boneco do inventário, skills, Wheel e postura) e escolha na hora de adicionar a sessão.",
+          "Monte seus sets de equipamento (boneco do inventário e postura) e escolha na hora de adicionar a sessão.",
       },
     ],
   }),
@@ -91,9 +92,13 @@ function EquipamentosPage() {
           <span className="text-gradient-brand">sets</span>
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Monte cada set uma vez — equipamentos no boneco (com tier), postura e Wheel. Na hora de
-          adicionar a sessão é só escolher o set. Tem mais de uma arma elemental? Duplique o set e
-          troque só a arma.
+          Monte cada set uma vez — equipamentos no boneco (com tier) e postura. Na hora de adicionar
+          a sessão é só escolher o set. Tem mais de uma arma elemental? Duplique o set e troque só a
+          arma. A Wheel of Destiny agora fica à parte, em{" "}
+          <Link to="/rodas" className="font-medium text-rubi-gold hover:underline">
+            Minhas rodas
+          </Link>
+          : qualquer roda combina com qualquer set.
         </p>
       </div>
 
@@ -213,8 +218,8 @@ function PresetDialog({
         <DialogHeader>
           <DialogTitle className="font-display">{preset ? "Editar set" : "Novo set"}</DialogTitle>
           <DialogDescription>
-            Charms não entram no set — eles dependem das criaturas de cada hunt e são marcados na
-            sessão.
+            Charms não entram no set — dependem das criaturas de cada hunt e são marcados na sessão.
+            A Wheel também não: ela é escolhida à parte, em Minhas rodas.
           </DialogDescription>
         </DialogHeader>
 
@@ -269,11 +274,11 @@ function PresetDialog({
   );
 }
 
-const PARTS: SetupPart[] = ["equipment", "stance", "wheel"];
+const PARTS: SetupPart[] = SET_PARTS;
 
 /**
- * "Copiar de outro set": escolhe o set e o que trazer (equipamento, postura, Wheel) — dá pra montar
- * juntando a Wheel de um set com o equipamento de outro e só ajustar o resto.
+ * "Copiar de outro set": escolhe o set e o que trazer (equipamento, postura) — dá pra montar
+ * juntando o equipamento de um set com a postura de outro e só ajustar o resto.
  */
 function CopyFromSet({
   presets,

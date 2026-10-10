@@ -52,7 +52,11 @@ const SECTIONS: Section[] = [
       },
       {
         label: "Meus sets",
-        text: "Em Meus sets (menu Herói) você monta cada set de equipamento — arma, skills, Wheel, postura e o print — uma vez só. Ao adicionar a sessão, é só escolher o set: o setup e o print entram na sessão.",
+        text: "Em Meus sets (menu Herói) você monta cada set de equipamento — arma, equipamentos no boneco e postura — uma vez só. Ao adicionar a sessão, é só escolher o set.",
+      },
+      {
+        label: "Minhas rodas",
+        text: "Em Minhas rodas (menu Herói) você cadastra as rodas da Wheel of Destiny com um nome, separadas dos sets. Na sessão e no registro de boss você escolhe o set e a roda cada um por si — dá pra testar rodas diferentes com o mesmo equipamento sem duplicar set.",
       },
       {
         label: "Setup da sessão",

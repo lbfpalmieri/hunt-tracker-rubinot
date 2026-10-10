@@ -1,13 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeSetup, presetPart, type SessionSetup } from "./session-setup";
+import { EMPTY_SETUP, normalizeSetup, presetPart, type SessionSetup } from "./session-setup";
 
 /**
  * Presets de setup ("sets") por personagem (tabela setup_presets): a pessoa preenche arma,
- * skills, equipamentos (boneco), Wheel e postura uma vez, salva com um nome (normalmente o da
+ * equipamentos (boneco) e postura uma vez, salva com um nome (normalmente o da
  * arma) e nas próximas sessões só escolhe. (O print do set foi removido em 2026-09-27 — o boneco
  * de equipamentos substitui; a coluna gear_url não é mais lida nem escrita.) Um EK com 3 armas elementais faz 3
- * sets. Charms não entram — dependem das criaturas de cada hunt. Tela dedicada: /equipamentos.
+ * sets. Charms não entram — dependem das criaturas de cada hunt. A Wheel também NÃO entra mais
+ * (desde 2026-10-11): é cadastrada à parte em /rodas (wheel-presets.ts); set antigo com roda no
+ * jsonb é lido sem ela (presetPart). Tela dedicada: /equipamentos.
  */
 
 // Tabela nova ainda não está nos tipos gerados.
@@ -37,7 +39,8 @@ export function useSetupPresets(characterId: string | null) {
         .map((r: { id: string; name: string; setup: unknown }) => ({
           id: r.id,
           name: r.name,
-          setup: normalizeSetup(r.setup),
+          // presetPart: set = equipamento + postura (a roda de sets antigos fica de fora).
+          setup: normalizeSetup(presetPart(normalizeSetup(r.setup) ?? EMPTY_SETUP)),
         }))
         .filter((p: { setup: SessionSetup | null }): p is SetupPreset => !!p.setup);
     },
