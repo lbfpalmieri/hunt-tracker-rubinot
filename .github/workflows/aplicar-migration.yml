@@ -1,0 +1,71 @@
+# Aplica UMA migration SQL no banco de produção (Supabase), com backup antes.
+# Rodado manualmente (Actions → Aplicar migration → Run workflow) ou pelo agente via `gh workflow run`.
+#   arquivo → caminho em supabase/migrations/ (ex.: supabase/migrations/2026..._x.sql)
+#   ref     → branch onde o arquivo está (default main). Serve pra aplicar ANTES do merge do PR.
+# Passos: 1) backup criptografado (mesmo formato do "Backup do banco"), 2) psql em transação única,
+# parando no primeiro erro (nada fica pela metade). Segredo: SUPABASE_DB_URL.
+name: Aplicar migration
+on:
+  workflow_dispatch:
+    inputs:
+      arquivo:
+        description: "Caminho do .sql, ex.: supabase/migrations/20261011120000_xxx.sql"
+        required: true
+      ref:
+        description: "Branch com o arquivo (vazio = main)"
+        required: false
+        default: main
+jobs:
+  aplicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Validar caminho
+        env:
+          ARQ: ${{ inputs.arquivo }}
+        run: |
+          case "$ARQ" in
+            supabase/migrations/*.sql) ;;
+            *) echo "Só aceita arquivos em supabase/migrations/*.sql"; exit 1 ;;
+          esac
+          case "$ARQ" in *..*) echo "Caminho inválido"; exit 1 ;; esac
+          test -f "$ARQ"
+          echo "Aplicando: $ARQ"; cat "$ARQ"
+      - name: Instalar cliente Postgres 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - name: Backup antes (criptografado)
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DB_URL=$(printf '%s' "$DB_URL" | tr -d '\r\n' | sed 's/^ *//; s/ *$//')
+          echo "::add-mask::$DB_URL"
+          pg_dump "$DB_URL" --no-owner --no-privileges --schema=public --schema=auth --schema=storage -Fc -f backup-pre.dump
+          printf '%s' "$DB_URL" | openssl enc -aes-256-cbc -pbkdf2 -salt -pass stdin -in backup-pre.dump -out backup-pre.dump.enc
+          rm backup-pre.dump
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backup-antes-da-migration-${{ github.run_number }}
+          path: backup-pre.dump.enc
+          retention-days: 90
+      - name: Aplicar SQL (transação única)
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          ARQ: ${{ inputs.arquivo }}
+        run: |
+          DB_URL=$(printf '%s' "$DB_URL" | tr -d '\r\n' | sed 's/^ *//; s/ *$//')
+          echo "::add-mask::$DB_URL"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f "$ARQ"
+      - name: Conferir
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DB_URL=$(printf '%s' "$DB_URL" | tr -d '\r\n' | sed 's/^ *//; s/ *$//')
+          psql "$DB_URL" -c "select table_name from information_schema.tables where table_schema='public' order by 1;"
