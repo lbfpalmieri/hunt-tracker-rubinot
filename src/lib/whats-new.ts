@@ -24,6 +24,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Fez boss com PT fixa e o loot é dividido igualmente? No registro da rotação, informe quantos jogadores e marque \"Dividir o lucro com a PT\": loot, supplies e lucro salvos passam a ser só a sua parte, e o balanço de gold do personagem fica mais real. Sugestão do Lodrak.",
   },
   {
+    id: "sem-print-equipamento-2026-10-10",
+    date: "2026-10-10",
+    title: "Sessão sem o print do equipamento",
+    description:
+      "O setup da sessão (boneco de equipamentos) já mostra o que você usou, então tiramos a caixa de colar print do equipamento da página da sessão. Sessões antigas que têm print continuam mostrando e dá pra remover. Sugestão do Lodrak.",
+  },
+  {
     id: "corrigir-tempo-analyser",
     date: "2026-10-09",
     title: "Corrigir o tempo do analyser na hora de colar",
