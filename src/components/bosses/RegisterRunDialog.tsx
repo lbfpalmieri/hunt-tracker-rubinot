@@ -17,6 +17,8 @@ import { parseHunting, parseSessionStamp, withDuration } from "@/lib/parser";
 import { DurationAdjust } from "@/components/DurationAdjust";
 import { parseGoldInput } from "@/lib/rc-calc";
 import { priceMap, useItemPrices, useSaveItemPrices } from "@/lib/item-prices";
+import { SetAndWheelPicker } from "@/components/setup/SetAndWheelPicker";
+import { EMPTY_SETUP, normalizeSetup, type SessionSetup } from "@/lib/session-setup";
 
 /** Base do lucro: só itens que caem de boss (padrão) ou o "Loot" total do analyser. */
 type LootBasis = "boss" | "total";
@@ -67,6 +69,8 @@ export function RegisterRunDialog({
   const [text, setText] = useState("");
   const [party, setParty] = useState("1");
   const [splitWithParty, setSplitWithParty] = useState(false);
+  // Set e roda usados na rotação (opcional) — escolhidos entre Meus sets e Minhas rodas.
+  const [runSetup, setRunSetup] = useState<SessionSetup>(EMPTY_SETUP);
   const [killedOverride, setKilledOverride] = useState<Set<string> | null>(null);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -171,6 +175,7 @@ export function RegisterRunDialog({
     setKilledOverride(null);
     setPrices({});
     setIncluded(new Set());
+    setRunSetup(EMPTY_SETUP);
   };
 
   const toggleKilled = (name: string) => {
@@ -202,6 +207,7 @@ export function RegisterRunDialog({
           unitValue: unitOf(l.name),
         })),
         notes: null,
+        setup: normalizeSetup(runSetup),
       });
       // O que foi digitado vira "meu preço" nesse servidor (falha aqui não desfaz a rotação).
       const typed = Object.entries(prices)
@@ -475,6 +481,18 @@ export function RegisterRunDialog({
                 </span>
               </label>
             )}
+
+            <div className="rounded-lg border border-border/70 bg-background/40 p-3">
+              <p className="mb-2 text-xs text-muted-foreground">
+                <b className="text-foreground">Opcional.</b> Com qual set e qual roda você fez a
+                rotação — fica guardado na execução.
+              </p>
+              <SetAndWheelPicker
+                characterId={characterId}
+                value={runSetup}
+                onChange={setRunSetup}
+              />
+            </div>
           </div>
         )}
 

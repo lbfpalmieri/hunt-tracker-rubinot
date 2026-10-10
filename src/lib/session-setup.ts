@@ -326,8 +326,14 @@ export function isEmptySetup(s: SessionSetup | null | undefined): boolean {
   );
 }
 
-/** Blocos do set que dá pra copiar de um set pro outro (Meus sets → "Copiar de outro set"). */
+/**
+ * Blocos do setup. O SET (Meus sets) guarda só equipamento + postura; a Wheel é cadastrada à parte
+ * (Minhas rodas, wheel-presets.ts) — ver SET_PARTS, applySet e applyWheel.
+ */
 export type SetupPart = "equipment" | "stance" | "wheel";
+
+/** O que faz parte de um set — e o que dá pra copiar de um set pro outro. */
+export const SET_PARTS: SetupPart[] = ["equipment", "stance"];
 
 export const SETUP_PART_LABEL: Record<SetupPart, string> = {
   equipment: "Equipamento",
@@ -359,9 +365,34 @@ export function copySetupParts(
   return next;
 }
 
-/** Parte do setup que vira preset (tudo menos os charms, que dependem das criaturas da hunt). */
+/**
+ * Parte do setup que vira SET: equipamento + postura. Ficam de fora os charms (dependem das
+ * criaturas da hunt) e a Wheel (roda salva à parte — sets antigos que tinham roda dentro são lidos
+ * sem ela; a roda deles foi copiada pra Minhas rodas).
+ */
 export function presetPart(s: SessionSetup): SessionSetup {
-  return { ...s, charms: [] };
+  return {
+    ...s,
+    charms: [],
+    wheel: null,
+    conviction: [],
+    revelation: [],
+    wheelDmgHeal: null,
+  };
+}
+
+/** Escolher um set: troca equipamento e postura; a roda e os charms do setup atual ficam. */
+export function applySet(current: SessionSetup, set: SessionSetup): SessionSetup {
+  return copySetupParts(current, set, SET_PARTS);
+}
+
+/** Escolher (ou tirar, com null) uma roda: o resto do setup fica como está. */
+export function applyWheel(current: SessionSetup, wheel: WheelBuild | null): SessionSetup {
+  if (!wheel || isEmptyWheel(wheel)) {
+    return { ...current, wheel: null, conviction: [], revelation: [], wheelDmgHeal: null };
+  }
+  const copy = structuredClone(wheel);
+  return { ...current, wheel: copy, ...wheelSetupFields(copy) };
 }
 
 export function charmIcon(name: string): string | undefined {

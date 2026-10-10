@@ -49,7 +49,12 @@ importamos). Regras em src/lib/wheel.ts (fatia libera com vizinha CHEIA; revela�
 mod N liga com N Vessel Resonances; bônus de Vessel só quando bate com o tamanho da gema). Com wheel, normalizeSetup
 RECALCULA conviction/revelation/wheelDmgHeal a partir dela (wheelSetupFields).
 Presets do setup ("sets", sem charms; o print do set foi REMOVIDO — o boneco de equipamentos substitui, gear_url não é lido) por personagem em public.setup_presets
-(setup-presets.ts); tela dedicada /equipamentos (Meus sets).
+(setup-presets.ts); tela dedicada /equipamentos (Meus sets). SET = SÓ equipamento + postura (SET_PARTS, presetPart): a Wheel
+SAIU do set em 2026-10-11 — set antigo com roda no jsonb é lido sem ela. RODAS SALVAS por personagem em public.wheel_presets
+(wheel-presets.ts; tela /rodas "Minhas rodas", menu Herói): escolhidas à parte do set via WheelPresetPicker (SessionSetupPanel
+no modo "session" e SetAndWheelPicker no registro de boss). applySet troca equipamento/postura e mantém a roda; applyWheel
+troca a roda e mantém o resto. A sessão/execução guarda uma CÓPIA da roda (setup.wheel) — editar/excluir a roda salva não muda
+o que já foi registrado. Execução de boss: boss_rotation_runs.setup jsonb (mesmo formato; só é enviado quando há set/roda).
 Armas: src/data/weapons-data.ts (530 armas extraídas da TibiaWiki BR — categorias Espadas/Machados/Clavas,
 Bows/Crossbows/Armas de Arremesso, Wands, Rods, Punhos (monk), Aljavas; sem obsoletas), lidas por
 src/lib/weapons.ts e filtradas por vocação. Equipamentos: src/data/equipment-data.ts (825 itens da TibiaWiki BR —
