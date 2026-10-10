@@ -1,0 +1,38 @@
+# Confere que o último backup abre: baixa o arquivo criptografado mais recente, descriptografa com a
+# senha do banco (SUPABASE_DB_URL) e lista o conteúdo com pg_restore -l. Manual (Actions → Verificar
+# backup → Run workflow). Não conecta no banco e não altera nada.
+name: Verificar backup
+on:
+  workflow_dispatch:
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Instalar cliente Postgres 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - name: Baixar o backup mais recente
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "Backup do banco" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          echo "Backup do run $RUN_ID"
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir baixado
+          ls -la baixado/*
+      - name: Descriptografar e listar tabelas
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DB_URL=$(printf '%s' "$DB_URL" | tr -d '\r\n' | sed 's/^ *//; s/ *$//')
+          printf '%s' "$DB_URL" | openssl enc -d -aes-256-cbc -pbkdf2 -pass stdin -in baixado/*/backup-hunt.dump.enc -out backup-hunt.dump
+          pg_restore -l backup-hunt.dump | grep 'TABLE DATA' | sed 's/.* TABLE DATA //' | sort
+          echo "Tabelas com dados: $(pg_restore -l backup-hunt.dump | grep -c 'TABLE DATA')"
+          rm backup-hunt.dump
