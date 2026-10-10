@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { GameIcon } from "@/components/GameIcon";
 import { bossLinkedLoot, normName, type Boss, type BossCatalog } from "@/lib/boss-catalog";
-import { addRun, lastPrices, type BossRotationRun } from "@/lib/boss-rotations";
+import { addRun, lastPrices, splitShare, type BossRotationRun } from "@/lib/boss-rotations";
 import { fmtGold } from "@/lib/format";
 import { parseHunting, parseSessionStamp, withDuration } from "@/lib/parser";
 import { DurationAdjust } from "@/components/DurationAdjust";
@@ -66,6 +66,7 @@ export function RegisterRunDialog({
 }: Props) {
   const [text, setText] = useState("");
   const [party, setParty] = useState("1");
+  const [splitWithParty, setSplitWithParty] = useState(false);
   const [killedOverride, setKilledOverride] = useState<Set<string> | null>(null);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -157,12 +158,16 @@ export function RegisterRunDialog({
   const bossLoot = lines.reduce((a, l) => a + l.count * unitOf(l.name), 0);
   const supplies = parsed?.supplies ?? 0;
   const analyserLoot = parsed?.loot ?? 0;
-  const loot = basis === "total" ? analyserLoot : bossLoot;
-  const profit = loot - supplies;
+  const totalLoot = basis === "total" ? analyserLoot : bossLoot;
+  const partySize = Math.max(1, Math.min(10, Number(party) || 1));
+  const share = splitShare(totalLoot, supplies, partySize, splitWithParty);
+  const loot = share.loot;
+  const profit = share.balance;
 
   const reset = () => {
     setText("");
     setParty("1");
+    setSplitWithParty(false);
     setKilledOverride(null);
     setPrices({});
     setIncluded(new Set());
@@ -186,10 +191,10 @@ export function RegisterRunDialog({
         ranAt: new Date(end ?? Date.now()).toISOString(),
         durationSec: parsed.durationSec,
         loot,
-        supplies,
+        supplies: share.supplies,
         balance: profit,
         xp: parsed.xpGain || parsed.rawXp,
-        partySize: Math.max(1, Math.min(10, Number(party) || 1)),
+        partySize,
         bossesKilled: [...killed],
         drops: lines.map((l) => ({
           name: l.name,
@@ -424,7 +429,7 @@ export function RegisterRunDialog({
                 label={basis === "total" ? "Loot total" : "Loot dos bosses"}
                 value={fmtGold(loot)}
               />
-              <Mini label="Supplies" value={fmtGold(supplies)} />
+              <Mini label="Supplies" value={fmtGold(share.supplies)} />
               <Mini
                 label="Lucro"
                 value={fmtGold(profit)}
@@ -452,6 +457,24 @@ export function RegisterRunDialog({
                 className="w-16 rounded-lg border border-border bg-background px-2 py-1.5 text-center outline-none focus:border-rubi-danger"
               />
             </label>
+            {partySize > 1 && (
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={splitWithParty}
+                  onChange={(e) => setSplitWithParty(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[var(--rubi-danger)]"
+                />
+                <span>
+                  Dividir o lucro com a PT
+                  <span className="block text-[10px] text-muted-foreground">
+                    {splitWithParty
+                      ? `Loot e supplies acima são a sua parte (1/${partySize}). Total da rotação: ${fmtGold(totalLoot)} de loot e ${fmtGold(supplies)} de supplies.`
+                      : "Marque se o loot foi dividido igualmente entre os jogadores: salvamos só a sua parte."}
+                  </span>
+                </span>
+              </label>
+            )}
           </div>
         )}
 
