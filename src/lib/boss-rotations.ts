@@ -255,3 +255,14 @@ export function rotationWait(
   }
   return bosses.length ? worst : null;
 }
+
+/**
+ * Sua parte de uma rotação de boss feita em PT fixa: loot e supplies divididos igualmente
+ * entre os jogadores (arredonda pra baixo, como o LootSplitter). Sem divisão ou 1 jogador = tudo seu.
+ */
+export function splitShare(loot: number, supplies: number, players: number, split: boolean) {
+  const n = split ? Math.max(1, Math.floor(players)) : 1;
+  const mine = Math.floor(loot / n);
+  const mySupplies = Math.floor(supplies / n);
+  return { loot: mine, supplies: mySupplies, balance: mine - mySupplies, divisor: n };
+}

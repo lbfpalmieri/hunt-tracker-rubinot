@@ -235,22 +235,18 @@ function SessionView({ session }: { session: any }) {
           )}
         </div>
 
-        <div className="card-surface p-5">
-          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
-            <Shield className="h-4 w-4 text-rubi-blue" /> Equipamento
-          </h2>
-          {session.gearUrl ? (
+        {session.gearUrl && (
+          <div className="card-surface p-5">
+            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
+              <Shield className="h-4 w-4 text-rubi-blue" /> Equipamento
+            </h2>
             <img
               src={session.gearUrl}
               alt={`Equipamento usado por ${session.charName}`}
               className="w-full rounded-lg border border-border/60 object-contain"
             />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Este jogador não compartilhou o print do equipamento nesta sessão.
-            </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {session.misc && (
