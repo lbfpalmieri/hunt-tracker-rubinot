@@ -115,15 +115,11 @@ export function SessionSetupPanel({
       ],
     });
   };
+  // Cada charm vale pra UMA criatura: escolher outra substitui; tocar na escolhida desmarca.
   const toggleCreature = (charm: string, creature: string) => {
-    const e = entries(charm).filter((x) => x.creature);
     const level = rowLevel(charm);
-    const next: SetupCharm[] = e.some((x) => x.creature === creature)
-      ? e.filter((x) => x.creature !== creature)
-      : [...e, { charm, level, creature }];
-    set({
-      charms: [...others(charm), ...(next.length ? next : [{ charm, level, creature: null }])],
-    });
+    const already = entries(charm).some((x) => x.creature === creature);
+    set({ charms: [...others(charm), { charm, level, creature: already ? null : creature }] });
   };
   const removeRow = (charm: string) => {
     set({ charms: others(charm) });
@@ -433,7 +429,7 @@ export function SessionSetupPanel({
                       </div>
                       {linked.size === 0 && (
                         <p className="mt-1 text-[10px] text-muted-foreground">
-                          Toque nas criaturas em que esse charm estava.
+                          Toque na criatura em que esse charm estava (cada charm vale pra uma só).
                         </p>
                       )}
                     </div>

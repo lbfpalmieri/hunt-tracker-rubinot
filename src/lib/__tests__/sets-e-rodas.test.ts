@@ -157,3 +157,25 @@ describe("rodas salvas", () => {
     expect(suggestedWheelName([{ name: "Roda" }, { name: " Roda 2 " }, { name: "Outra" }])).toBe("Roda 3");
   });
 });
+
+describe("charm vale pra uma criatura só", () => {
+  const withCharms = (charms: unknown[]) =>
+    normalizeSetup({ ...EMPTY_SETUP, weapon: "Soulcutter", charms })!;
+
+  it("setup antigo com várias criaturas no mesmo charm fica só com a primeira", () => {
+    const read = withCharms([
+      { charm: "Freeze", level: 2, creature: "Vexclaw" },
+      { charm: "Freeze", level: 2, creature: "Hellflayer" },
+      { charm: "Zap", level: 3, creature: "Demon" },
+    ]);
+    expect(read.charms).toEqual([
+      { charm: "Freeze", level: 2, creature: "Vexclaw" },
+      { charm: "Zap", level: 3, creature: "Demon" },
+    ]);
+  });
+
+  it("não perde o charm sem criatura nem cria duplicado", () => {
+    const read = withCharms([{ charm: "Freeze", level: 1, creature: null }]);
+    expect(read.charms).toEqual([{ charm: "Freeze", level: 1, creature: null }]);
+  });
+});
