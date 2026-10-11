@@ -1,0 +1,17 @@
+name: Ideia
+description: Guardar uma ideia ou melhoria para fazer depois
+labels: ["ideia"]
+body:
+  - type: textarea
+    id: ideia
+    attributes:
+      label: Qual é a ideia?
+      description: Em poucas palavras, o que você quer que mude ou exista.
+    validations:
+      required: true
+  - type: textarea
+    id: porque
+    attributes:
+      label: Por que vale a pena?
+    validations:
+      required: false
