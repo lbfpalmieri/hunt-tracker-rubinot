@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, Pencil, Plus, Save, Shirt, X } from "lucide-react";
 import { toast } from "sonner";
@@ -22,6 +22,12 @@ import { useAppStore } from "@/lib/store";
 import { currentLevel } from "@/lib/level";
 import { WheelPresetPicker } from "@/components/wheel/WheelPresetPicker";
 import { findWeapon } from "@/lib/weapons";
+import {
+  loadCharmMemory,
+  prefillCharms,
+  saveCharmMemory,
+  updateMemory,
+} from "@/lib/charm-memory";
 import {
   suggestedPresetName,
   useSaveSetupPreset,
@@ -50,6 +56,7 @@ export function SessionSetupPanel({
   creatures,
   activatedCharms = [],
   mode = "session",
+  rememberCharms = false,
 }: {
   value: SessionSetup;
   onChange: (next: SessionSetup) => void;
@@ -63,6 +70,8 @@ export function SessionSetupPanel({
   activatedCharms?: string[];
   /** "preset" = editando um set na tela Meus sets: sem escolha de set, sem Wheel e sem charms. */
   mode?: "session" | "preset";
+  /** Lembra charm ↔ criatura por personagem e já preenche na próxima sessão (só ao adicionar sessão). */
+  rememberCharms?: boolean;
 }) {
   const set = (patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
 
@@ -103,6 +112,21 @@ export function SessionSetupPanel({
   const rows = uniq([...activatedCharms, ...value.charms.map((c) => c.charm), ...extraCharms]);
   const entries = (charm: string) => value.charms.filter((c) => c.charm === charm);
   const rowLevel = (charm: string): 1 | 2 | 3 => entries(charm)[0]?.level ?? levelOf[charm] ?? 2;
+  // Pré-preenche com o que foi escolhido na sessão anterior (criatura precisa ter sido morta de novo).
+  const creaturesKey = creatures.join("|");
+  const activatedKey = activatedCharms.join("|");
+  useEffect(() => {
+    if (!rememberCharms || !characterId) return;
+    const filled = prefillCharms(value.charms, activatedCharms, creatures, loadCharmMemory(characterId));
+    if (filled) onChange({ ...value, charms: filled });
+    // roda quando muda a lista de criaturas/charms ou o personagem, não a cada edição.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rememberCharms, characterId, creaturesKey, activatedKey]);
+  // Guarda cada escolha (e desmarcação) pra próxima vez.
+  useEffect(() => {
+    if (!rememberCharms || !characterId || value.charms.length === 0) return;
+    saveCharmMemory(characterId, updateMemory(loadCharmMemory(characterId), value.charms));
+  }, [rememberCharms, characterId, value.charms]);
   const others = (charm: string) => value.charms.filter((c) => c.charm !== charm);
 
   const setCharmLevel = (charm: string, level: 1 | 2 | 3) => {
