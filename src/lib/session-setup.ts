@@ -300,10 +300,19 @@ export function normalizeSetup(value: unknown): SessionSetup | null {
             ? c.creature.trim().slice(0, 40)
             : null,
       }))
-      .slice(0, 24),
+      .slice(0, 24)
+      .filter(isFirstOfCharm),
   };
   if (wheel) Object.assign(setup, wheelSetupFields(wheel));
   return isEmptySetup(setup) ? null : setup;
+}
+
+/**
+ * No jogo cada charm vale pra UMA criatura. Setup antigo salvo com várias criaturas no mesmo charm
+ * fica só com a primeira ao ler (o que está no banco não é alterado).
+ */
+function isFirstOfCharm(c: SetupCharm, i: number, arr: SetupCharm[]): boolean {
+  return arr.findIndex((x) => x.charm === c.charm) === i;
 }
 
 export function isEmptySetup(s: SessionSetup | null | undefined): boolean {

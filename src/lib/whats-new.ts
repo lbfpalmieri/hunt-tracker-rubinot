@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "charm-uma-criatura-2026-10-11",
+    date: "2026-10-11",
+    title: "Charms: cada charm vale pra uma criatura só",
+    description:
+      "Como no jogo, cada charm agora aceita apenas uma criatura no setup da sessão: escolher outra troca a anterior, e tocar de novo na escolhida desmarca. Setups antigos que tinham várias criaturas no mesmo charm passam a mostrar só a primeira (nada é apagado do que já está salvo).",
+  },
+  {
     id: "minhas-rodas-2026-10-10",
     date: "2026-10-10",
     title: "Minhas rodas: a Wheel of Destiny agora é separada do set",
