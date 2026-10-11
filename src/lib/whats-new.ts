@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "charms-lembrados-2026-10-11",
+    date: "2026-10-11",
+    title: "Charms: o app lembra em qual criatura cada um estava",
+    description:
+      "Ao adicionar uma sessão, as Runas de Charm que ativaram já vêm ligadas às mesmas criaturas da sessão anterior (por personagem), desde que essas criaturas tenham sido mortas de novo. Só precisa mexer se mudou a criatura de algum charm — a nova escolha passa a ser a lembrada. Fica guardado neste navegador.",
+  },
+  {
     id: "charm-uma-criatura-2026-10-11",
     date: "2026-10-11",
     title: "Charms: cada charm vale pra uma criatura só",

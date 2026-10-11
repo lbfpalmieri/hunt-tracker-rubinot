@@ -1143,6 +1143,7 @@ function ImportPage() {
                   .sort((a, b) => b.count - a.count)
                   .map((k) => k.name)}
                 activatedCharms={charmsFromMisc(parsed.misc)}
+                rememberCharms
               />
             </div>
           )}
