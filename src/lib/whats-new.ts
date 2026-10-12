@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "desfazer-excluir-sessao-2026-10-12",
+    date: "2026-10-12",
+    title: "Sessões: desfazer depois de excluir",
+    description:
+      "Excluiu uma sessão sem querer? Aparece um aviso com o botão Desfazer por 8 segundos e a sessão volta inteira. Passado esse tempo, ela é apagada de verdade. Se você fechar a aba nesse intervalo, a sessão continua salva.",
+  },
+  {
     id: "exportar-sessoes-2026-10-12",
     date: "2026-10-12",
     title: "Sessões: exportar tudo em CSV ou JSON",

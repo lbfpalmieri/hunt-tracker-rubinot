@@ -27,6 +27,7 @@ import {
   ArrowLeft, Coins, Heart, Skull, Swords, Timer, Trash2, Zap, Package, Shield, Globe2, Trophy, StickyNote, ShoppingCart, LayoutDashboard, Users, FileOutput,
 } from "lucide-react";
 import { confirmDialog } from "@/lib/confirm-dialog";
+import { toast } from "sonner";
 
 
 import { lazy, Suspense, useMemo, useState } from "react";
@@ -56,7 +57,7 @@ function SessionDetail() {
   const navigate = useNavigate();
   const sessions = useAppStore((s) => s.sessions);
   const characters = useAppStore((s) => s.characters);
-  const removeSession = useAppStore((s) => s.removeSession);
+  const removeSessionWithUndo = useAppStore((s) => s.removeSessionWithUndo);
   const updateSession = useAppStore((s) => s.updateSession);
   const addHunt = useAppStore((s) => s.addHunt);
 
@@ -187,8 +188,19 @@ function SessionDetail() {
             onClick={async () => {
               const ok = await confirmDialog({ description: "Excluir esta sessão?", tone: "danger" });
               if (ok) {
-                await removeSession(session.id);
+                const pending = removeSessionWithUndo(session.id);
                 navigate({ to: "/sessions" });
+                if (!pending) return;
+                toast("Sessão excluída", {
+                  description: session.huntName,
+                  duration: 8000,
+                  action: {
+                    label: "Desfazer",
+                    onClick: () => {
+                      if (pending.undo()) toast.success("Sessão de volta", { description: session.huntName });
+                    },
+                  },
+                });
               }
             }}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rubi-danger/40 px-3 py-2 text-sm text-rubi-danger hover:bg-rubi-danger/10"
