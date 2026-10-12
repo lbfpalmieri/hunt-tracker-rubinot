@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "editar-personagem-2026-10-12",
+    date: "2026-10-12",
+    title: "Personagens: editar nome, vocação e mundo",
+    description:
+      "Na tela Personagens, o lápis ao lado de cada personagem abre a edição de nome, vocação e mundo. Mudou de nome ou de vocação no jogo? Corrija aqui e o histórico de sessões continua todo no mesmo personagem.",
+  },
+  {
     id: "hunt-renomear-2026-10-12",
     date: "2026-10-12",
     title: "Sessões: dá pra renomear a hunt",
