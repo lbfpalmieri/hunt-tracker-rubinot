@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "exportar-sessoes-2026-10-12",
+    date: "2026-10-12",
+    title: "Sessões: exportar tudo em CSV ou JSON",
+    description:
+      "Na tela Sessões, os botões CSV e JSON baixam todas as suas sessões (todos os personagens) com data, hunt, personagem, duração, balance/h, Raw XP/h, loot, supplies e mais. O CSV abre direto no Excel ou Google Planilhas; o JSON serve de backup. Suas observações não vão no arquivo.",
+  },
+  {
     id: "editar-personagem-2026-10-12",
     date: "2026-10-12",
     title: "Personagens: editar nome, vocação e mundo",
