@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { Coins, Save, Trash2, TrendingDown, TrendingUp, LineChart as LineChartIcon } from "lucide-react";
 import { toast } from "sonner";
+import { PageTabs } from "@/components/nav/PageTabs";
 import { AppShell } from "@/components/AppShell";
 import { useAppStore } from "@/lib/store";
 import { confirmDialog } from "@/lib/confirm-dialog";
@@ -65,6 +66,7 @@ function RubiniCoinsPage() {
 
   return (
     <AppShell>
+      <PageTabs itemId="monster-calc" />
       <RcCalculator
         defaultWorld={defaultWorld}
         entries={data?.entries ?? []}
