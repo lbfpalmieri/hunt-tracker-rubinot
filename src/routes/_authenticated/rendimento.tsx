@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PageTabs } from "@/components/nav/PageTabs";
 import { AppShell } from "@/components/AppShell";
 import { errorMessage } from "@/lib/errors";
 import { EmptyState } from "@/components/EmptyState";
@@ -428,6 +429,7 @@ function RendimentoPage() {
 
   return (
     <AppShell>
+      <PageTabs itemId="rendimento" />
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
           {active.name} · {active.vocation}

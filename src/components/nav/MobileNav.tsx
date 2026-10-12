@@ -6,7 +6,7 @@ import {
   NAV_GROUPS,
   NAV_ITEMS,
   findNavItem,
-  isNavActive,
+  isItemActive, navTarget,
   type NavItem,
 } from "@/lib/nav-items";
 import { useNavPrefs } from "@/lib/nav-prefs";
@@ -38,7 +38,7 @@ export function MobileNav({
     .filter((n): n is NavItem => !!n)
     .slice(0, MOBILE_BAR_SLOTS);
   const inBar = new Set<string>(bar.map((n) => n.id));
-  const moreActive = NAV_ITEMS.some((n) => !inBar.has(n.id) && isNavActive(pathname, n.to));
+  const moreActive = NAV_ITEMS.some((n) => !inBar.has(n.id) && isItemActive(pathname, n));
 
   return (
     <>
@@ -48,11 +48,11 @@ export function MobileNav({
           style={{ gridTemplateColumns: `repeat(${bar.length + 1}, minmax(0, 1fr))` }}
         >
           {bar.map((n) => {
-            const active = isNavActive(pathname, n.to);
+            const active = isItemActive(pathname, n);
             return (
               <Link
                 key={n.id}
-                to={n.to}
+                to={navTarget(n) as typeof n.to}
                 className={
                   "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium leading-tight transition-colors " +
                   (active ? "text-rubi-gold" : "text-foreground/75")
@@ -131,12 +131,12 @@ export function MobileNav({
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {items.map((n) => {
-                        const active = isNavActive(pathname, n.to);
+                        const active = isItemActive(pathname, n);
                         const badge = n.id === "imbuements" && lowCount > 0 ? lowCount : 0;
                         return (
                           <Link
                             key={n.id}
-                            to={n.to}
+                            to={navTarget(n) as typeof n.to}
                             onClick={() => onOpenChange(false)}
                             className={
                               "relative flex min-h-[5rem] flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2.5 text-center text-xs font-medium leading-tight transition-colors active:bg-accent " +

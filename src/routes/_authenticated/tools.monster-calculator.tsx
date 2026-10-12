@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PageTabs } from "@/components/nav/PageTabs";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { GameIcon } from "@/components/GameIcon";
@@ -165,6 +166,7 @@ function MonsterCalculatorPage() {
 
   return (
     <AppShell>
+      <PageTabs itemId="monster-calc" />
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Ferramentas</div>
         <h1 className="mt-1 font-brand text-3xl font-bold">Calculadora de Bounty / Linked Task</h1>

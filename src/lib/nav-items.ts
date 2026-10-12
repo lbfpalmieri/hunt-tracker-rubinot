@@ -48,6 +48,8 @@ interface NavItemDef {
   /** Sprite do jogo (TibiaWiki, via GameIcon) mostrado no menu — `icon` é o reserva se a imagem falhar. */
   sprite: string;
   group: NavGroupId;
+  /** Páginas irmãs que dividem este item do menu como abas (a 1ª é a do próprio item). */
+  tabs?: readonly { to: string; label: string }[];
 }
 
 export const NAV_ITEMS = [
@@ -118,19 +120,14 @@ export const NAV_ITEMS = [
   {
     id: "monster-calc",
     to: "/tools/monster-calculator",
-    label: "Calculadora de monstros/h",
-    short: "Monstros/h",
+    label: "Calculadoras",
+    short: "Calculadoras",
+    tabs: [
+      { to: "/tools/monster-calculator", label: "Monstros/h e Bounty" },
+      { to: "/tools/rubini-coins", label: "Rubini Coins" },
+    ],
     icon: Skull,
     sprite: "Hourglass",
-    group: "oficina",
-  },
-  {
-    id: "rubini-coins",
-    to: "/tools/rubini-coins",
-    label: "Calculadora de Rubini Coins",
-    short: "Rubini Coins",
-    icon: Coins,
-    sprite: "Tibia Coins",
     group: "oficina",
   },
   {
@@ -155,19 +152,14 @@ export const NAV_ITEMS = [
   {
     id: "rendimento",
     to: "/rendimento",
-    label: "Meu rendimento",
+    label: "Rendimento",
     short: "Rendimento",
+    tabs: [
+      { to: "/rendimento", label: "Meu rendimento" },
+      { to: "/overview", label: "Todos os personagens" },
+    ],
     icon: Gauge,
     sprite: "Golden Goblet",
-    group: "heroi",
-  },
-  {
-    id: "overview",
-    to: "/overview",
-    label: "Todos os personagens",
-    short: "Todos",
-    icon: Users,
-    sprite: "Crown",
     group: "heroi",
   },
   {
@@ -253,9 +245,43 @@ export function isNavActive(pathname: string, to: string) {
   return pathname === to || pathname.startsWith(to + "/");
 }
 
+/** Abas do item (vazio se ele não divide a página com outras). */
+export function navTabs(n: NavItem): readonly { to: string; label: string }[] {
+  return "tabs" in n ? n.tabs : [];
+}
+
+/** O item está ativo na rota atual? Vale também quando a rota é uma das abas dele. */
+export function isItemActive(pathname: string, n: NavItem): boolean {
+  return isNavActive(pathname, n.to) || navTabs(n).some((t) => isNavActive(pathname, t.to));
+}
+
+/** Última aba usada de cada item com abas (guardada só neste navegador). */
+const TAB_KEY = "rubinot:last-tab:";
+
+export function rememberTab(itemId: string, to: string): void {
+  try {
+    localStorage.setItem(TAB_KEY + itemId, to);
+  } catch {
+    // sem localStorage: sem memória, abre na 1ª aba
+  }
+}
+
+/** Pra onde o menu leva: a última aba usada, se ela ainda existir; senão a 1ª. */
+export function navTarget(n: NavItem): string {
+  const tabs = navTabs(n);
+  if (!tabs.length) return n.to;
+  try {
+    const last = localStorage.getItem(TAB_KEY + n.id);
+    if (last && tabs.some((t) => t.to === last)) return last;
+  } catch {
+    // ignora
+  }
+  return n.to;
+}
+
 /** Item da rota atual (o de caminho mais longo, pra "/tools/x" não cair em "/tools"). */
 export function navItemForPath(pathname: string): NavItem | undefined {
-  return NAV_ITEMS.filter((n) => isNavActive(pathname, n.to)).sort(
+  return NAV_ITEMS.filter((n) => isItemActive(pathname, n)).sort(
     (a, b) => b.to.length - a.to.length,
   )[0];
 }

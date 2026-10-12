@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "menu-abas-2026-10-12",
+    date: "2026-10-12",
+    title: "Menu mais enxuto: Rendimento e Calculadoras com abas",
+    description:
+      "Meu rendimento e Todos os personagens agora são um item só do menu (Rendimento), com duas abas no topo. O mesmo vale para as calculadoras de Monstros/h e de Rubini Coins (item Calculadoras). O menu lembra a última aba que você usou e os links antigos continuam funcionando.",
+  },
+  {
     id: "desfazer-excluir-sessao-2026-10-12",
     date: "2026-10-12",
     title: "Sessões: desfazer depois de excluir",

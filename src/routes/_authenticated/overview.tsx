@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Users, Coins, ScrollText, Wallet, Trophy, UserCircle2, BarChart3 } from "lucide-react";
+import { PageTabs } from "@/components/nav/PageTabs";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
@@ -136,6 +137,7 @@ function OverviewPage() {
 
   return (
     <AppShell>
+      <PageTabs itemId="rendimento" />
       <div className="mb-6">
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Conta</div>
         <h1 className="mt-1 flex items-center gap-2 font-brand text-3xl font-bold">

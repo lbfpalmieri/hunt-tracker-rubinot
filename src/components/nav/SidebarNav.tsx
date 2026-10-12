@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight, LogOut, Pin, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import logo from "@/assets/dragon-logo.png.asset.json";
-import { NAV_GROUPS, NAV_ITEMS, findNavItem, isNavActive, type NavItem } from "@/lib/nav-items";
+import { NAV_GROUPS, NAV_ITEMS, findNavItem, isItemActive, navTarget, type NavItem } from "@/lib/nav-items";
 import { setSidebarExpanded, useNavPrefs } from "@/lib/nav-prefs";
 import { NavIcon } from "@/components/nav/NavIcon";
 
@@ -35,12 +35,12 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
   const fade = "transition-opacity duration-150 " + (open ? "opacity-100" : "opacity-0");
 
   const renderItem = (n: NavItem) => {
-    const active = isNavActive(pathname, n.to);
+    const active = isItemActive(pathname, n);
     const badge = n.id === "imbuements" && lowCount > 0 ? lowCount : 0;
     return (
       <Link
         key={n.id}
-        to={n.to}
+        to={navTarget(n) as typeof n.to}
         title={open ? undefined : n.label}
         aria-current={active ? "page" : undefined}
         className={
