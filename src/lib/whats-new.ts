@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "nova-sessao-guarda-colagem-2026-10-12",
+    date: "2026-10-12",
+    title: "Nova sessão: o analyser colado não some mais",
+    description:
+      "Se você colar o Hunting Analyser na Nova sessão e for olhar outra página (Comparar hunts, por exemplo), ao voltar o texto continua lá. Só é apagado depois que você salva a sessão.",
+  },
+  {
     id: "charms-lembrados-2026-10-11",
     date: "2026-10-11",
     title: "Charms: o app lembra em qual criatura cada um estava",

@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { clearImportDraft, loadImportDraft, saveImportDraft } from "@/lib/import-draft";
 import { parseHunting, parseDamage, parseMiscellaneous, withDuration } from "@/lib/parser";
 import { DurationAdjust } from "@/components/DurationAdjust";
 import { detectDeathLoss } from "@/lib/deaths";
@@ -109,10 +110,12 @@ function ImportPage() {
   const addHunt = useAppStore((s) => s.addHunt);
   const addDeath = useAppStore((s) => s.addDeath);
 
-  const [huntingText, setHuntingText] = useState("");
-  const [damageText, setDamageText] = useState("");
-  const [miscText, setMiscText] = useState("");
-  const [huntQuery, setHuntQuery] = useState("");
+  // Rascunho guardado fora da rota: trocar de página e voltar não perde o que foi colado (import-draft.ts).
+  const [draft0] = useState(loadImportDraft);
+  const [huntingText, setHuntingText] = useState(draft0.hunting);
+  const [damageText, setDamageText] = useState(draft0.damage);
+  const [miscText, setMiscText] = useState(draft0.misc);
+  const [huntQuery, setHuntQuery] = useState(draft0.huntQuery);
   const [huntPickerOpen, setHuntPickerOpen] = useState(false);
   const huntPickerRef = useRef<HTMLDivElement>(null);
   const [isPublic, setIsPublic] = useState(true);
@@ -129,9 +132,9 @@ function ImportPage() {
   // Prey (dependem de XP e criaturas). No Modo Solo não tem party.
   const playMode = useNavPrefs((s) => s.mode);
   const groupMode = playMode === "party";
-  const [party, setParty] = useState<PartyInfo | null>(null);
+  const [party, setParty] = useState<PartyInfo | null>(draft0.party);
   // Texto colado no bloco "Party Hunt Analyser" da página (a party em si fica em `party`).
-  const [partyText, setPartyText] = useState("");
+  const [partyText, setPartyText] = useState(draft0.partyText);
   const hasParty = groupMode && !!party;
   // Precisa saber quem é você entre os membros (é a sua linha que vira a sessão).
   // Party Hunt Analyser do RubinOT (`own`) já é a sua linha — não tem membros pra escolher.
@@ -155,6 +158,17 @@ function ImportPage() {
   // anterior grudar sem querer numa sessão diferente.
   useEffect(() => setDeathOptOut(false), [huntingText]);
 
+
+  useEffect(() => {
+    saveImportDraft({
+      hunting: huntingText,
+      damage: damageText,
+      misc: miscText,
+      partyText,
+      party,
+      huntQuery,
+    });
+  }, [huntingText, damageText, miscText, partyText, party, huntQuery]);
 
   const effectiveCharId = activeId || characters[0]?.id || "";
   const activeChar = characters.find((c) => c.id === effectiveCharId);
@@ -543,6 +557,7 @@ function ImportPage() {
         }
       }
 
+      clearImportDraft();
       navigate({ to: "/sessions/$id", params: { id: created.id } });
     } catch (e) {
       setSaveError(errorMessage(e));
