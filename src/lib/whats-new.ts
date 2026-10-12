@@ -17,6 +17,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "conselho-task-orcamento-2026-10-12",
+    date: "2026-10-12",
+    title: "Linked Task: conselho de set e imbuement respeita o orçamento",
+    description:
+      "Pra criatura fraca (Goblin, Rat, Wolf, Troll...) o conselho agora diz que seu equipamento atual basta, sem set de end-game e sem imbuement. Criatura média (Dragon, Hydra...) sugere só itens até o level 150 e marca o imbuement como opcional. Set de ponta e imbuement ficam pras criaturas difíceis (Demon, Hellhound, bosses).",
     id: "nova-sessao-guarda-colagem-2026-10-12",
     date: "2026-10-12",
     title: "Nova sessão: o analyser colado não some mais",

@@ -6,8 +6,10 @@ import { EquipmentDoll } from "@/components/setup/EquipmentDoll";
 import {
   MODE_LABEL,
   charmPicks,
+  budgetLevel,
   emergencyItems,
   estimateIncoming,
+  huntStage,
   recommendSet,
   suggestImbuements,
   weightedProtection,
@@ -59,17 +61,23 @@ export function useTaskAdvice(creatures: string[]) {
     [creatures],
   );
   const incoming = useMemo(() => estimateIncoming(monsters), [monsters]);
+  // Fase da hunt: criatura fácil não pede set de end-game nem imbuement (orçamento do jogador).
+  const stage = useMemo(() => huntStage(monsters), [monsters]);
   const input = useMemo(
-    () => ({ vocation: voc, level, mode, monsters, incoming }),
-    [voc, level, mode, monsters, incoming],
+    () => ({ vocation: voc, level: budgetLevel(stage, level), mode, monsters, incoming }),
+    [voc, level, stage, mode, monsters, incoming],
   );
   const result = useMemo(() => recommendSet(input), [input]);
-  const imbues = useMemo(() => suggestImbuements(input, result.setup), [input, result.setup]);
+  const imbues = useMemo(
+    () => (stage === "starter" ? [] : suggestImbuements(input, result.setup)),
+    [stage, input, result.setup],
+  );
   const charms = useMemo(() => charmPicks(monsters), [monsters]);
   const emergency = useMemo(() => emergencyItems(incoming), [incoming]);
 
   return {
     hasData: monsters.length > 0,
+    stage,
     voc,
     setVoc,
     mode,
@@ -133,6 +141,7 @@ export function AdviceCombat({ advice }: { advice: TaskAdvice }) {
 /** Aba Set: vocação + estilo e o set no boneco do inventário do jogo. */
 export function AdviceSet({ advice }: { advice: TaskAdvice }) {
   if (!advice.hasData) return NO_DATA;
+  if (advice.stage === "starter") return <EnoughGear what="set" />;
   return (
     <div className="space-y-3">
       <Segmented
@@ -159,6 +168,11 @@ export function AdviceSet({ advice }: { advice: TaskAdvice }) {
           {weightedProtection(advice.result.setup, advice.incoming).toFixed(1)}%
         </b>
       </div>
+      {advice.stage === "mid" && (
+        <p className="text-xs text-muted-foreground">
+          Hunt de dificuldade média: só itens até o level 150, que ainda cabem no bolso.
+        </p>
+      )}
       <EquipmentDoll value={advice.result.setup} vocation={advice.voc} size={38} />
       {advice.level == null && (
         <p className="text-xs text-muted-foreground">
@@ -173,6 +187,7 @@ export function AdviceSet({ advice }: { advice: TaskAdvice }) {
 /** Aba Imbuements: por slot do set sugerido + itens de carga pra levar na BP. */
 export function AdviceImbues({ advice }: { advice: TaskAdvice }) {
   if (!advice.hasData) return NO_DATA;
+  if (advice.stage === "starter") return <EnoughGear what="imbuement" />;
   return (
     <div className="space-y-5">
       <Block
@@ -180,6 +195,11 @@ export function AdviceImbues({ advice }: { advice: TaskAdvice }) {
         label={`Imbuements · set ${MODE_LABEL[advice.mode].toLowerCase()}`}
         tone="text-rubi-blue"
       >
+        {advice.stage === "mid" && (
+          <p className="mb-2 text-xs text-muted-foreground">
+            Opcional: essas criaturas não são difíceis, só vale se sobrar gold.
+          </p>
+        )}
         {advice.imbues.length ? (
           <ul className="space-y-2">
             {advice.imbues.map((s) => (
@@ -227,6 +247,19 @@ export function AdviceImbues({ advice }: { advice: TaskAdvice }) {
         </ul>
       </Block>
       <Footnote />
+    </div>
+  );
+}
+
+/** Criatura fácil: o certo é dizer que o equipamento atual basta (nada de set ou imbuement caro). */
+function EnoughGear({ what }: { what: "set" | "imbuement" }) {
+  return (
+    <div className="rounded-lg border border-rubi-success/30 bg-rubi-success/10 px-3 py-3 text-sm">
+      <b className="text-rubi-success">Seu equipamento atual basta.</b>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Essas criaturas são fracas: não vale gastar com {what === "set" ? "set novo" : "imbuement"}.
+        Guarde o gold pra hunts mais difíceis.
+      </p>
     </div>
   );
 }

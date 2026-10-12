@@ -187,6 +187,42 @@ const num = (s: string | undefined) => {
   return m ? Number(m[0]) : 0;
 };
 
+// ---------------------------------------------------------------- fase do jogo / orçamento
+
+/**
+ * Quão pesada é a hunt, pela criatura MAIS difícil da lista (vida, maior golpe conhecido, boss):
+ *  - starter: Goblin, Rat, Wolf, Troll, Cyclops... o equipamento que o jogador já tem basta; não
+ *    há dinheiro nem motivo pra gastar em set novo ou imbuement;
+ *  - mid: Dragon, Hydra, Giant Spider... set de level médio e imbuement só se sobrar gold;
+ *  - hard: Demon, Hellhound, bosses... aqui vale set de ponta e imbuement.
+ */
+export type HuntStage = "starter" | "mid" | "hard";
+
+export const STAGE_ITEM_LEVEL_CAP: Record<HuntStage, number | null> = {
+  starter: 0,
+  mid: 150,
+  hard: null,
+};
+
+export function huntStage(monsters: HuntMonster[]): HuntStage {
+  let stage: HuntStage = "starter";
+  for (const hm of monsters) {
+    const m = findMonster(hm.name);
+    if (!m) continue;
+    const maxHit = Math.max(0, ...Object.values(m.attacks).filter((v): v is number => (v ?? 0) > 0));
+    if (m.boss || m.hp >= 3000 || maxHit >= 500) return "hard";
+    if (m.hp >= 500 || maxHit >= 250) stage = "mid";
+  }
+  return stage;
+}
+
+/** Level máximo dos itens que ainda cabem no bolso de quem caça essa hunt. */
+export function budgetLevel(stage: HuntStage, level: number | null): number | null {
+  const cap = STAGE_ITEM_LEVEL_CAP[stage];
+  if (cap == null) return level;
+  return level == null ? cap : Math.min(level, cap);
+}
+
 // ---------------------------------------------------------------- contexto
 
 export interface AdvisorInput {
