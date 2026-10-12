@@ -9,6 +9,7 @@ import { BountyBadge } from "@/components/BountyBadge";
 import { BountyEditor } from "@/components/BountyEditor";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
+import { LootValueList } from "@/components/LootValueList";
 import { RenameHunt } from "@/components/RenameHunt";
 import { SessionNotesEditor } from "@/components/SessionNotesEditor";
 import { SetupEditor } from "@/components/setup/SetupEditor";
@@ -381,21 +382,7 @@ function SessionDetail() {
         {h.lootedItems.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sem loot registrado.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-            {h.lootedItems
-              .slice()
-              .sort((a, b) => b.count - a.count)
-              .map((it) => (
-                <div
-                  key={it.name}
-                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
-                >
-                  <GameIcon name={it.name} size={24} className="flex-none" fallback={<Package className="h-5 w-5 flex-none text-muted-foreground/50" />} />
-                  <span className="min-w-0 flex-1 truncate">{it.name}</span>
-                  <span className="ml-2 flex-none font-mono font-semibold text-rubi-gold">×{fmtNum(it.count)}</span>
-                </div>
-              ))}
-          </div>
+          <LootValueList items={h.lootedItems} world={char?.world ?? null} />
         )}
       </div>
 

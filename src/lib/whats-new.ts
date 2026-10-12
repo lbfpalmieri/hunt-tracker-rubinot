@@ -17,11 +17,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    id: "menu-abas-2026-10-12",
+    id: "valor-loot-item-2026-10-12",
     date: "2026-10-12",
-    title: "Menu mais enxuto: Rendimento e Calculadoras com abas",
+    title: "Sessão: valor de cada item do loot",
     description:
-      "Meu rendimento e Todos os personagens agora são um item só do menu (Rendimento), com duas abas no topo. O mesmo vale para as calculadoras de Monstros/h e de Rubini Coins (item Calculadoras). O menu lembra a última aba que você usou e os links antigos continuam funcionando.",
+      "Na página da sessão, os itens lootados agora mostram quanto cada um valeu (seu preço × quantidade) e dá pra ordenar por valor ou quantidade. Item sem preço tem um campo pra você preencher na hora; o preço fica salvo em Meus preços, no servidor do personagem, e vale nas próximas sessões. As moedas já entram com o valor fixo.",
   },
   {
     id: "desfazer-excluir-sessao-2026-10-12",
