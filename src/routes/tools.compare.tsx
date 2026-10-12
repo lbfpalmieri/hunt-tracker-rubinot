@@ -195,7 +195,7 @@ function ComparePage() {
           {!visitor && (
           <Link
             to="/tools/comparisons"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-rubi-blue/40 hover:text-foreground"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-rubi-blue/40 hover:text-foreground"
           >
             <BookmarkCheck className="h-4 w-4" /> Comparações salvas
           </Link>

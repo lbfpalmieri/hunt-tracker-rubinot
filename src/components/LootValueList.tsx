@@ -86,7 +86,7 @@ export function LootValueList({
               <span className="flex-none text-right">
                 <span className="block font-mono font-semibold text-rubi-gold">{fmtGold(r.total)}</span>
                 {!r.fromCoins && r.count > 1 && (
-                  <span className="block font-mono text-[11px] text-muted-foreground">
+                  <span className="block font-mono text-2xs text-muted-foreground">
                     {fmtNum(r.unit ?? 0)} cada
                   </span>
                 )}

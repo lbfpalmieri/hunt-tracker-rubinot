@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageTabs } from "@/components/nav/PageTabs";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { GameIcon } from "@/components/GameIcon";
@@ -102,7 +103,7 @@ function MonsterCalculatorPage() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -160,6 +161,7 @@ function MonsterCalculatorPage() {
         <div>
           <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Personagem</label>
           <select
+            aria-label="Personagem"
             value={effectiveCharId}
             onChange={(e) => setCharId(e.target.value)}
             className="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
@@ -183,6 +185,7 @@ function MonsterCalculatorPage() {
             return (
               <>
                 <input
+                  aria-label={mode === "bounty" ? "Monstro" : "Adicionar monstro"}
                   value={monster}
                   onChange={(e) => {
                     setMonster(e.target.value);
@@ -239,6 +242,7 @@ function MonsterCalculatorPage() {
             {mode === "bounty" ? "Quantidade a derrotar" : "Total de monstros a derrotar"}
           </label>
           <input
+            aria-label={mode === "bounty" ? "Quantidade a derrotar" : "Total de monstros a derrotar"}
             type="number"
             min={1}
             value={quantity}
@@ -338,7 +342,7 @@ function MonsterCalculatorPage() {
                 <article key={r.huntName} className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="min-w-0 break-words font-display text-sm font-semibold">{r.huntName}</h3>
-                    {i === 0 && <span className="flex-none rounded bg-rubi-gold/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-rubi-gold">Mais rápida</span>}
+                    {i === 0 && <span className="flex-none rounded bg-rubi-gold/15 px-1.5 py-0.5 text-2xs font-semibold uppercase text-rubi-gold">Mais rápida</span>}
                   </div>
                   <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                     <div><dt className="text-muted-foreground">Sessões</dt><dd className="mt-0.5 font-mono font-semibold">{r.sessionCount}</dd></div>
@@ -376,7 +380,7 @@ function MonsterCalculatorPage() {
                       <td className="px-5 py-2 font-medium">
                         {r.huntName}
                         {i === 0 && (
-                          <span className="ml-2 rounded bg-rubi-gold/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+                          <span className="ml-2 rounded bg-rubi-gold/15 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider text-rubi-gold">
                             Mais rápida
                           </span>
                         )}

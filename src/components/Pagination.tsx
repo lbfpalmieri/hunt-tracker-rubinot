@@ -21,7 +21,7 @@ export function Pagination({
       >
         <ChevronLeft className="h-3.5 w-3.5" /> Anterior
       </button>
-      <span className="text-center text-[11px] text-muted-foreground sm:text-xs">
+      <span className="text-center text-2xs text-muted-foreground sm:text-xs">
         Página <strong className="text-foreground">{page}</strong> de {totalPages}
       </span>
       <button

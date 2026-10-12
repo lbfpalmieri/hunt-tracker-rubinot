@@ -35,7 +35,7 @@ export function BossHero({
       />
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-rubi-danger">
+          <div className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-[0.2em] text-rubi-danger">
             <Flame className="h-3.5 w-3.5" /> {eyebrow}
           </div>
           <h1 className="mt-1 font-brand text-3xl font-bold tracking-tight sm:text-4xl">
@@ -86,7 +86,7 @@ export function BossTypeBadge({ type }: { type: BossType }) {
   const color = BOSS_TYPE_COLOR[type];
   return (
     <span
-      className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+      className="rounded px-1.5 py-0.5 text-2xs font-bold uppercase tracking-wider"
       style={{ color, background: `color-mix(in oklab, ${color} 16%, transparent)` }}
     >
       {BOSS_TYPE_LABEL[type]}
@@ -104,7 +104,7 @@ export function PartyBadge({ party, estimated }: { party: PartyKind; estimated: 
           : "Definido por você"
       }
       className={
-        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold " +
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold " +
         (solo ? "bg-rubi-success/15 text-rubi-success" : "bg-rubi-blue-soft text-rubi-blue")
       }
     >
@@ -119,7 +119,7 @@ export function LootTierBadge({ tier }: { tier: LootTier }) {
   const color = LOOT_TIER_COLOR[tier];
   return (
     <span
-      className="whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-semibold"
+      className="whitespace-nowrap rounded px-1.5 py-0.5 text-2xs font-semibold"
       style={{ color, background: `color-mix(in oklab, ${color} 15%, transparent)` }}
     >
       {LOOT_TIER_LABEL[tier]}

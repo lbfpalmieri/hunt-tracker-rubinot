@@ -100,7 +100,7 @@ export function WhatsNewBell() {
               <div key={entry.id} className="border-b border-border/40 px-4 py-3 last:border-0">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="font-display text-sm font-semibold">{entry.title}</span>
-                  <span className="flex-none text-[11px] text-muted-foreground">
+                  <span className="flex-none text-2xs text-muted-foreground">
                     {formatWhatsNewDate(entry)}
                   </span>
                 </div>

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GitCompareArrows, Search, X, ArrowDown, ArrowLeft, Clock, Filter, Calendar, FlaskConical } from "lucide-react";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
@@ -134,7 +135,7 @@ function SessionsComparePage() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -143,7 +144,7 @@ function SessionsComparePage() {
     <AppShell>
       <Link
         to="/sessions"
-        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>

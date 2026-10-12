@@ -226,7 +226,7 @@ function CatalogMissing() {
 function AdminSync({ syncedAt, bossCount }: { syncedAt: string; bossCount: number }) {
   const { data: isAdmin } = useIsAdmin();
   return (
-    <div className="mt-10 flex flex-col items-center gap-2 text-center text-[11px] text-muted-foreground">
+    <div className="mt-10 flex flex-col items-center gap-2 text-center text-2xs text-muted-foreground">
       <span>
         {bossCount} bosses · dados da TibiaWiki, atualizados em {fmtDate(syncedAt)}
       </span>
@@ -338,7 +338,7 @@ function CatalogView({ catalog, rotations }: { catalog: BossCatalog; rotations: 
             ]}
           />
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-2xs text-muted-foreground">
           {filtered.length} bosses · Solo/Time com * é estimativa pela vida do boss — abra o boss
           pra corrigir. Toque no <Plus className="inline h-3 w-3" /> pra montar uma rotação.
         </p>
@@ -481,14 +481,14 @@ function BossCard({
             </div>
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-1 text-center text-[11px]">
+        <div className="mt-3 grid grid-cols-3 gap-1 text-center text-2xs">
           <Stat label="Vida" value={boss.hp ? fmtGold(boss.hp) : "—"} />
           <Stat label="XP" value={boss.xp ? fmtGold(boss.xp) : "—"} />
           <Stat label="Cooldown" value={fmtCooldown(boss.cooldownSec)} />
         </div>
         {topDrops.length > 0 && (
           <div className="mt-3 flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            <span className="text-2xs uppercase tracking-wider text-muted-foreground">
               Raros
             </span>
             {topDrops.map(({ n }) => (
@@ -507,7 +507,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md bg-background/50 px-1 py-1">
       <div className="font-semibold">{value}</div>
-      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-2xs uppercase tracking-wider text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -714,7 +714,7 @@ function RotationsView({
                 >
                   {s.runs ? fmtGold(s.avgBalance) : "—"}
                 </div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="text-2xs uppercase tracking-wider text-muted-foreground">
                   Lucro médio
                 </div>
               </div>
@@ -724,7 +724,7 @@ function RotationsView({
                 >
                   {wait === 0 ? "Disponível" : wait == null ? "—" : `em ${fmtWait(wait)}`}
                 </div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="text-2xs uppercase tracking-wider text-muted-foreground">
                   Próxima rotação
                 </div>
               </div>
@@ -784,7 +784,7 @@ function CooldownsView({
             <BossPortrait boss={boss} size={32} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold">{boss.name}</div>
-              <div className="text-[11px] text-muted-foreground">
+              <div className="text-2xs text-muted-foreground">
                 {last ? `Última kill ${fmtDate(last)}` : "Sem kill registrada"}
                 {boss.cooldownSec ? ` · cooldown ${fmtCooldown(boss.cooldownSec)}` : ""}
               </div>
@@ -811,7 +811,7 @@ function CooldownsView({
           </div>
         ))}
       </div>
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="mt-2 text-2xs text-muted-foreground">
         Baseado nas rotações registradas do personagem ativo e no cooldown da TibiaWiki (
         {fmtNum(catalog.bosses.filter((b) => b.cooldownSec > 0).length)} bosses têm esse dado). O
         RubinOT pode usar tempos diferentes.

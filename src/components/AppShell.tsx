@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-2.5">
-          <Link to="/dashboard" className="flex shrink-0 items-center lg:hidden">
+          <Link to="/dashboard" className="flex min-h-11 min-w-11 shrink-0 items-center lg:hidden">
             <img
               src={logo.url}
               alt="RubinOT Hunt Tracker"
@@ -102,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {current && <NavIcon item={current} size={34} />}
             <div className="min-w-0">
               {currentGroup && (
-                <div className="font-brand text-[11px] font-bold uppercase tracking-[0.16em] text-rubi-gold">
+                <div className="font-brand text-2xs font-bold uppercase tracking-[0.16em] text-rubi-gold">
                   {currentGroup.label}
                 </div>
               )}

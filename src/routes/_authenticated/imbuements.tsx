@@ -238,7 +238,7 @@ function ImbuementsPage() {
               </span>
               <span
                 className={
-                  "rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider " +
+                  "rounded px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider " +
                   (r.imb.tier === "powerful"
                     ? "bg-rubi-gold/20 text-rubi-gold"
                     : r.imb.tier === "intricate"
@@ -249,7 +249,7 @@ function ImbuementsPage() {
                 {IMB_TIER_LABEL[r.imb.tier]}
               </span>
             </div>
-            <div className="mt-0.5 text-[10px] text-muted-foreground">
+            <div className="mt-0.5 text-2xs text-muted-foreground">
               {fmtDate(r.imb.createdAt)} · {fmtGold(r.costPerHour)}/h · gasto {fmtGold(r.amountSpent)}
             </div>
           </div>
@@ -277,7 +277,7 @@ function ImbuementsPage() {
           </div>
         </div>
         <div className="mt-2">
-          <div className="mb-1 flex justify-between text-[10px] text-muted-foreground">
+          <div className="mb-1 flex justify-between text-2xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Timer className="h-3 w-3" />
               restam {fmtHoursMin(r.hoursRemaining)}
@@ -316,7 +316,7 @@ function ImbuementsPage() {
         </div>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 self-start rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="inline-flex min-h-11 items-center gap-2 self-start rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           Voltar ao dashboard
         </Link>
@@ -350,9 +350,9 @@ function ImbuementsPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="font-display text-lg font-bold text-rubi-gold">{slot.name}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">{slot.hint}</div>
+                  <div className="truncate text-2xs text-muted-foreground">{slot.hint}</div>
                 </div>
-                <span className="ml-auto shrink-0 rounded-md bg-accent px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+                <span className="ml-auto shrink-0 rounded-md bg-accent px-2 py-1 text-2xs font-semibold text-muted-foreground">
                   {activeRows.length}/{MAX_IMBUEMENTS_PER_ITEM}
                 </span>
               </div>
@@ -374,7 +374,7 @@ function ImbuementsPage() {
 
                 {expired.length > 0 && (
                   <div className="pt-1">
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="mb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Expirados ({expired.length})
                     </div>
                     <div className="space-y-2">{expired.map(renderRow)}</div>
@@ -427,7 +427,7 @@ function ImbuementsPage() {
                   }
                 >
                   <div>{IMB_TIER_LABEL[t]}</div>
-                  <div className="mt-0.5 text-[10px] opacity-70">{fmtGold(IMB_TIER_COST[t])}</div>
+                  <div className="mt-0.5 text-2xs opacity-70">{fmtGold(IMB_TIER_COST[t])}</div>
                 </button>
               ))}
             </div>
@@ -447,7 +447,7 @@ function ImbuementsPage() {
                   <img src={selectedType.icon} alt="" className="h-6 w-6" />
                   <span className="text-left">
                     <span className="block font-medium">{selectedType.name}</span>
-                    <span className="block text-[10px] text-muted-foreground">
+                    <span className="block text-2xs text-muted-foreground">
                       {selectedType.description}
                     </span>
                   </span>
@@ -472,7 +472,7 @@ function ImbuementsPage() {
                     if (items.length === 0) return null;
                     return (
                       <div key={cat} className="mb-2 last:mb-0">
-                        <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+                        <div className="px-1 pb-1 text-2xs font-semibold uppercase tracking-wider text-rubi-gold">
                           {CATEGORY_LABEL[cat]}
                         </div>
                         <ul>
@@ -493,7 +493,7 @@ function ImbuementsPage() {
                                 <img src={t.icon} alt="" className="h-6 w-6 shrink-0" />
                                 <span className="min-w-0 flex-1">
                                   <span className="block font-medium">{t.name}</span>
-                                  <span className="block text-[10px] text-muted-foreground">
+                                  <span className="block text-2xs text-muted-foreground">
                                     {t.description}
                                   </span>
                                 </span>
@@ -525,7 +525,7 @@ function ImbuementsPage() {
           <label className="block">
             <span className="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
               <span>Horas restantes</span>
-              <span className="text-[10px] normal-case tracking-normal text-muted-foreground/70">
+              <span className="text-2xs normal-case tracking-normal text-muted-foreground/70">
                 máx {IMB_DURATION_HOURS}h
               </span>
             </span>
@@ -561,7 +561,7 @@ function ImbuementsPage() {
                 </div>
               );
             })()}
-            <span className="mt-1 block text-[10px] text-muted-foreground">
+            <span className="mt-1 block text-2xs text-muted-foreground">
               Ex: 7h 45min — como aparece no jogo.
             </span>
           </label>
@@ -632,7 +632,7 @@ function ImbuementsPage() {
               placeholder="Ex: 320000"
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue"
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Valor anterior: {renewTarget ? fmtGold(renewTarget.currentGold) : "—"}. Ajuste se o preço mudou.
             </p>
           </div>

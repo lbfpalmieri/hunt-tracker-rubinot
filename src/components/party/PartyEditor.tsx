@@ -104,7 +104,7 @@ export function PartyEditor({
                   ? "O analyser da party usou os preços configurados pelo líder"
                   : "O analyser da party usou os preços do market"
               }
-              className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+              className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-2xs font-medium text-muted-foreground"
             >
               Preços: {value.lootType === "Leader" ? "do líder" : "market"}
             </span>
@@ -122,7 +122,7 @@ export function PartyEditor({
       </div>
 
       {durationMismatch && (
-        <p className="flex items-start gap-1.5 rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 p-2 text-[11px] text-rubi-gold">
+        <p className="flex items-start gap-1.5 rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 p-2 text-2xs text-rubi-gold">
           <AlertTriangle className="mt-px h-3.5 w-3.5 flex-none" />O Party Hunt Analyser é de{" "}
           {fmtDuration(value.sessionSec!)} e o seu Hunting Analyser de{" "}
           {fmtDuration(personalDurationSec!)} — confira se são da mesma hunt (resete os dois juntos
@@ -139,7 +139,7 @@ export function PartyEditor({
       )}
 
       {value.own && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-2xs text-muted-foreground">
           O Party Hunt Analyser do RubinOT traz só a sua linha (balance{" "}
           <b className="text-foreground">{fmtGold(value.own.balance)}</b>), sem os outros membros —
           então a sessão fica com esse lucro, sem divisão. Informe quantos jogadores tinha a party.
@@ -163,7 +163,7 @@ export function PartyEditor({
             />
           </label>
           {error && <p className="text-xs text-rubi-danger">{error}</p>}
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-2xs text-muted-foreground">
             {PARTY_COPY_HELP} Sem ele a sessão só fica marcada como em grupo, sem divisão — e o
             lucro salvo fica o do seu analyser (quem não é líder normalmente fica sem loot).
           </p>
@@ -251,7 +251,7 @@ function MembersView({
             type="button"
             onClick={() => setAdjusting((v) => !v)}
             className={
-              "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] " +
+              "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-2xs " +
               (adjusting
                 ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                 : "border-border text-muted-foreground hover:text-foreground")
@@ -287,14 +287,14 @@ function MembersView({
                     )}
                     <span className="min-w-0 flex-1 truncate font-medium">
                       {m.name}
-                      {on && <span className="ml-1.5 text-[10px] text-rubi-blue">(você)</span>}
+                      {on && <span className="ml-1.5 text-2xs text-rubi-blue">(você)</span>}
                       {m.removed && (
-                        <span className="ml-1.5 text-[10px] text-muted-foreground">
+                        <span className="ml-1.5 text-2xs text-muted-foreground">
                           fora da divisão
                         </span>
                       )}
                     </span>
-                    <span className="hidden text-[10px] text-muted-foreground sm:inline">
+                    <span className="hidden text-2xs text-muted-foreground sm:inline">
                       loot {fmtGold(m.loot)} · supplies {fmtGold(m.supplies)}
                     </span>
                     <span
@@ -307,7 +307,7 @@ function MembersView({
                     </span>
                   </button>
                   {adjusting && (
-                    <div className="flex flex-wrap items-center gap-2 border-t border-border/50 px-2.5 py-1.5 text-[11px]">
+                    <div className="flex flex-wrap items-center gap-2 border-t border-border/50 px-2.5 py-1.5 text-2xs">
                       <label className="flex items-center gap-1.5 text-muted-foreground">
                         Gasto extra
                         <input
@@ -341,7 +341,7 @@ function MembersView({
           })}
         </ul>
         {adjusting && (
-          <p className="mt-1 text-[10px] text-muted-foreground">
+          <p className="mt-1 text-2xs text-muted-foreground">
             Igual ao "Advanced" do LootSplitter do jogo: gasto extra (ex. quem pagou imbuement,
             bless ou boost da pt) entra na divisão; "fora da divisão" tira o membro da conta.
           </p>
@@ -370,7 +370,7 @@ function SplitterView({
 }) {
   return (
     <>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-2xs text-muted-foreground">
         Resultado do LootSplitter do jogo · party de {party.size}. Pra ver cada membro e ajustar,
         cole o Party Hunt Analyser ("Copy to Clipboard").
       </p>
@@ -401,7 +401,7 @@ function MiniBox({
     >
       <div
         className={
-          "text-[10px] uppercase tracking-wider " +
+          "text-2xs uppercase tracking-wider " +
           (highlight ? "text-rubi-blue" : "text-muted-foreground")
         }
       >
@@ -428,7 +428,7 @@ function MiniBox({
 function Transfers({ transfers, self }: { transfers: PartyTransfer[]; self: string | null }) {
   if (!transfers.length) {
     return (
-      <p className="text-[11px] text-muted-foreground">Sem transferências — já está dividido.</p>
+      <p className="text-2xs text-muted-foreground">Sem transferências — já está dividido.</p>
     );
   }
   const me = (n: string) => !!self && n.toLowerCase() === self.toLowerCase();

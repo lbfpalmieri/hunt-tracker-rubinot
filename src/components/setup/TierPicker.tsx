@@ -35,7 +35,7 @@ export function TierPicker({
           type="button"
           aria-label={`Tier de ${itemName}`}
           className={
-            "ml-1.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 align-baseline text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rubi-gold/50 " +
+            "ml-1.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 align-baseline text-2xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rubi-gold/50 " +
             (tier > 0
               ? "border-rubi-gold bg-rubi-gold text-background shadow-[0_0_10px_-2px_var(--rubi-gold)] hover:brightness-110"
               : "border-dashed border-rubi-gold/80 bg-rubi-gold/10 text-rubi-gold hover:bg-rubi-gold/20")
@@ -63,7 +63,7 @@ export function TierPicker({
             <div className="text-sm font-bold">
               {skill.name} <span className="font-normal text-muted-foreground">· {itemName}</span>
             </div>
-            <p className="text-[11px] leading-snug text-muted-foreground">{skill.effect}</p>
+            <p className="text-2xs leading-snug text-muted-foreground">{skill.effect}</p>
           </div>
         </div>
 
@@ -84,7 +84,7 @@ export function TierPicker({
               >
                 <span className="text-xs font-bold">T{t}</span>
                 <span
-                  className={"text-[9px] " + (on ? "text-background/80" : "text-muted-foreground")}
+                  className={"text-2xs " + (on ? "text-background/80" : "text-muted-foreground")}
                 >
                   {slot === "feet" ? "+" : ""}
                   {fmtPct(tierPct(slot, t))}
@@ -95,7 +95,7 @@ export function TierPicker({
         </div>
 
         <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-2xs text-muted-foreground">
             {slot === "feet" ? "Bônus na chance das outras" : "Chance de ativar"} · até T{max} nesse
             item
           </span>
@@ -103,7 +103,7 @@ export function TierPicker({
             <button
               type="button"
               onClick={() => pick(0)}
-              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-2xs text-muted-foreground hover:bg-accent hover:text-rubi-danger"
             >
               <X className="h-3 w-3" /> Sem tier
             </button>

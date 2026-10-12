@@ -47,7 +47,7 @@ export function PlayModeSwitch() {
             title={`Modo ${label}`}
             onClick={() => choose(m)}
             className={
-              "inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors sm:px-2.5 " +
+              "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold sm:min-h-0 transition-colors sm:px-2.5 " +
               (on
                 ? "bg-rubi-blue text-primary-foreground shadow-glow-blue"
                 : "text-muted-foreground hover:text-foreground")

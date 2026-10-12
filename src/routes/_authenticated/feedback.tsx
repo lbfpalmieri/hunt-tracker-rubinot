@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -80,7 +81,7 @@ const STATUS_ORDER: Status[] = ["novo", "em_analise", "respondido", "resolvido"]
 function StatusBadge({ status }: { status: string }) {
   const meta = STATUS_META[(status as Status) in STATUS_META ? (status as Status) : "novo"];
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.className}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${meta.className}`}>
       {meta.label}
     </span>
   );
@@ -289,7 +290,7 @@ function FeedbackPage() {
                                 : "bg-muted/20")
                             }
                           >
-                            <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            <div className="mb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                               {m.is_admin ? "Resposta da equipe" : m.char_name ?? (m.author_id === userId ? "Você" : "Usuário")} · {fmtDate(m.created_at)}
                             </div>
                             {m.body}
@@ -457,7 +458,7 @@ function FeedbackPage() {
               type="file"
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-xs file:font-medium file:text-foreground"
+              className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:min-h-11 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-xs file:font-medium file:text-foreground"
             />
           </label>
 
@@ -498,7 +499,7 @@ function FeedbackPage() {
               >
                 <Inbox className="h-4 w-4" /> Caixa de entrada
                 {inboxPending > 0 && (
-                  <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-[10px] font-bold text-background">
+                  <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-2xs font-bold text-background">
                     {inboxPending}
                   </span>
                 )}
@@ -527,7 +528,7 @@ function FeedbackPage() {
           )}
 
           {loading ? (
-            <div className="h-40 animate-pulse rounded-xl bg-muted/30" />
+            <Skeleton role="status" aria-label="Carregando" className="h-40 rounded-xl bg-muted/30" />
           ) : visible.length === 0 ? (
             <div className="card-surface p-8 text-center text-sm text-muted-foreground">
               Nenhuma mensagem por aqui ainda.

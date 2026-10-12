@@ -129,14 +129,20 @@ números/títulos de card em Space Grotesk (font-display). color-scheme: dark no
 NavCustomizeDialog; salvo em public.user_nav_prefs (1 linha/usuário, localStorage só como cache —
 nav-prefs.ts). Não recrie arrays de nav no AppShell.
 
-Design system (issue #14, em andamento): toda cor vem de TOKEN do tema em src/styles.css — nunca cor solta da paleta
-do Tailwind (bg-zinc-800, text-emerald-400...) nem hex em componente. Mapa: fundo/painel = background/surface/
-surface-elevated/card; texto = foreground/muted-foreground; borda = border; ação = rubi-blue; prêmio/lucro = rubi-gold;
-ganho = rubi-success; perda/erro = rubi-danger; categorias de gráfico/chip = cat-sky/yellow/rose/fuchsia/orange/cyan/
-violet; elementos de dano = var(--el-<elemento>); moldura de bronze do painel de tarefas = frame-*. Cor nova = token novo
-em styles.css (e no @theme). O teste src/lib/__tests__/design-tokens.test.ts falha se aparecer cor solta. Exceções
-conscientes: réplicas de arte do jogo (WheelOfDestiny SVG), logo do Google em auth.tsx e meta theme-color. Falta (próximos
-PRs, tela a tela): padronizar tipografia, espaçamentos, estados vazios/carregando e ícones; conferir visitante e 390px.
+Design system (issue #14, concluído em 2026-10-12): identidade = azul/dourado atual (Cinzel nos títulos, Space Grotesk nos
+números, Inter no texto). Toda cor vem de TOKEN do tema em src/styles.css — nunca cor solta da paleta do Tailwind
+(bg-zinc-800, text-emerald-400...) nem hex em componente. Mapa: fundo/painel = background/surface/surface-elevated/card;
+texto = foreground/muted-foreground; borda = border; ação = rubi-blue; prêmio/lucro = rubi-gold; ganho = rubi-success;
+perda/erro = rubi-danger; categorias de gráfico/chip = cat-sky/yellow/rose/fuchsia/orange/cyan/violet; elementos de dano =
+var(--el-<elemento>); moldura de bronze do painel de tarefas = frame-*. Cor nova = token novo em styles.css (e no @theme).
+Texto: nada abaixo de 11px (use text-2xs). Toque: alvo de 44px no celular — campos ganham min-height 44px e botões uma área
+de toque invisível de 44px por CSS global (styles.css, @media pointer coarse / <1024px; data-no-tap-area desliga); link/botão
+de texto novo leva min-h-11. Todo botão só com ícone e todo campo sem rótulo visível leva aria-label. Carregando de página
+inteira = <PageSkeleton /> (title + cards, mesma altura); carregando de bloco = <Skeleton role="status" aria-label>. Lista
+ou página sem dados = <EmptyState> (ícone, título, o que fazer), não parágrafo solto. prefers-reduced-motion zera animações
+(styles.css). Testes src/lib/__tests__/design-tokens.test.ts falham com cor solta ou texto < 11px. Exceções conscientes:
+réplicas de arte do jogo (WheelOfDestiny SVG), logo do Google em auth.tsx e meta theme-color. Auditoria de 2026-10-12: 21
+telas (logado, 390px e visitante) sem rolagem horizontal, h1 em Cinzel, imagens com alt e controles com nome.
 
 Banco local (desenvolvimento, NUNCA produção): Supabase inteiro no Docker (banco + login + storage, vazio).
 `npm run db:start` (Docker Desktop aberto; scripts/db-local.mjs — sobe com --workdir local-db/, SEM migrations, e aplica

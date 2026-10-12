@@ -84,7 +84,7 @@ export function LevelQuickAdd({
       type="button"
       onClick={() => step(d)}
       aria-label={d > 0 ? "Subir 1 level" : "Descer 1 level"}
-      className="flex h-9 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-rubi-gold/15 hover:text-rubi-gold"
+      className="flex h-11 w-10 items-center justify-center sm:h-9 sm:w-8 text-muted-foreground transition-colors hover:bg-rubi-gold/15 hover:text-rubi-gold"
     >
       {d > 0 ? <Plus className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
     </button>

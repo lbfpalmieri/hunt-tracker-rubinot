@@ -37,7 +37,7 @@ import {
 
 const FIELD =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-blue";
-const LABEL = "mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
+const LABEL = "mb-1 block text-2xs font-semibold uppercase tracking-wider text-muted-foreground";
 const ROMAN = ["", "I", "II", "III"];
 
 const uniq = <T,>(a: T[]) => [...new Set(a)];
@@ -159,7 +159,7 @@ export function SessionSetupPanel({
             <span className={LABEL + " mb-0"}>Meus sets</span>
             <Link
               to="/equipamentos"
-              className="text-[11px] font-medium text-rubi-blue hover:underline"
+              className="text-2xs font-medium text-rubi-blue hover:underline"
             >
               Gerenciar sets
             </Link>
@@ -400,7 +400,7 @@ export function SessionSetupPanel({
                         <img src={charmIcon(charm)} alt="" className="h-8 w-8" />
                         <span className="font-semibold text-rubi-gold">{charm}</span>
                         {activatedCharms.includes(charm) && (
-                          <span className="rounded bg-rubi-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-rubi-success">
+                          <span className="rounded bg-rubi-success/15 px-1.5 py-0.5 text-2xs font-semibold text-rubi-success">
                             ativou nesta sessão
                           </span>
                         )}
@@ -412,7 +412,7 @@ export function SessionSetupPanel({
                               onClick={() => setCharmLevel(charm, n)}
                               title={n === 1 ? "Bronze" : n === 2 ? "Prata" : "Ouro"}
                               className={
-                                "rounded-md border px-2 py-0.5 text-[11px] font-semibold " +
+                                "rounded-md border px-2 py-0.5 text-2xs font-semibold " +
                                 (lvl === n && entries(charm).length
                                   ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
                                   : "border-border text-muted-foreground hover:text-foreground")
@@ -440,7 +440,7 @@ export function SessionSetupPanel({
                               type="button"
                               onClick={() => toggleCreature(charm, cr)}
                               className={
-                                "inline-flex items-center gap-1 rounded-md border py-0.5 pl-0.5 pr-2 text-[11px] transition-colors " +
+                                "inline-flex items-center gap-1 rounded-md border py-0.5 pl-0.5 pr-2 text-2xs transition-colors " +
                                 (on
                                   ? "border-rubi-gold bg-rubi-gold/15 text-foreground"
                                   : "border-border text-muted-foreground hover:text-foreground")
@@ -452,7 +452,7 @@ export function SessionSetupPanel({
                         })}
                       </div>
                       {linked.size === 0 && (
-                        <p className="mt-1 text-[10px] text-muted-foreground">
+                        <p className="mt-1 text-2xs text-muted-foreground">
                           Toque na criatura em que esse charm estava (cada charm vale pra uma só).
                         </p>
                       )}
@@ -477,7 +477,7 @@ export function SessionSetupPanel({
                       className="flex flex-col items-center gap-0.5 rounded-md p-1 hover:bg-accent"
                     >
                       <img src={c.icon} alt="" className="h-8 w-8" />
-                      <span className="line-clamp-1 text-[9px] text-muted-foreground">
+                      <span className="line-clamp-1 text-2xs text-muted-foreground">
                         {c.name}
                       </span>
                     </button>
@@ -493,7 +493,7 @@ export function SessionSetupPanel({
                 <Plus className="h-3.5 w-3.5" /> Outro charm que não apareceu
               </button>
             )}
-            <p className="mt-1.5 text-[10px] text-muted-foreground">
+            <p className="mt-1.5 text-2xs text-muted-foreground">
               Nv1 = Bronze, Nv2 = Prata, Nv3 = Ouro (TibiaWiki).
             </p>
           </section>

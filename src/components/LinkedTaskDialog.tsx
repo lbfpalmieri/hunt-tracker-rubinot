@@ -94,7 +94,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
                     />
                     {c.name}
                     {pending && (
-                      <span className="text-[10px] text-muted-foreground/70">
+                      <span className="text-2xs text-muted-foreground/70">
                         · sem dado na TibiaWiki
                       </span>
                     )}
@@ -280,7 +280,7 @@ function TaskTabs({
                   );
                 })}
               </div>
-              <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+              <p className="mt-1.5 text-2xs text-muted-foreground/70">
                 Baseado em dados da TibiaWiki (Tibia oficial) — o RubinOT pode ter valores
                 diferentes.
               </p>

@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -84,7 +85,7 @@ function SavedComparisonsPage() {
       </div>
 
       {isLoading ? (
-        <div className="h-48 animate-pulse rounded-xl bg-muted/30" />
+        <Skeleton role="status" aria-label="Carregando" className="h-48 rounded-xl bg-muted/30" />
       ) : list.length === 0 ? (
         <EmptyState
           icon={GitCompareArrows}
@@ -117,7 +118,7 @@ function SavedComparisonsPage() {
       <div className="mt-6">
         <Link
           to="/tools/compare"
-          className="inline-flex items-center gap-2 rounded-lg border border-rubi-blue/50 bg-rubi-blue/10 px-4 py-2 text-sm font-semibold text-rubi-blue"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-rubi-blue/50 bg-rubi-blue/10 px-4 py-2 text-sm font-semibold text-rubi-blue"
         >
           <GitCompareArrows className="h-4 w-4" /> Nova comparação
         </Link>
@@ -169,7 +170,7 @@ function SavedCard({
               {comparison.hunts.map((h) => (
                 <span
                   key={h.key}
-                  className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
+                  className="rounded-full border border-border px-2 py-0.5 text-2xs text-muted-foreground"
                 >
                   {h.huntName}
                 </span>

@@ -30,6 +30,15 @@ describe("design system: só tokens do tema", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("nenhum texto abaixo de 11px: use text-2xs (ou maior)", () => {
+    const offenders: string[] = [];
+    for (const file of tsxFiles(ROOT)) {
+      const hits = readFileSync(file, "utf-8").match(/text-\[(?:[0-9]|10)(?:\.\d+)?px\]/g);
+      if (hits) offenders.push(`${file.slice(ROOT.length + 1)}: ${[...new Set(hits)].join(", ")}`);
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it("os tokens de categoria e de elemento usados existem em styles.css", () => {
     const css = readFileSync(join(ROOT, "styles.css"), "utf-8");
     for (const t of ["--cat-sky", "--cat-violet", "--el-fire", "--el-drown", "--frame-edge"]) {

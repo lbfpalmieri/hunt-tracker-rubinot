@@ -63,7 +63,7 @@ export function BossDialog({
                   {boss.locations.slice(0, 2).map((l) => (
                     <span
                       key={l}
-                      className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
+                      className="inline-flex items-center gap-1 text-2xs text-muted-foreground"
                     >
                       <MapPin className="h-3 w-3" /> {l}
                     </span>
@@ -112,7 +112,7 @@ export function BossDialog({
             )}
           </div>
           {partyEstimated && (
-            <p className="mt-2 text-[11px] text-muted-foreground">
+            <p className="mt-2 text-2xs text-muted-foreground">
               A wiki não diz quantos jogadores precisa — estimamos pela vida do boss. Marque o que
               vale pra você.
             </p>
@@ -158,7 +158,7 @@ export function BossDialog({
               <LootHighlightList items={items} empty="" showBosses={false} initial={6} />
             </div>
           ))}
-          <p className="text-[10px] text-muted-foreground/70">
+          <p className="text-2xs text-muted-foreground/70">
             Raridade, loot e resistências: TibiaWiki (Tibia oficial). Valor = média do mercado do
             Tibia oficial ou preço de NPC — no RubinOT os preços podem ser outros; o lucro real vem
             do seu Hunting Analyser.
@@ -174,7 +174,7 @@ function Info({ icon: Icon, label, value }: { icon: typeof Heart; label: string;
     <div className="rounded-xl border border-border bg-surface/60 p-2.5">
       <Icon className="mx-auto h-4 w-4 text-rubi-danger" />
       <div className="mt-1 text-sm font-bold">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-2xs uppercase tracking-wider text-muted-foreground">{label}</div>
     </div>
   );
 }

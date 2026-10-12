@@ -298,7 +298,7 @@ export function RegisterRunDialog({
                   );
                 })}
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">
+              <p className="mt-1 text-2xs text-muted-foreground">
                 Marcados pelo "Killed Monsters" — toque pra corrigir.
               </p>
             </div>
@@ -308,7 +308,7 @@ export function RegisterRunDialog({
                 <span className="text-xs font-semibold uppercase tracking-wider text-rubi-gold">
                   Loot dos bosses
                 </span>
-                <div className="inline-flex rounded-lg border border-border bg-background p-0.5 text-[11px] font-medium">
+                <div className="inline-flex rounded-lg border border-border bg-background p-0.5 text-2xs font-medium">
                   {(
                     [
                       ["mine", "Meus preços"],
@@ -347,7 +347,7 @@ export function RegisterRunDialog({
                           <span className="block truncate text-sm">
                             {l.count}x {l.name}
                           </span>
-                          <span className="block text-[10px] text-muted-foreground">
+                          <span className="block text-2xs text-muted-foreground">
                             {sourceOf(l.name)}
                             {npcOf(l.name) > 0 && sourceOf(l.name) !== "NPC"
                               ? ` · NPC ${fmtGold(npcOf(l.name))}`
@@ -371,7 +371,7 @@ export function RegisterRunDialog({
                 </ul>
               )}
               {ignored.length > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-2xs text-muted-foreground">
                   Ficaram de fora (também caem de monstro comum) — toque pra contar:
                   {ignored.map((i) => (
                     <button
@@ -385,7 +385,7 @@ export function RegisterRunDialog({
                   ))}
                 </div>
               )}
-              <label className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+              <label className="mt-2 flex items-center gap-2 text-2xs text-muted-foreground">
                 <input
                   type="checkbox"
                   checked={rememberPrices}
@@ -394,7 +394,7 @@ export function RegisterRunDialog({
                 />
                 Salvar os preços que eu digitar como "Meus preços"{world ? ` em ${world}` : ""}
               </label>
-              <p className="mt-1 text-[10px] text-muted-foreground">
+              <p className="mt-1 text-2xs text-muted-foreground">
                 Preço por unidade (aceita 150k, 1,5kk). "Meus preços" usa a sua tabela do servidor;
                 sem preço lá, o último que você usou; senão, o NPC da TibiaWiki.
               </p>
@@ -424,7 +424,7 @@ export function RegisterRunDialog({
                   >
                     <span className="block text-xs font-semibold">{label}</span>
                     <span className="block text-sm font-bold text-rubi-gold">{fmtGold(value)}</span>
-                    <span className="block text-[10px] text-muted-foreground">{hint}</span>
+                    <span className="block text-2xs text-muted-foreground">{hint}</span>
                   </button>
                 ))}
               </div>
@@ -442,7 +442,7 @@ export function RegisterRunDialog({
                 className={profit >= 0 ? "text-rubi-success" : "text-rubi-danger"}
               />
             </div>
-            <p className="-mt-2 text-[10px] text-muted-foreground">
+            <p className="-mt-2 text-2xs text-muted-foreground">
               Supplies são os da rotação inteira (caminho incluído).
             </p>
             {parsedRaw && parsedRaw.durationSec > 0 && (
@@ -473,7 +473,7 @@ export function RegisterRunDialog({
                 />
                 <span>
                   Dividir o lucro com a PT
-                  <span className="block text-[10px] text-muted-foreground">
+                  <span className="block text-2xs text-muted-foreground">
                     {splitWithParty
                       ? `Loot e supplies acima são a sua parte (1/${partySize}). Total da rotação: ${fmtGold(totalLoot)} de loot e ${fmtGold(supplies)} de supplies.`
                       : "Marque se o loot foi dividido igualmente entre os jogadores: salvamos só a sua parte."}
@@ -530,7 +530,7 @@ function Mini({
   return (
     <div className="rounded-lg border border-border bg-surface/60 p-2">
       <div className={"font-bold " + className}>{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-2xs uppercase tracking-wider text-muted-foreground">{label}</div>
     </div>
   );
 }

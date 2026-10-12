@@ -191,7 +191,7 @@ function WikiPage() {
           <a
             key={s.id}
             href={`#${s.id}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-rubi-blue/40 hover:text-foreground"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-rubi-blue/40 hover:text-foreground"
           >
             <s.icon className="h-3.5 w-3.5" /> {s.title}
           </a>

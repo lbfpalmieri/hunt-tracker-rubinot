@@ -117,7 +117,7 @@ function AuthPage() {
               >
                 Entrar como usuário de teste
               </button>
-              <p className="mt-2 text-[11px] text-muted-foreground">
+              <p className="mt-2 text-2xs text-muted-foreground">
                 Banco local de desenvolvimento — nada aqui vai pra produção. O Google não funciona
                 neste banco.
               </p>
@@ -130,7 +130,7 @@ function AuthPage() {
             </p>
           )}
 
-          <p className="mt-6 text-[11px] text-muted-foreground">
+          <p className="mt-6 text-2xs text-muted-foreground">
             Ao continuar você concorda em compartilhar seu e-mail para identificação. Sem spam,
             sem venda de dados.
           </p>

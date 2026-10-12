@@ -79,7 +79,7 @@ export function SetupCard({
                   )}
                 </span>
                 {weapon && !compact && (
-                  <span className="block text-[10px] font-normal text-muted-foreground">
+                  <span className="block text-2xs font-normal text-muted-foreground">
                     {weaponSummary(weapon)}
                   </span>
                 )}
@@ -108,7 +108,7 @@ export function SetupCard({
               key={k}
               className="rounded-lg border border-border/60 bg-background/40 px-2.5 py-1.5"
             >
-              <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{k}</dt>
+              <dt className="text-2xs uppercase tracking-wider text-muted-foreground">{k}</dt>
               <dd className="truncate text-sm font-semibold">{v}</dd>
             </div>
           ))}

@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -49,13 +50,13 @@ function CommunitySessionPage() {
     <SiteShell>
       <Link
         to="/community"
-        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Voltar para a comunidade
       </Link>
 
       {isLoading ? (
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <Skeleton role="status" aria-label="Carregando" className="h-96 rounded-xl bg-muted/30" />
       ) : !session ? (
         <div className="card-surface flex flex-col items-center gap-2 p-10 text-center">
           <Globe2 className="h-8 w-8 text-muted-foreground" />
@@ -225,7 +226,7 @@ function SessionView({ session }: { session: any }) {
                     <span className="min-w-0 flex-1 truncate">{k.name}</span>
                     <div className="ml-2 flex flex-none flex-col items-end">
                       <span className="font-mono font-semibold text-rubi-blue">×{fmtNum(Number(k.count))}</span>
-                      <span className="font-mono text-[10px] text-muted-foreground">
+                      <span className="font-mono text-2xs text-muted-foreground">
                         {fmtNum(Number(k.count) / hours)}/h
                       </span>
                     </div>

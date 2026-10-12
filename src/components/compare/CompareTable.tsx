@@ -373,7 +373,7 @@ function FighterCard({
       </div>
       {pct != null && (
         <div className="mt-2.5">
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <div className="flex items-center justify-between text-2xs text-muted-foreground">
             <span>
               {score} de {decided} métricas
             </span>
@@ -423,7 +423,7 @@ function DiffBadge({ row, hunts, h }: { row: Row; hunts: CompareHunt[]; h: Compa
   return (
     <span
       title={`Comparado à melhor desta métrica: ${sign}${absDiffFmt}${pct != null ? ` (${sign}${fmtPct(pct)}%)` : ""}`}
-      className={"inline-flex flex-none items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold " + tone}
+      className={"inline-flex flex-none items-center gap-1 rounded-full border px-1.5 py-0.5 text-2xs font-semibold " + tone}
     >
       {sign}
       {absDiffFmt}
@@ -576,7 +576,7 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                         <DiffBadge row={row} hunts={hunts} h={h} />
                       </div>
                       {mark && (
-                        <div title={row.prey ? preyMarkTitle(h.prey, row.prey) : undefined} className="mt-1 text-[10px] font-semibold uppercase text-rubi-gold">
+                        <div title={row.prey ? preyMarkTitle(h.prey, row.prey) : undefined} className="mt-1 text-2xs font-semibold uppercase text-rubi-gold">
                           {mark}
                         </div>
                       )}
@@ -652,7 +652,7 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                           {pre && patch && (
                             <span
                               title={`Sessão de antes do ${patch.label} (${formatPatchDate(patch)}) — o balanceamento do servidor era outro.`}
-                              className="inline-flex items-center gap-1 rounded-full border border-rubi-gold/40 px-1.5 py-0.5 text-[10px] font-semibold text-rubi-gold"
+                              className="inline-flex items-center gap-1 rounded-full border border-rubi-gold/40 px-1.5 py-0.5 text-2xs font-semibold text-rubi-gold"
                             >
                               <History className="h-3 w-3 flex-none" /> pré-nerf
                             </span>
@@ -695,7 +695,7 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                           {mark && (
                             <div
                               title={row.prey ? preyMarkTitle(h.prey, row.prey) : undefined}
-                              className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-gold"
+                              className="mt-0.5 text-2xs font-semibold uppercase tracking-wide text-rubi-gold"
                             >
                               {mark}
                             </div>

@@ -46,7 +46,7 @@ function VisitorShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6">
-          <Link to="/" className="flex flex-none items-center">
+          <Link to="/" className="flex min-h-11 min-w-11 flex-none items-center">
             <img
               src={logo.url}
               alt="RubinOT Hunt Tracker"
@@ -62,7 +62,7 @@ function VisitorShell({ children }: { children: ReactNode }) {
                   key={to}
                   to={to}
                   className={
-                    "inline-flex flex-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors " +
+                    "inline-flex min-h-11 flex-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors " +
                     (active
                       ? "bg-rubi-gold/15 font-semibold text-rubi-gold ring-1 ring-inset ring-rubi-gold/35"
                       : "text-foreground/80 hover:bg-white/[0.06] hover:text-foreground")
@@ -77,7 +77,7 @@ function VisitorShell({ children }: { children: ReactNode }) {
           <PlayModeSwitch />
           <Link
             to="/auth"
-            className="inline-flex flex-none items-center gap-1.5 rounded-lg bg-rubi-gold px-3 py-2 text-sm font-semibold text-background shadow-glow-gold hover:opacity-90"
+            className="inline-flex min-h-11 flex-none items-center gap-1.5 rounded-lg bg-rubi-gold px-3 py-2 text-sm font-semibold text-background shadow-glow-gold hover:opacity-90"
           >
             <LogIn className="h-4 w-4" />
             <span className="hidden sm:inline">Entrar com Google</span>

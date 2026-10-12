@@ -58,11 +58,11 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
         <span className={"flex-1 truncate " + fade}>{n.label}</span>
         {badge > 0 &&
           (open ? (
-            <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-[11px] font-bold text-background">
+            <span className="rounded-full bg-rubi-gold px-1.5 py-0.5 text-2xs font-bold text-background">
               {badge}
             </span>
           ) : (
-            <span className="absolute right-1 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rubi-gold px-1 text-[10px] font-bold text-background">
+            <span className="absolute right-1 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rubi-gold px-1 text-2xs font-bold text-background">
               {badge}
             </span>
           ))}
@@ -72,7 +72,7 @@ export function SidebarNav({ pathname, lowCount, onCustomize, onSignOut }: Props
 
   const title = (label: string, icon?: boolean) =>
     open ? (
-      <div className="flex items-center gap-2 whitespace-nowrap px-4 pb-1.5 pt-5 font-brand text-[11px] font-bold uppercase tracking-[0.18em] text-rubi-gold">
+      <div className="flex items-center gap-2 whitespace-nowrap px-4 pb-1.5 pt-5 font-brand text-2xs font-bold uppercase tracking-[0.18em] text-rubi-gold">
         {icon && <Pin className="h-3 w-3" />}
         {label}
         <span className="h-px flex-1 bg-gradient-to-r from-rubi-gold/40 to-transparent" />

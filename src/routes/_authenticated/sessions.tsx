@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntDashboardDialog } from "@/components/HuntDashboardDialog";
@@ -141,7 +142,7 @@ function SessionsList() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -272,9 +273,11 @@ function SessionsList() {
 
           {view === "hunts" ? (
             huntsList.length === 0 ? (
-              <p className="card-surface p-6 text-center text-sm text-muted-foreground">
-                Nenhuma hunt encontrada com esse filtro.
-              </p>
+              <EmptyState
+                icon={Layers}
+                title="Nenhuma hunt encontrada"
+                description="Nenhuma hunt bate com a busca ou com o personagem escolhido. Limpe o filtro para ver todas."
+              />
             ) : (
               <>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -282,7 +285,7 @@ function SessionsList() {
                   <div key={h.key} className="card-surface p-5 transition-colors hover:border-rubi-blue/50">
                     <div className="flex items-start justify-between gap-2">
                       <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
-                      <span className="flex-none rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
+                      <span className="flex-none rounded-full bg-rubi-blue-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-rubi-blue">
                         {h.vocation}
                       </span>
                     </div>
@@ -403,7 +406,7 @@ function MiniStat({ label, value, tone }: { label: string; value: string; tone: 
   }[tone];
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-2xs uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className={"font-semibold " + c}>{value}</div>
     </div>
   );

@@ -207,7 +207,7 @@ export function RcCalculator({ defaultWorld, entries, loading, loadError, saving
           >
             <Save className="h-4 w-4" /> Salvar preço de {fmtIsoDate(date)}
           </button>
-          <p className="mt-2 text-[11px] text-muted-foreground">
+          <p className="mt-2 text-2xs text-muted-foreground">
             Salvar de novo no mesmo dia e servidor atualiza o valor daquele dia.
           </p>
         </div>
@@ -293,10 +293,10 @@ const inputCls =
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+    <label className="block">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {children}
-    </div>
+    </label>
   );
 }
 

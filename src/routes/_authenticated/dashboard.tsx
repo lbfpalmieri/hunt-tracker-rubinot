@@ -172,13 +172,13 @@ function Dashboard() {
         <div className="flex flex-wrap gap-2 self-start sm:self-auto">
           <Link
             to="/import"
-            className="inline-flex items-center gap-2 rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-rubi-blue px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow-blue hover:opacity-90"
           >
             <Upload className="h-4 w-4" /> Nova sessão
           </Link>
           <Link
             to="/imbuements"
-            className="inline-flex items-center gap-2 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-2.5 text-sm font-semibold text-rubi-gold hover:bg-rubi-gold/20"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-2.5 text-sm font-semibold text-rubi-gold hover:bg-rubi-gold/20"
           >
             <Sparkles className="h-4 w-4" /> Adicionar imbuement
           </Link>
@@ -278,9 +278,9 @@ function Dashboard() {
                 </div>
               </div>
               <div className="flex-none">
-                <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tempo jogado</div>
+                <div className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Tempo jogado</div>
                 <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(agg.totalTime)}</div>
-                <div className="text-[11px] text-muted-foreground">{mySessions.length} sessões</div>
+                <div className="text-2xs text-muted-foreground">{mySessions.length} sessões</div>
               </div>
             </div>
           </div>
@@ -423,7 +423,7 @@ function Dashboard() {
             <div className="card-surface p-5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-base font-semibold">Últimas sessões</h2>
-                <Link to="/sessions" className="text-xs text-rubi-blue hover:underline">ver todas</Link>
+                <Link to="/sessions" className="inline-flex min-h-11 items-center text-xs text-rubi-blue hover:underline">ver todas</Link>
               </div>
               <ul className="space-y-2">
                 {mySessions.slice(0, 6).map((s) => (

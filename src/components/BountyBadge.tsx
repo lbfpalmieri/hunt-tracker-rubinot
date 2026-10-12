@@ -14,7 +14,7 @@ export function BountyBadge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-gold ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-2xs font-semibold text-rubi-gold ${className}`}
       title={`Bônus de Bounty Task — ${bountyLabel(bounty)}${bounty.creature ? ` (${bounty.creature})` : ""}`}
     >
       <Trophy className="h-3 w-3" />

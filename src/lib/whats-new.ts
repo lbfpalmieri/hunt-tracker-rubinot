@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "padrao-visual-celular-2026-10-12",
+    date: "2026-10-12",
+    title: "Visual padronizado e mais fácil de tocar no celular",
+    description:
+      "Revisão de todas as telas: botões e campos com área de toque de 44px no celular, texto pequeno nunca abaixo de 11px, carregando com o mesmo formato da página, telas vazias com a mesma cara e animações desligadas pra quem usa movimento reduzido. Campos das calculadoras agora têm nome pra leitor de tela.",
+  },
+  {
     id: "tutorial-por-pagina-2026-10-12",
     date: "2026-10-12",
     title: "Tutorial passo a passo em cada página",

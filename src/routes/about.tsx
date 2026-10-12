@@ -44,7 +44,7 @@ function About() {
               href="https://www.youtube.com/@Ésobrerubinot"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-rubi-danger/90 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-rubi-danger/90 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
             >
               <Youtube className="h-3.5 w-3.5" /> YouTube
             </a>
@@ -52,7 +52,7 @@ function About() {
               href="https://instagram.com/esobrerubinot"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-rubi-gold px-3 py-1.5 text-xs font-semibold text-background hover:opacity-90"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-rubi-gold px-3 py-1.5 text-xs font-semibold text-background hover:opacity-90"
             >
               <Instagram className="h-3.5 w-3.5" /> Instagram
             </a>

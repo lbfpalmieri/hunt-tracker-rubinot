@@ -391,7 +391,7 @@ function CommunityPage() {
         />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-rubi-gold">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold-soft px-2.5 py-1 text-2xs font-bold uppercase tracking-widest text-rubi-gold">
               <Globe2 className="h-3 w-3" /> Comunidade RubinOT
               {mode === "party" && <> · Modo Grupo</>}
             </span>
@@ -442,7 +442,7 @@ function CommunityPage() {
               type="button"
               onClick={() => setVocation("")}
               className={
-                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors " +
+                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs font-semibold transition-colors " +
                 (vocation === ""
                   ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                   : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
@@ -619,7 +619,7 @@ function CommunityPage() {
               </div>
               <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="font-display text-2xl font-bold">{calcRows[0].huntName}</span>
-                <span className="rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
+                <span className="rounded-full bg-rubi-blue-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-rubi-blue">
                   {calcRows[0].vocation}
                 </span>
               </div>
@@ -661,7 +661,7 @@ function CommunityPage() {
               <div className="hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <tr className="border-b border-border text-left text-2xs uppercase tracking-wider text-muted-foreground">
                     <th className="px-4 py-3">Hunt</th>
                     <th className="px-4 py-3 text-right">Sessões</th>
                     <th className="px-4 py-3 text-right">Jogadores</th>
@@ -713,11 +713,11 @@ function CommunityPage() {
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-lg font-semibold leading-tight">{h.huntName}</h2>
                 <div className="flex flex-none flex-col items-end gap-1">
-                  <span className="rounded-full bg-rubi-blue-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-blue">
+                  <span className="rounded-full bg-rubi-blue-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-rubi-blue">
                     {h.vocation}
                   </span>
                   {h.avgLevel != null && (
-                    <span className="rounded-full bg-rubi-gold-soft px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                    <span className="rounded-full bg-rubi-gold-soft px-2 py-0.5 text-2xs font-semibold text-rubi-gold">
                       ~Lvl {fmtNum(h.avgLevel)}
                     </span>
                   )}
@@ -839,7 +839,7 @@ function CommunityPage() {
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-semibold">{s.charName}</span>
                       {s.level != null && (
-                        <span className="flex-none rounded-full bg-rubi-gold-soft px-1.5 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                        <span className="flex-none rounded-full bg-rubi-gold-soft px-1.5 py-0.5 text-2xs font-semibold text-rubi-gold">
                           Lvl {fmtNum(s.level)}
                         </span>
                       )}
@@ -912,7 +912,7 @@ function HeroStat({
           : "text-rubi-danger";
   return (
     <div className="rounded-xl border border-border/70 bg-background/50 px-4 py-3 backdrop-blur-sm">
-      <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <dt className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
         <Icon className={"h-3.5 w-3.5 " + color} /> {label}
       </dt>
       <dd className={"mt-1 font-display text-2xl font-bold tabular-nums " + color}>{value}</dd>
@@ -941,7 +941,7 @@ function Metric({
             : "text-foreground";
   return (
     <div>
-      <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dt className="text-2xs uppercase tracking-wider text-muted-foreground">{label}</dt>
       <dd className={"font-mono text-sm font-semibold " + color}>{value}</dd>
     </div>
   );

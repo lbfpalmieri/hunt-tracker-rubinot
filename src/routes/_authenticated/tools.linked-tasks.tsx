@@ -206,7 +206,7 @@ function LinkedTasksPage() {
                   ? "Desmarcar todas as tasks"
                   : "Marcar todas as tasks como concluídas"}
             </button>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Ou toque no ✓ de cada task para marcar uma por uma.
             </p>
           </div>
@@ -257,7 +257,7 @@ function LinkedTasksPage() {
                 {charId && (
                   <span
                     className={
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-semibold " +
+                      "rounded-full px-1.5 py-0.5 text-2xs font-semibold " +
                       (full ? "bg-rubi-success/20 text-rubi-success" : "bg-accent text-muted-foreground")
                     }
                   >
@@ -377,7 +377,7 @@ function LinkedTasksPage() {
                 style={{ objectFit: "contain", imageRendering: "pixelated" }}
               />
               <div className="min-w-0">
-                <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                <div className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
                   {room.name}
                 </div>
                 <div className="font-display text-base font-semibold leading-tight">

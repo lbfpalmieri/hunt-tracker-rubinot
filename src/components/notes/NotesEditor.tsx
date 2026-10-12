@@ -199,7 +199,7 @@ export function NotesEditor({
               </button>
             </span>
           ))}
-        <div className="ml-auto flex rounded-md border border-border/70 p-0.5 text-[11px] font-medium">
+        <div className="ml-auto flex rounded-md border border-border/70 p-0.5 text-2xs font-medium">
           {(
             [
               ["write", "Escrever", <PenLine key="w" className="h-3 w-3" />],
@@ -245,7 +245,7 @@ export function NotesEditor({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2 border-t border-border/50 px-3 py-1 text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 border-t border-border/50 px-3 py-1 text-2xs text-muted-foreground">
         <span className="hidden truncate sm:inline">
           **negrito** · *itálico* · ==destaque== · - lista · - [ ] checklist
         </span>
