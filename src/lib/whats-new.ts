@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "tutorial-segue-conta-2026-10-12",
+    date: "2026-10-12",
+    title: "Tutoriais seguem a sua conta",
+    description:
+      "Marcou Não mostrar de novo em um tutorial? Agora essa escolha vale em qualquer aparelho em que você entrar com a sua conta, e não só no navegador onde você marcou.",
+  },
+  {
     id: "padrao-visual-celular-2026-10-12",
     date: "2026-10-12",
     title: "Visual padronizado e mais fácil de tocar no celular",
