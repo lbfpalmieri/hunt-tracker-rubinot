@@ -52,8 +52,8 @@ const ROWS: Row[] = [
   {
     label: "Raw XP (sem bounty)",
     icon: Zap,
-    iconColor: "text-sky-400",
-    iconBg: "bg-sky-400/15",
+    iconColor: "text-cat-sky",
+    iconBg: "bg-cat-sky/15",
     better: "high",
     value: (h) => perHour(h.rawXpHunt, h.durationSec),
     render: (h) => {
@@ -65,8 +65,8 @@ const ROWS: Row[] = [
   {
     label: "Lucro",
     icon: Coins,
-    iconColor: "text-amber-400",
-    iconBg: "bg-amber-400/15",
+    iconColor: "text-rubi-gold",
+    iconBg: "bg-rubi-gold/15",
     better: "high",
     value: (h) => perHour(h.balance, h.durationSec),
     render: (h) => fmtGold(perHour(h.balance, h.durationSec) ?? 0),
@@ -76,8 +76,8 @@ const ROWS: Row[] = [
   {
     label: "Loot",
     icon: Package,
-    iconColor: "text-yellow-400",
-    iconBg: "bg-yellow-400/15",
+    iconColor: "text-cat-yellow",
+    iconBg: "bg-cat-yellow/15",
     better: "high",
     value: (h) => perHour(h.loot, h.durationSec),
     render: (h) => fmtGold(perHour(h.loot, h.durationSec) ?? 0),
@@ -87,8 +87,8 @@ const ROWS: Row[] = [
   {
     label: "Supplies",
     icon: ShoppingBag,
-    iconColor: "text-rose-400",
-    iconBg: "bg-rose-400/15",
+    iconColor: "text-cat-rose",
+    iconBg: "bg-cat-rose/15",
     better: "low",
     value: (h) => perHour(h.supplies, h.durationSec),
     render: (h) => fmtGold(perHour(h.supplies, h.durationSec) ?? 0),
@@ -97,8 +97,8 @@ const ROWS: Row[] = [
   {
     label: "Kills",
     icon: Swords,
-    iconColor: "text-fuchsia-400",
-    iconBg: "bg-fuchsia-400/15",
+    iconColor: "text-cat-fuchsia",
+    iconBg: "bg-cat-fuchsia/15",
     better: "high",
     value: (h) => perHour(h.killsTotal, h.durationSec),
     render: (h) => fmtNum(perHour(h.killsTotal, h.durationSec) ?? 0),
@@ -106,8 +106,8 @@ const ROWS: Row[] = [
   {
     label: "Dano causado",
     icon: Flame,
-    iconColor: "text-orange-400",
-    iconBg: "bg-orange-400/15",
+    iconColor: "text-cat-orange",
+    iconBg: "bg-cat-orange/15",
     better: "high",
     value: (h) => perHour(h.damageDealt, h.durationSec),
     render: (h) => fmtNum(perHour(h.damageDealt, h.durationSec) ?? 0),
@@ -116,8 +116,8 @@ const ROWS: Row[] = [
   {
     label: "Cura",
     icon: HeartPulse,
-    iconColor: "text-emerald-400",
-    iconBg: "bg-emerald-400/15",
+    iconColor: "text-rubi-success",
+    iconBg: "bg-rubi-success/15",
     better: "none",
     value: (h) => perHour(h.healing, h.durationSec),
     render: (h) => fmtNum(perHour(h.healing, h.durationSec) ?? 0),
@@ -125,8 +125,8 @@ const ROWS: Row[] = [
   {
     label: "Dano recebido",
     icon: Shield,
-    iconColor: "text-cyan-400",
-    iconBg: "bg-cyan-400/15",
+    iconColor: "text-cat-cyan",
+    iconBg: "bg-cat-cyan/15",
     better: "low",
     value: (h) => perHour(h.damageReceived, h.durationSec),
     render: (h) => {
@@ -138,8 +138,8 @@ const ROWS: Row[] = [
   {
     label: "Top 3 monstros",
     icon: Skull,
-    iconColor: "text-violet-400",
-    iconBg: "bg-violet-400/15",
+    iconColor: "text-cat-violet",
+    iconBg: "bg-cat-violet/15",
     better: "none",
     value: () => null,
     render: (h) => {

@@ -37,6 +37,19 @@
   --color-rubi-gold-soft: var(--rubi-gold-soft);
   --color-rubi-success: var(--rubi-success);
   --color-rubi-danger: var(--rubi-danger);
+  /* Categorias de dados (gráficos, chips): cores de apoio, nunca de ação. */
+  --color-cat-sky: var(--cat-sky);
+  --color-cat-yellow: var(--cat-yellow);
+  --color-cat-rose: var(--cat-rose);
+  --color-cat-fuchsia: var(--cat-fuchsia);
+  --color-cat-orange: var(--cat-orange);
+  --color-cat-cyan: var(--cat-cyan);
+  --color-cat-violet: var(--cat-violet);
+  /* Moldura de bronze do painel de tarefas (réplica do Task Board do jogo). */
+  --color-frame-edge: var(--frame-edge);
+  --color-frame-light: var(--frame-light);
+  --color-frame-dark: var(--frame-dark);
+  --color-frame-ink: var(--frame-ink);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
 
@@ -90,6 +103,29 @@
   --rubi-gold-soft: oklch(0.80 0.16 75 / 0.15);
   --rubi-success: oklch(0.76 0.17 155);
   --rubi-danger: oklch(0.68 0.22 20);
+
+  --cat-sky: oklch(0.746 0.16 233);
+  --cat-yellow: oklch(0.852 0.199 92);
+  --cat-rose: oklch(0.712 0.194 13);
+  --cat-fuchsia: oklch(0.74 0.238 322);
+  --cat-orange: oklch(0.75 0.183 56);
+  --cat-cyan: oklch(0.789 0.154 212);
+  --cat-violet: oklch(0.702 0.183 294);
+  --frame-edge: oklch(0.55 0.08 80);
+  --frame-light: oklch(0.70 0.08 82);
+  --frame-dark: oklch(0.59 0.08 82);
+  --frame-ink: oklch(0.22 0.03 80);
+  /* Elementos de dano (barras do conselho). */
+  --el-physical: oklch(0.72 0 0);
+  --el-fire: oklch(0.70 0.19 48);
+  --el-earth: oklch(0.72 0.19 150);
+  --el-energy: oklch(0.63 0.24 303);
+  --el-ice: oklch(0.76 0.13 225);
+  --el-holy: oklch(0.86 0.17 95);
+  --el-death: oklch(0.60 0.22 293);
+  --el-lifedrain: oklch(0.64 0.23 25);
+  --el-manadrain: oklch(0.62 0.2 262);
+  --el-drown: oklch(0.70 0.12 182);
 }
 
 /* Modo Grupo (play-mode.ts): o azul de destaque vira violeta e o fundo puxa pro roxo — dá pra
