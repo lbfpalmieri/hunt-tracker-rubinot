@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { GameIcon } from "@/components/GameIcon";
 import { useAppStore, useHydrated } from "@/lib/store";
+import { rankHuntsByTask } from "@/lib/hunt-speed";
 import { useModeSessions } from "@/lib/play-mode";
 import { fmtNum, fmtDuration } from "@/lib/format";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -19,6 +20,14 @@ export const Route = createFileRoute("/_authenticated/tools/monster-calculator")
       { property: "og:type", content: "website" },
     ],
   }),
+  // Vindo do conselho da Linked Task: ?linked=Dragon|Hydra&qty=400 já abre no modo Linked Task.
+  validateSearch: (search: Record<string, unknown>): { linked?: string; qty?: number } => {
+    const qty = Number(search.qty);
+    return {
+      linked: typeof search.linked === "string" && search.linked ? search.linked : undefined,
+      qty: Number.isFinite(qty) && qty > 0 ? Math.round(qty) : undefined,
+    };
+  },
   component: MonsterCalculatorPage,
 });
 
@@ -29,10 +38,13 @@ function MonsterCalculatorPage() {
   const activeId = useAppStore((s) => s.activeCharacterId);
 
   const [charId, setCharId] = useState<string>("");
-  const [mode, setMode] = useState<"bounty" | "linked">("bounty");
+  const search = Route.useSearch();
+  const [mode, setMode] = useState<"bounty" | "linked">(search.linked ? "linked" : "bounty");
   const [monster, setMonster] = useState<string>("");
-  const [linked, setLinked] = useState<string[]>([]);
-  const [quantity, setQuantity] = useState<number>(400);
+  const [linked, setLinked] = useState<string[]>(() =>
+    search.linked ? search.linked.split("|").filter(Boolean).slice(0, 40) : [],
+  );
+  const [quantity, setQuantity] = useState<number>(search.qty ?? 400);
   const [showSuggest, setShowSuggest] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const suggestRef = useRef<HTMLDivElement>(null);
@@ -68,65 +80,10 @@ function MonsterCalculatorPage() {
   );
 
   // Group sessions by hunt name and compute kills/h of the target monster(s)
-  const results = useMemo(() => {
-    if (targets.length === 0) return [];
-    const needles = targets.map((t) => t.toLowerCase());
-    const byHunt = new Map<
-      string,
-      {
-        huntName: string;
-        totalSec: number;
-        totalKills: number;
-        sessionCount: number;
-        perMonster: Map<string, number>;
-      }
-    >();
-    for (const s of charSessions) {
-      const sessionPer = new Map<string, number>();
-      let sessionKills = 0;
-      for (const k of s.hunting.kills) {
-        const idx = needles.indexOf(k.name.toLowerCase());
-        if (idx === -1) continue;
-        sessionPer.set(targets[idx], (sessionPer.get(targets[idx]) ?? 0) + k.count);
-        sessionKills += k.count;
-      }
-      if (sessionKills <= 0) continue;
-      // Mesma hunt com grafia diferente ("Asura" / "asura ") conta junto, como no resto do app.
-      const key = s.huntName.trim().toLowerCase();
-      const cur = byHunt.get(key) ?? {
-        huntName: s.huntName.trim(),
-        totalSec: 0,
-        totalKills: 0,
-        sessionCount: 0,
-        perMonster: new Map(),
-      };
-      cur.totalSec += s.hunting.durationSec;
-      cur.totalKills += sessionKills;
-      cur.sessionCount += 1;
-      for (const [name, n] of sessionPer) cur.perMonster.set(name, (cur.perMonster.get(name) ?? 0) + n);
-      byHunt.set(key, cur);
-    }
-    return Array.from(byHunt.values())
-      .map((v) => {
-        const huntName = v.huntName;
-        const hours = v.totalSec / 3600;
-        const perHour = hours > 0 ? v.totalKills / hours : 0;
-        const estSec = perHour > 0 ? (quantity / perHour) * 3600 : Infinity;
-        return {
-          huntName,
-          sessionCount: v.sessionCount,
-          totalKills: v.totalKills,
-          totalSec: v.totalSec,
-          perHour,
-          estSec,
-          perMonsterPerHour: targets.map((t) => ({
-            name: t,
-            perHour: hours > 0 ? (v.perMonster.get(t) ?? 0) / hours : 0,
-          })),
-        };
-      })
-      .sort((a, b) => a.estSec - b.estSec);
-  }, [charSessions, targets, quantity]);
+  const results = useMemo(
+    () => rankHuntsByTask(charSessions, targets, quantity),
+    [charSessions, targets, quantity],
+  );
 
   const pickMonster = (m: string) => {
     if (mode === "bounty") {

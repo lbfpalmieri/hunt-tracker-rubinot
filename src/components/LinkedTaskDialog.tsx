@@ -6,7 +6,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Swords, Gift, Repeat, Shirt, Sparkles, Target } from "lucide-react";
+import { Swords, Gift, Repeat, Shirt, Sparkles, Target, MapPin } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { useAppStore } from "@/lib/store";
+import { useModeSessions } from "@/lib/play-mode";
+import { fmtDuration } from "@/lib/format";
+import { rankHuntsByTask } from "@/lib/hunt-speed";
 import { fmtNum } from "@/lib/format";
 import { huntWeakness } from "@/lib/hunt-advisor";
 import { findMonster } from "@/lib/monsters";
@@ -106,6 +111,60 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
   );
 }
 
+/** "Onde eu já caçei essas criaturas?": as 3 hunts do SEU histórico em que a task sairia mais rápido. */
+function WhereIHunted({ task }: { task: LinkedTaskEntry }) {
+  const sessions = useModeSessions();
+  const activeId = useAppStore((s) => s.activeCharacterId);
+  const names = useMemo(() => task.creatures.map((c) => c.name), [task]);
+  const ranking = useMemo(
+    () =>
+      rankHuntsByTask(
+        sessions.filter((s) => !activeId || s.characterId === activeId),
+        names,
+        task.quantity,
+      ),
+    [sessions, activeId, names, task.quantity],
+  );
+  const top = ranking.slice(0, 3);
+  return (
+    <Section icon={MapPin} label="Onde eu já caçei essas criaturas" tone="blue">
+      {top.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Nenhuma sessão sua com essas criaturas ainda. Quando você salvar hunts em que elas
+          aparecem, o app mostra aqui qual rende a task mais rápido.
+        </p>
+      ) : (
+        <ul className="space-y-1.5">
+          {top.map((h, i) => (
+            <li
+              key={h.huntName}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-background/30 px-3 py-2 text-sm"
+            >
+              <span className="min-w-0 truncate">
+                {i === 0 && <span className="mr-1.5 text-rubi-gold">Melhor:</span>}
+                <b>{h.huntName}</b>
+                <span className="ml-1.5 text-xs text-muted-foreground">
+                  {fmtNum(h.perHour)} kills/h · {h.sessionCount} sessão(ões)
+                </span>
+              </span>
+              <span className="flex-none font-mono text-xs text-rubi-blue">
+                {Number.isFinite(h.estSec) ? `≈ ${fmtDuration(h.estSec)}` : "—"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link
+        to="/tools/monster-calculator"
+        search={{ linked: names.join("|"), qty: task.quantity }}
+        className="mt-2 inline-flex min-h-11 items-center text-xs font-semibold text-rubi-blue hover:underline"
+      >
+        Ver todas as hunts na calculadora
+      </Link>
+    </Section>
+  );
+}
+
 function RewardList({ items }: { items: string[] }) {
   if (items.length === 0) return <p className="text-xs text-muted-foreground">—</p>;
   return (
@@ -187,6 +246,7 @@ function TaskTabs({
       </TabsList>
 
       <TabsContent value="combat" className="mt-4 space-y-5">
+        <WhereIHunted task={task} />
         <Section icon={Swords} label="Elemento mais eficaz contra essas criaturas" tone="success">
           {ranking.length === 0 ? (
             <p className="text-xs text-muted-foreground">

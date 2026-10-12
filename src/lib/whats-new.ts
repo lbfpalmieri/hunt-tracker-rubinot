@@ -17,11 +17,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    id: "valor-loot-item-2026-10-12",
+    id: "linked-task-onde-cacei-2026-10-12",
     date: "2026-10-12",
-    title: "Sessão: valor de cada item do loot",
+    title: "Linked Task: onde você já caçou essas criaturas",
     description:
-      "Na página da sessão, os itens lootados agora mostram quanto cada um valeu (seu preço × quantidade) e dá pra ordenar por valor ou quantidade. Item sem preço tem um campo pra você preencher na hora; o preço fica salvo em Meus preços, no servidor do personagem, e vale nas próximas sessões. As moedas já entram com o valor fixo.",
+      "Ao abrir uma Linked Task, a aba Combate mostra as 3 hunts do seu histórico em que essa task sairia mais rápido (kills por hora e tempo estimado), com um atalho que abre a calculadora já preenchida com as criaturas e a quantidade.",
   },
   {
     id: "menu-abas-2026-10-12",
