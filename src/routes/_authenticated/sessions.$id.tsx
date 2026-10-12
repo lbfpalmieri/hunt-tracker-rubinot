@@ -9,6 +9,7 @@ import { BountyBadge } from "@/components/BountyBadge";
 import { BountyEditor } from "@/components/BountyEditor";
 import { PreyBadge } from "@/components/PreyBadge";
 import { PreyEditor } from "@/components/PreyEditor";
+import { RenameHunt } from "@/components/RenameHunt";
 import { SessionNotesEditor } from "@/components/SessionNotesEditor";
 import { SetupEditor } from "@/components/setup/SetupEditor";
 import { GameIcon } from "@/components/GameIcon";
@@ -57,6 +58,7 @@ function SessionDetail() {
   const characters = useAppStore((s) => s.characters);
   const removeSession = useAppStore((s) => s.removeSession);
   const updateSession = useAppStore((s) => s.updateSession);
+  const addHunt = useAppStore((s) => s.addHunt);
 
 
   const session = sessions.find((s) => s.id === id);
@@ -148,7 +150,15 @@ function SessionDetail() {
         <div>
           <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Sessão</div>
           <div className="mt-1 flex flex-wrap items-center gap-3">
-            <h1 className="font-brand text-3xl font-bold">{session.huntName}</h1>
+            <RenameHunt
+              key={session.id}
+              name={session.huntName}
+              onSave={async (next) => {
+                await updateSession(session.id, { huntName: next });
+                // Registra o nome na lista de hunts do personagem (sugestões da Nova sessão).
+                await addHunt(session.characterId, next).catch(() => undefined);
+              }}
+            />
             {session.party && (
               <PartyBadge size={session.party.size} split={isSplit(session.party)} />
             )}

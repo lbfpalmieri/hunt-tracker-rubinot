@@ -150,7 +150,7 @@ interface State {
   addHunt: (characterId: string, name: string) => Promise<Hunt>;
   removeHunt: (id: string) => Promise<void>;
   addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty" | "prey" | "notes" | "setup" | "party"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null; setup?: SessionSetup | null; party?: PartyInfo | null }) => Promise<HuntSession>;
-  updateSession: (id: string, patch: { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null; setup?: SessionSetup | null; party?: PartyInfo | null; hunting?: HuntingData }) => Promise<void>;
+  updateSession: (id: string, patch: { huntName?: string; gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null; setup?: SessionSetup | null; party?: PartyInfo | null; hunting?: HuntingData }) => Promise<void>;
   removeSession: (id: string) => Promise<void>;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
@@ -572,6 +572,7 @@ export const useAppStore = create<State>()((set, get) => ({
 
   updateSession: async (id, patch) => {
     const dbPatch: Record<string, unknown> = {};
+    if (patch.huntName !== undefined) dbPatch.hunt_name = patch.huntName;
     if (patch.gearUrl !== undefined) dbPatch.gear_url = patch.gearUrl;
     if (patch.isPublic !== undefined) dbPatch.is_public = patch.isPublic;
     if (patch.bounty !== undefined) {
