@@ -311,7 +311,7 @@ function RankingPage() {
                     <span className="font-display text-sm font-semibold">{h.huntName}</span>
                     {!agg && h.bounty && <BountyBadge bounty={h.bounty} className="flex-none" />}
                     {h.prey && <PreyBadge prey={h.prey} className="flex-none" />}
-                    <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue">
+                    <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-2xs font-semibold text-rubi-blue">
                       {(h.sessionCount ?? 1) === 1 ? "1 sessão" : `Média de ${h.sessionCount} sessões`}
                     </span>
                   </div>
@@ -323,7 +323,7 @@ function RankingPage() {
                   <div className="font-mono text-base font-semibold text-rubi-gold">
                     {metricFormat(r.value, metric)}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <div className="text-2xs uppercase tracking-wide text-muted-foreground">
                     {METRICS.find((m) => m.value === metric)?.label}
                   </div>
                 </div>

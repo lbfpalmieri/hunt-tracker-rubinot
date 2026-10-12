@@ -253,12 +253,12 @@ export function EquipmentDoll({
                 </span>
               )}
               {blocked && (
-                <span className="absolute inset-x-0 bottom-0.5 text-center text-[8px] font-bold uppercase text-muted-foreground">
+                <span className="absolute inset-x-0 bottom-0.5 text-center text-2xs font-bold uppercase text-muted-foreground">
                   2 mãos
                 </span>
               )}
               {item && tierOf(slot) > 0 && (
-                <span className="absolute right-0.5 top-0.5 rounded bg-rubi-gold/90 px-1 text-[9px] font-bold leading-tight text-background">
+                <span className="absolute right-0.5 top-0.5 rounded bg-rubi-gold/90 px-1 text-2xs font-bold leading-tight text-background">
                   T{tierOf(slot)}
                 </span>
               )}
@@ -290,7 +290,7 @@ export function EquipmentDoll({
                 const tier = tierOf(slot);
                 return (
                   <li key={slot} className="min-w-0 text-xs leading-snug">
-                    <span className="mr-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="mr-1.5 text-2xs uppercase tracking-wider text-muted-foreground">
                       {slotLabel(slot, vocation)}
                     </span>
                     <b className="font-semibold">{it.name}</b>
@@ -303,12 +303,12 @@ export function EquipmentDoll({
                         onChange={(t) => setTier(slot, t)}
                       />
                     ) : tier > 0 ? (
-                      <span className="ml-1.5 rounded bg-rubi-gold/15 px-1 text-[10px] font-bold text-rubi-gold">
+                      <span className="ml-1.5 rounded bg-rubi-gold/15 px-1 text-2xs font-bold text-rubi-gold">
                         T{tier}
                       </span>
                     ) : null}
                     {summary && (
-                      <span className="block break-words text-[11px] text-muted-foreground">
+                      <span className="block break-words text-2xs text-muted-foreground">
                         {summary}
                       </span>
                     )}
@@ -358,7 +358,7 @@ function ForgeBlock({ lines }: { lines: ReturnType<typeof forgeLines> }) {
   const amp = lines.find((l) => l.slot === "feet");
   return (
     <div className="rounded-lg border border-rubi-gold/30 bg-rubi-gold/[0.05] p-2.5">
-      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-rubi-gold">
+      <div className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-rubi-gold">
         <Flame className="h-3.5 w-3.5" /> Forja (tier)
       </div>
       <ul className="space-y-1.5">
@@ -390,13 +390,13 @@ function ForgeBlock({ lines }: { lines: ReturnType<typeof forgeLines> }) {
                   → <b className="text-foreground">{fmtPct(l.amplified)}</b> com a bota
                 </span>
               )}
-              <span className="block text-[11px] text-muted-foreground">{l.skill.effect}</span>
+              <span className="block text-2xs text-muted-foreground">{l.skill.effect}</span>
             </span>
           </li>
         ))}
       </ul>
       {amp == null && lines.length > 0 && (
-        <p className="mt-1.5 text-[10px] text-muted-foreground">
+        <p className="mt-1.5 text-2xs text-muted-foreground">
           Bota com tier (Amplification) aumenta essas chances.
         </p>
       )}
@@ -418,7 +418,7 @@ function Chip({
     muted: "border-border bg-background/40 text-muted-foreground",
   }[tone];
   return (
-    <span className={"rounded-full border px-2 py-0.5 text-[10px] font-semibold " + c}>
+    <span className={"rounded-full border px-2 py-0.5 text-2xs font-semibold " + c}>
       {children}
     </span>
   );
@@ -541,11 +541,11 @@ function SlotPicker({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{it.name}</span>
-                  <span className="block truncate text-[10px] text-muted-foreground">
+                  <span className="block truncate text-2xs text-muted-foreground">
                     {shortSkills(it.summary) || it.tag || "—"}
                   </span>
                 </span>
-                <span className="flex-none text-right text-[10px] text-muted-foreground">
+                <span className="flex-none text-right text-2xs text-muted-foreground">
                   {it.level ? `Lv ${it.level}` : "—"}
                   {it.tag && <span className="block">{it.tag}</span>}
                 </span>
@@ -559,7 +559,7 @@ function SlotPicker({
           )}
         </ul>
         {list.length > LIST_LIMIT && (
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-2xs text-muted-foreground">
             Mostrando {LIST_LIMIT} de {list.length} (do maior level pro menor) — busque pelo nome.
           </p>
         )}

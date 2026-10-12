@@ -164,7 +164,7 @@ export function PreyPicker({
                   <div className="flex h-16 w-14 items-center justify-center rounded-lg border border-border bg-surface/80">
                     <Lock className="h-6 w-6 text-muted-foreground/70" />
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-2xs text-muted-foreground">
                     3º slot é comprado na Store (<i>Permanent Prey Slot</i>).
                   </p>
                   <button
@@ -198,7 +198,7 @@ export function PreyPicker({
                           }
                         >
                           <GameIcon name={c} size={48} />
-                          <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-muted-foreground">
+                          <span className="line-clamp-1 w-full text-center text-2xs leading-tight text-muted-foreground">
                             {c}
                           </span>
                         </button>
@@ -265,7 +265,7 @@ export function PreyPicker({
                           </div>
                         </>
                       ) : (
-                        <p className="mt-1.5 text-center text-[11px] text-rubi-gold">
+                        <p className="mt-1.5 text-center text-2xs text-rubi-gold">
                           Escolha o bônus dessa prey
                         </p>
                       )}
@@ -276,7 +276,7 @@ export function PreyPicker({
                     <button
                       type="button"
                       onClick={() => setThird(false)}
-                      className="text-[10px] text-muted-foreground hover:underline"
+                      className="text-2xs text-muted-foreground hover:underline"
                     >
                       não tenho o 3º slot
                     </button>

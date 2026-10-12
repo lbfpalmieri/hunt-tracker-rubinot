@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDate } from "@/lib/format";
@@ -18,6 +19,7 @@ import { blobToCompressedImage } from "@/components/PasteImage";
 import { confirmDialog } from "@/lib/confirm-dialog";
 import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
+import { EmptyState } from "@/components/EmptyState";
 import { LevelBadge } from "@/components/LevelBadge";
 import { EditCharacterDialog } from "@/components/EditCharacterDialog";
 
@@ -128,7 +130,7 @@ function CharactersPage() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -207,7 +209,7 @@ function CharactersPage() {
                   <ClipboardPaste className="h-3.5 w-3.5 text-rubi-blue" />
                   {outfitUrl ? "Cole outra imagem para trocar" : "Cole uma imagem (Ctrl+V)"}
                 </div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-2xs text-muted-foreground">
                   {pasteTarget === "new"
                     ? "Pronto — copie um print e pressione Ctrl+V."
                     : "Clique para focar aqui e depois cole."}
@@ -221,7 +223,7 @@ function CharactersPage() {
                     e.stopPropagation();
                     setOutfitUrl(null);
                   }}
-                  className="inline-flex items-center gap-1 rounded-lg border border-rubi-danger/40 px-2 py-1 text-[11px] text-rubi-danger hover:bg-rubi-danger/10"
+                  className="inline-flex items-center gap-1 rounded-lg border border-rubi-danger/40 px-2 py-1 text-2xs text-rubi-danger hover:bg-rubi-danger/10"
                 >
                   <X className="h-3 w-3" /> Remover
                 </span>
@@ -246,14 +248,11 @@ function CharactersPage() {
 
         <div className="lg:col-span-2">
           {characters.length === 0 ? (
-            <div className="card-surface flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
-              <div>
-                <UserCircle2 className="mx-auto mb-3 h-8 w-8 text-rubi-blue" />
-                Nenhum personagem cadastrado ainda.
-                <br />
-                Preencha o formulário ao lado para começar.
-              </div>
-            </div>
+            <EmptyState
+              icon={UserCircle2}
+              title="Nenhum personagem cadastrado ainda"
+              description="Preencha o formulário para cadastrar o primeiro e começar a registrar suas hunts."
+            />
           ) : (
             <ul className="space-y-2">
               {characters.map((c) => {
@@ -281,7 +280,7 @@ function CharactersPage() {
                           <span className="truncate font-display font-semibold">{c.name}</span>
                           <LevelBadge level={currentLevel(levelSnapshots, c.id)} />
                           {isActive && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-rubi-gold/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rubi-gold/20 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wider text-rubi-gold">
                               <Star className="h-3 w-3" /> ativo
                             </span>
                           )}

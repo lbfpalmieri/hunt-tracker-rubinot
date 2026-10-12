@@ -7,7 +7,7 @@ export function LevelBadge({ level, className = "" }: { level: number | null; cl
     <span
       title={`Level ${level}`}
       className={
-        "inline-flex flex-none items-center gap-1 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue " +
+        "inline-flex flex-none items-center gap-1 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2 py-0.5 text-2xs font-semibold text-rubi-blue " +
         className
       }
     >

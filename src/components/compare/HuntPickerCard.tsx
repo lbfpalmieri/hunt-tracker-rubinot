@@ -35,7 +35,7 @@ export function HuntPickerCard({ hunt, selected, disabled, onToggle }: Props) {
       <div className="flex flex-wrap items-start gap-2 pr-6">
         <span className="font-display text-sm font-semibold leading-snug">{hunt.huntName}</span>
         {agg ? (
-          <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-blue">
+          <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-2xs font-semibold text-rubi-blue">
             Média de {hunt.sessionCount} sessões
           </span>
         ) : (
@@ -45,7 +45,7 @@ export function HuntPickerCard({ hunt, selected, disabled, onToggle }: Props) {
           </>
         )}
         {agg && (hunt.preySessions ?? 0) > 0 && (
-          <span className="flex-none rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-gold">
+          <span className="flex-none rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-2xs font-semibold text-rubi-gold">
             Prey em {hunt.preySessions}/{hunt.sessionCount}
           </span>
         )}

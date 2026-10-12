@@ -55,7 +55,7 @@ export function BountyTaskPanel({
 
       <div className="space-y-4 p-3 sm:p-4">
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Task Difficulty
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
@@ -79,7 +79,7 @@ export function BountyTaskPanel({
                 >
                   {d.label}
                 </div>
-                <div className="text-[10px] leading-tight text-muted-foreground">
+                <div className="text-2xs leading-tight text-muted-foreground">
                   {BOUNTY_DIFFICULTY_POOL[d.value]}
                 </div>
               </button>
@@ -89,7 +89,7 @@ export function BountyTaskPanel({
 
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,15rem)]">
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="mb-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
               Criatura da task <span className="normal-case text-muted-foreground/70">(opcional)</span>
             </div>
             <div className="grid max-h-[13rem] grid-cols-3 gap-1.5 overflow-y-auto pr-0.5 sm:grid-cols-4">
@@ -109,10 +109,10 @@ export function BountyTaskPanel({
                     }
                   >
                     <GameIcon name={c.name} size={40} />
-                    <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-muted-foreground">
+                    <span className="line-clamp-1 w-full text-center text-2xs leading-tight text-muted-foreground">
                       {c.name}
                     </span>
-                    <span className="text-[9px] font-semibold text-muted-foreground/70">
+                    <span className="text-2xs font-semibold text-muted-foreground/70">
                       {fmtNum(c.count)}x
                     </span>
                   </button>
@@ -153,7 +153,7 @@ export function BountyTaskPanel({
                     onClick={() => set({ tier: t.value })}
                     title={t.hint}
                     className={
-                      "inline-flex items-center justify-center gap-1 rounded-md border px-1 py-1 text-[11px] font-semibold " +
+                      "inline-flex items-center justify-center gap-1 rounded-md border px-1 py-1 text-2xs font-semibold " +
                       (value.tier === t.value
                         ? "border-rubi-gold bg-rubi-gold/15 text-rubi-gold"
                         : "border-border text-muted-foreground hover:border-muted-foreground/40")
@@ -189,7 +189,7 @@ export function BountyTaskPanel({
           </div>
         </div>
 
-        <p className={"text-[11px] " + (xpInvalid ? "text-rubi-danger" : "text-muted-foreground")}>
+        <p className={"text-2xs " + (xpInvalid ? "text-rubi-danger" : "text-muted-foreground")}>
           {xpInvalid
             ? "XP inválida — use 781.875, 8kk ou 8000000."
             : xp != null

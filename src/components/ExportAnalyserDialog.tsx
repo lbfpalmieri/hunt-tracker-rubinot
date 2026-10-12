@@ -101,18 +101,18 @@ export function ExportAnalyserDialog({
               }
             >
               <span className="block text-sm font-semibold">{label}</span>
-              <span className="block text-[11px] text-muted-foreground">{hint}</span>
+              <span className="block text-2xs text-muted-foreground">{hint}</span>
             </button>
           ))}
         </div>
         {kind === "hunt" && hunt && (
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-2xs text-muted-foreground">
             Média de "{hunt.name}" {hunt.source}: tudo dividido pelas horas somadas e mostrado como
             1 hora no ritmo médio — inclusive monstros por hora (densidade média).
           </p>
         )}
         {noKills && (
-          <p className="rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 p-2 text-[11px] text-rubi-gold">
+          <p className="rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 p-2 text-2xs text-rubi-gold">
             Sem os monstros mortos (sessão registrada só com o Party Hunt Analyser) — sites que
             montam build pela composição de monstros não vão ter o que ler.
           </p>
@@ -126,7 +126,7 @@ export function ExportAnalyserDialog({
             value={text}
             rows={12}
             onFocus={(e) => e.currentTarget.select()}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-2xs leading-relaxed outline-none"
           />
         )}
 

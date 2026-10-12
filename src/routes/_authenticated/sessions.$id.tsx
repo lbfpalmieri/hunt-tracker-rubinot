@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
@@ -98,7 +99,7 @@ function SessionDetail() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -143,7 +144,7 @@ function SessionDetail() {
     <AppShell>
       <Link
         to="/sessions"
-        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
@@ -335,7 +336,7 @@ function SessionDetail() {
           {preyMarkLabel(session.prey, "defense") && (
             <span
               title={preyMarkTitle(session.prey, "defense")}
-              className="absolute right-0 top-0 inline-flex items-center gap-1 rounded-bl-lg bg-rubi-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-gold"
+              className="absolute right-0 top-0 inline-flex items-center gap-1 rounded-bl-lg bg-rubi-gold/15 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-rubi-gold"
             >
               <Sparkles className="h-2.5 w-2.5" />
               {preyMarkLabel(session.prey, "defense")}

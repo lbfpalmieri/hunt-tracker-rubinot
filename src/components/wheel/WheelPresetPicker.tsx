@@ -49,10 +49,10 @@ export function WheelPresetPicker({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
           Minhas rodas
         </span>
-        <Link to="/rodas" className="text-[11px] font-medium text-rubi-gold hover:underline">
+        <Link to="/rodas" className="text-2xs font-medium text-rubi-gold hover:underline">
           Gerenciar rodas
         </Link>
       </div>

@@ -230,7 +230,7 @@ function PresetDialog({
         </DialogHeader>
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="mb-1 block text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Nome do set
           </span>
           <input
@@ -309,7 +309,7 @@ function CopyFromSet({
 
   return (
     <section className="rounded-xl border border-rubi-blue/30 bg-rubi-blue/[0.05] p-3">
-      <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-rubi-blue">
+      <div className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-rubi-blue">
         <Copy className="h-3.5 w-3.5" /> Copiar de outro set
       </div>
       <div className="flex flex-wrap gap-1.5">

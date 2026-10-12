@@ -33,7 +33,7 @@ export function LootHighlightList({
                 <LootTierBadge tier={it.tier} />
               </div>
               {showBosses && (
-                <div className="truncate text-[11px] text-muted-foreground">
+                <div className="truncate text-2xs text-muted-foreground">
                   {it.bosses.join(", ")}
                 </div>
               )}
@@ -43,7 +43,7 @@ export function LootHighlightList({
                 {it.value > 0 ? fmtGold(it.value) : "—"}
               </div>
               {it.npc > 0 && (
-                <div className="text-[10px] text-muted-foreground">NPC {fmtGold(it.npc)}</div>
+                <div className="text-2xs text-muted-foreground">NPC {fmtGold(it.npc)}</div>
               )}
             </div>
           </li>

@@ -146,7 +146,7 @@ export function ItemPricesPanel({
                   <GameIcon name={p.item} size={28} className="flex-none" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{p.item}</span>
-                    <span className="block text-[10px] text-muted-foreground">
+                    <span className="block text-2xs text-muted-foreground">
                       {ref?.npc ? `NPC ${fmtGold(ref.npc)}` : "sem preço de NPC"}
                       {ref?.marketMax
                         ? ` · Tibia oficial ${fmtGold(ref.marketMin)}–${fmtGold(ref.marketMax)}`

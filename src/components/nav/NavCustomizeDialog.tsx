@@ -44,7 +44,7 @@ export function NavCustomizeDialog({
         </DialogHeader>
 
         <section>
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-rubi-gold/85">
+          <h3 className="mb-2 text-2xs font-semibold uppercase tracking-[0.16em] text-rubi-gold/85">
             Fixados ({pinned.length})
           </h3>
           {pinned.length === 0 ? (
@@ -62,7 +62,7 @@ export function NavCustomizeDialog({
                     <NavIcon item={n} size={24} />
                     <span className="min-w-0 flex-1 truncate text-sm">{n.label}</span>
                     {i < MOBILE_BAR_SLOTS && (
-                      <span className="flex-none rounded bg-accent px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="flex-none rounded bg-accent px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Barra
                       </span>
                     )}
@@ -100,7 +100,7 @@ export function NavCustomizeDialog({
         </section>
 
         <section className="space-y-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rubi-gold/85">
+          <h3 className="text-2xs font-semibold uppercase tracking-[0.16em] text-rubi-gold/85">
             Adicionar aos fixados
           </h3>
           {NAV_GROUPS.map((g) => {

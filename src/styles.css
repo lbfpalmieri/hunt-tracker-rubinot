@@ -5,6 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Escala de texto pequeno: nada abaixo de 11px (rótulos, chips, notas de rodapé). */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -166,6 +169,28 @@ html[data-play-mode="party"] {
     letter-spacing: 0.02em;
   }
 
+  /* Toque no celular (WCAG 2.2: alvo de 24px no mínimo, 44px de meta): campos ficam com 44px de
+     altura e botões ganham uma área de toque invisível de 44px sem mudar o layout. Quem já tem
+     posição própria (absolute/fixed/relative/sticky) ou marca data-no-tap-area fica de fora. */
+  @media (pointer: coarse), (max-width: 1023px) {
+    select,
+    textarea,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]) {
+      min-height: 2.75rem;
+    }
+    :where(button, [role="button"], [role="tab"]):not(.absolute, .fixed, .relative, .sticky, [data-no-tap-area]) {
+      position: relative;
+    }
+    :where(button, [role="button"], [role="tab"]):not([data-no-tap-area])::after {
+      content: "";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: max(100%, 2.75rem);
+      height: max(100%, 2.75rem);
+      transform: translate(-50%, -50%);
+    }
+  }
+
   select option {
     background-color: var(--popover);
     color: var(--popover-foreground);
@@ -267,4 +292,16 @@ html[data-play-mode="party"] {
 
 @utility animate-notice-in {
   animation: notice-slide-in 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Movimento reduzido: sem animação nem transição longa pra quem pede (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

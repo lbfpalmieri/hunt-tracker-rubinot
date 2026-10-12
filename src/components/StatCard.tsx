@@ -46,7 +46,7 @@ export function StatCard({ label, value, perHour, hint, icon: Icon, accent = "bl
       {mark && (
         <span
           title={markTitle}
-          className="absolute right-0 top-0 inline-flex items-center gap-1 rounded-bl-lg rounded-tr-lg bg-rubi-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rubi-gold"
+          className="absolute right-0 top-0 inline-flex items-center gap-1 rounded-bl-lg rounded-tr-lg bg-rubi-gold/15 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-rubi-gold"
         >
           <Sparkles className="h-2.5 w-2.5" />
           {mark}
@@ -61,7 +61,7 @@ export function StatCard({ label, value, perHour, hint, icon: Icon, accent = "bl
           {value}
         </span>
         {perHour != null && (
-          <span className="inline-flex items-center rounded-full bg-accent/70 px-2 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
+          <span className="inline-flex items-center rounded-full bg-accent/70 px-2 py-0.5 font-mono text-2xs font-semibold text-muted-foreground">
             {perHour}/h
           </span>
         )}

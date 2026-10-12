@@ -78,7 +78,7 @@ function HeroNudge({
         title={title}
         aria-label={title}
         className={
-          "nudge-attention relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-all hover:scale-110 " +
+          "nudge-attention relative inline-flex h-11 w-11 items-center justify-center rounded-full transition-all hover:scale-110 " +
           t.ring +
           " " +
           (visible ? t.text : t.text + " opacity-90 hover:opacity-100")

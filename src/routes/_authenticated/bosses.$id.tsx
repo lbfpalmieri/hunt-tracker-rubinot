@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Trophy,
 } from "lucide-react";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { GameIcon } from "@/components/GameIcon";
 import { StatCard } from "@/components/StatCard";
@@ -76,7 +77,7 @@ function RotationPage() {
   if (loadingCatalog || loadingRotations) {
     return (
       <AppShell>
-        <div className="h-40 animate-pulse rounded-2xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -286,7 +287,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
                   <PartyBadge party={p.party} estimated={p.estimated} />
                 </div>
               </div>
-              <span className="flex-none text-[11px] font-semibold">
+              <span className="flex-none text-2xs font-semibold">
                 {wait === 0 ? (
                   <span className="text-rubi-success">Disponível</span>
                 ) : wait == null ? (
@@ -351,14 +352,14 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="card-surface border-rubi-danger/25 p-4">
           <SectionTitle icon={Gem}>Melhores drops possíveis</SectionTitle>
-          <p className="-mt-2 mb-2 text-[11px] text-muted-foreground">
+          <p className="-mt-2 mb-2 text-2xs text-muted-foreground">
             Raros e muito raros, do mais valioso pro menos.
           </p>
           <LootHighlightList items={loot.rare} empty="Nenhum drop raro nesses bosses." />
         </div>
         <div className="card-surface p-4">
           <SectionTitle icon={Coins}>Loot valioso que não é raro</SectionTitle>
-          <p className="-mt-2 mb-2 text-[11px] text-muted-foreground">
+          <p className="-mt-2 mb-2 text-2xs text-muted-foreground">
             Comum a semi-raro, valendo 10k ou mais.
           </p>
           <LootHighlightList items={loot.valuable} empty="Nada acima de 10k fora dos raros." />
@@ -386,7 +387,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
               );
             })}
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
+          <p className="mt-2 text-2xs text-muted-foreground">
             Média de dano que os bosses da rotação tomam de cada elemento (100% = normal).
           </p>
         </div>
@@ -419,7 +420,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
                           <span
                             key={d.name}
                             title={d.unitValue ? `${fmtGold(d.unitValue)} cada` : undefined}
-                            className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/30 bg-rubi-gold/10 px-1.5 py-0.5 text-[11px]"
+                            className="inline-flex items-center gap-1 rounded-md border border-rubi-gold/30 bg-rubi-gold/10 px-1.5 py-0.5 text-2xs"
                           >
                             <GameIcon name={d.name} size={16} /> {d.count}x {d.name}
                           </span>
@@ -455,7 +456,7 @@ function RotationDetail({ rotation, catalog }: { rotation: BossRotation; catalog
                     >
                       {fmtGold(r.balance)}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-2xs text-muted-foreground">
                       loot {fmtGold(r.loot)} · supplies {fmtGold(r.supplies)}
                     </div>
                   </div>
@@ -605,7 +606,7 @@ function EditBossesDialog({
           })}
         </ul>
         {matches.length > LIST_LIMIT && (
-          <p className="text-center text-[11px] text-muted-foreground">
+          <p className="text-center text-2xs text-muted-foreground">
             Mostrando {LIST_LIMIT} de {matches.length} — busque pelo nome pra achar os outros.
           </p>
         )}

@@ -37,10 +37,10 @@ export function SetAndWheelPicker({
     <div className="space-y-3">
       <div>
         <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Meus sets
           </span>
-          <Link to="/equipamentos" className="text-[11px] font-medium text-rubi-blue hover:underline">
+          <Link to="/equipamentos" className="text-2xs font-medium text-rubi-blue hover:underline">
             Gerenciar sets
           </Link>
         </div>

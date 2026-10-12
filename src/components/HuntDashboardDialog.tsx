@@ -200,7 +200,7 @@ export function HuntDashboardDialog({
                   />
                   <Sparkles className="h-3.5 w-3.5 text-rubi-blue" /> Incluir Prey
                 </label>
-                <span className="text-[11px] text-muted-foreground/80">
+                <span className="text-2xs text-muted-foreground/80">
                   Por padrão só entram sessões sem bônus na média.
                 </span>
               </div>
@@ -218,7 +218,7 @@ export function HuntDashboardDialog({
                     {hunt.bounty && <BountyBadge bounty={hunt.bounty} showXp />}
                     {hunt.prey && hunt.prey.length > 0 && (
                       <>
-                        <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-gold">
+                        <span className="rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-2xs font-semibold text-rubi-gold">
                           Prey em {hunt.preySessions ?? 0}/{hunt.sessionCount ?? 1} sessões
                         </span>
                         {/* Resumo por tipo de bônus — sem enumerar cada criatura, que numa hunt de
@@ -227,7 +227,7 @@ export function HuntDashboardDialog({
                           <span
                             key={b.value}
                             title={b.hint}
-                            className="rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2 py-0.5 text-[10px] font-semibold text-rubi-blue"
+                            className="rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2 py-0.5 text-2xs font-semibold text-rubi-blue"
                           >
                             {b.emoji} {b.label}
                           </span>
@@ -243,12 +243,12 @@ export function HuntDashboardDialog({
                     const mark = row.prey ? preyMarkLabel(hunt.prey, row.prey) : null;
                     return (
                       <div key={row.label} className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2">
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{row.label}</div>
+                        <div className="text-2xs uppercase tracking-wider text-muted-foreground">{row.label}</div>
                         <div className="font-mono text-sm font-semibold text-foreground">{row.format(v)}</div>
                         {mark && (
                           <div
                             title={row.prey ? preyMarkTitle(hunt.prey, row.prey) : undefined}
-                            className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-wide text-rubi-gold"
+                            className="mt-0.5 truncate text-2xs font-semibold uppercase tracking-wide text-rubi-gold"
                           >
                             {mark}
                           </div>
@@ -350,7 +350,7 @@ export function HuntDashboardDialog({
                             );
                           })}
                         </div>
-                        <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+                        <p className="mt-1.5 text-2xs text-muted-foreground/70">
                           Baseado nos monstros mais mortos, com dados da TibiaWiki (Tibia oficial) — o RubinOT
                           pode ter valores diferentes.
                         </p>

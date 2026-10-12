@@ -21,7 +21,7 @@ export function PreyBadge({
         {prey.map((slot, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-blue"
+            className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-2xs font-semibold text-rubi-blue"
           >
             {slot.creature ? (
               <GameIcon name={slot.creature} size={14} className="flex-none" />
@@ -48,7 +48,7 @@ export function PreyBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-[11px] font-semibold text-rubi-blue ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/50 bg-rubi-blue/10 px-2 py-0.5 text-2xs font-semibold text-rubi-blue ${className}`}
       title={`Prey ativa — ${full}`}
     >
       <Sparkles className="h-3 w-3" />

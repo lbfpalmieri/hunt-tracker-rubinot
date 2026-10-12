@@ -102,7 +102,7 @@ export function PartyOverview({ sessions }: { sessions: HuntSession[] }) {
                     >
                       {fmtGold(Math.round(p.balance / (p.sec / 3600 || 1)))}/h
                     </span>
-                    <span className="block text-[10px] text-muted-foreground">sua parte</span>
+                    <span className="block text-2xs text-muted-foreground">sua parte</span>
                   </span>
                 </li>
               ))}

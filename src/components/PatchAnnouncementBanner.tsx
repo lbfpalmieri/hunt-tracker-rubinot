@@ -53,7 +53,7 @@ export function PatchAnnouncementBanner() {
             onClick={closePatchAnnouncement}
             title="Fechar (continua disponível no sino de avisos, no topo)"
             aria-label="Fechar aviso"
-            className="flex-none rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>

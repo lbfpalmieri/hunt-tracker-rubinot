@@ -45,7 +45,7 @@ function MiscSection({ title, rows, cols }: { title: string; rows: MiscRow[]; co
                   <PositionBadge index={i} />
                   <div className="min-w-0 truncate text-xs font-semibold" title={c.label}>{c.label}</div>
                 </div>
-                <div className="mt-0.5 text-[11px] font-normal text-muted-foreground">{c.sub}</div>
+                <div className="mt-0.5 text-2xs font-normal text-muted-foreground">{c.sub}</div>
               </th>
             ))}
           </tr>
@@ -73,7 +73,7 @@ function MiscSection({ title, rows, cols }: { title: string; rows: MiscRow[]; co
                         {showDiff && (
                           <span
                             title={`Comparado ao maior valor da linha: −${fmtNum(Math.abs(diff))}${pct != null ? ` (−${fmtPct(pct)}%)` : ""}`}
-                            className="inline-flex flex-none items-center gap-1 rounded-full border border-border/50 bg-muted/30 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                            className="inline-flex flex-none items-center gap-1 rounded-full border border-border/50 bg-muted/30 px-1.5 py-0.5 text-2xs font-semibold text-muted-foreground"
                           >
                             −{fmtNum(Math.abs(diff))}
                             {pct != null && ` (−${fmtPct(pct)}%)`}

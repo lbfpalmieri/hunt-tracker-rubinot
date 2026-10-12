@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { useAppStore, useHydrated } from "@/lib/store";
@@ -597,7 +598,7 @@ function ImportPage() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -682,9 +683,9 @@ function ImportPage() {
         <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">Importar</div>
         <h1 className="mt-1 font-brand text-3xl font-bold">Nova sessão de hunt</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Dê <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">Ctrl</kbd>
+          Dê <kbd className="rounded border border-border/70 bg-background/60 px-1 text-2xs">Ctrl</kbd>
           <span className="mx-px">+</span>
-          <kbd className="rounded border border-border/70 bg-background/60 px-1 text-[11px]">V</kbd> em
+          <kbd className="rounded border border-border/70 bg-background/60 px-1 text-2xs">V</kbd> em
           qualquer lugar da tela — o sistema identifica o bloco e encaixa no lugar certo.
         </p>
         {groupMode ? (
@@ -761,7 +762,7 @@ function ImportPage() {
                 </p>
               )}
               {partyDurationMismatch && parsed.personal && (
-                <p className="mb-3 flex items-start gap-1.5 rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 p-2 text-[11px] text-rubi-gold">
+                <p className="mb-3 flex items-start gap-1.5 rounded-lg border border-rubi-gold/40 bg-rubi-gold/10 p-2 text-2xs text-rubi-gold">
                   <AlertTriangle className="mt-px h-3.5 w-3.5 flex-none" />
                   A party durou {fmtDuration(parsed.hunting.durationSec)} e o seu Hunting Analyser{" "}
                   {fmtDuration(parsed.personal.durationSec)} — confira se são da mesma hunt (resete os
@@ -851,7 +852,7 @@ function ImportPage() {
               </h2>
               {activeChar && (
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2.5 py-1 text-[11px] font-semibold text-rubi-blue"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-rubi-blue/40 bg-rubi-blue/10 px-2.5 py-1 text-2xs font-semibold text-rubi-blue"
                   title="Personagem ativo do seu perfil"
                 >
                   <UserCircle2 className="h-3.5 w-3.5" />
@@ -926,7 +927,7 @@ function ImportPage() {
 
               {(ownMatches.length > 0 || communityMatches.length > 0) && !selectedHuntName && (
                 <div className="mt-2 mb-2.5 space-y-2.5 rounded-xl border border-rubi-blue/40 bg-rubi-blue/[0.07] p-3">
-                  <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rubi-blue">
+                  <p className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wider text-rubi-blue">
                     <Sparkles className="h-3.5 w-3.5" />
                     Sugestões pelos monstros
                   </p>
@@ -957,7 +958,7 @@ function ImportPage() {
                             </span>
                             <span
                               className={
-                                "rounded-full px-1.5 py-px text-[10px] font-bold " +
+                                "rounded-full px-1.5 py-px text-2xs font-bold " +
                                 (full
                                   ? "bg-rubi-gold/25 text-rubi-gold"
                                   : "bg-rubi-blue/20 text-rubi-blue")
@@ -966,7 +967,7 @@ function ImportPage() {
                               {m.shared}/{m.total}
                             </span>
                             {full && (
-                              <span className="rounded-full bg-rubi-gold px-1.5 py-px text-[10px] font-bold uppercase tracking-wider text-background">
+                              <span className="rounded-full bg-rubi-gold px-1.5 py-px text-2xs font-bold uppercase tracking-wider text-background">
                                 match total
                               </span>
                             )}
@@ -977,7 +978,7 @@ function ImportPage() {
                   )}
                   {communityMatches.length > 0 && (
                     <div>
-                      <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                         <Globe2 className="h-3 w-3" />
                         Usadas pela comunidade
                       </p>
@@ -1017,7 +1018,7 @@ function ImportPage() {
                               </span>
                               <span
                                 className={
-                                  "rounded-full px-1.5 py-px text-[10px] font-semibold " +
+                                  "rounded-full px-1.5 py-px text-2xs font-semibold " +
                                   (full
                                     ? "bg-rubi-gold/20 text-rubi-gold"
                                     : "bg-muted/40 text-muted-foreground")
@@ -1026,7 +1027,7 @@ function ImportPage() {
                                 {m.shared}/{m.total}
                               </span>
                               {m.suspicious && (
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+                                <span className="text-2xs font-semibold uppercase tracking-wider text-rubi-gold">
                                   nome suspeito
                                 </span>
                               )}
@@ -1069,7 +1070,7 @@ function ImportPage() {
               </div>
 
               {huntNameLooksGeneric && (
-                <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-rubi-gold">
+                <p className="mt-1.5 flex items-start gap-1.5 text-2xs text-rubi-gold">
                   <AlertTriangle className="mt-0.5 h-3 w-3 flex-none" />
                   Esse nome não parece bater com nenhum local conhecido — considere algo descritivo (ex:
                   "Darashia - DT Seal -1") pra ajudar outros jogadores a encontrar essa hunt.
@@ -1188,7 +1189,7 @@ function ImportPage() {
                 <div className="relative flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-14 w-14 flex-none flex-col items-center justify-center rounded-xl border border-rubi-gold/50 bg-background/70">
-                      <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Lvl
                       </span>
                       <span className="font-display text-lg font-bold leading-none tabular-nums text-rubi-gold">
@@ -1223,7 +1224,7 @@ function ImportPage() {
                   <StickyNote className="h-3.5 w-3.5 text-rubi-gold" /> Observação
                   <span className="font-normal normal-case tracking-normal">(opcional)</span>
                 </span>
-                <span className="text-[10px] text-muted-foreground">Só você vê — nunca vai pra Comunidade.</span>
+                <span className="text-2xs text-muted-foreground">Só você vê — nunca vai pra Comunidade.</span>
               </div>
               <NotesEditor value={notes} onChange={setNotes} />
             </div>
@@ -1431,15 +1432,15 @@ function PasteSlot({
           <div className="flex items-center gap-2">
             <span className="truncate font-display text-[15px] font-bold tracking-tight">{label}</span>
             {recommended ? (
-              <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue-soft px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-rubi-blue">
+              <span className="flex-none rounded-full border border-rubi-blue/50 bg-rubi-blue-soft px-2 py-px text-2xs font-semibold uppercase tracking-wider text-rubi-blue">
                 recomendado
               </span>
             ) : optional ? (
-              <span className="flex-none rounded-full border border-border/70 px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="flex-none rounded-full border border-border/70 px-2 py-px text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                 opcional
               </span>
             ) : (
-              <span className="flex-none rounded-full border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
+              <span className="flex-none rounded-full border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-px text-2xs font-semibold uppercase tracking-wider text-rubi-gold">
                 obrigatório
               </span>
             )}
@@ -1480,7 +1481,7 @@ function PasteSlot({
               <ClipboardPaste className="h-3.5 w-3.5 flex-none" />
               {pasting ? "Colando…" : "Colar"}
             </button>
-            <span className="hidden text-[10px] font-medium text-muted-foreground/70 sm:block">
+            <span className="hidden text-2xs font-medium text-muted-foreground/70 sm:block">
               ou <kbd className="rounded border border-border/70 bg-background/60 px-1">Ctrl</kbd>
               <span className="mx-px">+</span>
               <kbd className="rounded border border-border/70 bg-background/60 px-1">V</kbd>
@@ -1545,7 +1546,7 @@ function WizardSteps({
             />
             <span
               className={
-                "mt-1 block truncate text-[11px] font-semibold " +
+                "mt-1 block truncate text-2xs font-semibold " +
                 (i === step ? "text-foreground" : "text-muted-foreground")
               }
             >

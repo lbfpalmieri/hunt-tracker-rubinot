@@ -107,7 +107,7 @@ export function SaveComparisonPanel({ hunts, includeBounty, includePrey }: Props
         {hunts.map((h, i) => (
           <label key={h.key} className="block">
             <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs font-semibold text-foreground">
-              <span className="rounded bg-rubi-blue/20 px-1.5 py-0.5 font-mono text-[10px] text-rubi-blue">
+              <span className="rounded bg-rubi-blue/20 px-1.5 py-0.5 font-mono text-2xs text-rubi-blue">
                 #{i + 1}
               </span>
               <span className="text-rubi-blue">{h.huntName}</span>

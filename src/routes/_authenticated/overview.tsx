@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Users, Coins, ScrollText, Wallet, Trophy, UserCircle2, BarChart3 } from "lucide-react";
 import { PageTabs } from "@/components/nav/PageTabs";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
@@ -116,7 +117,7 @@ function OverviewPage() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -184,11 +185,11 @@ function OverviewPage() {
             </div>
           </div>
           <div className="flex-none">
-            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <div className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
               Tempo total jogado
             </div>
             <div className="mt-1 font-display text-lg font-semibold">{fmtDuration(totals.time)}</div>
-            <div className="text-[11px] text-muted-foreground">{totals.sessions} sessões</div>
+            <div className="text-2xs text-muted-foreground">{totals.sessions} sessões</div>
           </div>
         </div>
       </div>
@@ -223,7 +224,7 @@ function OverviewPage() {
               <article key={r.character.id} className="p-4">
                 <div className="flex min-w-0 items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <Link to="/characters" className="flex min-w-0 items-center gap-1.5 font-display font-semibold hover:text-rubi-blue">
+                    <Link to="/characters" className="flex min-h-11 min-w-0 items-center gap-1.5 font-display font-semibold hover:text-rubi-blue">
                       <span className="truncate">{r.character.name}</span>
                       <LevelBadge level={r.level} />
                     </Link>
@@ -413,7 +414,7 @@ function OverviewPage() {
 function MobileMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
-      <dt className="text-[10px] uppercase text-muted-foreground">{label}</dt>
+      <dt className="text-2xs uppercase text-muted-foreground">{label}</dt>
       <dd className="mt-1 break-words font-mono font-semibold">{value}</dd>
     </div>
   );

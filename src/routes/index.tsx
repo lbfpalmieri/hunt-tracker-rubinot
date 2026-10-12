@@ -147,7 +147,7 @@ function Landing() {
             className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_70%_120%_at_0%_0%,var(--rubi-blue-soft),transparent),radial-gradient(ellipse_60%_120%_at_100%_100%,var(--rubi-gold-soft),transparent)]"
           />
           <div className="text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-rubi-gold">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-rubi-gold/40 bg-rubi-gold-soft px-2.5 py-1 text-2xs font-bold uppercase tracking-widest text-rubi-gold">
               <Globe2 className="h-3 w-3" /> A comunidade em números
             </span>
             <h2 className="mt-3 font-display text-2xl font-bold sm:text-3xl">
@@ -208,7 +208,7 @@ function Stat({
           : "text-rubi-danger";
   return (
     <div className="rounded-xl border border-border/70 bg-background/50 px-4 py-4 text-center backdrop-blur-sm">
-      <dt className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <dt className="flex items-center justify-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
         <Icon className={"h-3.5 w-3.5 " + c} /> {label}
       </dt>
       <dd className={"mt-1 font-display text-2xl font-bold tabular-nums sm:text-3xl " + c}>{value}</dd>

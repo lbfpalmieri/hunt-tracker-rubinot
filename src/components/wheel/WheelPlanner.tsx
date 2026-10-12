@@ -185,7 +185,7 @@ function PointsBar({
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="mb-1 block text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Level
           </span>
           <input
@@ -197,7 +197,7 @@ function PointsBar({
           />
         </label>
         <div>
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="mb-1 block text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Promotion Scrolls
           </span>
           <div className="flex flex-wrap gap-1">
@@ -224,7 +224,7 @@ function PointsBar({
         </div>
         <label className="block">
           <span
-            className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            className="mb-1 block text-2xs font-semibold uppercase tracking-wider text-muted-foreground"
             title="Hunting Task Shop (até 50), The Way of the Monk Quest (10) e mods no Grau IV (até 69)"
           >
             Outros pontos
@@ -557,7 +557,7 @@ function DomainPanel({
             />
           ))}
         </div>
-        <div className="mt-1 grid grid-cols-3 text-center text-[11px] text-muted-foreground">
+        <div className="mt-1 grid grid-cols-3 text-center text-2xs text-muted-foreground">
           {REVELATION_STAGE_POINTS.map((t, k) => (
             <span
               key={t}
@@ -726,7 +726,7 @@ function ModPicker({
   };
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="mb-1 flex items-center justify-between text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
         <span>{label}</span>
         {value != null && <span className="normal-case tracking-normal">{status}</span>}
       </div>
@@ -842,7 +842,7 @@ export function SummaryPanel({ summary, voc }: { summary: WheelSummary; voc: Set
       </div>
 
       <div>
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
           Revelação
         </p>
         <div className="grid grid-cols-2 gap-1.5">
@@ -864,7 +864,7 @@ export function SummaryPanel({ summary, voc }: { summary: WheelSummary; voc: Set
 
       {(perks.length > 0 || extras.length > 0) && (
         <div>
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Convicção
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -892,7 +892,7 @@ export function SummaryPanel({ summary, voc }: { summary: WheelSummary; voc: Set
 
       {(resist.length > 0 || summary.augments.length > 0) && (
         <div>
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Gemas
           </p>
           <div className="flex flex-wrap gap-1.5">

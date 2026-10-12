@@ -54,7 +54,7 @@ export function MobileNav({
                 key={n.id}
                 to={navTarget(n) as typeof n.to}
                 className={
-                  "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium leading-tight transition-colors " +
+                  "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 py-1.5 text-2xs font-medium leading-tight transition-colors " +
                   (active ? "text-rubi-gold" : "text-foreground/75")
                 }
               >
@@ -72,14 +72,14 @@ export function MobileNav({
             aria-expanded={open}
             aria-haspopup="dialog"
             className={
-              "relative flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium leading-tight " +
+              "relative flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-2xs font-medium leading-tight " +
               (moreActive ? "text-rubi-blue" : "text-muted-foreground")
             }
           >
             <Menu className="h-5 w-5" />
             Menu
             {lowCount > 0 && (
-              <span className="absolute right-1/4 top-1.5 flex h-4 min-w-4 animate-pulse items-center justify-center rounded-full bg-rubi-gold px-1 text-[10px] font-bold text-background">
+              <span className="absolute right-1/4 top-1.5 flex h-4 min-w-4 animate-pulse items-center justify-center rounded-full bg-rubi-gold px-1 text-2xs font-bold text-background">
                 {lowCount}
               </span>
             )}
@@ -126,7 +126,7 @@ export function MobileNav({
                 if (items.length === 0) return null;
                 return (
                   <div key={g.id} className="mb-3">
-                    <div className="mb-1.5 px-1 font-brand text-[11px] font-bold uppercase tracking-[0.16em] text-rubi-gold">
+                    <div className="mb-1.5 px-1 font-brand text-2xs font-bold uppercase tracking-[0.16em] text-rubi-gold">
                       {g.label}
                     </div>
                     <div className="grid grid-cols-3 gap-2">
@@ -148,7 +148,7 @@ export function MobileNav({
                             <NavIcon item={n} size={32} />
                             <span className="line-clamp-2">{n.short}</span>
                             {badge > 0 && (
-                              <span className="absolute right-1.5 top-1.5 rounded-full bg-rubi-gold px-1.5 py-0.5 text-[10px] font-bold text-background">
+                              <span className="absolute right-1.5 top-1.5 rounded-full bg-rubi-gold px-1.5 py-0.5 text-2xs font-bold text-background">
                                 {badge}
                               </span>
                             )}

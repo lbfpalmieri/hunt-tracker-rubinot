@@ -229,7 +229,7 @@ function WheelPresetDialog({
         </DialogHeader>
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="mb-1 block text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             Nome da roda
           </span>
           <input

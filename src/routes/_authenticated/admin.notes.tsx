@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -40,7 +41,7 @@ function AdminNotesPage() {
 
   return (
     <AppShell>
-      <Link to="/feedback" className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/feedback" className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
@@ -64,7 +65,7 @@ function AdminNotesPage() {
       </div>
 
       {isLoading ? (
-        <div className="h-40 animate-pulse rounded-xl bg-muted/30" />
+        <Skeleton role="status" aria-label="Carregando" className="h-40 rounded-xl bg-muted/30" />
       ) : error ? (
         <div className="card-surface p-8 text-center text-sm text-muted-foreground">
           {error instanceof Error ? error.message : "Não foi possível carregar."}

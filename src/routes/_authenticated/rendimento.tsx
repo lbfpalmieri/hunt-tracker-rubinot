@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageTabs } from "@/components/nav/PageTabs";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { AppShell } from "@/components/AppShell";
 import { errorMessage } from "@/lib/errors";
 import { EmptyState } from "@/components/EmptyState";
@@ -408,7 +409,7 @@ function RendimentoPage() {
   if (!hydrated) {
     return (
       <AppShell>
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
+        <PageSkeleton />
       </AppShell>
     );
   }
@@ -1006,7 +1007,7 @@ function RendimentoPage() {
                     placeholder="Ex: 160000000"
                     className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-rubi-danger"
                   />
-                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  <p className="mt-1.5 text-2xs text-muted-foreground">
                     Hoje o sistema calcula <strong className="text-foreground">{fmtGold(netBalance)}</strong> de
                     balance pra {active?.name} — a diferença pro que você digitar vira o gasto registrado.
                   </p>
@@ -1327,7 +1328,7 @@ function GoalCard({
         />
       </div>
 
-      <div className="mt-2 flex items-center justify-between text-[11px]">
+      <div className="mt-2 flex items-center justify-between text-2xs">
         <span className="text-muted-foreground">{Math.min(100, Math.round(pct))}% concluído</span>
         {done && (
           <span className="inline-flex items-center gap-1 font-semibold text-rubi-gold">
