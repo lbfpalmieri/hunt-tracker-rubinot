@@ -4,6 +4,7 @@ import { useAppStore, useHydrated } from "@/lib/store";
 import { fmtDate } from "@/lib/format";
 import {
   Plus,
+  Pencil,
   Trash2,
   UserCircle2,
   Star,
@@ -18,6 +19,7 @@ import { confirmDialog } from "@/lib/confirm-dialog";
 import { errorMessage } from "@/lib/errors";
 import { currentLevel } from "@/lib/level";
 import { LevelBadge } from "@/components/LevelBadge";
+import { EditCharacterDialog } from "@/components/EditCharacterDialog";
 
 
 export const Route = createFileRoute("/_authenticated/characters")({
@@ -61,6 +63,8 @@ function CharactersPage() {
   // "new" for the form, character id for existing rows, null = no target
   const [pasteTarget, setPasteTarget] = useState<string | null>("new");
   const [pasteFlash, setPasteFlash] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = characters.find((c) => c.id === editingId) ?? null;
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,7 +292,7 @@ function CharactersPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 sm:flex sm:w-auto">
+                    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 sm:flex sm:w-auto">
                       <button
                         type="button"
                         onClick={() => setPasteTarget(c.id)}
@@ -303,6 +307,15 @@ function CharactersPage() {
                         {pasteTarget === c.id ? "Cole (Ctrl+V)" : "Colar outfit"}
                       </button>
 
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(c.id)}
+                        aria-label={`Editar ${c.name}`}
+                        title="Editar nome, vocação e mundo"
+                        className="flex h-11 w-11 items-center justify-center rounded-lg border border-border text-muted-foreground transition-transform hover:bg-accent hover:text-foreground active:scale-[0.98]"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
                       {!isActive && (
                         <button
                           onClick={() => setActive(c.id)}
@@ -332,6 +345,15 @@ function CharactersPage() {
           )}
         </div>
       </div>
+      {editing && (
+        <EditCharacterDialog
+          key={editing.id}
+          character={editing}
+          vocations={VOCATIONS}
+          open
+          onOpenChange={(o) => !o && setEditingId(null)}
+        />
+      )}
     </AppShell>
   );
 }
