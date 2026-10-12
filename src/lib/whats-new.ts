@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "linked-task-onde-cacei-2026-10-12",
+    date: "2026-10-12",
+    title: "Linked Task: onde você já caçou essas criaturas",
+    description:
+      "Ao abrir uma Linked Task, a aba Combate mostra as 3 hunts do seu histórico em que essa task sairia mais rápido (kills por hora e tempo estimado), com um atalho que abre a calculadora já preenchida com as criaturas e a quantidade.",
+  },
+  {
     id: "valor-loot-item-2026-10-12",
     date: "2026-10-12",
     title: "Sessão: valor de cada item do loot",
