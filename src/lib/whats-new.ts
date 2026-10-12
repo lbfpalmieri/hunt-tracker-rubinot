@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "tutorial-por-pagina-2026-10-12",
+    date: "2026-10-12",
+    title: "Tutorial passo a passo em cada página",
+    description:
+      "Na primeira visita a cada página do app abre um tutorial curto, passo a passo. Marque Não mostrar de novo pra ele não voltar, ou clique em Pular tutorial pra fechar só por agora. O botão de interrogação no cabeçalho abre o tutorial da página quando você quiser, e dentro dele dá pra reativar todos.",
+  },
+  {
     id: "linked-task-onde-cacei-2026-10-12",
     date: "2026-10-12",
     title: "Linked Task: onde você já caçou essas criaturas",

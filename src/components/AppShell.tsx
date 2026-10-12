@@ -13,6 +13,7 @@ import { PatchAnnouncementBanner } from "./PatchAnnouncementBanner";
 import { PatchAnnouncementBell } from "./PatchAnnouncementBell";
 import { PlayModeSwitch } from "./PlayModeSwitch";
 import { WhatsNewBell } from "./WhatsNewBell";
+import { PageTutorial, TutorialHelpButton } from "./PageTutorial";
 import { supabase } from "@/integrations/supabase/client";
 import { NAV_GROUPS, navItemForPath } from "@/lib/nav-items";
 import { initNavPrefs, useNavPrefs } from "@/lib/nav-prefs";
@@ -115,6 +116,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <PlayModeSwitch />
             <PatchAnnouncementBell />
             <WhatsNewBell />
+            <TutorialHelpButton />
             <Link
               to="/wiki"
               title="Wiki"
@@ -129,6 +131,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       <PatchAnnouncementBanner />
+      <PageTutorial />
 
       <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:py-8 lg:pb-8">{children}</main>
 
