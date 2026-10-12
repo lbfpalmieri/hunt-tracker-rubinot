@@ -137,10 +137,10 @@ export function PreyPicker({
           return (
             <div
               key={i}
-              className="flex flex-col overflow-hidden rounded-xl border-2 border-zinc-600/60 bg-zinc-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+              className="flex flex-col overflow-hidden rounded-xl border-2 border-border bg-background/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
             >
-              <div className="flex items-center justify-between gap-2 border-b border-zinc-700/80 bg-zinc-800/80 px-3 py-1.5">
-                <span className="truncate text-xs font-semibold text-zinc-300">
+              <div className="flex items-center justify-between gap-2 border-b border-border bg-surface/80 px-3 py-1.5">
+                <span className="truncate text-xs font-semibold text-foreground/85">
                   {locked
                     ? "Bloqueado"
                     : slot.creature
@@ -152,7 +152,7 @@ export function PreyPicker({
                     type="button"
                     onClick={() => patch(i, { ...EMPTY })}
                     aria-label={`Limpar slot ${i + 1}`}
-                    className="rounded p-0.5 text-zinc-400 hover:bg-zinc-700 hover:text-foreground"
+                    className="rounded p-0.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -161,8 +161,8 @@ export function PreyPicker({
 
               {locked ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4 text-center">
-                  <div className="flex h-16 w-14 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800/80">
-                    <Lock className="h-6 w-6 text-zinc-500" />
+                  <div className="flex h-16 w-14 items-center justify-center rounded-lg border border-border bg-surface/80">
+                    <Lock className="h-6 w-6 text-muted-foreground/70" />
                   </div>
                   <p className="text-[11px] text-muted-foreground">
                     3º slot é comprado na Store (<i>Permanent Prey Slot</i>).
@@ -191,14 +191,14 @@ export function PreyPicker({
                           className={
                             "flex h-20 flex-col items-center justify-center gap-0.5 rounded-md border p-1 transition-colors " +
                             (selected
-                              ? "border-white bg-zinc-700/70"
+                              ? "border-white bg-surface-elevated/70"
                               : taken
                                 ? "cursor-not-allowed border-transparent opacity-25"
-                                : "border-transparent bg-zinc-800/60 hover:border-zinc-500")
+                                : "border-transparent bg-surface/60 hover:border-muted-foreground/40")
                           }
                         >
                           <GameIcon name={c} size={48} />
-                          <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-zinc-400">
+                          <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-muted-foreground">
                             {c}
                           </span>
                         </button>
@@ -207,7 +207,7 @@ export function PreyPicker({
                   </div>
 
                   {slot.creature && (
-                    <div className="rounded-lg border border-zinc-700 bg-zinc-800/60 p-2">
+                    <div className="rounded-lg border border-border bg-surface/60 p-2">
                       <div className="flex justify-center gap-1.5">
                         {PREY_BONUSES.map((b) => {
                           const on = slot.bonus === b.value;
@@ -252,7 +252,7 @@ export function PreyPicker({
                                     "h-3.5 w-3.5 " +
                                     (n <= slot.stars
                                       ? "fill-rubi-gold text-rubi-gold"
-                                      : "text-zinc-600")
+                                      : "text-muted-foreground/70")
                                   }
                                 />
                               </button>
@@ -310,7 +310,7 @@ export function PreyPicker({
           {chosen.map((s) => (
             <span
               key={s.creature}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-600/60 bg-zinc-900/70 py-1 pl-1 pr-2.5 text-xs"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background/70 py-1 pl-1 pr-2.5 text-xs"
             >
               <GameIcon name={s.creature!} size={28} />
               {s.bonus && (

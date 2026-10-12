@@ -14,8 +14,8 @@
 const POSITION_STYLES = [
   "border-rubi-blue/50 bg-rubi-blue/15 text-rubi-blue",
   "border-rubi-gold/50 bg-rubi-gold/15 text-rubi-gold",
-  "border-emerald-400/50 bg-emerald-400/15 text-emerald-400",
-  "border-fuchsia-400/50 bg-fuchsia-400/15 text-fuchsia-400",
+  "border-rubi-success/50 bg-rubi-success/15 text-rubi-success",
+  "border-cat-fuchsia/50 bg-cat-fuchsia/15 text-cat-fuchsia",
 ];
 
 export function PositionBadge({ index, className = "" }: { index: number; className?: string }) {

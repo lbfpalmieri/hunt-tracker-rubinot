@@ -5,16 +5,16 @@ import type { MixEntry } from "@/lib/hunt-advisor";
 
 /** Cor de cada elemento (barras e chips do Hunt Advisor). */
 export const ELEMENT_COLOR: Record<AttackElement, string> = {
-  physical: "#a3a3a3",
-  fire: "#f97316",
-  earth: "#22c55e",
-  energy: "#a855f7",
-  ice: "#38bdf8",
-  holy: "#facc15",
-  death: "#8b5cf6",
-  lifedrain: "#ef4444",
-  manadrain: "#3b82f6",
-  drown: "#14b8a6",
+  physical: "var(--el-physical)",
+  fire: "var(--el-fire)",
+  earth: "var(--el-earth)",
+  energy: "var(--el-energy)",
+  ice: "var(--el-ice)",
+  holy: "var(--el-holy)",
+  death: "var(--el-death)",
+  lifedrain: "var(--el-lifedrain)",
+  manadrain: "var(--el-manadrain)",
+  drown: "var(--el-drown)",
 };
 
 export const elementLabel = (el: string) => {

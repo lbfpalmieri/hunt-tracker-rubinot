@@ -997,7 +997,7 @@ function ImportPage() {
                               className={
                                 "inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-all active:scale-95 " +
                                 (m.suspicious
-                                  ? "border-dashed border-amber-500/50 bg-amber-500/[0.06] opacity-70 hover:opacity-100"
+                                  ? "border-dashed border-rubi-gold/50 bg-rubi-gold/[0.06] opacity-70 hover:opacity-100"
                                   : full
                                     ? "border-rubi-gold/70 bg-rubi-gold/10 hover:border-rubi-gold hover:bg-rubi-gold/20"
                                     : "border-border/60 bg-background/40 hover:border-rubi-blue/60 hover:bg-rubi-blue/10")
@@ -1005,7 +1005,7 @@ function ImportPage() {
                             >
                               {full && <Crown className="h-3.5 w-3.5 flex-none text-rubi-gold" />}
                               {m.suspicious && (
-                                <AlertTriangle className="h-3.5 w-3.5 flex-none text-amber-400" />
+                                <AlertTriangle className="h-3.5 w-3.5 flex-none text-rubi-gold" />
                               )}
                               <span
                                 className={
@@ -1026,7 +1026,7 @@ function ImportPage() {
                                 {m.shared}/{m.total}
                               </span>
                               {m.suspicious && (
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-rubi-gold">
                                   nome suspeito
                                 </span>
                               )}

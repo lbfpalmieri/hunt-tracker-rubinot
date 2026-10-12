@@ -71,7 +71,7 @@ interface ThreadMessage {
 const STATUS_META: Record<Status, { label: string; className: string }> = {
   novo: { label: "Novo", className: "bg-rubi-blue-soft text-rubi-blue" },
   em_analise: { label: "Em análise", className: "bg-rubi-gold/20 text-rubi-gold" },
-  respondido: { label: "Respondido", className: "bg-emerald-500/15 text-emerald-400" },
+  respondido: { label: "Respondido", className: "bg-rubi-success/15 text-rubi-success" },
   resolvido: { label: "Resolvido", className: "bg-muted text-muted-foreground" },
 };
 
@@ -471,7 +471,7 @@ function FeedbackPage() {
           </button>
 
           {sent && (
-            <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-2 text-xs text-emerald-400">
+            <p className="rounded-lg border border-rubi-success/40 bg-rubi-success/10 p-2 text-xs text-rubi-success">
               Recebemos sua mensagem! Você verá a resposta aqui.
             </p>
           )}

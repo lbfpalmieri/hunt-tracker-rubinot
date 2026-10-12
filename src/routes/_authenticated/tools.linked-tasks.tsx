@@ -185,7 +185,7 @@ function LinkedTasksPage() {
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
-            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${(doneCount / totalTasks) * 100}%` }} />
+            <div className="h-full bg-rubi-success transition-all" style={{ width: `${(doneCount / totalTasks) * 100}%` }} />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
@@ -196,7 +196,7 @@ function LinkedTasksPage() {
                 "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 " +
                 (doneCount === totalTasks
                   ? "border-border/60 text-muted-foreground hover:border-rubi-danger/50 hover:text-rubi-danger"
-                  : "border-emerald-500/60 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20")
+                  : "border-rubi-success/60 bg-rubi-success/10 text-rubi-success hover:bg-rubi-success/20")
               }
             >
               <Check className="h-4 w-4" />
@@ -241,7 +241,7 @@ function LinkedTasksPage() {
                   (roomId === room.id
                     ? "border-rubi-blue bg-rubi-blue-soft text-rubi-blue"
                     : full
-                      ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-400"
+                      ? "border-rubi-success/60 bg-rubi-success/10 text-rubi-success"
                       : "border-border/60 text-muted-foreground hover:border-rubi-blue/40")
                 }
               >
@@ -258,7 +258,7 @@ function LinkedTasksPage() {
                   <span
                     className={
                       "rounded-full px-1.5 py-0.5 text-[10px] font-semibold " +
-                      (full ? "bg-emerald-500/20 text-emerald-400" : "bg-accent text-muted-foreground")
+                      (full ? "bg-rubi-success/20 text-rubi-success" : "bg-accent text-muted-foreground")
                     }
                   >
                     {doneN}/{total}
@@ -297,7 +297,7 @@ function LinkedTasksPage() {
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
               <div
-                className="h-full bg-emerald-500 transition-all"
+                className="h-full bg-rubi-success transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -309,7 +309,7 @@ function LinkedTasksPage() {
                 "mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 " +
                 (full
                   ? "border-border/60 text-muted-foreground hover:border-rubi-danger/50 hover:text-rubi-danger"
-                  : "border-emerald-500/60 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20")
+                  : "border-rubi-success/60 bg-rubi-success/10 text-rubi-success hover:bg-rubi-success/20")
               }
             >
               <Check className="h-4 w-4" />
@@ -349,7 +349,7 @@ function LinkedTasksPage() {
               onKeyDown={(e) => { if (e.key === "Enter") setActive({ room, task }); }}
               className={
                 "card-surface relative flex cursor-pointer items-start gap-3 p-4 pr-12 text-left transition-colors hover:border-rubi-blue/50 " +
-                (isDone ? "border-emerald-500/50 bg-emerald-500/5" : "")
+                (isDone ? "border-rubi-success/50 bg-rubi-success/5" : "")
               }
             >
               {charId && (
@@ -361,8 +361,8 @@ function LinkedTasksPage() {
                   className={
                     "absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border transition-colors " +
                     (isDone
-                      ? "border-emerald-500 bg-emerald-500 text-background"
-                      : "border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-400")
+                      ? "border-rubi-success bg-rubi-success text-background"
+                      : "border-border text-muted-foreground hover:border-rubi-success hover:text-rubi-success")
                   }
                 >
                   <Check className="h-4 w-4" />
