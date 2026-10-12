@@ -24,6 +24,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Na tela Personagens, o lápis ao lado de cada personagem abre a edição de nome, vocação e mundo. Mudou de nome ou de vocação no jogo? Corrija aqui e o histórico de sessões continua todo no mesmo personagem.",
   },
   {
+    id: "hunt-renomear-2026-10-12",
+    date: "2026-10-12",
+    title: "Sessões: dá pra renomear a hunt",
+    description:
+      "Errou o nome da hunt ao salvar a sessão? Na página da sessão, clique no lápis ao lado do título, corrija e confirme. Sessões com o mesmo nome passam a contar juntas na média da hunt, sem precisar apagar e colar o analyser de novo.",
+  },
+  {
     id: "conselho-task-orcamento-2026-10-12",
     date: "2026-10-12",
     title: "Linked Task: conselho de set e imbuement respeita o orçamento",
