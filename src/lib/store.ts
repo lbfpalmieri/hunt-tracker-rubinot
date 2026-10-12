@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { toast } from "sonner";
+import { scheduleUndoable } from "./undoable";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fixBalanceSign,
@@ -12,6 +14,9 @@ import { normalizePrey, type PreySlot } from "./prey";
 import { normalizeSetup, type SessionSetup } from "./session-setup";
 import { currentLevel } from "./level";
 import { normalizeParty, type PartyInfo } from "./party";
+
+/** Tempo (ms) que o "Desfazer" fica disponível depois de excluir uma sessão. */
+const UNDO_DELETE_MS = 8000;
 
 /** Repara sessões antigas: duração ausente (deriva do intervalo/miscellaneous) e Balance negativo
  *  salvo como positivo (fixBalanceSign). */
@@ -152,6 +157,8 @@ interface State {
   addSession: (s: Omit<HuntSession, "id" | "createdAt" | "gearUrl" | "isPublic" | "bounty" | "prey" | "notes" | "setup" | "party"> & { gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null; setup?: SessionSetup | null; party?: PartyInfo | null }) => Promise<HuntSession>;
   updateSession: (id: string, patch: { huntName?: string; gearUrl?: string | null; isPublic?: boolean; bounty?: BountyInfo | null; prey?: PreySlot[] | null; notes?: string | null; setup?: SessionSetup | null; party?: PartyInfo | null; hunting?: HuntingData }) => Promise<void>;
   removeSession: (id: string) => Promise<void>;
+  /** Esconde a sessão na hora e só apaga de verdade depois de `delayMs`; `undo()` traz de volta. */
+  removeSessionWithUndo: (id: string, delayMs?: number) => { undo: () => boolean; flush: () => Promise<void> } | null;
   addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
 
@@ -605,6 +612,38 @@ export const useAppStore = create<State>()((set, get) => ({
     const { error } = await db.from("hunt_sessions").delete().eq("id", id);
     if (error) throw error;
     set((s) => ({ sessions: s.sessions.filter((se) => se.id !== id) }));
+  },
+
+  removeSessionWithUndo: (id, delayMs = UNDO_DELETE_MS) => {
+    const session = get().sessions.find((se) => se.id === id);
+    if (!session) return null;
+    const restore = () =>
+      set((s) =>
+        s.sessions.some((se) => se.id === id)
+          ? s
+          : {
+              sessions: [...s.sessions, session].sort((a, b) =>
+                b.createdAt.localeCompare(a.createdAt),
+              ),
+            },
+      );
+    // Some da tela já; o banco só é tocado quando o tempo do "Desfazer" acaba.
+    set((s) => ({ sessions: s.sessions.filter((se) => se.id !== id) }));
+    const task = scheduleUndoable(async () => {
+      const { error } = await db.from("hunt_sessions").delete().eq("id", id);
+      if (error) {
+        restore();
+        toast.error("Não consegui excluir a sessão", { description: error.message });
+      }
+    }, delayMs);
+    return {
+      undo: () => {
+        if (!task.cancel()) return false;
+        restore();
+        return true;
+      },
+      flush: () => task.flush(),
+    };
   },
 
 

@@ -17,18 +17,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    id: "exportar-sessoes-2026-10-12",
+    id: "desfazer-excluir-sessao-2026-10-12",
     date: "2026-10-12",
-    title: "Sessões: exportar tudo em CSV ou JSON",
+    title: "Sessões: desfazer depois de excluir",
     description:
-      "Na tela Sessões, os botões CSV e JSON baixam todas as suas sessões (todos os personagens) com data, hunt, personagem, duração, balance/h, Raw XP/h, loot, supplies e mais. O CSV abre direto no Excel ou Google Planilhas; o JSON serve de backup. Suas observações não vão no arquivo.",
-  },
-  {
-    id: "editar-personagem-2026-10-12",
-    date: "2026-10-12",
-    title: "Personagens: editar nome, vocação e mundo",
-    description:
-      "Na tela Personagens, o lápis ao lado de cada personagem abre a edição de nome, vocação e mundo. Mudou de nome ou de vocação no jogo? Corrija aqui e o histórico de sessões continua todo no mesmo personagem.",
+      "Excluiu uma sessão sem querer? Aparece um aviso com o botão Desfazer por 8 segundos e a sessão volta inteira. Passado esse tempo, ela é apagada de verdade. Se você fechar a aba nesse intervalo, a sessão continua salva.",
   },
   {
     id: "hunt-renomear-2026-10-12",
