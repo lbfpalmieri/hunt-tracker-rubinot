@@ -24,6 +24,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Na tela Sessões, os botões CSV e JSON baixam todas as suas sessões (todos os personagens) com data, hunt, personagem, duração, balance/h, Raw XP/h, loot, supplies e mais. O CSV abre direto no Excel ou Google Planilhas; o JSON serve de backup. Suas observações não vão no arquivo.",
   },
   {
+    id: "hunt-renomear-2026-10-12",
+    date: "2026-10-12",
+    title: "Sessões: dá pra renomear a hunt",
+    description:
+      "Errou o nome da hunt ao salvar a sessão? Na página da sessão, clique no lápis ao lado do título, corrija e confirme. Sessões com o mesmo nome passam a contar juntas na média da hunt, sem precisar apagar e colar o analyser de novo.",
+  },
+  {
     id: "conselho-task-orcamento-2026-10-12",
     date: "2026-10-12",
     title: "Linked Task: conselho de set e imbuement respeita o orçamento",
