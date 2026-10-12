@@ -140,8 +140,11 @@ export const onHiddenChange = (fn: ((list: string[]) => void) | null) => {
 };
 export const getHiddenTutorials = () => read(() => localStorage, HIDDEN_KEY);
 /** Troca a lista inteira (vinda da conta) sem disparar o salvamento de volta. */
-export const replaceHiddenTutorials = (list: string[]) =>
+export const replaceHiddenTutorials = (list: string[]) => {
   write(() => localStorage, HIDDEN_KEY, [...new Set(list)]);
+  // A conta pode responder depois da página abrir: avisa a tela pra rever se ainda deve mostrar.
+  useTutorialUi.setState((s) => ({ hiddenVersion: s.hiddenVersion + 1 }));
+};
 
 export const isTutorialHidden = (key: string) => getHiddenTutorials().includes(key);
 export const hideTutorial = (key: string) => {
@@ -162,6 +165,9 @@ export const skipTutorial = (key: string) =>
 export const shouldAutoOpen = (key: string) => !isTutorialHidden(key) && !isTutorialSkipped(key);
 
 /** Abertura manual (botão de ajuda do cabeçalho). */
-export const useTutorialUi = create<{ manualKey: string | null; openManual: (k: string | null) => void }>(
-  (set) => ({ manualKey: null, openManual: (manualKey) => set({ manualKey }) }),
-);
+export const useTutorialUi = create<{
+  manualKey: string | null;
+  openManual: (k: string | null) => void;
+  /** Sobe toda vez que a lista de "não mostrar de novo" é trocada. */
+  hiddenVersion: number;
+}>((set) => ({ manualKey: null, openManual: (manualKey) => set({ manualKey }), hiddenVersion: 0 }));
