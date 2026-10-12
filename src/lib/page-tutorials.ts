@@ -128,12 +128,30 @@ function write(storage: () => Storage, key: string, list: string[]) {
   }
 }
 
-export const isTutorialHidden = (key: string) => read(() => localStorage, HIDDEN_KEY).includes(key);
-export const hideTutorial = (key: string) =>
-  write(() => localStorage, HIDDEN_KEY, [...new Set([...read(() => localStorage, HIDDEN_KEY), key])]);
+/**
+ * "Não mostrar de novo": o navegador guarda a lista (vale pra visitante e sem rede); com login, o
+ * nav-prefs.ts também grava na conta (user_nav_prefs.tutorials_hidden) e o tutorial segue o jogador
+ * entre aparelhos. Se a coluna ainda não existe no banco, continua só no navegador.
+ */
+let onChange: ((list: string[]) => void) | null = null;
+/** O nav-prefs registra aqui pra salvar na conta toda vez que a lista muda. */
+export const onHiddenChange = (fn: ((list: string[]) => void) | null) => {
+  onChange = fn;
+};
+export const getHiddenTutorials = () => read(() => localStorage, HIDDEN_KEY);
+/** Troca a lista inteira (vinda da conta) sem disparar o salvamento de volta. */
+export const replaceHiddenTutorials = (list: string[]) =>
+  write(() => localStorage, HIDDEN_KEY, [...new Set(list)]);
+
+export const isTutorialHidden = (key: string) => getHiddenTutorials().includes(key);
+export const hideTutorial = (key: string) => {
+  replaceHiddenTutorials([...getHiddenTutorials(), key]);
+  onChange?.(getHiddenTutorials());
+};
 export const resetTutorials = () => {
-  write(() => localStorage, HIDDEN_KEY, []);
+  replaceHiddenTutorials([]);
   write(() => sessionStorage, SKIP_KEY, []);
+  onChange?.([]);
 };
 /** "Pular tutorial": some só nesta visita ao app (volta no próximo acesso, a menos que marque "não mostrar de novo"). */
 export const isTutorialSkipped = (key: string) => read(() => sessionStorage, SKIP_KEY).includes(key);
