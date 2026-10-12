@@ -14,10 +14,12 @@ import { aggregateByHunt, fromOwnSession, perHour } from "@/lib/compare";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 import {
-  ScrollText, Search, Filter, ChevronRight, GitCompareArrows, StickyNote, Layers, LayoutDashboard,
+  ScrollText, Search, Filter, Download, ChevronRight, GitCompareArrows, StickyNote, Layers, LayoutDashboard,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "@/components/Pagination";
+import { toast } from "sonner";
+import { buildSessionRows, downloadText, sessionsToCsv, sessionsToJson } from "@/lib/sessions-export";
 
 const SESSIONS_PAGE_SIZE = 20;
 const HUNTS_PAGE_SIZE = 12;
@@ -48,6 +50,19 @@ function SessionsList() {
   const sessions = useModeSessions();
   const mode = usePlayMode();
   const activeId = useAppStore((s) => s.activeCharacterId);
+  const allSessions = useAppStore((s) => s.sessions);
+
+  // Exporta TODAS as sessões (todos os personagens e modos), não só o que está filtrado na tela.
+  const exportAll = (kind: "csv" | "json") => {
+    const rows = buildSessionRows(allSessions, characters);
+    const day = new Date().toISOString().slice(0, 10);
+    if (kind === "csv") {
+      downloadText(`sessoes-rubinot-${day}.csv`, sessionsToCsv(rows), "text/csv;charset=utf-8");
+    } else {
+      downloadText(`sessoes-rubinot-${day}.json`, sessionsToJson(rows), "application/json");
+    }
+    toast.success(`${rows.length} sessões exportadas`, { description: kind.toUpperCase() });
+  };
 
   const [q, setQ] = useState("");
   const [filterChar, setFilterChar] = useState<string>(activeId ?? "all");
@@ -145,6 +160,30 @@ function SessionsList() {
           <span className="text-sm text-muted-foreground">
             {view === "sessions" ? visible.length : huntsList.length} resultado(s)
           </span>
+          {allSessions.length > 0 && (
+            <div
+              role="group"
+              aria-label="Exportar todas as sessões"
+              className="inline-flex overflow-hidden rounded-lg border border-border text-sm font-medium"
+            >
+              <button
+                type="button"
+                onClick={() => exportAll("csv")}
+                title="Baixar todas as sessões em CSV (abre no Excel e no Google Planilhas)"
+                className="inline-flex min-h-11 items-center gap-2 px-3 transition-colors hover:bg-accent active:scale-[0.98]"
+              >
+                <Download className="h-4 w-4 text-rubi-blue" /> CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => exportAll("json")}
+                title="Baixar todas as sessões em JSON (backup)"
+                className="inline-flex min-h-11 items-center gap-2 border-l border-border px-3 transition-colors hover:bg-accent active:scale-[0.98]"
+              >
+                JSON
+              </button>
+            </div>
+          )}
           {sessions.length > 0 && (
             <Link
               to="/sessions/compare"
