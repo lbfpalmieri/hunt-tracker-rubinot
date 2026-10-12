@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   TUTORIALS,
   hideTutorial,
+  getHiddenTutorials,
   isTutorialHidden,
+  onHiddenChange,
+  replaceHiddenTutorials,
   resetTutorials,
   shouldAutoOpen,
   skipTutorial,
@@ -75,5 +78,28 @@ describe("não mostrar de novo e pular", () => {
     resetTutorials();
     expect(shouldAutoOpen("import")).toBe(true);
     expect(shouldAutoOpen("sessions")).toBe(true);
+  });
+});
+
+describe("lembrança na conta", () => {
+  it("avisa quem salva na conta quando a lista muda, e reativar manda lista vazia", () => {
+    fakeStorages();
+    const fn = vi.fn();
+    onHiddenChange(fn);
+    hideTutorial("import");
+    expect(fn).toHaveBeenLastCalledWith(["import"]);
+    resetTutorials();
+    expect(fn).toHaveBeenLastCalledWith([]);
+    onHiddenChange(null);
+  });
+
+  it("lista vinda da conta troca a do navegador sem disparar salvamento de volta", () => {
+    fakeStorages();
+    const fn = vi.fn();
+    onHiddenChange(fn);
+    replaceHiddenTutorials(["sessions", "sessions", "bosses"]);
+    expect(getHiddenTutorials()).toEqual(["sessions", "bosses"]);
+    expect(fn).not.toHaveBeenCalled();
+    onHiddenChange(null);
   });
 });

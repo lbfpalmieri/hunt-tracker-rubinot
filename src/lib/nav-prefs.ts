@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_PINNED, NAV_ITEMS } from "./nav-items";
+import { getHiddenTutorials, onHiddenChange, replaceHiddenTutorials } from "./page-tutorials";
 
 /**
  * Preferências do menu: quais itens o usuário fixou no topo (e em que ordem) e se o menu lateral
@@ -103,7 +104,15 @@ async function saveToDb() {
   };
   let { error } = await db
     .from("user_nav_prefs")
-    .upsert({ ...row, play_mode: mode }, { onConflict: "user_id" });
+    .upsert(
+      { ...row, play_mode: mode, tutorials_hidden: getHiddenTutorials() },
+      { onConflict: "user_id" },
+    );
+  // Coluna tutorials_hidden ainda não existe: salva sem ela (os tutoriais ficam no navegador).
+  if (error)
+    ({ error } = await db
+      .from("user_nav_prefs")
+      .upsert({ ...row, play_mode: mode }, { onConflict: "user_id" }));
   // Coluna play_mode ainda não existe: salva o resto (o modo fica no cache local).
   if (error) ({ error } = await db.from("user_nav_prefs").upsert(row, { onConflict: "user_id" }));
   if (error) console.warn("[nav-prefs] não salvou no banco:", error.message);
@@ -129,12 +138,27 @@ async function syncFromDb() {
 
   const read = (cols: string) =>
     db.from("user_nav_prefs").select(cols).eq("user_id", uid).maybeSingle();
-  let { data, error } = await read("pinned, sidebar_expanded, play_mode");
+  let { data, error } = await read("pinned, sidebar_expanded, play_mode, tutorials_hidden");
+  const hasTutorialsColumn = !error;
+  if (error) ({ data, error } = await read("pinned, sidebar_expanded, play_mode"));
   const hasModeColumn = !error;
   if (error) ({ data, error } = await read("pinned, sidebar_expanded"));
   if (error) return; // tabela ainda não existe / sem rede: segue com o cache local.
 
+  let pushTutorials = false;
+  // Tutoriais: junta o que a conta já tinha com o que foi marcado neste navegador (nada se perde).
+  if (hasTutorialsColumn) {
+    const fromDb = Array.isArray(data?.tutorials_hidden)
+      ? (data.tutorials_hidden as unknown[]).filter((x): x is string => typeof x === "string")
+      : [];
+    const local = getHiddenTutorials();
+    const merged = [...new Set([...fromDb, ...local])];
+    replaceHiddenTutorials(merged);
+    pushTutorials = merged.length !== fromDb.length;
+  }
+
   syncedUid = uid;
+  if (pushTutorials) persist();
   if (changedBeforeSync) {
     changedBeforeSync = false;
     persist();
@@ -152,6 +176,7 @@ async function syncFromDb() {
 }
 
 export function initNavPrefs() {
+  onHiddenChange(() => persist());
   if (!useNavPrefs.getState().ready) {
     const cache = readCache();
     useNavPrefs.setState({

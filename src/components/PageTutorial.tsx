@@ -21,13 +21,14 @@ export function PageTutorial() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const manualKey = useTutorialUi((s) => s.manualKey);
   const openManual = useTutorialUi((s) => s.openManual);
+  const hiddenVersion = useTutorialUi((s) => s.hiddenVersion);
   const tutorial = tutorialFor(pathname);
   const [autoKey, setAutoKey] = useState<string | null>(null);
 
   // Só decide abrir no navegador (localStorage), depois da página montar — não bloqueia o carregamento.
   useEffect(() => {
     setAutoKey(tutorial && shouldAutoOpen(tutorial.key) ? tutorial.key : null);
-  }, [tutorial?.key]);
+  }, [tutorial?.key, hiddenVersion]);
 
   const openKey = manualKey ?? autoKey;
   if (!tutorial || openKey !== tutorial.key) return null;
