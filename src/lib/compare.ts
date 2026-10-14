@@ -349,6 +349,39 @@ export function isHuntValid(h: CompareHunt): boolean {
   return (h.totalDurationSec ?? h.durationSec) >= MIN_HUNT_DURATION_SEC;
 }
 
+/** O card é a média de várias sessões (e não uma sessão só)? */
+export const isHuntAverage = (h: CompareHunt): boolean => (h.sessionCount ?? 1) > 1;
+
+/**
+ * "Ver por sessão" do Comparar hunts: sessões individuais (sem média e sem o piso de 30 min — cada
+ * uma é projetada pra 1h pela própria duração) agrupadas pela hunt. Dentro do grupo, a mais recente
+ * primeiro; os grupos seguem a sessão mais recente de cada hunt.
+ */
+export function groupSessionsByHunt(sessions: CompareHunt[]): { huntName: string; items: CompareHunt[] }[] {
+  const sorted = sessions.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const groups = new Map<string, { huntName: string; items: CompareHunt[] }>();
+  for (const s of sorted) {
+    const k = s.huntName.trim().toLowerCase();
+    const g = groups.get(k);
+    if (g) g.items.push(s);
+    else groups.set(k, { huntName: s.huntName, items: [s] });
+  }
+  return Array.from(groups.values());
+}
+
+/**
+ * Um item selecionado no comparativo ainda tem dados com os filtros novos (`keep`)? Média da hunt =
+ * sobra alguma sessão com o mesmo nome; sessão individual = ela mesma passa no filtro.
+ */
+export function stillHasData(sel: CompareHunt, raw: CompareHunt[], keep: (h: CompareHunt) => boolean): boolean {
+  if (!isHuntAverage(sel)) {
+    const own = raw.find((h) => h.id === sel.id);
+    return own ? keep(own) : false;
+  }
+  const name = sel.huntName.trim().toLowerCase();
+  return raw.some((h) => h.huntName.trim().toLowerCase() === name && keep(h));
+}
+
 export function topKills(h: CompareHunt, n = 3): { name: string; count: number }[] {
   return h.kills
     .slice()

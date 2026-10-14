@@ -1,6 +1,6 @@
 import { Check, Globe2, User } from "lucide-react";
 import type { CompareHunt } from "@/lib/compare";
-import { fmtDate, fmtGold, fmtNum } from "@/lib/format";
+import { fmtDate, fmtDuration, fmtGold, fmtNum } from "@/lib/format";
 import { BountyBadge } from "@/components/BountyBadge";
 import { PreyBadge } from "@/components/PreyBadge";
 
@@ -61,7 +61,7 @@ export function HuntPickerCard({ hunt, selected, disabled, onToggle }: Props) {
         </span>
       </div>
       <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-        {agg ? `Média de ${hunt.sessionCount} sessões` : fmtDate(hunt.createdAt)}
+        {agg ? `Média de ${hunt.sessionCount} sessões` : `${fmtDate(hunt.createdAt)} · ${fmtDuration(hunt.durationSec)}`}
       </div>
 
       <div className="mt-2 flex items-center justify-between text-xs">
