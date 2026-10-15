@@ -51,7 +51,7 @@ export const TUTORIALS: Tutorial[] = [
     ["Rubini Coins", "A outra aba converte e compara valores de Rubini Coins."],
   ]),
   T("linked-tasks", "Linked Tasks", [
-    ["Escolha a sala e a task", "Toque numa task pra abrir o conselho dela."],
+    ["Escolha a sala e a task", "A página abre na sala que você está fazendo (ou na próxima, se completou a anterior). Toque numa task pra abrir o conselho dela."],
     ["Conselho da task", "Abas de Combate (elemento, dano, onde você já caçou), Set, Imbuements e Recompensas. Criatura fraca não pede set caro."],
     ["Acompanhe o progresso", "Marque as tasks concluídas; o progresso geral e por sala aparece no topo."],
   ]),

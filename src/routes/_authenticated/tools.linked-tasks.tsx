@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link2, Search, AlertTriangle, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { LinkedTaskDialog } from "@/components/LinkedTaskDialog";
 import { fmtNum } from "@/lib/format";
+import { currentLinkedTaskRoom } from "@/lib/linked-task-rooms";
 import {
   getLinkedTasks,
   type LinkedTaskEntry,
@@ -57,18 +58,43 @@ function LinkedTasksPage() {
   const charId = useAppStore((s) => s.activeCharacterId);
   const charName = useAppStore((s) => s.characters.find((c) => c.id === s.activeCharacterId)?.name ?? "");
   const [done, setDone] = useState<Set<string>>(new Set());
+  /** Personagem cujo progresso já chegou do banco (antes disso `done` vazio não quer dizer "nada feito"). */
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   useEffect(() => {
     setDone(new Set());
+    setLoadedFor(null);
     if (!charId) return;
     let alive = true;
     db.from("linked_task_progress")
       .select("task_key")
       .eq("character_id", charId)
       .then(({ data: rows }: { data: { task_key: string }[] | null }) => {
-        if (alive) setDone(new Set((rows ?? []).map((r) => r.task_key)));
+        if (!alive) return;
+        setDone(new Set((rows ?? []).map((r) => r.task_key)));
+        setLoadedFor(charId);
       });
     return () => { alive = false; };
   }, [charId]);
+
+  // Abre na sala atual (pela metade) ou na próxima depois das completas, em vez de "Todas as salas".
+  // Só ao abrir a página / trocar de personagem: marcar task aqui não muda a sala, e a escolha
+  // manual de sala vence.
+  const pickedByUser = useRef(false);
+  const autoRoomFor = useRef<string | null>(null);
+  useEffect(() => {
+    pickedByUser.current = false;
+  }, [charId]);
+  useEffect(() => {
+    if (!charId || loadedFor !== charId || rooms.length === 0) return;
+    if (autoRoomFor.current === charId) return;
+    autoRoomFor.current = charId;
+    if (pickedByUser.current) return;
+    setRoomId(currentLinkedTaskRoom(rooms, done) ?? "");
+  }, [charId, loadedFor, rooms, done]);
+  const pickRoom = (id: number | "") => {
+    pickedByUser.current = true;
+    setRoomId(id);
+  };
   const toggle = async (key: string) => {
     if (!charId) return;
     const was = done.has(key);
@@ -217,7 +243,8 @@ function LinkedTasksPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setRoomId("")}
+            onClick={() => pickRoom("")}
+            aria-pressed={roomId === ""}
             className={
               "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors " +
               (roomId === ""
@@ -235,7 +262,8 @@ function LinkedTasksPage() {
               <button
                 key={room.id}
                 type="button"
-                onClick={() => setRoomId(roomId === room.id ? "" : room.id)}
+                onClick={() => pickRoom(roomId === room.id ? "" : room.id)}
+                aria-pressed={roomId === room.id}
                 className={
                   "inline-flex items-center gap-2 rounded-lg border py-1 pl-1 pr-3 text-sm font-medium transition-colors " +
                   (roomId === room.id
@@ -333,7 +361,13 @@ function LinkedTasksPage() {
         <EmptyState
           icon={Link2}
           title="Nenhuma task encontrada"
-          description="Tente outro nome de task ou criatura."
+          description={
+            selectedRoom
+              ? `Nenhuma task com esse nome na sala ${selectedRoom.name}.`
+              : "Tente outro nome de task ou criatura."
+          }
+          ctaLabel={selectedRoom ? "Buscar em todas as salas" : undefined}
+          onCta={selectedRoom ? () => pickRoom("") : undefined}
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

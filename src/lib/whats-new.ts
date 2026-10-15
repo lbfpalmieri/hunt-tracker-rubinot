@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "linked-task-sala-atual-2026-10-15",
+    date: "2026-10-15",
+    title: "Linked Tasks abre na sua sala atual",
+    description:
+      "A página de Linked Tasks agora abre direto na sala que você está fazendo ou, se você completou a anterior, na próxima. Nada de rolar a lista inteira até achar sua task. Pra ver tudo, toque em Todas as salas.",
+  },
+  {
     id: "comparar-por-sessao-2026-10-14",
     date: "2026-10-14",
     title: "Comparar hunts: compare sessões da mesma hunt",
