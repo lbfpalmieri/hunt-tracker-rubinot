@@ -1,13 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
-import { GitCompareArrows, Search, X, ArrowDown, Clock, Trophy, Sparkles, AlertTriangle, BookmarkCheck } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  GitCompareArrows,
+  Search,
+  X,
+  ArrowDown,
+  Clock,
+  Trophy,
+  Sparkles,
+  AlertTriangle,
+  BookmarkCheck,
+  FlaskConical,
+  Layers,
+  ListOrdered,
+} from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { EmptyState } from "@/components/EmptyState";
 import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
+import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { useModeSessions, usePlayMode } from "@/lib/play-mode";
 import { useAuthState } from "@/lib/use-auth-state";
@@ -20,12 +34,15 @@ import {
   filterByBonusInclusion,
   fromCommunityRow,
   fromOwnSession,
+  groupSessionsByHunt,
+  isHuntAverage,
   isHuntValid,
+  stillHasData,
   type CommunityRow,
   type CompareHunt,
 } from "@/lib/compare";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
-import { fmtDuration } from "@/lib/format";
+import { fmtDate, fmtDuration } from "@/lib/format";
 
 export const Route = createFileRoute("/tools/compare")({
   head: () => ({
@@ -48,6 +65,12 @@ export const Route = createFileRoute("/tools/compare")({
   component: ComparePage,
 });
 
+/** "Hunt" = média de todas as sessões da hunt; "Sessão" = cada sessão sozinha (ex.: testes de set na mesma hunt). */
+type CompareView = "hunts" | "sessions";
+const VIEW_KEY = "rubinot:compare-view";
+/** Quantos cards a lista mostra de uma vez (os mais recentes; a busca acha os outros). */
+const LIST_CAP = 60;
+
 function ComparePage() {
   const hydrated = useHydrated();
   const sessions = useModeSessions();
@@ -56,6 +79,23 @@ function ComparePage() {
   const visitor = useAuthState() === "out";
   const [ownTab, setTab] = useState<"own" | "community">("own");
   const tab = visitor ? "community" : ownTab;
+  const [view, setViewState] = useState<CompareView>("hunts");
+  // Lembra o modo de ver neste navegador (lido depois da hidratação pra não divergir do SSR).
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(VIEW_KEY) === "sessions") setViewState("sessions");
+    } catch {
+      // sem storage: começa em "Hunt"
+    }
+  }, []);
+  const setView = (v: CompareView) => {
+    setViewState(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      // sem storage: só não lembra na próxima visita
+    }
+  };
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
   const [includeBounty, setIncludeBounty] = useState(true);
@@ -95,14 +135,17 @@ function ComparePage() {
     () => filterByBonusInclusion(communityRaw, includeBounty, includePrey),
     [communityRaw, includeBounty, includePrey],
   );
-  const ownHuntsAll = useMemo(
-    () => aggregateByHunt(filterByLatestPatch(ownFilteredByBonus, (h) => h.createdAt, includePrePatch)),
+  // Sessões individuais já filtradas — base das médias e do "Ver por Sessão" (que não tem piso de duração).
+  const ownSessions = useMemo(
+    () => filterByLatestPatch(ownFilteredByBonus, (h) => h.createdAt, includePrePatch),
     [ownFilteredByBonus, includePrePatch],
   );
-  const communityHuntsAll = useMemo(
-    () => aggregateByHunt(filterByLatestPatch(communityFilteredByBonus, (h) => h.createdAt, includePrePatch)),
+  const communitySessions = useMemo(
+    () => filterByLatestPatch(communityFilteredByBonus, (h) => h.createdAt, includePrePatch),
     [communityFilteredByBonus, includePrePatch],
   );
+  const ownHuntsAll = useMemo(() => aggregateByHunt(ownSessions), [ownSessions]);
+  const communityHuntsAll = useMemo(() => aggregateByHunt(communitySessions), [communitySessions]);
   const ownHunts = useMemo(() => ownHuntsAll.filter(isHuntValid), [ownHuntsAll]);
   const communityHunts = useMemo(() => communityHuntsAll.filter(isHuntValid), [communityHuntsAll]);
   const hiddenCount =
@@ -112,19 +155,19 @@ function ComparePage() {
     return patch ? raw.filter((h) => isPrePatch(h.createdAt, patch)).length : 0;
   }, [tab, ownFilteredByBonus, communityFilteredByBonus, patch]);
 
-  /** Currently selected hunts (by name) that would have zero sessions left under a hypothetical filter change. */
+  /** Selecionados (média da hunt ou sessão) que ficariam sem dados com a mudança de filtro. */
   const selectedThatWouldVanish = (nextIncludeBounty: boolean, nextIncludePrey: boolean, nextIncludePrePatch: boolean) =>
-    selected.filter((sel) => {
-      const raw = sel.source === "own" ? ownRaw : communityRaw;
-      const stillHasSessions = raw.some(
-        (h) =>
-          h.huntName.trim().toLowerCase() === sel.huntName.trim().toLowerCase() &&
-          (nextIncludeBounty || !h.bounty) &&
-          (nextIncludePrey || !(h.prey && h.prey.length)) &&
-          (nextIncludePrePatch || !isPrePatch(h.createdAt)),
-      );
-      return !stillHasSessions;
-    });
+    selected.filter(
+      (sel) =>
+        !stillHasData(
+          sel,
+          sel.source === "own" ? ownRaw : communityRaw,
+          (h) =>
+            (nextIncludeBounty || !h.bounty) &&
+            (nextIncludePrey || !(h.prey && h.prey.length)) &&
+            (nextIncludePrePatch || !isPrePatch(h.createdAt)),
+        ),
+    );
 
   const applyBonusFilter = async (kind: "bounty" | "prey" | "prePatch", checked: boolean) => {
     const nextBounty = kind === "bounty" ? checked : includeBounty;
@@ -133,7 +176,9 @@ function ComparePage() {
     if (!checked) {
       const vanishing = selectedThatWouldVanish(nextBounty, nextPrey, nextPrePatch);
       if (vanishing.length > 0) {
-        const names = vanishing.map((h) => h.huntName).join("\n");
+        const names = vanishing
+          .map((h) => (isHuntAverage(h) ? h.huntName : `${h.huntName} (sessão de ${fmtDate(h.createdAt)})`))
+          .join("\n");
         const many = vanishing.length > 1;
         const description =
           kind === "prePatch"
@@ -155,7 +200,14 @@ function ComparePage() {
   };
 
 
-  const list = tab === "own" ? ownHunts : communityHunts;
+  const list =
+    view === "sessions"
+      ? (tab === "own" ? ownSessions : communitySessions)
+          .slice()
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      : tab === "own"
+        ? ownHunts
+        : communityHunts;
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return list;
@@ -167,8 +219,34 @@ function ComparePage() {
     );
   }, [list, q]);
 
+  const sessionGroups = useMemo(
+    () => (view === "sessions" ? groupSessionsByHunt(visible.slice(0, LIST_CAP)) : null),
+    [view, visible],
+  );
+
   const selectedKeys = new Set(selected.map((h) => h.key));
   const full = selected.length >= MAX_COMPARE;
+
+  // Misc Data (charm, imbuement, item upgrade) só existe nas suas sessões individuais.
+  const [showMisc, setShowMisc] = useState(true);
+  const miscSessions = useMemo(
+    () =>
+      selected.map((h) =>
+        h.source === "own" && !isHuntAverage(h) ? sessions.find((s) => s.id === h.id) : undefined,
+      ),
+    [selected, sessions],
+  );
+  const hasMisc = miscSessions.some(Boolean);
+  const miscCols = useMemo(
+    () =>
+      selected.map((h) => ({
+        key: h.key,
+        label: h.huntName,
+        sub: isHuntAverage(h) ? `Média de ${h.sessionCount} sessões` : fmtDate(h.createdAt),
+      })),
+    [selected],
+  );
+  const anyAverage = selected.some(isHuntAverage);
 
   const toggle = (h: CompareHunt) =>
     setSelected((prev) => {
@@ -176,6 +254,16 @@ function ComparePage() {
       if (prev.length >= MAX_COMPARE) return prev;
       return [...prev, h];
     });
+
+  const pickerCard = (h: CompareHunt) => (
+    <HuntPickerCard
+      key={h.key}
+      hunt={h}
+      selected={selectedKeys.has(h.key)}
+      disabled={full}
+      onToggle={() => toggle(h)}
+    />
+  );
 
   return (
     <SiteShell>
@@ -186,8 +274,10 @@ function ComparePage() {
             <GitCompareArrows className="h-7 w-7 text-rubi-blue" /> Comparar hunts
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Cada card é uma hunt (média de todas as sessões dela). Clique para selecionar até {MAX_COMPARE} e o
-            comparativo aparece automaticamente abaixo.
+            {view === "sessions"
+              ? "Cada card é uma sessão (sem média), agrupada pela hunt — dá pra comparar testes de set, roda ou rotação feitos na mesma hunt."
+              : "Cada card é uma hunt (média de todas as sessões dela)."}{" "}
+            Clique para selecionar até {MAX_COMPARE} e o comparativo aparece automaticamente abaixo.
           </p>
 
         </div>
@@ -239,6 +329,31 @@ function ComparePage() {
             className="w-full rounded-lg border border-border bg-background/60 py-2 pl-9 pr-3 text-sm"
           />
         </div>
+        <div
+          role="group"
+          aria-label="Ver por"
+          className="grid flex-none grid-cols-2 gap-1 rounded-lg border border-border p-1"
+        >
+          {(
+            [
+              ["hunts", "Hunt (média)", Layers],
+              ["sessions", "Sessão", ListOrdered],
+            ] as const
+          ).map(([v, label, Icon]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              className={
+                "inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors " +
+                (view === v ? "bg-rubi-blue/20 text-rubi-blue" : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              <Icon className="h-4 w-4 flex-none" /> {label}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-none flex-wrap items-center gap-x-4 gap-y-2">
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <input
@@ -275,21 +390,33 @@ function ComparePage() {
         </div>
       </div>
       <p className="-mt-2 mb-1 text-xs text-muted-foreground">
-        Desmarque pra tirar sessões com esse bônus da média das hunts — útil pra ver o rendimento "limpo",
-        sem prey ou bounty.
+        {view === "sessions"
+          ? 'Desmarque pra esconder as sessões com esse bônus — útil pra ver o rendimento "limpo", sem prey ou bounty.'
+          : 'Desmarque pra tirar sessões com esse bônus da média das hunts — útil pra ver o rendimento "limpo", sem prey ou bounty.'}
       </p>
       <p className="mb-4 text-xs text-muted-foreground">
-        Só entram aqui hunts com pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} somados de sessões — evita
-        que uma sessão curta e isolada pareça um resultado absurdo quando projetada para 1h.
-        {hiddenCount > 0 &&
-          ` ${hiddenCount} hunt${hiddenCount > 1 ? "s" : ""} escondida${hiddenCount > 1 ? "s" : ""} por enquanto — continue registrando sessões nela${hiddenCount > 1 ? "s" : ""}.`}
+        {view === "sessions" ? (
+          <>
+            Sessão de qualquer duração entra: cada uma é projetada para 1h pela própria duração (sessão curta
+            oscila mais).
+            {visible.length > LIST_CAP &&
+              ` Mostrando as ${LIST_CAP} mais recentes — busque pelo nome da hunt pra achar as outras.`}
+          </>
+        ) : (
+          <>
+            Só entram aqui hunts com pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} somados de sessões — evita
+            que uma sessão curta e isolada pareça um resultado absurdo quando projetada para 1h.
+            {hiddenCount > 0 &&
+              ` ${hiddenCount} hunt${hiddenCount > 1 ? "s" : ""} escondida${hiddenCount > 1 ? "s" : ""} por enquanto — continue registrando sessões nela${hiddenCount > 1 ? "s" : ""} ou use Ver por Sessão.`}
+          </>
+        )}
         {patch && prePatchCount > 0 && !includePrePatch &&
           ` ${prePatchCount} sessão(ões) de antes do ${patch.label} também ficam de fora por padrão.`}
       </p>
 
       {full && (
         <p className="mb-3 text-xs text-rubi-gold">
-          Limite de {MAX_COMPARE} hunts atingido — remova uma para escolher outra.
+          Limite de {MAX_COMPARE} itens atingido — remova um para escolher outro.
         </p>
       )}
 
@@ -309,17 +436,27 @@ function ComparePage() {
           ctaLabel={tab === "own" ? "Importar sessão" : undefined}
           ctaTo={tab === "own" ? "/import" : undefined}
         />
+      ) : sessionGroups ? (
+        <div className="space-y-6">
+          {sessionGroups.map((g) => (
+            <div key={g.huntName}>
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Layers className="h-3.5 w-3.5 flex-none text-rubi-blue" />
+                <span className="min-w-0 break-words">{g.huntName}</span>
+                <span className="flex-none font-normal normal-case tracking-normal">
+                  · {g.items.length} {g.items.length === 1 ? "sessão" : "sessões"}
+                </span>
+                <span className="h-px flex-1 bg-border/60" />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {g.items.map(pickerCard)}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visible.slice(0, 60).map((h) => (
-            <HuntPickerCard
-              key={h.key}
-              hunt={h}
-              selected={selectedKeys.has(h.key)}
-              disabled={full}
-              onToggle={() => toggle(h)}
-            />
-          ))}
+          {visible.slice(0, LIST_CAP).map(pickerCard)}
         </div>
       )}
 
@@ -329,7 +466,7 @@ function ComparePage() {
       >
         {selected.length < 2 ? (
           <div className="card-surface p-6 text-center text-sm text-muted-foreground">
-            Selecione pelo menos 2 hunts para gerar o comparativo.
+            Selecione pelo menos 2 {view === "sessions" ? "sessões" : "hunts"} para gerar o comparativo.
           </div>
         ) : (
           <>
@@ -337,10 +474,33 @@ function ComparePage() {
               <h2 className="font-display text-xl font-bold">Comparativo ({selected.length})</h2>
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock className="h-3.5 w-3.5 flex-none text-rubi-blue" />
-                Ritmo médio projetado para 1 hora de caça
+                {anyAverage ? "Ritmo médio projetado para 1 hora de caça" : "Cada sessão projetada para 1 hora de caça"}
               </span>
             </div>
             <CompareTable hunts={selected} />
+            {hasMisc && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowMisc((v) => !v)}
+                  aria-pressed={showMisc}
+                  className={
+                    "mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition-all " +
+                    (showMisc
+                      ? "border-rubi-blue bg-rubi-blue text-primary-foreground shadow-glow-blue"
+                      : "border-border bg-muted/40 text-foreground hover:border-rubi-blue/50 hover:bg-rubi-blue/10")
+                  }
+                >
+                  <FlaskConical className="h-3.5 w-3.5 flex-none" />
+                  {showMisc ? "Esconder Misc Data" : "Ver Misc Data (charm, imbuement, item upgrade)"}
+                </button>
+                {showMisc && (
+                  <div className="mt-3">
+                    <SessionMiscCompare sessions={miscSessions} cols={miscCols} />
+                  </div>
+                )}
+              </>
+            )}
             {!visitor && (
               <SaveComparisonPanel
                 hunts={selected}

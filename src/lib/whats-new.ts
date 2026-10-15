@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "comparar-por-sessao-2026-10-14",
+    date: "2026-10-14",
+    title: "Comparar hunts: compare sessões da mesma hunt",
+    description:
+      "Testou set, roda ou rotação diferentes na mesma hunt? Em Comparar hunts, troque Ver por para Sessão: cada sessão aparece sozinha (sem média), agrupada pela hunt, e entra com qualquer duração, já que cada uma é projetada para 1 hora pela própria duração. O comparativo mostra o setup e o Misc Data de cada sessão.",
+  },
+  {
     id: "tutorial-segue-conta-2026-10-12",
     date: "2026-10-12",
     title: "Tutoriais seguem a sua conta",

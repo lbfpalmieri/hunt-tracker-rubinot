@@ -4,9 +4,13 @@ import {
   aggregateByHunt,
   filterByBonusInclusion,
   fromOwnSession,
+  groupSessionsByHunt,
+  isHuntAverage,
   isHuntValid,
   perHour,
+  stillHasData,
   topKills,
+  type CompareHunt,
 } from "../compare";
 import { detectDeathLoss, totalXpLost } from "../deaths";
 import { IMB_TIER_COST, aggregateImbuements, computeImbuement } from "../imbuements";
@@ -208,6 +212,42 @@ describe("aggregateByHunt — média da hunt", () => {
     expect(filterByBonusInclusion(list, true, true)).toHaveLength(3);
     expect(filterByBonusInclusion(list, false, true)).toHaveLength(2);
     expect(filterByBonusInclusion(list, false, false)).toHaveLength(1);
+  });
+});
+
+describe("Comparar hunts — ver por sessão", () => {
+  const own = (over: Parameters<typeof makeSession>[0]) => fromOwnSession(makeSession(over), "Char", "Knight");
+
+  it("groupSessionsByHunt: sessões da mesma hunt juntas, sem média e sem piso de duração", () => {
+    const curta = own({ huntName: "Asura", createdAt: "2026-10-03T00:00:00Z", hunting: { durationSec: 5 * 60, balance: 50 } });
+    const longa = own({ huntName: "asura", createdAt: "2026-10-01T00:00:00Z", hunting: { durationSec: 2 * HOUR, balance: 900 } });
+    const outra = own({ huntName: "Falcon", createdAt: "2026-10-02T00:00:00Z" });
+    const groups = groupSessionsByHunt([longa, outra, curta]);
+    expect(groups.map((g) => g.huntName)).toEqual(["Asura", "Falcon"]);
+    expect(groups[0].items).toEqual([curta, longa]);
+    // cada sessão continua com os próprios números: o "/h" sai da duração dela
+    expect(perHour(curta.balance, curta.durationSec)).toBe(600);
+    expect(perHour(longa.balance, longa.durationSec)).toBe(450);
+  });
+
+  it("isHuntAverage só vale pra card com mais de uma sessão", () => {
+    const [uma] = aggregateByHunt([own({})]);
+    const [duas] = aggregateByHunt([own({}), own({})]);
+    expect(isHuntAverage(own({}))).toBe(false);
+    expect(isHuntAverage(uma)).toBe(false);
+    expect(isHuntAverage(duas)).toBe(true);
+  });
+
+  it("stillHasData: sessão confere a si mesma; média confere qualquer sessão da hunt", () => {
+    const comBounty = own({ huntName: "Asura", bounty: bounty(1) });
+    const limpa = own({ huntName: "Asura" });
+    const raw = [comBounty, limpa];
+    const semBounty = (h: CompareHunt) => !h.bounty;
+    expect(stillHasData(comBounty, raw, semBounty)).toBe(false);
+    expect(stillHasData(limpa, raw, semBounty)).toBe(true);
+    const [media] = aggregateByHunt(raw);
+    expect(stillHasData(media, raw, semBounty)).toBe(true);
+    expect(stillHasData(media, [comBounty], semBounty)).toBe(false);
   });
 });
 
