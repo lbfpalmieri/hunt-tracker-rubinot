@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "landing-nova-2026-10-16",
+    date: "2026-10-16",
+    title: "Página inicial nova e login que volta pra onde você estava",
+    description:
+      "A página inicial foi refeita: mostra um Hunting Analyser real virando sessão no app, os números da Comunidade e as hunts mais recentes. Abriu um link do app sem estar logado (ex.: Linked Tasks)? Agora você cai na página inicial, entra com o Google em um clique e volta direto pra página que tinha aberto.",
+  },
+  {
     id: "linked-task-sala-atual-2026-10-15",
     date: "2026-10-15",
     title: "Linked Tasks abre na sua sala atual",

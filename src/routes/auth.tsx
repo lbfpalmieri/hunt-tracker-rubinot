@@ -1,8 +1,20 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Cloud, Globe2, ShieldCheck, Swords } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { takeLoginRedirect } from "@/lib/auth-redirect";
 import { errorMessage } from "@/lib/errors";
+import { useGoogleSignIn } from "@/lib/use-google-sign-in";
 import logo from "@/assets/dragon-logo.png.asset.json";
+import { HeroPreview } from "@/components/landing/HeroPreview";
+import {
+  DiamondDivider,
+  GoogleButton,
+  LandingBackdrop,
+  LandingFooter,
+  LandingHeader,
+  SecondaryLink,
+} from "@/components/landing/LandingParts";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -31,122 +43,148 @@ const DEV_LOGIN = (() => {
   return email && password && local ? { email, password } : null;
 })();
 
+const PERKS = [
+  { icon: Swords, text: "Suas sessões com Raw XP/h, lucro/h e monstros/h" },
+  { icon: Cloud, text: "Salvo na nuvem: abre no PC e no celular" },
+  { icon: ShieldCheck, text: "Seu e-mail nunca aparece pra outros jogadores" },
+] as const;
+
 function AuthPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const google = useGoogleSignIn();
+  // "checking" enquanto lê a sessão: na volta do Google a tela não pisca o formulário.
+  const [checking, setChecking] = useState(true);
 
-  // If already signed in (session was set by the OAuth callback or a previous visit),
-  // bounce straight to the dashboard.
+  // A URL de retorno do Google (cadastrada no Supabase) é /auth. Com a sessão pronta, leva pra
+  // página que a pessoa tentou abrir (guardada antes do login) ou pro Dashboard.
   useEffect(() => {
-    let cancelled = false;
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      navigate({ href: takeLoginRedirect() ?? "/dashboard", replace: true });
+    };
     supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled && data.session) navigate({ to: "/", replace: true });
+      if (data.session) go();
+      else if (!done) setChecking(false);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) go();
     });
     return () => {
-      cancelled = true;
+      done = true;
+      sub.subscription.unsubscribe();
     };
   }, [navigate]);
 
-  const handleGoogle = async () => {
-    setLoading(true);
-    setError(null);
-    // Login Google direto no Supabase (sem o broker do Lovable). O Supabase
-    // redireciona de volta para /auth com a sessão na URL; o useEffect acima
-    // detecta a sessão e manda para a página inicial.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin + "/auth" },
-    });
-    if (error) {
-      setError(errorMessage(error));
-      setLoading(false);
-    }
-    // Sem erro: redirecionamento para o Google em andamento.
-  };
-
   const handleDevLogin = async () => {
     if (!DEV_LOGIN) return;
-    setLoading(true);
-    setError(null);
+    google.setLoading(true);
+    google.setError(null);
     const { error } = await supabase.auth.signInWithPassword(DEV_LOGIN);
     if (error) {
-      setError(errorMessage(error));
-      setLoading(false);
-      return;
+      google.setError(errorMessage(error));
+      google.setLoading(false);
     }
-    navigate({ to: "/", replace: true });
+    // Com sucesso, o onAuthStateChange acima leva pro destino.
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/60">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center">
-            <img src={logo.url} alt="RubinOT Hunt Tracker" className="h-14 w-auto object-contain sm:h-16" />
-          </Link>
+    <div className="relative flex min-h-screen flex-col overflow-x-clip">
+      <LandingBackdrop />
+      <LandingHeader action={<SecondaryLink to="/" size="sm">Conhecer o app</SecondaryLink>} />
 
-        </div>
-      </header>
+      <main className="mx-auto grid w-full max-w-7xl flex-1 items-center gap-12 px-4 py-10 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,26rem)_1fr]">
+        <div className="panel-gilded relative mx-auto w-full max-w-md overflow-hidden p-7 text-center sm:p-9">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_70%_100%_at_50%_0%,color-mix(in_oklab,var(--rubi-blue)_25%,transparent),transparent)]"
+          />
+          <div className="relative">
+            <img
+              src={logo.url}
+              alt=""
+              width={96}
+              height={96}
+              className="mx-auto h-20 w-20 object-contain drop-shadow-[0_0_28px_var(--rubi-blue-soft)] sm:h-24 sm:w-24"
+            />
+            <h1 className="mt-4 font-brand text-3xl font-bold">Entrar no Hunt Tracker</h1>
 
-      <main className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-12 sm:px-6">
-        <div className="card-surface w-full p-8 text-center">
-          <div className="text-xs font-medium uppercase tracking-widest text-rubi-gold">
-            Bem-vindo
-          </div>
-          <h1 className="mt-2 font-brand text-3xl font-bold">Entrar na sua conta</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Suas hunts ficam salvas na nuvem e disponíveis em qualquer dispositivo.
-          </p>
-
-          <button
-            onClick={handleGoogle}
-            disabled={loading}
-            className="mt-8 inline-flex w-full items-center justify-center gap-3 rounded-lg bg-rubi-blue px-4 py-3 text-sm font-semibold text-primary-foreground shadow-glow-blue transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            <GoogleGlyph />
-            {loading ? "Conectando..." : "Continuar com Google"}
-          </button>
-
-          {DEV_LOGIN && (
-            <div className="mt-4 rounded-lg border border-dashed border-rubi-gold/50 bg-rubi-gold/5 p-3">
-              <button
-                onClick={handleDevLogin}
-                disabled={loading}
-                className="inline-flex w-full items-center justify-center rounded-lg border border-rubi-gold/60 px-4 py-2.5 text-sm font-semibold text-rubi-gold transition-colors hover:bg-rubi-gold/10 disabled:opacity-50"
-              >
-                Entrar como usuário de teste
-              </button>
-              <p className="mt-2 text-2xs text-muted-foreground">
-                Banco local de desenvolvimento — nada aqui vai pra produção. O Google não funciona
-                neste banco.
+            {checking ? (
+              <p role="status" className="mt-6 text-sm text-muted-foreground">
+                Conferindo sua conta...
               </p>
-            </div>
-          )}
+            ) : (
+              <>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Um clique com a sua conta Google. Sem senha nova pra lembrar.
+                </p>
 
-          {error && (
-            <p className="mt-4 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-3 text-xs text-rubi-danger">
-              {error}
-            </p>
-          )}
+                <GoogleButton
+                  onClick={() => void google.signIn()}
+                  loading={google.loading}
+                  size="lg"
+                  className="mt-7 w-full"
+                >
+                  Continuar com Google
+                </GoogleButton>
 
-          <p className="mt-6 text-2xs text-muted-foreground">
-            Ao continuar você concorda em compartilhar seu e-mail para identificação. Sem spam,
-            sem venda de dados.
-          </p>
+                {DEV_LOGIN && (
+                  <div className="mt-4 rounded-lg border border-dashed border-rubi-gold/50 bg-rubi-gold/5 p-3">
+                    <button
+                      type="button"
+                      onClick={handleDevLogin}
+                      disabled={google.loading}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-rubi-gold/60 px-4 py-2.5 text-sm font-semibold text-rubi-gold transition-colors hover:bg-rubi-gold/10 disabled:opacity-50"
+                    >
+                      Entrar como usuário de teste
+                    </button>
+                    <p className="mt-2 text-2xs text-muted-foreground">
+                      Banco local de desenvolvimento — nada aqui vai pra produção. O Google não
+                      funciona neste banco.
+                    </p>
+                  </div>
+                )}
+
+                {google.error && (
+                  <p
+                    role="alert"
+                    className="mt-4 rounded-lg border border-rubi-danger/40 bg-rubi-danger/10 p-3 text-xs text-rubi-danger"
+                  >
+                    Não deu pra abrir o login do Google: {google.error}
+                  </p>
+                )}
+
+                <DiamondDivider className="my-6" />
+
+                <ul className="space-y-2.5 text-left text-sm">
+                  {PERKS.map(({ icon: Icon, text }) => (
+                    <li key={text} className="flex items-start gap-2.5">
+                      <Icon className="mt-0.5 h-4 w-4 flex-none text-rubi-gold" aria-hidden />
+                      <span className="text-muted-foreground">{text}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <SecondaryLink to="/community" size="md" className="mt-6 w-full">
+                  <Globe2 className="h-4 w-4" /> Ver a Comunidade sem conta
+                </SecondaryLink>
+
+                <p className="mt-5 text-2xs text-muted-foreground">
+                  Usamos o e-mail do Google só para identificar a sua conta. Sem spam, sem venda de
+                  dados.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="hidden lg:block">
+          <HeroPreview />
         </div>
       </main>
-    </div>
-  );
-}
 
-function GoogleGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
-      <path
-        fill="#fff"
-        d="M21.35 11.1H12v2.9h5.35c-.23 1.4-1.7 4.1-5.35 4.1-3.22 0-5.85-2.66-5.85-5.95S8.78 6.2 12 6.2c1.83 0 3.06.78 3.76 1.45l2.57-2.48C16.75 3.72 14.6 2.8 12 2.8 6.9 2.8 2.8 6.9 2.8 12s4.1 9.2 9.2 9.2c5.31 0 8.83-3.73 8.83-8.98 0-.6-.06-1.06-.13-1.52z"
-      />
-    </svg>
+      <LandingFooter />
+    </div>
   );
 }

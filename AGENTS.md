@@ -104,6 +104,13 @@ Telas de hunt (Dashboard, Sessões, Comparar, Ranking, Calculadora, Comunidade) 
 mode no getCommunitySessions; telas do personagem (Meu rendimento, Imbuements, Todos os personagens, saldo
 de gold) usam todas as sessões. Nomes dos membros NUNCA vão pra Comunidade (publicParty em
 community.functions.ts expõe só size/split).
+LANDING E LOGIN: "/" (routes/index.tsx) é a vitrine pública; quem tem sessão vai pro /dashboard. Sem login, as rotas de
+_authenticated mandam pra landing com ?redirect=<página> (nunca mais pra uma /auth crua). O destino passa por
+safeRedirectPath (src/lib/auth-redirect.ts: só caminho interno, nada de "//", "\\" ou URL de fora = sem open redirect;
+teste em __tests__/auth-redirect.test.ts) e fica em sessionStorage; o OAuth do Google SEMPRE volta pra origin + "/auth"
+(é a URL cadastrada no Supabase — não pôr query nela), e o /auth lê a sessão e leva ao destino guardado ou ao /dashboard.
+Botões de entrar usam useGoogleSignIn (vai direto pro Google). Peças visuais da landing e do /auth em
+components/landing/ (prévia = HeroPreview, números de landing-sample.ts = export real lido pelo parser, com teste).
 Páginas PÚBLICAS (modo visitante, sem login): /community, /community/$id, /tools/compare e /about ficam em
 src/routes/ (fora de _authenticated) e usam SiteShell (components/SiteShell.tsx): logado = AppShell normal; sem conta
 = cabeçalho de visitante + convite "Entrar com Google". Dados da Comunidade vêm de server fns públicas (sem login).
@@ -141,7 +148,7 @@ de texto novo leva min-h-11. Todo botão só com ícone e todo campo sem rótulo
 inteira = <PageSkeleton /> (title + cards, mesma altura); carregando de bloco = <Skeleton role="status" aria-label>. Lista
 ou página sem dados = <EmptyState> (ícone, título, o que fazer), não parágrafo solto. prefers-reduced-motion zera animações
 (styles.css). Testes src/lib/__tests__/design-tokens.test.ts falham com cor solta ou texto < 11px. Exceções conscientes:
-réplicas de arte do jogo (WheelOfDestiny SVG), logo do Google em auth.tsx e meta theme-color. Auditoria de 2026-10-12: 21
+réplicas de arte do jogo (WheelOfDestiny SVG) e meta theme-color. Auditoria de 2026-10-12: 21
 telas (logado, 390px e visitante) sem rolagem horizontal, h1 em Cinzel, imagens com alt e controles com nome.
 
 Banco local (desenvolvimento, NUNCA produção): Supabase inteiro no Docker (banco + login + storage, vazio).

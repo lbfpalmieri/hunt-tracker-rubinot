@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     reset();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/", replace: true });
   };
 
   const openCustomize = () => {
