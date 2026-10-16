@@ -7,6 +7,7 @@ import { PlayModeSwitch } from "@/components/PlayModeSwitch";
 import { initNavPrefs } from "@/lib/nav-prefs";
 import { useAppStore } from "@/lib/store";
 import { useAuthState } from "@/lib/use-auth-state";
+import { useGoogleSignIn } from "@/lib/use-google-sign-in";
 import { NavIcon } from "@/components/nav/NavIcon";
 
 /**
@@ -37,6 +38,10 @@ const VISITOR_NAV = [
 
 function VisitorShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const href = useRouterState({ select: (s) => s.location.href });
+  // Entrar daqui vai direto pro Google e volta pra esta mesma página depois do login.
+  const google = useGoogleSignIn();
+  const signIn = () => void google.signIn(href);
 
   useEffect(() => {
     initNavPrefs();
@@ -75,14 +80,16 @@ function VisitorShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <PlayModeSwitch />
-          <Link
-            to="/auth"
-            className="inline-flex min-h-11 flex-none items-center gap-1.5 rounded-lg bg-rubi-gold px-3 py-2 text-sm font-semibold text-background shadow-glow-gold hover:opacity-90"
+          <button
+            type="button"
+            onClick={signIn}
+            disabled={google.loading}
+            className="inline-flex min-h-11 flex-none items-center gap-1.5 rounded-lg bg-rubi-gold px-3 py-2 text-sm font-semibold text-background shadow-glow-gold transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.98] disabled:opacity-70"
           >
             <LogIn className="h-4 w-4" />
-            <span className="hidden sm:inline">Entrar com Google</span>
+            <span className="hidden sm:inline">{google.loading ? "Abrindo o Google..." : "Entrar com Google"}</span>
             <span className="sm:hidden">Entrar</span>
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -93,9 +100,13 @@ function VisitorShell({ children }: { children: ReactNode }) {
             Você está como <b className="text-foreground">visitante</b>: dá pra pesquisar, ver as
             hunts e exportar o analyser. Pra registrar e comparar as <b>suas</b> hunts,
           </span>
-          <Link to="/auth" className="font-semibold text-rubi-gold hover:underline">
+          <button
+            type="button"
+            onClick={signIn}
+            className="min-h-11 font-semibold text-rubi-gold hover:underline lg:min-h-0"
+          >
             crie sua conta com o Google →
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -104,9 +115,13 @@ function VisitorShell({ children }: { children: ReactNode }) {
       <footer className="mt-12 border-t border-border/60">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-center text-xs text-muted-foreground sm:flex-row sm:px-6 sm:text-left">
           <span>RubinOT Hunt Tracker · feito pelo canal É sobre RubinOT</span>
-          <Link to="/auth" className="font-semibold text-rubi-gold hover:underline">
+          <button
+            type="button"
+            onClick={signIn}
+            className="min-h-11 font-semibold text-rubi-gold hover:underline"
+          >
             Entrar com Google
-          </Link>
+          </button>
         </div>
       </footer>
     </div>
