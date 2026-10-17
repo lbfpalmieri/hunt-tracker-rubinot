@@ -31,7 +31,8 @@ export function WheelReadout({ build, compact = false }: { build: WheelBuild; co
             Dano e cura <b className="font-display text-lg text-rubi-gold">+{s.dmgHeal}</b>
           </span>
           <span className="text-xs text-muted-foreground">
-            {fmt(s.used)} pontos{build.level ? ` · level ${build.level}` : ""}
+            {fmt(s.used)}
+            {s.budget != null ? ` de ${fmt(s.budget)}` : ""} pontos{build.level ? ` · level ${build.level}` : ""}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-1">

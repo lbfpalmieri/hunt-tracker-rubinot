@@ -6,9 +6,18 @@ import {
   applyWheel,
   normalizeSetup,
   presetPart,
+  syncSetupWheelLevel,
   type SessionSetup,
 } from "../session-setup";
-import { availableSlices, emptyWheel, setSlicePoints, usedPoints, type WheelBuild } from "../wheel";
+import {
+  availableSlices,
+  emptyWheel,
+  setSlicePoints,
+  usedPoints,
+  wheelBudget,
+  withCharacterLevel,
+  type WheelBuild,
+} from "../wheel";
 import { rowsToWheelPresets, sameWheel, suggestedWheelName } from "../wheel-presets";
 
 /** Roda válida de knight com `fill` fatias do centro cheias. */
@@ -133,7 +142,9 @@ describe("rodas salvas", () => {
   it("sameWheel compara o conteúdo (a sessão guarda cópia)", () => {
     expect(sameWheel(wheel(2), JSON.parse(JSON.stringify(wheel(2))))).toBe(true);
     expect(sameWheel(wheel(2), wheel(3))).toBe(false);
-    expect(sameWheel(wheel(2), wheel(2, 900))).toBe(false);
+    // level acompanha o personagem — não faz a roda ser outra
+    expect(sameWheel(wheel(2), wheel(2, 900))).toBe(true);
+    expect(sameWheel(wheel(2), { ...wheel(2), scrolls: 1 })).toBe(false);
     expect(sameWheel(null, wheel(2))).toBe(false);
     expect(sameWheel(null, null)).toBe(false);
   });
@@ -177,5 +188,30 @@ describe("charm vale pra uma criatura só", () => {
   it("não perde o charm sem criatura nem cria duplicado", () => {
     const read = withCharms([{ charm: "Freeze", level: 1, creature: null }]);
     expect(read.charms).toEqual([{ charm: "Freeze", level: 1, creature: null }]);
+  });
+});
+
+describe("roda acompanha o level do personagem", () => {
+  it("withCharacterLevel sobe o level e com ele os pontos disponíveis", () => {
+    const w = wheel(2, 800);
+    const up = withCharacterLevel(w, 1000);
+    expect(up.level).toBe(1000);
+    expect(up.points).toEqual(w.points);
+    expect(wheelBudget(up)! - wheelBudget(w)!).toBe(200);
+  });
+
+  it("não desce o level, não mexe sem level registrado e devolve a mesma roda", () => {
+    const w = wheel(2, 1000);
+    expect(withCharacterLevel(w, 900)).toBe(w);
+    expect(withCharacterLevel(w, 1000)).toBe(w);
+    expect(withCharacterLevel(w, null)).toBe(w);
+    expect(withCharacterLevel({ ...w, level: null }, 950).level).toBe(950);
+  });
+
+  it("syncSetupWheelLevel: level atualizado no fim da Nova sessão vale pra roda da sessão", () => {
+    const setup = applyWheel(EMPTY_SETUP, wheel(2, 800));
+    expect(syncSetupWheelLevel(setup, 1000).wheel?.level).toBe(1000);
+    expect(syncSetupWheelLevel(setup, 700)).toBe(setup);
+    expect(syncSetupWheelLevel(EMPTY_SETUP, 1000)).toBe(EMPTY_SETUP);
   });
 });

@@ -9,7 +9,7 @@
  */
 
 import { normalizeGear, normalizeGearTier, type SetupGear, type SetupGearTier } from "./equipment";
-import { isEmptyWheel, normalizeWheel, wheelSetupFields, type WheelBuild } from "./wheel";
+import { isEmptyWheel, normalizeWheel, wheelSetupFields, withCharacterLevel, type WheelBuild } from "./wheel";
 
 export type SetupVocation = "knight" | "paladin" | "sorcerer" | "druid" | "monk";
 
@@ -402,6 +402,13 @@ export function applyWheel(current: SessionSetup, wheel: WheelBuild | null): Ses
   }
   const copy = structuredClone(wheel);
   return { ...current, wheel: copy, ...wheelSetupFields(copy) };
+}
+
+/** Leva o level atual do personagem pra roda do setup (ver withCharacterLevel). */
+export function syncSetupWheelLevel(setup: SessionSetup, level: number | null | undefined): SessionSetup {
+  if (!setup.wheel) return setup;
+  const wheel = withCharacterLevel(setup.wheel, level);
+  return wheel === setup.wheel ? setup : { ...setup, wheel };
 }
 
 export function charmIcon(name: string): string | undefined {
