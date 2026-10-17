@@ -75,6 +75,11 @@ hunts) e tools.comparisons.tsx (salvos privados); community.index.tsx (feed púb
 vocações em grade); feedback.tsx (tickets com imagem no bucket feedback-attachments,
 Inbox admin, export Markdown sem e-mails, histórico de resolvidos); rendimento.tsx
 (level_snapshots + goals).
+SALDO DE GOLD (gold-balance.ts): Saldo atual = balance de TODAS as sessões do char − imbuements consumidos − gastos
+(public.expenses, amount > 0) + ajustes (public.gold_adjustments, amount ≠ 0). "Atualizar saldo" (BalanceAdjustDialog, no
+Dashboard e em Meu rendimento → Gastos) grava a diferença entre o saldo digitado do jogo e o calculado. Objetivos: o
+PRINCIPAL (goals.is_main, índice único parcial = 1 por personagem, setMainGoal) conta o saldo atual inteiro; os demais só
+o lucro das hunts depois de criados (goalProgress). Mesma conta em Dashboard, Meu rendimento e Todos os personagens.
 
 Mobile/perf: listas paginadas; imagens lazy.
 Rotação de Bosses (/bosses, /bosses/$id): catálogo da TibiaWiki em public.boss_catalog_cache (linha única,
