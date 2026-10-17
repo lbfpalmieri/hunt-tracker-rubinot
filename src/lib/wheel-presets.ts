@@ -25,9 +25,18 @@ export const WHEEL_PRESET_NAME_MAX = 40;
 const key = (characterId: string) => ["wheel-presets", characterId] as const;
 
 /** Mesma roda? (compara o conteúdo, não a referência — a sessão guarda uma cópia). */
+/**
+ * Mesma roda (pontos, gemas, scrolls...)? O level fica de fora: ele acompanha o personagem
+ * (withCharacterLevel), então a cópia na sessão pode ter level maior que a roda salva.
+ */
 export function sameWheel(a: WheelBuild | null | undefined, b: WheelBuild | null | undefined) {
   if (!a || !b) return false;
-  return JSON.stringify(normalizeWheel(a)) === JSON.stringify(normalizeWheel(b));
+  const key = (w: WheelBuild) => {
+    const n = normalizeWheel(w);
+    return n ? JSON.stringify({ ...n, level: null }) : null;
+  };
+  const ka = key(a);
+  return ka != null && ka === key(b);
 }
 
 /** Linhas do banco → rodas válidas (descarta o que não der pra ler). */

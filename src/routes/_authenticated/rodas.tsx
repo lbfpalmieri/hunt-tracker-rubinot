@@ -19,7 +19,7 @@ import { confirmDialog } from "@/lib/confirm-dialog";
 import { currentLevel } from "@/lib/level";
 import { WHEEL_ICON, setupVocation } from "@/lib/session-setup";
 import { useAppStore } from "@/lib/store";
-import { isEmptyWheel, type WheelBuild } from "@/lib/wheel";
+import { isEmptyWheel, withCharacterLevel, type WheelBuild } from "@/lib/wheel";
 import {
   WHEEL_PRESET_NAME_MAX,
   suggestedWheelName,
@@ -50,6 +50,8 @@ export const Route = createFileRoute("/_authenticated/rodas")({
  */
 function RodasPage() {
   const active = useAppStore((s) => s.characters.find((c) => c.id === s.activeCharacterId) ?? null);
+  // A roda salva mostra os pontos do level ATUAL do personagem (ao editar, ela já grava esse level).
+  const charLevel = useAppStore((s) => (active ? currentLevel(s.levelSnapshots, active.id) : null));
   const { data: presets = [], isLoading } = useWheelPresets(active?.id ?? null);
   const deletePreset = useDeleteWheelPreset(active?.id ?? null);
   // "new" = roda vazia; { copyOf } = roda nova já igual a outra (Duplicar).
@@ -142,7 +144,7 @@ function RodasPage() {
                   </button>
                 </div>
               </div>
-              <WheelReadout build={p.wheel} compact />
+              <WheelReadout build={withCharacterLevel(p.wheel, charLevel)} compact />
             </div>
           ))}
 

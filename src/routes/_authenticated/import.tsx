@@ -62,6 +62,7 @@ import {
   EMPTY_SETUP,
   charmsFromMisc,
   normalizeSetup,
+  syncSetupWheelLevel,
   setupVocation,
   type SessionSetup,
 } from "@/lib/session-setup";
@@ -537,7 +538,8 @@ function ImportPage() {
         isPublic,
         bounty: bountyPreyOn && hasBounty ? bountyFromDraft(bountyDraft) : null,
         prey: bountyPreyOn && hasPrey ? prey : null,
-        setup: normalizeSetup(setup),
+        // Level atualizado no último passo vale pra roda da sessão também (mais pontos).
+        setup: normalizeSetup(syncSetupWheelLevel(setup, currentLevel(levelSnapshots, effectiveCharId))),
         notes: notes.trim() || null,
       });
 

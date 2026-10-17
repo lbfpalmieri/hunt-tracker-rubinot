@@ -3,7 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { Check, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { WHEEL_ICON } from "@/lib/session-setup";
-import { isEmptyWheel, usedPoints, type WheelBuild } from "@/lib/wheel";
+import { isEmptyWheel, usedPoints, withCharacterLevel, type WheelBuild } from "@/lib/wheel";
+import { currentLevel } from "@/lib/level";
+import { useAppStore } from "@/lib/store";
 import {
   WHEEL_PRESET_NAME_MAX,
   sameWheel,
@@ -22,14 +24,19 @@ export function WheelPresetPicker({
   value,
   onPick,
   allowSave = false,
+  followLevel = true,
 }: {
   characterId: string | null;
   /** Roda atual do setup (pra marcar qual está escolhida). */
   value: WheelBuild | null | undefined;
   onPick: (wheel: WheelBuild | null) => void;
   allowSave?: boolean;
+  /** A roda escolhida ganha o level atual do personagem (false = sessão já salva, mantém o da roda). */
+  followLevel?: boolean;
 }) {
   const { data: presets = [] } = useWheelPresets(characterId);
+  const charLevel = useAppStore((s) => (characterId ? currentLevel(s.levelSnapshots, characterId) : null));
+  const pick = (wheel: WheelBuild) => onPick(followLevel ? withCharacterLevel(wheel, charLevel) : wheel);
   const save = useSaveWheelPreset(characterId);
   const [naming, setNaming] = useState<string | null>(null);
   const current = presets.find((p) => sameWheel(p.wheel, value)) ?? null;
@@ -65,7 +72,7 @@ export function WheelPresetPicker({
               <button
                 key={p.id}
                 type="button"
-                onClick={() => onPick(on ? null : p.wheel)}
+                onClick={() => (on ? onPick(null) : pick(p.wheel))}
                 aria-pressed={on}
                 title={on ? "Tirar esta roda" : `Usar a roda "${p.name}"`}
                 className={

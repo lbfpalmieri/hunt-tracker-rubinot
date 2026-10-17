@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "roda-segue-level-2026-10-17",
+    date: "2026-10-17",
+    title: "Wheel of Destiny: pontos acompanham o seu level",
+    description:
+      "Subiu de level? As suas rodas salvas, a roda escolhida na Nova sessão e no registro de boss passam a usar o level atual do personagem, então os pontos disponíveis crescem junto. Atualizou o level no último passo da Nova sessão? A roda da sessão também ganha esse level. Sessões antigas continuam com o level da época.",
+  },
+  {
     id: "landing-nova-2026-10-16",
     date: "2026-10-16",
     title: "Página inicial nova e login que volta pra onde você estava",

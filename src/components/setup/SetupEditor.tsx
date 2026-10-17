@@ -71,6 +71,7 @@ export function SetupEditor({
         characterId={characterId}
         creatures={creatures}
         activatedCharms={charmsFromMisc(misc)}
+        keepWheelLevel
       />
       <div className="mt-4 flex gap-2">
         <button

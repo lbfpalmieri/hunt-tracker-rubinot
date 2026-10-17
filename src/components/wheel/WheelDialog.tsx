@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { WheelPlanner } from "@/components/wheel/WheelPlanner";
 import { WHEEL_ICON, type SetupVocation } from "@/lib/session-setup";
-import { emptyWheel, isEmptyWheel, type WheelBuild } from "@/lib/wheel";
+import { emptyWheel, isEmptyWheel, withCharacterLevel, type WheelBuild } from "@/lib/wheel";
 import { confirmDialog } from "@/lib/confirm-dialog";
 
 /**
@@ -21,19 +21,24 @@ export function WheelDialog({
   value,
   vocation,
   defaultLevel,
+  keepLevel = false,
   onApply,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   value: WheelBuild | null | undefined;
   vocation: SetupVocation | null;
-  /** Level atual do personagem (preenche o level da roda nova). */
+  /** Level atual do personagem: preenche a roda nova e sobe o level da roda aberta (mais pontos). */
   defaultLevel: number | null;
+  /** Não mexe no level da roda aberta (setup de sessão já salva = level daquela época). */
+  keepLevel?: boolean;
   onApply: (wheel: WheelBuild | null) => void;
 }) {
   const fresh = () =>
     value && (!vocation || value.voc === vocation)
-      ? structuredClone(value)
+      ? keepLevel
+        ? structuredClone(value)
+        : withCharacterLevel(structuredClone(value), defaultLevel)
       : emptyWheel(vocation ?? "knight", defaultLevel);
   const [draft, setDraft] = useState<WheelBuild>(fresh);
   const initial = useRef("");

@@ -115,6 +115,15 @@ export function wheelBudget(b: Pick<WheelBuild, "level" | "scrolls" | "extra">):
   );
 }
 
+/**
+ * Roda com o level atual do personagem (level_snapshots), pra os pontos acompanharem quem sobe de
+ * level. Só sobe: level digitado acima do registrado fica; sem level registrado não muda nada.
+ */
+export function withCharacterLevel(b: WheelBuild, level: number | null | undefined): WheelBuild {
+  if (level == null || level <= 0 || (b.level != null && b.level >= level)) return b;
+  return { ...b, level };
+}
+
 export type SetPointsResult = { ok: true; build: WheelBuild } | { ok: false; reason: string };
 
 /**

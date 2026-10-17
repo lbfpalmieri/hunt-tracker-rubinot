@@ -57,6 +57,7 @@ export function SessionSetupPanel({
   activatedCharms = [],
   mode = "session",
   rememberCharms = false,
+  keepWheelLevel = false,
 }: {
   value: SessionSetup;
   onChange: (next: SessionSetup) => void;
@@ -72,8 +73,10 @@ export function SessionSetupPanel({
   mode?: "session" | "preset";
   /** Lembra charm ↔ criatura por personagem e já preenche na próxima sessão (só ao adicionar sessão). */
   rememberCharms?: boolean;
+  /** Sessão já salva: a roda mantém o level daquela época (senão acompanha o level atual). */
+  keepWheelLevel?: boolean;
 }) {
-  const set = (patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
+  const set =(patch: Partial<SessionSetup>) => onChange({ ...value, ...patch });
 
   const stances = vocation ? STANCES[vocation] : uniq(Object.values(STANCES).flat());
 
@@ -299,6 +302,7 @@ export function SessionSetupPanel({
             value={value.wheel}
             onPick={(wheel) => onChange(applyWheel(value, wheel))}
             allowSave
+            followLevel={!keepWheelLevel}
           />
         </div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -366,6 +370,7 @@ export function SessionSetupPanel({
           value={value.wheel}
           vocation={vocation}
           defaultLevel={charLevel}
+          keepLevel={keepWheelLevel}
           onApply={(wheel) => onChange(applyWheel(value, wheel))}
         />
       </section>
