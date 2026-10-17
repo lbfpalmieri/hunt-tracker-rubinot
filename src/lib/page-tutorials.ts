@@ -22,6 +22,7 @@ const T = (key: string, title: string, steps: [string, string][]): Tutorial => (
 export const TUTORIALS: Tutorial[] = [
   T("dashboard", "Seu painel", [
     ["Resumo das hunts", "Aqui ficam os números das suas sessões: lucro, XP e tempo jogado do personagem ativo."],
+    ["Atualizar saldo", "O saldo não bate com o jogo (itens vendidos, gold de antes do app)? Toque em Atualizar saldo e digite quanto gold você tem."],
     ["Troque de personagem", "No canto de cima você escolhe o personagem ativo. Tudo no app passa a mostrar os dados dele."],
     ["Solo ou Grupo", "O alternador Solo / Grupo filtra as hunts do app inteiro e troca a cor de destaque."],
   ]),
@@ -45,6 +46,7 @@ export const TUTORIALS: Tutorial[] = [
   T("rendimento", "Rendimento", [
     ["Duas abas", "Meu rendimento mostra o personagem ativo; Todos os personagens compara a conta inteira."],
     ["Level, metas e gastos", "Registre seu level, defina metas de gold e anote gastos e mortes pra o saldo bater com o jogo."],
+    ["Objetivo principal", "Em Objetivos, o principal conta o seu saldo atual inteiro; os outros contam só as hunts feitas depois de criados."],
   ]),
   T("calculadoras", "Calculadoras", [
     ["Monstros/h e Bounty", "Escolha a criatura (ou as da Linked Task) e veja em qual hunt seu histórico termina a task mais rápido."],

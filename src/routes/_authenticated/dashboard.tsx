@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { currentLevel } from "@/lib/level";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
+import { BalanceAdjustDialog } from "@/components/BalanceAdjustDialog";
+import { netGoldBalance, sumAdjustments } from "@/lib/gold-balance";
 
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
@@ -49,6 +51,7 @@ function Dashboard() {
   const mode = usePlayMode();
   const imbuements = useAppStore((s) => s.imbuements);
   const expenses = useAppStore((s) => s.expenses);
+  const goldAdjustments = useAppStore((s) => s.goldAdjustments);
   const deaths = useAppStore((s) => s.deaths);
   const levelSnapshots = useAppStore((s) => s.levelSnapshots);
   const activeId = useAppStore((s) => s.activeCharacterId);
@@ -114,7 +117,13 @@ function Dashboard() {
         : 0,
     [allSessions, active],
   );
-  const netBalance = charBalance - (imbAgg?.totalSpent ?? 0) - totalSpentOnPurchases;
+  const netBalance = netGoldBalance({
+    sessionsBalance: charBalance,
+    imbuementsSpent: imbAgg?.totalSpent ?? 0,
+    expensesSpent: totalSpentOnPurchases,
+    adjustments: active ? sumAdjustments(goldAdjustments, active.id) : 0,
+  });
+  const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
 
   const myDeaths = useMemo(
     () => (active ? deaths.filter((d) => d.characterId === active.id) : []),
@@ -258,7 +267,8 @@ function Dashboard() {
                   <Trophy className="h-3.5 w-3.5 text-rubi-gold" />
                   Saldo atual
                   <InfoHint title="Saldo atual" description="Quanto de gold o personagem ativo tem, hoje.">
-                    <p>Soma do balance de todas as sessões, já <strong>descontando</strong> imbuements consumidos e gastos registrados.</p>
+                    <p>Soma do balance de todas as sessões, já <strong>descontando</strong> imbuements consumidos e gastos registrados e <strong>somando</strong> os ajustes de saldo.</p>
+                    <p><strong>Atualizar saldo:</strong> digite quanto gold o personagem tem no jogo; a diferença vira um ajuste (itens vendidos, gold de antes de usar o app...).</p>
                     <p>O balance bruto (sem descontos), o detalhe do que foi gasto e a evolução no tempo ficam em <strong>Meu rendimento</strong>.</p>
                     <p><strong>Top spot:</strong> hunt (agrupada por nome) com maior <code>balance / horas</code>, entre as que já somam pelo menos {fmtDuration(MIN_HUNT_DURATION_SEC)} de sessões.</p>
                     {latestPatch() && <p>O Top spot ignora sessões de antes do último balanceamento do servidor ({latestPatch()!.label}).</p>}
@@ -267,6 +277,15 @@ function Dashboard() {
                 <div className={"mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl " + (netBalance >= 0 ? "text-gradient-brand" : "text-rubi-danger")}>
                   {fmtGold(netBalance)}
                 </div>
+                {active && (
+                  <button
+                    type="button"
+                    onClick={() => setBalanceDialogOpen(true)}
+                    className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-3 py-1.5 text-sm font-semibold text-rubi-gold transition-colors hover:bg-rubi-gold/20"
+                  >
+                    <Wallet className="h-4 w-4" /> Atualizar saldo
+                  </button>
+                )}
                 <div className="mt-1 text-sm text-muted-foreground">
                   {agg.bestHunt ? (
                     <>Top spot: <span className="text-foreground/80">{agg.bestHunt.name}</span></>
@@ -356,7 +375,7 @@ function Dashboard() {
                   <p>Todo imbuement dura <strong>{IMB_DURATION_HOURS}h</strong> de caça no jogo. O custo total é <code>preço do tier + Gold Token</code>.</p>
                   <p><strong>Custo / hora (ativo):</strong> <code>Σ (custo total ÷ {IMB_DURATION_HOURS}h)</code> de cada imbuement ainda ativo. É quanto você "queima" de gold por hora enquanto está com os imbuements ligados.</p>
                   <p><strong>Consumido:</strong> para cada imbuement, somamos as horas caçadas <em>depois</em> do registro (até o limite das horas restantes informadas) e multiplicamos por <code>custo/hora</code>. Sessões anteriores ao registro não amortizam nada — por isso pode aparecer 0.</p>
-                  <p><strong>Saldo atual:</strong> <code>balance das sessões − imbuements consumidos − gastos registrados</code>.</p>
+                  <p><strong>Saldo atual:</strong> <code>balance das sessões − imbuements consumidos − gastos registrados + ajustes de saldo</code>.</p>
                   <p><strong>Projeção líquida / h:</strong> <code>Lucro/h médio − Custo/h ativo</code>. Se ficar positivo, o imbuement se paga; negativo, custa mais do que rende.</p>
                 </InfoHint>
               </div>
@@ -378,7 +397,7 @@ function Dashboard() {
                 <StatCard
                   label="Saldo atual"
                   value={fmtGold(netBalance)}
-                  hint="balance − imbuements consumidos e gastos"
+                  hint="balance − imbuements e gastos + ajustes"
                   icon={Wallet}
                   accent={netBalance >= 0 ? "success" : "danger"}
                 />
@@ -463,6 +482,15 @@ function Dashboard() {
             </div>
           </div>
         </>
+      )}
+      {active && (
+        <BalanceAdjustDialog
+          open={balanceDialogOpen}
+          onOpenChange={setBalanceDialogOpen}
+          characterId={active.id}
+          characterName={active.name}
+          appBalance={netBalance}
+        />
       )}
     </AppShell>
   );

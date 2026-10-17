@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "saldo-e-objetivo-principal-2026-10-17",
+    date: "2026-10-17",
+    title: "Atualizar saldo e objetivo principal",
+    description:
+      "Vendeu itens ou já tinha gold antes de usar o app? No Dashboard (ou em Meu rendimento → Gastos), toque em Atualizar saldo e digite quanto gold o personagem tem no jogo: a diferença vira um ajuste e o Saldo atual passa a bater. Em Objetivos, marque um objetivo como principal pra ele contar o seu saldo atual inteiro, e não só as hunts feitas depois de criado. Só um objetivo pode ser o principal, pra o mesmo gold não ser contado duas vezes.",
+  },
+  {
     id: "roda-segue-level-2026-10-17",
     date: "2026-10-17",
     title: "Wheel of Destiny: pontos acompanham o seu level",

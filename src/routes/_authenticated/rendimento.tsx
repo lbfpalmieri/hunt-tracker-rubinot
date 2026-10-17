@@ -18,7 +18,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAppStore, useHydrated } from "@/lib/store";
-import { aggregateSessions, balanceSince } from "@/lib/performance";
+import { aggregateSessions } from "@/lib/performance";
+import { goalProgress, netGoldBalance, sumAdjustments } from "@/lib/gold-balance";
+import { BalanceAdjustDialog } from "@/components/BalanceAdjustDialog";
 import { aggregateImbuements } from "@/lib/imbuements";
 import { type Period, PERIODS, periodRange, formatRange, filterByPeriod, fmtDay } from "@/lib/period";
 import { filterByLatestPatch, formatPatchDate, isPrePatch, latestPatch } from "@/lib/patches";
@@ -45,6 +47,7 @@ import {
   Receipt,
   Skull,
   ChevronsUp,
+  Star,
 } from "lucide-react";
 import { levelGainInRange } from "@/lib/level";
 
@@ -75,12 +78,15 @@ function RendimentoPage() {
   const goals = useAppStore((s) => s.goals);
   const imbuements = useAppStore((s) => s.imbuements);
   const expenses = useAppStore((s) => s.expenses);
+  const goldAdjustments = useAppStore((s) => s.goldAdjustments);
   const deaths = useAppStore((s) => s.deaths);
   const activeId = useAppStore((s) => s.activeCharacterId);
   const addLevelSnapshot = useAppStore((s) => s.addLevelSnapshot);
   const removeLevelSnapshot = useAppStore((s) => s.removeLevelSnapshot);
   const addGoal = useAppStore((s) => s.addGoal);
   const removeGoal = useAppStore((s) => s.removeGoal);
+  const setMainGoal = useAppStore((s) => s.setMainGoal);
+  const removeGoldAdjustment = useAppStore((s) => s.removeGoldAdjustment);
   const addExpense = useAppStore((s) => s.addExpense);
   const removeExpense = useAppStore((s) => s.removeExpense);
   const addDeath = useAppStore((s) => s.addDeath);
@@ -247,6 +253,21 @@ function RendimentoPage() {
     }
   };
 
+  // Objetivo principal: conta o saldo atual inteiro (1 por personagem; clicar de novo desmarca).
+  const [savingMain, setSavingMain] = useState(false);
+  const handleToggleMain = async (id: string, name: string, isMain: boolean) => {
+    if (!active || savingMain) return;
+    setSavingMain(true);
+    try {
+      await setMainGoal(active.id, isMain ? null : id);
+      toast.success(isMain ? `"${name}" deixou de ser o objetivo principal` : `"${name}" agora é o objetivo principal`);
+    } catch (e) {
+      toast.error("Não consegui salvar", { description: errorMessage(e) });
+    } finally {
+      setSavingMain(false);
+    }
+  };
+
   // --- Gastos ---
   const myExpenses = useMemo(
     () => (active ? expenses.filter((e) => e.characterId === active.id) : []),
@@ -260,7 +281,28 @@ function RendimentoPage() {
     () => (active ? aggregateImbuements(imbuements, sessions, active.id) : null),
     [imbuements, sessions, active],
   );
-  const netBalance = lifetimeAgg.balance - (imbAgg?.totalSpent ?? 0) - totalExpenses;
+  const myAdjustments = useMemo(
+    () => (active ? goldAdjustments.filter((a) => a.characterId === active.id) : []),
+    [goldAdjustments, active],
+  );
+  const totalAdjustments = active ? sumAdjustments(goldAdjustments, active.id) : 0;
+  const netBalance = netGoldBalance({
+    sessionsBalance: lifetimeAgg.balance,
+    imbuementsSpent: imbAgg?.totalSpent ?? 0,
+    expensesSpent: totalExpenses,
+    adjustments: totalAdjustments,
+  });
+  const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
+
+  const handleRemoveAdjustment = async (id: string, description: string) => {
+    const ok = await confirmDialog({ description: `Remover o ajuste de saldo "${description}"?`, tone: "danger" });
+    if (!ok) return;
+    try {
+      await removeGoldAdjustment(id);
+    } catch (e) {
+      toast.error("Falha ao remover", { description: errorMessage(e) });
+    }
+  };
 
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [expenseDesc, setExpenseDesc] = useState("");
@@ -756,7 +798,9 @@ function RendimentoPage() {
         <>
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              O progresso soma o lucro das suas hunts feitas depois que cada objetivo foi criado.
+              O progresso soma o lucro das hunts feitas depois que cada objetivo foi criado. Quer contar o
+              gold que você já tem? Marque um objetivo como <strong className="text-rubi-gold">principal</strong>:
+              ele usa o seu saldo atual inteiro ({fmtGold(netBalance)}).
             </p>
             <button
               type="button"
@@ -775,14 +819,18 @@ function RendimentoPage() {
             />
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {myGoals.map((g) => (
-                <GoalCard
-                  key={g.id}
-                  goal={g}
-                  progress={Math.max(0, balanceSince(mySessions, active.id, g.createdAt))}
-                  onRemove={() => handleRemoveGoal(g.id, g.name)}
-                />
-              ))}
+              {[...myGoals]
+                .sort((a, b) => Number(b.isMain) - Number(a.isMain))
+                .map((g) => (
+                  <GoalCard
+                    key={g.id}
+                    goal={g}
+                    progress={goalProgress(g, { sessions: mySessions, netBalance })}
+                    onRemove={() => handleRemoveGoal(g.id, g.name)}
+                    onToggleMain={() => handleToggleMain(g.id, g.name, g.isMain)}
+                    busy={savingMain}
+                  />
+                ))}
             </div>
           )}
 
@@ -876,19 +924,28 @@ function RendimentoPage() {
                   {myExpenses.length === 0
                     ? "Nenhum gasto registrado ainda"
                     : `${myExpenses.length} registro${myExpenses.length === 1 ? "" : "s"}`}
-                  {" · "}Saldo após imbuements e gastos:{" "}
+                  {" · "}Saldo atual (com imbuements, gastos e ajustes):{" "}
                   <span className={"font-semibold " + (netBalance >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
                     {fmtGold(netBalance)}
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={openExpenseDialog}
-                className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-rubi-danger px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90 sm:self-auto"
-              >
-                <Plus className="h-4 w-4" /> Registrar gasto
-              </button>
+              <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setBalanceDialogOpen(true)}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rubi-gold/50 bg-rubi-gold/10 px-4 py-2.5 text-sm font-semibold text-rubi-gold hover:bg-rubi-gold/20"
+                >
+                  <Wallet className="h-4 w-4" /> Atualizar saldo
+                </button>
+                <button
+                  type="button"
+                  onClick={openExpenseDialog}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-rubi-danger px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" /> Registrar gasto
+                </button>
+              </div>
             </div>
           </div>
 
@@ -917,6 +974,48 @@ function RendimentoPage() {
                       onClick={() => handleRemoveExpense(e.id, e.description)}
                       className="flex-none rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
                       aria-label="Remover"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {myAdjustments.length > 0 && (
+            <div className="card-surface mt-6 p-5">
+              <h2 className="mb-1 text-base font-semibold">Ajustes de saldo</h2>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Gold de fora das hunts, registrado por Atualizar saldo. Total:{" "}
+                <span className={"font-semibold " + (totalAdjustments >= 0 ? "text-rubi-success" : "text-rubi-danger")}>
+                  {totalAdjustments >= 0 ? "+" : "−"}
+                  {fmtGold(Math.abs(totalAdjustments))}
+                </span>
+              </p>
+              <ul className="space-y-1.5">
+                {myAdjustments.map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 basis-full truncate sm:basis-auto sm:flex-1" title={a.description}>
+                      {a.description}
+                    </span>
+                    <span
+                      className={
+                        "flex-none font-mono font-semibold " + (a.amount >= 0 ? "text-rubi-success" : "text-rubi-danger")
+                      }
+                    >
+                      {a.amount >= 0 ? "+" : "−"}
+                      {fmtGold(Math.abs(a.amount))}
+                    </span>
+                    <span className="flex-none text-xs text-muted-foreground">{fmtDate(a.createdAt)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAdjustment(a.id, a.description)}
+                      className="flex-none rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+                      aria-label="Remover ajuste"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1020,7 +1119,7 @@ function RendimentoPage() {
                     >
                       {impliedFromBalance > 0
                         ? `Isso representa um gasto de ${fmtGold(impliedFromBalance)}.`
-                        : "Esse balance é maior ou igual ao que o sistema já calcula — nada a registrar aqui."}
+                        : "Esse balance é maior ou igual ao que o sistema já calcula — não é gasto. Pra gold que entrou (ex.: itens vendidos), use Atualizar saldo."}
                     </p>
                   )}
                 </label>
@@ -1271,6 +1370,13 @@ function RendimentoPage() {
           </Dialog>
         </>
       )}
+      <BalanceAdjustDialog
+        open={balanceDialogOpen}
+        onOpenChange={setBalanceDialogOpen}
+        characterId={active.id}
+        characterName={active.name}
+        appBalance={netBalance}
+      />
     </AppShell>
   );
 }
@@ -1279,10 +1385,22 @@ function GoalCard({
   goal,
   progress,
   onRemove,
+  onToggleMain,
+  busy = false,
 }: {
-  goal: { id: string; name: string; targetAmount: number; currencyLabel: string; imageUrl: string | null };
+  goal: {
+    id: string;
+    name: string;
+    targetAmount: number;
+    currencyLabel: string;
+    imageUrl: string | null;
+    isMain: boolean;
+  };
   progress: number;
   onRemove: () => void;
+  onToggleMain: () => void;
+  /** Salvando a troca do principal: botões travados (evita clique duplo no meio). */
+  busy?: boolean;
 }) {
   const clamped = Math.min(progress, goal.targetAmount);
   const animated = useCountUp(clamped);
@@ -1313,7 +1431,12 @@ function GoalCard({
             <Target className="h-6 w-6 text-muted-foreground" />
           )}
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 pr-5">
+          {goal.isMain && (
+            <span className="mb-0.5 inline-flex items-center gap-1 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-2xs font-semibold text-rubi-gold">
+              <Star className="h-3 w-3 fill-current" /> Principal · conta todo o saldo
+            </span>
+          )}
           <div className="truncate font-display text-sm font-semibold">{goal.name}</div>
           <div className="mt-0.5 font-mono text-xs text-muted-foreground">
             {fmtGold(animated)} <span className="opacity-60">/ {fmtGold(goal.targetAmount)}</span> {goal.currencyLabel}
@@ -1336,6 +1459,27 @@ function GoalCard({
           </span>
         )}
       </div>
+
+      <button
+        type="button"
+        onClick={onToggleMain}
+        disabled={busy}
+        aria-pressed={goal.isMain}
+        title={
+          goal.isMain
+            ? "Voltar a contar só as hunts feitas depois de criar o objetivo"
+            : "Contar o saldo atual inteiro neste objetivo (só um objetivo pode ser o principal)"
+        }
+        className={
+          "mt-3 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 " +
+          (goal.isMain
+            ? "border-border/60 text-muted-foreground hover:text-foreground"
+            : "border-rubi-gold/50 text-rubi-gold hover:bg-rubi-gold/10")
+        }
+      >
+        <Star className={"h-3.5 w-3.5 " + (goal.isMain ? "" : "fill-current")} />
+        {goal.isMain ? "Deixar de ser principal" : "Tornar principal (contar meu saldo)"}
+      </button>
     </div>
   );
 }
