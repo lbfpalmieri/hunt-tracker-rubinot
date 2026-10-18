@@ -14,6 +14,7 @@ import { normalizePrey, type PreySlot } from "./prey";
 import { normalizeSetup, type SessionSetup } from "./session-setup";
 import { currentLevel } from "./level";
 import { normalizeParty, type PartyInfo } from "./party";
+import type { GoldAdjustment } from "./gold-balance";
 
 /** Tempo (ms) que o "Desfazer" fica disponível depois de excluir uma sessão. */
 const UNDO_DELETE_MS = 8000;
@@ -91,6 +92,8 @@ export interface Goal {
   currencyLabel: string;
   imageUrl: string | null;
   createdAt: string;
+  /** Objetivo principal: conta o saldo atual inteiro (gold-balance.ts → goalProgress). 1 por personagem. */
+  isMain: boolean;
 }
 
 /**
@@ -142,6 +145,7 @@ interface State {
   levelSnapshots: LevelSnapshot[];
   goals: Goal[];
   expenses: Expense[];
+  goldAdjustments: GoldAdjustment[];
   deaths: Death[];
   activeCharacterId: string | null;
   loaded: boolean;
@@ -165,10 +169,14 @@ interface State {
   removeImbuement: (id: string) => Promise<void>;
   addLevelSnapshot: (characterId: string, level: number) => Promise<LevelSnapshot>;
   removeLevelSnapshot: (id: string) => Promise<void>;
-  addGoal: (g: Omit<Goal, "id" | "createdAt">) => Promise<Goal>;
+  addGoal: (g: Omit<Goal, "id" | "createdAt" | "isMain">) => Promise<Goal>;
   removeGoal: (id: string) => Promise<void>;
+  /** Marca o objetivo principal do personagem (null = nenhum). */
+  setMainGoal: (characterId: string, goalId: string | null) => Promise<void>;
   addExpense: (e: Omit<Expense, "id" | "createdAt">) => Promise<Expense>;
   removeExpense: (id: string) => Promise<void>;
+  addGoldAdjustment: (a: Omit<GoldAdjustment, "id" | "createdAt">) => Promise<GoldAdjustment>;
+  removeGoldAdjustment: (id: string) => Promise<void>;
   addDeath: (d: Omit<Death, "id" | "createdAt">) => Promise<Death>;
   removeDeath: (id: string) => Promise<void>;
 }
@@ -198,6 +206,7 @@ export const useAppStore = create<State>()((set, get) => ({
   levelSnapshots: [],
   goals: [],
   expenses: [],
+  goldAdjustments: [],
   deaths: [],
   activeCharacterId: null,
   loaded: false,
@@ -214,6 +223,7 @@ export const useAppStore = create<State>()((set, get) => ({
       levelSnapshots: [],
       goals: [],
       expenses: [],
+      goldAdjustments: [],
       deaths: [],
       activeCharacterId: null,
       loaded: false,
@@ -272,6 +282,20 @@ export const useAppStore = create<State>()((set, get) => ({
       } catch (e) {
         console.error("[gastos] tabela expenses indisponível (migration ainda não aplicada?)", e);
         expenseRes = { data: [], error: null };
+      }
+
+      // Ajustes de saldo (gold_adjustments): mesmo cuidado — sem a tabela, o saldo só não tem ajuste.
+      let adjustmentRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
+      try {
+        adjustmentRes = await db
+          .from("gold_adjustments")
+          .select("*")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false });
+        if (adjustmentRes.error) throw adjustmentRes.error;
+      } catch (e) {
+        console.error("[saldo] tabela gold_adjustments indisponível (migration ainda não aplicada?)", e);
+        adjustmentRes = { data: [], error: null };
       }
 
       // Idem pro histórico de mortes.
@@ -340,6 +364,7 @@ export const useAppStore = create<State>()((set, get) => ({
         currencyLabel: g.currency_label ?? "Gold",
         imageUrl: g.image_url ?? null,
         createdAt: g.created_at,
+        isMain: Boolean(g.is_main),
       }));
       const expenses: Expense[] = (expenseRes.data ?? []).map((e: any) => ({
         id: e.id,
@@ -347,6 +372,13 @@ export const useAppStore = create<State>()((set, get) => ({
         description: e.description,
         amount: Number(e.amount ?? 0),
         createdAt: e.created_at,
+      }));
+      const goldAdjustments: GoldAdjustment[] = (adjustmentRes.data ?? []).map((a: any) => ({
+        id: a.id,
+        characterId: a.character_id,
+        description: a.description,
+        amount: Number(a.amount ?? 0),
+        createdAt: a.created_at,
       }));
       const deaths: Death[] = (deathRes.data ?? []).map((d: any) => ({
         id: d.id,
@@ -368,6 +400,7 @@ export const useAppStore = create<State>()((set, get) => ({
         levelSnapshots,
         goals,
         expenses,
+        goldAdjustments,
         deaths,
         loaded: true,
         loading: false,
@@ -455,6 +488,7 @@ export const useAppStore = create<State>()((set, get) => ({
       levelSnapshots: s.levelSnapshots.filter((l) => l.characterId !== id),
       goals: s.goals.filter((g) => g.characterId !== id),
       expenses: s.expenses.filter((e) => e.characterId !== id),
+      goldAdjustments: s.goldAdjustments.filter((a) => a.characterId !== id),
       deaths: s.deaths.filter((d) => d.characterId !== id),
       activeCharacterId:
         s.activeCharacterId === id
@@ -750,6 +784,7 @@ export const useAppStore = create<State>()((set, get) => ({
       currencyLabel: data.currency_label ?? "Gold",
       imageUrl: data.image_url ?? null,
       createdAt: data.created_at,
+      isMain: Boolean(data.is_main),
     };
     set((s) => ({ goals: [created, ...s.goals] }));
     return created;
@@ -759,6 +794,41 @@ export const useAppStore = create<State>()((set, get) => ({
     const { error } = await db.from("goals").delete().eq("id", id);
     if (error) throw error;
     set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
+  },
+
+  setMainGoal: async (characterId, goalId) => {
+    const mark = (mainId: string | null) => (s: State) => ({
+      goals: s.goals.map((g) =>
+        g.characterId === characterId ? { ...g, isMain: mainId != null && g.id === mainId } : g,
+      ),
+    });
+    const before = get().goals.find((g) => g.characterId === characterId && g.isMain)?.id ?? null;
+    // Tela muda na hora; se o banco recusar, volta como estava.
+    set(mark(goalId));
+    try {
+      // Índice único parcial (1 principal por personagem): desmarca o atual antes de marcar o novo.
+      const { error: clearError } = await db
+        .from("goals")
+        .update({ is_main: false })
+        .eq("character_id", characterId)
+        .eq("is_main", true);
+      if (clearError) throw clearError;
+      if (goalId) {
+        const { error } = await db.from("goals").update({ is_main: true }).eq("id", goalId);
+        if (error) throw error;
+      }
+    } catch (e) {
+      set(mark(before));
+      throw e;
+    }
+    // Confere com o banco: a tela fica igual ao que ficou salvo.
+    const { data } = await db.from("goals").select("id, is_main").eq("character_id", characterId);
+    if (Array.isArray(data)) {
+      const saved = new Map<string, boolean>(data.map((r: { id: string; is_main: boolean }) => [r.id, Boolean(r.is_main)]));
+      set((s) => ({
+        goals: s.goals.map((g) => (saved.has(g.id) ? { ...g, isMain: saved.get(g.id)! } : g)),
+      }));
+    }
   },
 
   addExpense: async (input) => {
@@ -791,6 +861,38 @@ export const useAppStore = create<State>()((set, get) => ({
     const { error } = await db.from("expenses").delete().eq("id", id);
     if (error) throw error;
     set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) }));
+  },
+
+  addGoldAdjustment: async (input) => {
+    const { data: userData } = await supabase.auth.getSession();
+    const uid = userData.session?.user?.id;
+    if (!uid) throw new Error("Not signed in");
+    const { data, error } = await db
+      .from("gold_adjustments")
+      .insert({
+        user_id: uid,
+        character_id: input.characterId,
+        description: input.description,
+        amount: input.amount,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const created: GoldAdjustment = {
+      id: data.id,
+      characterId: data.character_id,
+      description: data.description,
+      amount: Number(data.amount ?? 0),
+      createdAt: data.created_at,
+    };
+    set((s) => ({ goldAdjustments: [created, ...s.goldAdjustments] }));
+    return created;
+  },
+
+  removeGoldAdjustment: async (id) => {
+    const { error } = await db.from("gold_adjustments").delete().eq("id", id);
+    if (error) throw error;
+    set((s) => ({ goldAdjustments: s.goldAdjustments.filter((a) => a.id !== id) }));
   },
 
   addDeath: async (input) => {

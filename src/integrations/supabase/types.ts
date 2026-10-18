@@ -334,6 +334,7 @@ export type Database = {
           currency_label: string
           id: string
           image_url: string | null
+          is_main: boolean
           name: string
           target_amount: number
           user_id: string
@@ -344,6 +345,7 @@ export type Database = {
           currency_label?: string
           id?: string
           image_url?: string | null
+          is_main?: boolean
           name: string
           target_amount?: number
           user_id: string
@@ -354,6 +356,7 @@ export type Database = {
           currency_label?: string
           id?: string
           image_url?: string | null
+          is_main?: boolean
           name?: string
           target_amount?: number
           user_id?: string
@@ -361,6 +364,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "goals_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gold_adjustments: {
+        Row: {
+          amount: number
+          character_id: string
+          created_at: string
+          description: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          character_id: string
+          created_at?: string
+          description: string
+          id?: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          character_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gold_adjustments_character_id_fkey"
             columns: ["character_id"]
             isOneToOne: false
             referencedRelation: "characters"

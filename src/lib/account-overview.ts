@@ -2,6 +2,7 @@ import type { Character, HuntSession, Imbuement, Expense, LevelSnapshot } from "
 import { aggregateSessions, type PerformanceAgg } from "./performance";
 import { aggregateImbuements } from "./imbuements";
 import { currentLevel } from "./level";
+import { netGoldBalance, sumAdjustments, type GoldAdjustment } from "./gold-balance";
 
 /**
  * Resumo de um personagem pra tela "Todos os personagens" — reaproveita
@@ -15,7 +16,9 @@ export interface CharacterOverview {
   agg: PerformanceAgg;
   imbSpent: number;
   expensesSpent: number;
-  /** Balance − imbuements consumidos − gastos registrados. */
+  /** Ajustes de saldo (gold_adjustments): itens vendidos, gold de antes do app... */
+  adjustments: number;
+  /** Balance − imbuements consumidos − gastos registrados + ajustes. */
   netBalance: number;
   level: number | null;
 }
@@ -26,6 +29,7 @@ export function buildAccountOverview(
   imbuements: Imbuement[],
   expenses: Expense[],
   levelSnapshots: LevelSnapshot[],
+  goldAdjustments: GoldAdjustment[] = [],
 ): CharacterOverview[] {
   return characters.map((c) => {
     const charSessions = sessions.filter((s) => s.characterId === c.id);
@@ -34,12 +38,19 @@ export function buildAccountOverview(
     const expensesSpent = expenses
       .filter((e) => e.characterId === c.id)
       .reduce((a, e) => a + e.amount, 0);
+    const adjustments = sumAdjustments(goldAdjustments, c.id);
     return {
       character: c,
       agg,
       imbSpent,
       expensesSpent,
-      netBalance: agg.balance - imbSpent - expensesSpent,
+      adjustments,
+      netBalance: netGoldBalance({
+        sessionsBalance: agg.balance,
+        imbuementsSpent: imbSpent,
+        expensesSpent,
+        adjustments,
+      }),
       level: currentLevel(levelSnapshots, c.id),
     };
   });
