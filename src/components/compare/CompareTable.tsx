@@ -432,7 +432,8 @@ function DiffBadge({ row, hunts, h }: { row: Row; hunts: CompareHunt[]; h: Compa
   );
 }
 
-export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
+/** `detailed`: setup completo (roda, charms com nome da criatura, equipamentos) — usado na exportação em PDF. */
+export function CompareTable({ hunts, detailed = false }: { hunts: CompareHunt[]; detailed?: boolean }) {
   const patch = latestPatch();
   const hasSetup = hunts.some((h) => h.setup);
 
@@ -590,7 +591,7 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                 <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   <Wrench className="h-3.5 w-3.5 text-rubi-blue" /> Setup
                 </div>
-                <SetupCard setup={h.setup} vocation={h.vocation} compact />
+                <SetupCard setup={h.setup} vocation={h.vocation} compact={!detailed} />
               </div>
             )}
           </section>
@@ -718,7 +719,7 @@ export function CompareTable({ hunts }: { hunts: CompareHunt[] }) {
                     {hunts.map((h) => (
                       <td key={h.key} className="px-4 py-2.5 align-top">
                         {h.setup ? (
-                          <SetupCard setup={h.setup} vocation={h.vocation} compact />
+                          <SetupCard setup={h.setup} vocation={h.vocation} compact={!detailed} />
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}

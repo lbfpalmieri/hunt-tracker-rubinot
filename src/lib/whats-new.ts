@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "exportar-comparativo-pdf-2026-10-19",
+    date: "2026-10-19",
+    title: "Exportar o comparativo em PDF",
+    description:
+      "Comparou hunts e quer guardar ou mandar pra alguém? Em Comparar hunts, Comparar sessões e Comparações salvas, o botão Exportar PDF baixa o comparativo inteiro numa página só, igual a um print completo: resultado, maior diferença, a tabela com todas as métricas e os monstros, mais o setup completo (equipamentos, Wheel of Destiny e charms com a criatura) e o Misc Data. O PDF sai sempre com tudo aberto.",
+  },
+  {
     id: "saldo-e-objetivo-principal-2026-10-17",
     date: "2026-10-17",
     title: "Atualizar saldo e objetivo principal",

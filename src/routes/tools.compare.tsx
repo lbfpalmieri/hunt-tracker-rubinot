@@ -22,6 +22,7 @@ import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
 import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
+import { ExportPdfButton, ExportPdfHeader } from "@/components/compare/ExportPdfButton";
 import { useAppStore, useHydrated } from "@/lib/store";
 import { useModeSessions, usePlayMode } from "@/lib/play-mode";
 import { useAuthState } from "@/lib/use-auth-state";
@@ -103,6 +104,7 @@ function ComparePage() {
   const [includePrePatch, setIncludePrePatch] = useState(false);
   const patch = latestPatch();
   const compareRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
   const scrollToCompare = () =>
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -229,6 +231,7 @@ function ComparePage() {
 
   // Misc Data (charm, imbuement, item upgrade) só existe nas suas sessões individuais.
   const [showMisc, setShowMisc] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const miscSessions = useMemo(
     () =>
       selected.map((h) =>
@@ -470,18 +473,27 @@ function ComparePage() {
           </div>
         ) : (
           <>
-            <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <div ref={exportRef} className="bg-background p-1">
+            <ExportPdfHeader title={`Comparativo: ${selected.map((h) => h.huntName).join(" vs ")}`} />
+            <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
               <h2 className="font-display text-xl font-bold">Comparativo ({selected.length})</h2>
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock className="h-3.5 w-3.5 flex-none text-rubi-blue" />
                 {anyAverage ? "Ritmo médio projetado para 1 hora de caça" : "Cada sessão projetada para 1 hora de caça"}
               </span>
+              <ExportPdfButton
+                targetRef={exportRef}
+                filename={`comparativo-${selected.map((h) => h.huntName).join("-vs-")}`}
+                className="ml-auto"
+                onExportingChange={setExporting}
+              />
             </div>
-            <CompareTable hunts={selected} />
+            <CompareTable hunts={selected} detailed={exporting} />
             {hasMisc && (
               <>
                 <button
                   type="button"
+                  data-export-hide
                   onClick={() => setShowMisc((v) => !v)}
                   aria-pressed={showMisc}
                   className={
@@ -494,13 +506,14 @@ function ComparePage() {
                   <FlaskConical className="h-3.5 w-3.5 flex-none" />
                   {showMisc ? "Esconder Misc Data" : "Ver Misc Data (charm, imbuement, item upgrade)"}
                 </button>
-                {showMisc && (
+                {(showMisc || exporting) && (
                   <div className="mt-3">
                     <SessionMiscCompare sessions={miscSessions} cols={miscCols} />
                   </div>
                 )}
               </>
             )}
+            </div>
             {!visitor && (
               <SaveComparisonPanel
                 hunts={selected}

@@ -8,6 +8,7 @@ import { HuntPickerCard } from "@/components/compare/HuntPickerCard";
 import { CompareTable } from "@/components/compare/CompareTable";
 import { SessionMiscCompare } from "@/components/compare/SessionMiscCompare";
 import { SaveComparisonPanel } from "@/components/compare/SaveComparisonPanel";
+import { ExportPdfButton, ExportPdfHeader } from "@/components/compare/ExportPdfButton";
 
 import { useAppStore, useHydrated } from "@/lib/store";
 import { useModeSessions } from "@/lib/play-mode";
@@ -62,7 +63,9 @@ function SessionsComparePage() {
   const [customEnd, setCustomEnd] = useState("");
   const [selected, setSelected] = useState<CompareHunt[]>([]);
   const [showMisc, setShowMisc] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const compareRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
   const scrollToCompare = () =>
     compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -320,17 +323,26 @@ function SessionsComparePage() {
           </div>
         ) : (
           <>
-            <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <div ref={exportRef} className="bg-background p-1">
+            <ExportPdfHeader title={`Comparativo: ${selected.map((h) => h.huntName).join(" vs ")}`} />
+            <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
               <h2 className="font-display text-xl font-bold">Comparativo ({selected.length})</h2>
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock className="h-3.5 w-3.5 flex-none text-rubi-blue" />
                 Cada sessão projetada para 1 hora de caça
               </span>
+              <ExportPdfButton
+                targetRef={exportRef}
+                filename={`comparativo-${selected.map((h) => h.huntName).join("-vs-")}`}
+                className="ml-auto"
+                onExportingChange={setExporting}
+              />
             </div>
-            <CompareTable hunts={selected} />
+            <CompareTable hunts={selected} detailed={exporting} />
 
             <button
               type="button"
+              data-export-hide
               onClick={() => setShowMisc((v) => !v)}
               aria-pressed={showMisc}
               className={
@@ -343,11 +355,12 @@ function SessionsComparePage() {
               <FlaskConical className="h-3.5 w-3.5 flex-none" />
               {showMisc ? "Esconder Misc Data" : "Ver Misc Data (charm, imbuement, item upgrade)"}
             </button>
-            {showMisc && (
+            {(showMisc || exporting) && (
               <div className="mt-3">
                 <SessionMiscCompare sessions={selectedSessions} cols={miscCols} />
               </div>
             )}
+            </div>
 
             <SaveComparisonPanel hunts={selected} includeBounty includePrey />
           </>
