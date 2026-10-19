@@ -9,20 +9,28 @@ import { errorMessage } from "@/lib/errors";
  * do Dashboard pra quem nunca registrou. Pré-preenche com o level atual
  * quando existe, então também serve pra atualizar rapidinho.
  * `size="lg"`: campo grande com −/+ (passo Finalizar da Nova sessão).
+ * `value`/`onValueChange`: campo controlado de fora (a Nova sessão grava o level digitado junto
+ * com a sessão, mesmo sem clicar em "Salvar level").
  */
 export function LevelQuickAdd({
   characterId,
   currentLevel,
   onSaved,
   size = "sm",
+  value: controlled,
+  onValueChange,
 }: {
   characterId: string;
   currentLevel: number | null;
   onSaved?: (level: number) => void;
   size?: "sm" | "lg";
+  value?: string;
+  onValueChange?: (value: string) => void;
 }) {
   const addLevelSnapshot = useAppStore((s) => s.addLevelSnapshot);
-  const [value, setValue] = useState(currentLevel != null ? String(currentLevel) : "");
+  const [own, setOwn] = useState(currentLevel != null ? String(currentLevel) : "");
+  const value = controlled ?? own;
+  const setValue = (v: string) => (onValueChange ? onValueChange(v) : setOwn(v));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
