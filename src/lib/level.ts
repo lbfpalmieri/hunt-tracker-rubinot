@@ -18,6 +18,33 @@ export function currentLevel(levelSnapshots: LevelSnapshot[], characterId: strin
   return currentLevelSnapshot(levelSnapshots, characterId)?.level ?? null;
 }
 
+/**
+ * Level que o campo do passo Finalizar da Nova sessão mostra de início: o atual do personagem ou,
+ * se a roda do setup foi montada com level maior (a pessoa subiu o level lá), o da roda — assim o
+ * level novo não fica só na sessão e chega no personagem ao salvar.
+ */
+export function suggestedSessionLevel(
+  current: number | null,
+  wheelLevel: number | null | undefined,
+): number | null {
+  const wheel = wheelLevel != null && wheelLevel > 0 ? Math.round(wheelLevel) : null;
+  if (wheel == null) return current;
+  if (current == null || wheel > current) return wheel;
+  return current;
+}
+
+/**
+ * Level a gravar no personagem junto com a sessão: o digitado no Finalizar quando é um número
+ * válido e diferente do atual; null = nada pra gravar (vazio, inválido ou igual ao atual).
+ */
+export function levelToSaveWithSession(typed: string, current: number | null): number | null {
+  const text = typed.trim();
+  if (!/^\d+$/.test(text)) return null;
+  const level = Number(text);
+  if (level <= 0 || level === current) return null;
+  return level;
+}
+
 export interface LevelGain {
   from: number;
   to: number;
