@@ -2,12 +2,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BookmarkCheck, ChevronDown, GitCompareArrows, Pencil, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { CompareTable } from "@/components/compare/CompareTable";
+import { ExportPdfButton, ExportPdfHeader } from "@/components/compare/ExportPdfButton";
 import { confirmDialog } from "@/lib/confirm-dialog";
 import {
   deleteComparison,
@@ -140,6 +141,8 @@ function SavedCard({
   onSave: (v: { title?: string; notes?: string; huntNotes?: Record<string, string> }) => void;
   onDelete: () => void;
 }) {
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(comparison.title);
   const [notes, setNotes] = useState(comparison.notes);
@@ -227,7 +230,17 @@ function SavedCard({
       </div>
 
       {open && (
-        <div className="mt-4 space-y-4">
+        <div ref={exportRef} className="mt-4 space-y-4 bg-background p-1">
+          <ExportPdfHeader title={comparison.title} />
+          {!editing && (
+            <div className="flex justify-end">
+              <ExportPdfButton
+                targetRef={exportRef}
+                filename={comparison.title}
+                onExportingChange={setExporting}
+              />
+            </div>
+          )}
           {editing && (
             <label className="block text-xs font-medium text-muted-foreground">
               Título
@@ -280,7 +293,7 @@ function SavedCard({
             ))}
           </div>
 
-          <CompareTable hunts={comparison.hunts} />
+          <CompareTable hunts={comparison.hunts} detailed={exporting} />
         </div>
       )}
     </div>
