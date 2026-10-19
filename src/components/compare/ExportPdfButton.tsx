@@ -69,15 +69,43 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
 
       // Sprites de outro site (TibiaWiki) não podem ser "fotografados" pelo navegador:
       // o servidor baixa e devolve embutidos. O que não vier vira transparente, pra um
-      // ícone faltando não derrubar o PDF inteiro.
-      const remote = Array.from(node.querySelectorAll("img")).filter((img) => {
-        const src = img.currentSrc || img.src;
-        return (
-          src && !src.startsWith("data:") && new URL(src, location.href).origin !== location.origin
-        );
+      // ícone faltando não derrubar o PDF inteiro. Vale pra <img> e pra <image> de SVG
+      // (a roda e os gráficos usam esse segundo).
+      const isRemote = (src: string | null) =>
+        !!src && !src.startsWith("data:") && new URL(src, location.href).origin !== location.origin;
+      const targets: Array<{ key: string; apply: (url: string) => void }> = [];
+      node.querySelectorAll("img").forEach((img) => {
+        const key = img.currentSrc || img.src;
+        if (!isRemote(key)) return;
+        const prevSrc = img.getAttribute("src");
+        const prevSrcset = img.getAttribute("srcset");
+        targets.push({
+          key,
+          apply: (url) => {
+            img.removeAttribute("srcset");
+            img.src = url;
+            restore.push(() => {
+              if (prevSrc == null) img.removeAttribute("src");
+              else img.setAttribute("src", prevSrc);
+              if (prevSrcset != null) img.setAttribute("srcset", prevSrcset);
+            });
+          },
+        });
       });
-      if (remote.length > 0) {
-        const urls = Array.from(new Set(remote.map((img) => img.currentSrc || img.src)));
+      node.querySelectorAll("image").forEach((im) => {
+        const attr = im.hasAttribute("href") ? "href" : "xlink:href";
+        const key = im.getAttribute(attr);
+        if (!key || !isRemote(key)) return;
+        targets.push({
+          key: new URL(key, location.href).toString(),
+          apply: (url) => {
+            im.setAttribute(attr, url);
+            restore.push(() => im.setAttribute(attr, key));
+          },
+        });
+      });
+      if (targets.length > 0) {
+        const urls = Array.from(new Set(targets.map((t) => t.key)));
         const found: Record<string, string> = {};
         for (let i = 0; i < urls.length; i += 60) {
           try {
@@ -89,18 +117,7 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
             console.warn("Imagens do PDF: falha no servidor", err);
           }
         }
-        for (const img of remote) {
-          const key = img.currentSrc || img.src;
-          const prevSrc = img.getAttribute("src");
-          const prevSrcset = img.getAttribute("srcset");
-          img.removeAttribute("srcset");
-          img.src = found[key] ?? BLANK_PIXEL;
-          restore.push(() => {
-            if (prevSrc == null) img.removeAttribute("src");
-            else img.setAttribute("src", prevSrc);
-            if (prevSrcset != null) img.setAttribute("srcset", prevSrcset);
-          });
-        }
+        for (const t of targets) t.apply(found[t.key] ?? BLANK_PIXEL);
       }
       // Dá um respiro pro navegador aplicar os estilos temporários antes de fotografar.
       await new Promise((r) => setTimeout(r, 150));
@@ -111,13 +128,29 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
       const pixelRatio = Math.min(2, 15000 / Math.max(width, height));
       const bg = getComputedStyle(document.body).backgroundColor;
 
-      const dataUrl = await toPng(node, {
+      const base = {
         pixelRatio,
         width,
         height,
-        cacheBust: true,
         backgroundColor: bg && bg !== "rgba(0, 0, 0, 0)" ? bg : "#0b1020",
-      });
+      };
+      let dataUrl: string;
+      try {
+        dataUrl = await toPng(node, { ...base, cacheBust: true });
+      } catch (first) {
+        // Segunda tentativa, mais simples: sem fontes embutidas e sem nenhuma imagem de fora
+        // (uma fonte ou ícone que não carrega não pode impedir o PDF de sair).
+        console.warn("PDF: 1ª tentativa falhou, tentando sem fontes/imagens externas", first);
+        dataUrl = await toPng(node, {
+          ...base,
+          skipFonts: true,
+          filter: (n) => {
+            if (n instanceof HTMLImageElement) return !isRemote(n.currentSrc || n.src);
+            if (n instanceof SVGImageElement) return !isRemote(n.getAttribute("href"));
+            return true;
+          },
+        });
+      }
 
       // Página única do tamanho exato do print; px do PDF = px da tela.
       const pdf = new jsPDF({
