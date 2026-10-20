@@ -177,7 +177,7 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
     const restore: Array<() => void> = [];
     try {
       // Carrega só quando clica: são bibliotecas pesadas que ninguém precisa pra abrir a página.
-      const [{ toPng }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]);
+      const [{ toJpeg }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]);
       // Espera a tela re-renderizar com tudo aberto antes de mexer no DOM.
       await new Promise((r) => setTimeout(r, 600));
 
@@ -295,7 +295,12 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
       let dataUrl: string;
       try {
         dataUrl = await withTimeout(
-          toPng(node, { ...base, cacheBust: true, filter: (n) => !hidden.has(n as Element) }),
+          toJpeg(node, {
+            ...base,
+            quality: 0.95,
+            skipFonts: true,
+            filter: (n) => !hidden.has(n as Element),
+          }),
           90_000,
         );
       } catch (first) {
@@ -303,8 +308,9 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
         // (uma fonte ou ícone que não carrega não pode impedir o PDF de sair).
         console.warn("PDF: 1ª tentativa falhou, tentando sem fontes/imagens externas", first);
         dataUrl = await withTimeout(
-          toPng(node, {
+          toJpeg(node, {
             ...base,
+            quality: 0.95,
             skipFonts: true,
             filter: (n) => {
               if (hidden.has(n as Element)) return false;
@@ -326,7 +332,8 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
         hotfixes: ["px_scaling"],
         compress: true,
       });
-      pdf.addImage(dataUrl, "PNG", 0, 0, width, height, undefined, "FAST");
+      // JPEG entra no PDF direto; PNG era reencodado pelo jsPDF (lento em página grande).
+      pdf.addImage(dataUrl, "JPEG", 0, 0, width, height, undefined, "FAST");
       const stamp = new Date().toISOString().slice(0, 10);
       pdf.save(`${slug(filename)}-${stamp}.pdf`);
       toast.success("PDF do comparativo baixado");
