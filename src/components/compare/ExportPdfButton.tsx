@@ -32,6 +32,137 @@ function slug(text: string) {
  * `data-export-hide` (botões, dicas de rolagem) somem do PDF e as marcadas com
  * `data-export-only` (cabeçalho com a data) só aparecem nele.
  */
+/**
+ * Só estas propriedades de CSS são copiadas pra "foto". Sem isso o html-to-image copia as ~400
+ * propriedades de cada elemento: num comparativo de sessões (2,4 mil elementos) a captura virava um
+ * SVG de 21 MB e travava a aba por ~25 s (ou falhava). Com a lista: ~2 MB em ~1,5 s.
+ */
+const STYLE_PROPS = [
+  "display",
+  "position",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "z-index",
+  "float",
+  "clear",
+  "overflow",
+  "overflow-x",
+  "overflow-y",
+  "box-sizing",
+  "width",
+  "height",
+  "min-width",
+  "min-height",
+  "max-width",
+  "max-height",
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+  "border-top-width",
+  "border-top-style",
+  "border-top-color",
+  "border-right-width",
+  "border-right-style",
+  "border-right-color",
+  "border-bottom-width",
+  "border-bottom-style",
+  "border-bottom-color",
+  "border-left-width",
+  "border-left-style",
+  "border-left-color",
+  "border-top-left-radius",
+  "border-top-right-radius",
+  "border-bottom-left-radius",
+  "border-bottom-right-radius",
+  "border-collapse",
+  "border-spacing",
+  "color",
+  "background-color",
+  "background-image",
+  "background-size",
+  "background-position",
+  "background-repeat",
+  "background-clip",
+  "box-shadow",
+  "opacity",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "font-variant-numeric",
+  "line-height",
+  "letter-spacing",
+  "text-align",
+  "text-transform",
+  "text-decoration",
+  "text-overflow",
+  "white-space",
+  "word-break",
+  "overflow-wrap",
+  "vertical-align",
+  "flex-direction",
+  "flex-wrap",
+  "flex-grow",
+  "flex-shrink",
+  "flex-basis",
+  "align-items",
+  "align-self",
+  "align-content",
+  "justify-content",
+  "justify-items",
+  "justify-self",
+  "order",
+  "row-gap",
+  "column-gap",
+  "grid-template-columns",
+  "grid-template-rows",
+  "grid-column-start",
+  "grid-column-end",
+  "grid-row-start",
+  "grid-row-end",
+  "grid-auto-flow",
+  "fill",
+  "stroke",
+  "stroke-width",
+  "stroke-linecap",
+  "stroke-linejoin",
+  "stroke-dasharray",
+  "fill-opacity",
+  "stroke-opacity",
+  "filter",
+  "backdrop-filter",
+  "transform",
+  "transform-origin",
+  "image-rendering",
+  "object-fit",
+  "table-layout",
+  "visibility",
+  "content",
+  "text-shadow",
+  "mix-blend-mode",
+  "aspect-ratio",
+  "text-anchor",
+  "dominant-baseline",
+  "text-wrap",
+  "list-style-type",
+  "list-style-position",
+  "-webkit-line-clamp",
+  "-webkit-box-orient",
+  "text-decoration-line",
+  "text-decoration-color",
+  "text-underline-offset",
+  "word-spacing",
+  "-webkit-text-fill-color",
+  "-webkit-background-clip",
+];
+
 const BLANK_PIXEL = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
 
 export function ExportPdfButton({ targetRef, filename, className, onExportingChange }: Props) {
@@ -128,29 +259,64 @@ export function ExportPdfButton({ targetRef, filename, className, onExportingCha
       const pixelRatio = Math.min(2, 15000 / Math.max(width, height));
       const bg = getComputedStyle(document.body).backgroundColor;
 
+      // Elementos escondidos (ex.: layout de celular quando a tela é larga) ficam de fora.
+      const realGetComputedStyle = window.getComputedStyle.bind(window);
+      const hidden = new Set<Element>();
+      node.querySelectorAll("*").forEach((el) => {
+        if (el instanceof HTMLElement && realGetComputedStyle(el).display === "none")
+          hidden.add(el);
+      });
       const base = {
         pixelRatio,
         width,
         height,
         backgroundColor: bg && bg !== "rgba(0, 0, 0, 0)" ? bg : "#0b1020",
+        includeStyleProperties: STYLE_PROPS,
       };
+      // Navegadores novos devolvem o `cssText` do estilo calculado (todas as propriedades) e o
+      // html-to-image prefere ele à nossa lista; devolvendo vazio, a lista é que vale.
+      window.getComputedStyle = ((el: Element, pseudo?: string | null) => {
+        const cs = realGetComputedStyle(el, pseudo);
+        return new Proxy(cs, {
+          get(target, key) {
+            if (key === "cssText") return "";
+            const v = Reflect.get(target, key);
+            return typeof v === "function" ? v.bind(target) : v;
+          },
+        });
+      }) as typeof window.getComputedStyle;
+      restore.push(() => (window.getComputedStyle = realGetComputedStyle));
+
+      const withTimeout = <T,>(p: Promise<T>, ms: number) =>
+        Promise.race([
+          p,
+          new Promise<T>((_, rej) => setTimeout(() => rej(new Error("tempo esgotado")), ms)),
+        ]);
       let dataUrl: string;
       try {
-        dataUrl = await toPng(node, { ...base, cacheBust: true });
+        dataUrl = await withTimeout(
+          toPng(node, { ...base, cacheBust: true, filter: (n) => !hidden.has(n as Element) }),
+          90_000,
+        );
       } catch (first) {
         // Segunda tentativa, mais simples: sem fontes embutidas e sem nenhuma imagem de fora
         // (uma fonte ou ícone que não carrega não pode impedir o PDF de sair).
         console.warn("PDF: 1ª tentativa falhou, tentando sem fontes/imagens externas", first);
-        dataUrl = await toPng(node, {
-          ...base,
-          skipFonts: true,
-          filter: (n) => {
-            if (n instanceof HTMLImageElement) return !isRemote(n.currentSrc || n.src);
-            if (n instanceof SVGImageElement) return !isRemote(n.getAttribute("href"));
-            return true;
-          },
-        });
+        dataUrl = await withTimeout(
+          toPng(node, {
+            ...base,
+            skipFonts: true,
+            filter: (n) => {
+              if (hidden.has(n as Element)) return false;
+              if (n instanceof HTMLImageElement) return !isRemote(n.currentSrc || n.src);
+              if (n instanceof SVGImageElement) return !isRemote(n.getAttribute("href"));
+              return true;
+            },
+          }),
+          90_000,
+        );
       }
+      window.getComputedStyle = realGetComputedStyle;
 
       // Página única do tamanho exato do print; px do PDF = px da tela.
       const pdf = new jsPDF({
