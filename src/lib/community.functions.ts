@@ -4,23 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { normalizePrey } from "./prey";
 import { normalizeSetup } from "./session-setup";
-import { isSplit, normalizeParty } from "./party";
-
-/**
- * Party exposta na Comunidade: só o tamanho e se o lucro é a parte dividida. Os NOMES dos
- * membros (outros jogadores) nunca saem daqui.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function publicParty(raw: any): { size: number; split: boolean; noXp: boolean } | null {
-  const p = normalizeParty(raw);
-  return p ? { size: p.size, split: isSplit(p), noXp: !!p.noHuntingAnalyser } : null;
-}
-
-/** Columns that are safe to expose publicly. Never include user_id/character_id. */
-const LIST_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, char_level, hunting, damage, bounty_difficulty, bounty_tier, bounty_xp, prey";
-const DETAIL_COLUMNS =
-  "id, created_at, hunt_name, char_name, char_vocation, char_level, gear_url, hunting, damage, misc, bounty_difficulty, bounty_tier, bounty_xp, prey";
+import { DETAIL_COLUMNS, LIST_COLUMNS, publicParty } from "./community-public";
 
 function publicClient() {
   const url = process.env.SUPABASE_URL!;
