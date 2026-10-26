@@ -20,6 +20,7 @@ import {
 import { useAppStore, useHydrated } from "@/lib/store";
 import { aggregateSessions } from "@/lib/performance";
 import { goalProgress, netGoldBalance, sumAdjustments } from "@/lib/gold-balance";
+import { daysToComplete, goalFromForm, goalMissing, goalToForm, splitGoals } from "@/lib/goals";
 import { BalanceAdjustDialog } from "@/components/BalanceAdjustDialog";
 import { aggregateImbuements } from "@/lib/imbuements";
 import { type Period, PERIODS, periodRange, formatRange, filterByPeriod, fmtDay } from "@/lib/period";
@@ -48,6 +49,8 @@ import {
   Skull,
   ChevronsUp,
   Star,
+  Pencil,
+  RotateCcw,
 } from "lucide-react";
 import { levelGainInRange } from "@/lib/level";
 
@@ -85,6 +88,8 @@ function RendimentoPage() {
   const removeLevelSnapshot = useAppStore((s) => s.removeLevelSnapshot);
   const addGoal = useAppStore((s) => s.addGoal);
   const removeGoal = useAppStore((s) => s.removeGoal);
+  const updateGoal = useAppStore((s) => s.updateGoal);
+  const setGoalCompleted = useAppStore((s) => s.setGoalCompleted);
   const setMainGoal = useAppStore((s) => s.setMainGoal);
   const removeGoldAdjustment = useAppStore((s) => s.removeGoldAdjustment);
   const addExpense = useAppStore((s) => s.addExpense);
@@ -203,7 +208,11 @@ function RendimentoPage() {
     [goals, active],
   );
 
+  const { active: activeGoals, completed: completedGoals } = useMemo(() => splitGoals(myGoals), [myGoals]);
+
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  // Objetivo sendo editado (null = criando um novo) — o mesmo formulário serve pros dois.
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [goalName, setGoalName] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
   const [goalCurrency, setGoalCurrency] = useState("Gold");
@@ -212,6 +221,7 @@ function RendimentoPage() {
   const [goalError, setGoalError] = useState<string | null>(null);
 
   const openGoalDialog = () => {
+    setEditingGoalId(null);
     setGoalName("");
     setGoalTarget("");
     setGoalCurrency("Gold");
@@ -220,21 +230,31 @@ function RendimentoPage() {
     setGoalDialogOpen(true);
   };
 
-  const goalAmount = Number(goalTarget.replace(/[.,\s]/g, ""));
-  const goalReady = goalName.trim().length > 0 && Number.isFinite(goalAmount) && goalAmount > 0;
+  const openEditGoal = (g: (typeof myGoals)[number]) => {
+    const form = goalToForm(g);
+    setEditingGoalId(g.id);
+    setGoalName(form.name);
+    setGoalTarget(form.target);
+    setGoalCurrency(form.currency);
+    setGoalImage(form.imageUrl);
+    setGoalError(null);
+    setGoalDialogOpen(true);
+  };
 
-  const handleAddGoal = async () => {
-    if (!active || !goalReady) return;
+  const goalFields = goalFromForm({ name: goalName, target: goalTarget, currency: goalCurrency, imageUrl: goalImage });
+  const goalReady = goalFields != null;
+
+  const handleSaveGoal = async () => {
+    if (!active || !goalFields) return;
     setSavingGoal(true);
     setGoalError(null);
     try {
-      await addGoal({
-        characterId: active.id,
-        name: goalName.trim(),
-        targetAmount: Math.round(goalAmount),
-        currencyLabel: goalCurrency.trim() || "Gold",
-        imageUrl: goalImage,
-      });
+      if (editingGoalId) {
+        await updateGoal(editingGoalId, goalFields);
+        toast.success(`Objetivo "${goalFields.name}" atualizado`);
+      } else {
+        await addGoal({ characterId: active.id, ...goalFields });
+      }
       setGoalDialogOpen(false);
     } catch (e) {
       setGoalError(errorMessage(e));
@@ -250,6 +270,36 @@ function RendimentoPage() {
       await removeGoal(id);
     } catch (e) {
       toast.error("Falha ao remover", { description: errorMessage(e) });
+    }
+  };
+
+  // Conquistado: sai da lista de andamento e vai pros Conquistados (dá pra reabrir).
+  const handleCompleteGoal = async (g: (typeof myGoals)[number], progress: number) => {
+    const missing = goalMissing(g.targetAmount, progress);
+    if (missing > 0) {
+      const ok = await confirmDialog({
+        title: "Marcar como conquistado?",
+        description: `Ainda faltam ${fmtGold(missing)} ${g.currencyLabel} pra "${g.name}" pelo progresso do app. Marcar como conquistado mesmo assim?`,
+        confirmLabel: "Marcar conquistado",
+      });
+      if (!ok) return;
+    }
+    try {
+      await setGoalCompleted(g.id, true);
+      toast.success(`"${g.name}" conquistado!`, {
+        description: g.isMain ? "Ele deixou de ser o principal: escolha outro pra contar o seu saldo." : undefined,
+      });
+    } catch (e) {
+      toast.error("Não consegui salvar", { description: errorMessage(e) });
+    }
+  };
+
+  const handleReopenGoal = async (g: (typeof myGoals)[number]) => {
+    try {
+      await setGoalCompleted(g.id, false);
+      toast.success(`"${g.name}" voltou pra Em andamento`);
+    } catch (e) {
+      toast.error("Não consegui salvar", { description: errorMessage(e) });
     }
   };
 
@@ -811,34 +861,67 @@ function RendimentoPage() {
             </button>
           </div>
 
-          {myGoals.length === 0 ? (
+          {activeGoals.length === 0 ? (
             <EmptyState
               icon={Target}
-              title="Nenhum objetivo ainda"
-              description='Crie um objetivo (ex: "Boots of Haste — 2M gold") e acompanhe o progresso conforme suas hunts.'
+              title={completedGoals.length ? "Nenhum objetivo em andamento" : "Nenhum objetivo ainda"}
+              description={
+                completedGoals.length
+                  ? "Todos os seus objetivos foram conquistados. Crie o próximo e acompanhe o progresso conforme suas hunts."
+                  : 'Crie um objetivo (ex: "Boots of Haste — 2M gold") e acompanhe o progresso conforme suas hunts.'
+              }
             />
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[...myGoals]
-                .sort((a, b) => Number(b.isMain) - Number(a.isMain))
-                .map((g) => (
+              {activeGoals.map((g) => {
+                const progress = goalProgress(g, { sessions: mySessions, netBalance });
+                return (
                   <GoalCard
                     key={g.id}
                     goal={g}
-                    progress={goalProgress(g, { sessions: mySessions, netBalance })}
+                    progress={progress}
                     onRemove={() => handleRemoveGoal(g.id, g.name)}
+                    onEdit={() => openEditGoal(g)}
+                    onComplete={() => handleCompleteGoal(g, progress)}
                     onToggleMain={() => handleToggleMain(g.id, g.name, g.isMain)}
                     busy={savingMain}
                   />
-                ))}
+                );
+              })}
             </div>
+          )}
+
+          {completedGoals.length > 0 && (
+            <section className="mt-8" aria-labelledby="goals-completed-title">
+              <h2 id="goals-completed-title" className="mb-3 flex items-center gap-2 font-display text-base font-semibold">
+                <Trophy className="h-4 w-4 text-rubi-gold" /> Conquistados
+                <span className="rounded-full border border-rubi-gold/40 bg-rubi-gold/10 px-2 py-0.5 text-2xs font-semibold text-rubi-gold">
+                  {completedGoals.length}
+                </span>
+              </h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {completedGoals.map((g) => (
+                  <CompletedGoalCard
+                    key={g.id}
+                    goal={g}
+                    onEdit={() => openEditGoal(g)}
+                    onReopen={() => handleReopenGoal(g)}
+                    onRemove={() => handleRemoveGoal(g.id, g.name)}
+                  />
+                ))}
+              </div>
+            </section>
           )}
 
           <Dialog open={goalDialogOpen} onOpenChange={(o) => !savingGoal && setGoalDialogOpen(o)}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Novo objetivo</DialogTitle>
-                <DialogDescription>O progresso é calculado automaticamente a partir das suas próximas hunts.</DialogDescription>
+                <DialogTitle>{editingGoalId ? "Editar objetivo" : "Novo objetivo"}</DialogTitle>
+                <DialogDescription>
+                  {editingGoalId
+                    ? "Mudou o preço ou faltou a imagem? Ajuste aqui — o progresso continua contando do mesmo jeito."
+                    : "O progresso é calculado automaticamente a partir das suas próximas hunts."}
+                </DialogDescription>
               </DialogHeader>
 
               <label className="block">
@@ -898,11 +981,11 @@ function RendimentoPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleAddGoal}
+                  onClick={handleSaveGoal}
                   disabled={savingGoal || !goalReady}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-rubi-gold px-4 py-2 text-sm font-semibold text-background hover:opacity-90 disabled:opacity-60"
                 >
-                  {savingGoal ? "Salvando..." : "Criar objetivo"}
+                  {savingGoal ? "Salvando..." : editingGoalId ? "Salvar alterações" : "Criar objetivo"}
                 </button>
               </DialogFooter>
             </DialogContent>
@@ -1385,6 +1468,8 @@ function GoalCard({
   goal,
   progress,
   onRemove,
+  onEdit,
+  onComplete,
   onToggleMain,
   busy = false,
 }: {
@@ -1398,6 +1483,8 @@ function GoalCard({
   };
   progress: number;
   onRemove: () => void;
+  onEdit: () => void;
+  onComplete: () => void;
   onToggleMain: () => void;
   /** Salvando a troca do principal: botões travados (evita clique duplo no meio). */
   busy?: boolean;
@@ -1414,14 +1501,25 @@ function GoalCard({
         (done ? "border-rubi-gold shadow-glow-gold" : "")
       }
     >
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
-        aria-label="Remover objetivo"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      <div className="absolute right-2 top-2 flex gap-0.5">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label={`Editar o objetivo ${goal.name}`}
+          title="Editar (nome, valor, moeda ou imagem)"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+          aria-label={`Remover o objetivo ${goal.name}`}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
 
       <div className="flex items-center gap-3">
         <div className="flex h-14 w-14 flex-none items-center justify-center overflow-hidden rounded-lg border border-border bg-background/60">
@@ -1431,7 +1529,7 @@ function GoalCard({
             <Target className="h-6 w-6 text-muted-foreground" />
           )}
         </div>
-        <div className="min-w-0 flex-1 pr-5">
+        <div className="min-w-0 flex-1 pr-12">
           {goal.isMain && (
             <span className="mb-0.5 inline-flex items-center gap-1 rounded-full border border-rubi-gold/50 bg-rubi-gold/10 px-2 py-0.5 text-2xs font-semibold text-rubi-gold">
               <Star className="h-3 w-3 fill-current" /> Principal · conta todo o saldo
@@ -1480,6 +1578,93 @@ function GoalCard({
         <Star className={"h-3.5 w-3.5 " + (goal.isMain ? "" : "fill-current")} />
         {goal.isMain ? "Deixar de ser principal" : "Tornar principal (contar meu saldo)"}
       </button>
+
+      <button
+        type="button"
+        onClick={onComplete}
+        title="Comprou o item ou chegou no objetivo? Ele vai pra lista de Conquistados."
+        className={
+          "mt-2 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
+          (done
+            ? "bg-rubi-gold text-background hover:opacity-90"
+            : "border border-border/60 text-muted-foreground hover:border-rubi-gold/50 hover:text-rubi-gold")
+        }
+      >
+        <Trophy className="h-3.5 w-3.5" /> Marcar como conquistado
+      </button>
+    </div>
+  );
+}
+
+/** Objetivo conquistado: imagem, valor, quando e em quantos dias. */
+function CompletedGoalCard({
+  goal,
+  onEdit,
+  onReopen,
+  onRemove,
+}: {
+  goal: {
+    name: string;
+    targetAmount: number;
+    currencyLabel: string;
+    imageUrl: string | null;
+    createdAt: string;
+    completedAt: string | null;
+  };
+  onEdit: () => void;
+  onReopen: () => void;
+  onRemove: () => void;
+}) {
+  const days = daysToComplete(goal);
+  return (
+    <div className="card-surface flex items-center gap-3 border-rubi-gold/40 p-3">
+      <div className="flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-lg border border-rubi-gold/40 bg-background/60">
+        {goal.imageUrl ? (
+          <img src={goal.imageUrl} alt={goal.name} loading="lazy" className="h-full w-full object-contain" />
+        ) : (
+          <Trophy className="h-5 w-5 text-rubi-gold" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-display text-sm font-semibold">{goal.name}</div>
+        <div className="font-mono text-xs text-muted-foreground">
+          {fmtGold(goal.targetAmount)} {goal.currencyLabel}
+        </div>
+        {goal.completedAt && (
+          <div className="text-2xs text-rubi-gold">
+            Conquistado em {fmtDay(new Date(goal.completedAt))}
+            {days != null && ` · em ${days} dia${days === 1 ? "" : "s"}`}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-none gap-0.5">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label={`Editar o objetivo ${goal.name}`}
+          title="Editar"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onReopen}
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label={`Reabrir o objetivo ${goal.name}`}
+          title="Voltar pra Em andamento"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-rubi-danger"
+          aria-label={`Remover o objetivo ${goal.name}`}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
