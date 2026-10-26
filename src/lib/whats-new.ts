@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "level-salvo-com-sessao-2026-10-19",
+    date: "2026-10-19",
+    title: "Level atualizado junto com a sessão",
+    description:
+      "Subiu de level na hunt? No último passo da Nova sessão, ajuste o level e salve a sessão: o personagem já fica com o level novo, sem precisar ir em Personagens ou Meu rendimento. Se você subiu o level na Wheel of Destiny do setup, esse level já aparece ali. O aviso mostra a mudança (ex.: Lvl 300 → 305) antes de salvar.",
+  },
+  {
     id: "exportar-comparativo-pdf-2026-10-19",
     date: "2026-10-19",
     title: "Exportar o comparativo em PDF",

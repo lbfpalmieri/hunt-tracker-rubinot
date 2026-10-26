@@ -70,7 +70,7 @@ import type { PreySlot } from "@/lib/prey";
 import { LevelQuickAdd } from "@/components/LevelQuickAdd";
 import { NotesEditor } from "@/components/notes/NotesEditor";
 import { errorMessage } from "@/lib/errors";
-import { currentLevel } from "@/lib/level";
+import { currentLevel, levelToSaveWithSession, suggestedSessionLevel } from "@/lib/level";
 import {
   applyPartySplit,
   findSelfByHunting,
@@ -111,6 +111,7 @@ function ImportPage() {
   const addSession = useAppStore((s) => s.addSession);
   const addHunt = useAppStore((s) => s.addHunt);
   const addDeath = useAppStore((s) => s.addDeath);
+  const addLevelSnapshot = useAppStore((s) => s.addLevelSnapshot);
 
   // Rascunho guardado fora da rota: trocar de página e voltar não perde o que foi colado (import-draft.ts).
   const [draft0] = useState(loadImportDraft);
@@ -175,6 +176,14 @@ function ImportPage() {
   const effectiveCharId = activeId || characters[0]?.id || "";
   const activeChar = characters.find((c) => c.id === effectiveCharId);
   const activeCharLevel = currentLevel(levelSnapshots, effectiveCharId);
+  // Level do passo Finalizar: null = a pessoa não mexeu (mostra o sugerido — o atual, ou o da roda
+  // se ela subiu o level lá). Level diferente do atual é gravado no personagem ao salvar a sessão.
+  const [levelInput, setLevelInput] = useState<string | null>(null);
+  useEffect(() => setLevelInput(null), [effectiveCharId]);
+  const suggestedLevel = suggestedSessionLevel(activeCharLevel, setup.wheel?.level);
+  const levelValue = levelInput ?? (suggestedLevel != null ? String(suggestedLevel) : "");
+  const pendingLevel = levelToSaveWithSession(levelValue, activeCharLevel);
+  const pendingLevelFromWheel = levelInput == null && pendingLevel != null;
   const charHunts = useMemo(
     () => hunts.filter((h) => h.characterId === effectiveCharId),
     [hunts, effectiveCharId],
@@ -503,6 +512,18 @@ function ImportPage() {
     try {
       // Idempotent by name — reuses the existing hunt row if one already matches.
       await addHunt(effectiveCharId, selectedHuntName);
+      // Level novo digitado no Finalizar (ou vindo da roda) vai pro personagem junto com a sessão,
+      // sem precisar clicar em "Salvar level". Falhar aqui não impede salvar a sessão.
+      let levelForWheel = activeCharLevel;
+      if (pendingLevel != null) {
+        try {
+          await addLevelSnapshot(effectiveCharId, pendingLevel);
+          levelForWheel = pendingLevel;
+          toast.success(`Level de ${activeChar?.name ?? "personagem"} atualizado para ${pendingLevel}`);
+        } catch (e) {
+          toast.error("Não consegui atualizar o level do personagem", { description: errorMessage(e) });
+        }
+      }
       // Não dá pra separar quanto foi caça e quanto foi a morte no campo que
       // fechou negativo — zeramos só esse(s) campo(s) pros fins de Raw XP/h
       // (nem soma nem subtrai a média do spot; o outro campo, se já positivo,
@@ -539,7 +560,7 @@ function ImportPage() {
         bounty: bountyPreyOn && hasBounty ? bountyFromDraft(bountyDraft) : null,
         prey: bountyPreyOn && hasPrey ? prey : null,
         // Level atualizado no último passo vale pra roda da sessão também (mais pontos).
-        setup: normalizeSetup(syncSetupWheelLevel(setup, currentLevel(levelSnapshots, effectiveCharId))),
+        setup: normalizeSetup(syncSetupWheelLevel(setup, levelForWheel)),
         notes: notes.trim() || null,
       });
 
@@ -1204,9 +1225,15 @@ function ImportPage() {
                       </div>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {activeCharLevel == null
-                          ? "Ainda não registramos o level — preencha aqui, sem ir em Meu rendimento."
-                          : "Subiu de level na hunt? Atualize aqui — alimenta o Meu rendimento."}
+                          ? "Ainda não registramos o level — preencha aqui e ele é salvo junto com a sessão."
+                          : "Subiu de level na hunt? Ajuste aqui — é salvo no personagem junto com a sessão."}
                       </p>
+                      {pendingLevel != null && (
+                        <p role="status" className="mt-1 text-xs font-semibold text-rubi-gold">
+                          {activeCharLevel != null ? `Lvl ${activeCharLevel} → ${pendingLevel}` : `Lvl ${pendingLevel}`}
+                          {pendingLevelFromWheel ? " (level da roda)" : ""}: salvo junto com a sessão.
+                        </p>
+                      )}
                     </div>
                   </div>
                   {/* key força remontar ao trocar de personagem — sem isso o input ficava com o
@@ -1216,6 +1243,8 @@ function ImportPage() {
                     size="lg"
                     characterId={effectiveCharId}
                     currentLevel={activeCharLevel}
+                    value={levelValue}
+                    onValueChange={setLevelInput}
                   />
                 </div>
               </div>
