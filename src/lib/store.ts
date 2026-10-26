@@ -94,6 +94,8 @@ export interface Goal {
   createdAt: string;
   /** Objetivo principal: conta o saldo atual inteiro (gold-balance.ts → goalProgress). 1 por personagem. */
   isMain: boolean;
+  /** Quando foi marcado como conquistado (null = em andamento). Ver goals.ts. */
+  completedAt: string | null;
 }
 
 /**
@@ -169,7 +171,13 @@ interface State {
   removeImbuement: (id: string) => Promise<void>;
   addLevelSnapshot: (characterId: string, level: number) => Promise<LevelSnapshot>;
   removeLevelSnapshot: (id: string) => Promise<void>;
-  addGoal: (g: Omit<Goal, "id" | "createdAt" | "isMain">) => Promise<Goal>;
+  addGoal: (g: Omit<Goal, "id" | "createdAt" | "isMain" | "completedAt">) => Promise<Goal>;
+  updateGoal: (
+    id: string,
+    patch: Pick<Goal, "name" | "targetAmount" | "currencyLabel" | "imageUrl">,
+  ) => Promise<void>;
+  /** Marca como conquistado (sai de principal) ou reabre o objetivo. */
+  setGoalCompleted: (id: string, completed: boolean) => Promise<void>;
   removeGoal: (id: string) => Promise<void>;
   /** Marca o objetivo principal do personagem (null = nenhum). */
   setMainGoal: (characterId: string, goalId: string | null) => Promise<void>;
@@ -365,6 +373,7 @@ export const useAppStore = create<State>()((set, get) => ({
         imageUrl: g.image_url ?? null,
         createdAt: g.created_at,
         isMain: Boolean(g.is_main),
+        completedAt: g.completed_at ?? null,
       }));
       const expenses: Expense[] = (expenseRes.data ?? []).map((e: any) => ({
         id: e.id,
@@ -785,9 +794,39 @@ export const useAppStore = create<State>()((set, get) => ({
       imageUrl: data.image_url ?? null,
       createdAt: data.created_at,
       isMain: Boolean(data.is_main),
+      completedAt: data.completed_at ?? null,
     };
     set((s) => ({ goals: [created, ...s.goals] }));
     return created;
+  },
+
+  updateGoal: async (id, patch) => {
+    const { error } = await db
+      .from("goals")
+      .update({
+        name: patch.name,
+        target_amount: patch.targetAmount,
+        currency_label: patch.currencyLabel,
+        image_url: patch.imageUrl,
+      })
+      .eq("id", id);
+    if (error) throw error;
+    set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)) }));
+  },
+
+  setGoalCompleted: async (id, completed) => {
+    const completedAt = completed ? new Date().toISOString() : null;
+    // Conquistado deixa de ser o principal: o principal conta o saldo atual, que agora vai pro próximo.
+    const { error } = await db
+      .from("goals")
+      .update(completed ? { completed_at: completedAt, is_main: false } : { completed_at: null })
+      .eq("id", id);
+    if (error) throw error;
+    set((s) => ({
+      goals: s.goals.map((g) =>
+        g.id === id ? { ...g, completedAt, isMain: completed ? false : g.isMain } : g,
+      ),
+    }));
   },
 
   removeGoal: async (id) => {

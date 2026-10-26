@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "objetivos-conquistados-e-editar-2026-10-26",
+    date: "2026-10-26",
+    title: "Objetivos: conquistados e editar",
+    description:
+      "Comprou o item que queria? Em Meu rendimento → Objetivos, toque em Marcar como conquistado: o objetivo vai pra lista de Conquistados, com a data e em quantos dias você chegou lá (dá pra reabrir se marcou sem querer). E agora dá pra editar um objetivo pelo lápis: trocar o nome, o valor quando o preço muda, a moeda ou colar a imagem que faltou.",
+  },
+  {
     id: "exportar-comparativo-pdf-2026-10-19",
     date: "2026-10-19",
     title: "Exportar o comparativo em PDF",
