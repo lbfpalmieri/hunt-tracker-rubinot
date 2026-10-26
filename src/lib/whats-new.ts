@@ -24,6 +24,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Comprou o item que queria? Em Meu rendimento → Objetivos, toque em Marcar como conquistado: o objetivo vai pra lista de Conquistados, com a data e em quantos dias você chegou lá (dá pra reabrir se marcou sem querer). E agora dá pra editar um objetivo pelo lápis: trocar o nome, o valor quando o preço muda, a moeda ou colar a imagem que faltou.",
   },
   {
+    id: "level-salvo-com-sessao-2026-10-19",
+    date: "2026-10-19",
+    title: "Level atualizado junto com a sessão",
+    description:
+      "Subiu de level na hunt? No último passo da Nova sessão, ajuste o level e salve a sessão: o personagem já fica com o level novo, sem precisar ir em Personagens ou Meu rendimento. Se você subiu o level na Wheel of Destiny do setup, esse level já aparece ali. O aviso mostra a mudança (ex.: Lvl 300 → 305) antes de salvar.",
+  },
+  {
     id: "exportar-comparativo-pdf-2026-10-19",
     date: "2026-10-19",
     title: "Exportar o comparativo em PDF",
