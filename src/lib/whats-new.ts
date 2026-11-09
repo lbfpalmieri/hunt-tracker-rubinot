@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "calculadora-linked-task-dias-2026-11-09",
+    date: "2026-11-09",
+    title: "Calculadora de Linked Task: escolha a task e veja em dias",
+    description:
+      "Na Calculadora de Linked Task você não adiciona mais monstro por monstro: escolha a linked task da lista do jogo (ela já diz se você tem hunt feita com aquelas criaturas) ou escolha uma hunt sua e veja quais tasks ela atende. A calculadora pega as criaturas e a quantidade da task, conta só as criaturas da task em cada hunt (as outras aparecem em \"Não contam\") e mostra o tempo em horas ou em dias: diga quantas horas joga por dia e veja quantos dias faltam e em que data termina. Também voltaram as sprites de monstros que apareciam sem imagem, como o Cloak of Terror.",
+  },
+  {
     id: "objetivos-conquistados-e-editar-2026-10-26",
     date: "2026-10-26",
     title: "Objetivos: conquistados e editar",

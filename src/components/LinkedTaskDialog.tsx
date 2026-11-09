@@ -12,6 +12,7 @@ import { useAppStore } from "@/lib/store";
 import { useModeSessions } from "@/lib/play-mode";
 import { fmtDuration } from "@/lib/format";
 import { rankHuntsByTask } from "@/lib/hunt-speed";
+import { linkedTaskKey } from "@/lib/linked-task-rooms";
 import { fmtNum } from "@/lib/format";
 import { huntWeakness } from "@/lib/hunt-advisor";
 import { findMonster } from "@/lib/monsters";
@@ -104,7 +105,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
             </div>
           </Section>
 
-          <TaskTabs task={task} ranking={ranking} />
+          <TaskTabs task={task} room={room} ranking={ranking} />
         </div>
       </DialogContent>
     </Dialog>
@@ -112,7 +113,7 @@ export function LinkedTaskDialog({ room, task, open, onOpenChange }: Props) {
 }
 
 /** "Onde eu já caçei essas criaturas?": as 3 hunts do SEU histórico em que a task sairia mais rápido. */
-function WhereIHunted({ task }: { task: LinkedTaskEntry }) {
+function WhereIHunted({ task, room }: { task: LinkedTaskEntry; room: LinkedTaskRoom | null }) {
   const sessions = useModeSessions();
   const activeId = useAppStore((s) => s.activeCharacterId);
   const names = useMemo(() => task.creatures.map((c) => c.name), [task]);
@@ -156,7 +157,11 @@ function WhereIHunted({ task }: { task: LinkedTaskEntry }) {
       )}
       <Link
         to="/tools/monster-calculator"
-        search={{ linked: names.join("|"), qty: task.quantity }}
+        search={{
+          linked: names.join("|"),
+          qty: task.quantity,
+          task: room ? linkedTaskKey(room.id, task.id) : undefined,
+        }}
         className="mt-2 inline-flex min-h-11 items-center text-xs font-semibold text-rubi-blue hover:underline"
       >
         Ver todas as hunts na calculadora
@@ -219,9 +224,11 @@ const TAB_TRIGGER =
  */
 function TaskTabs({
   task,
+  room,
   ranking,
 }: {
   task: LinkedTaskEntry;
+  room: LinkedTaskRoom | null;
   ranking: { element: string; avgMod: number }[];
 }) {
   const names = useMemo(() => task.creatures.map((c) => c.name), [task]);
@@ -246,7 +253,7 @@ function TaskTabs({
       </TabsList>
 
       <TabsContent value="combat" className="mt-4 space-y-5">
-        <WhereIHunted task={task} />
+        <WhereIHunted task={task} room={room} />
         <Section icon={Swords} label="Elemento mais eficaz contra essas criaturas" tone="success">
           {ranking.length === 0 ? (
             <p className="text-xs text-muted-foreground">

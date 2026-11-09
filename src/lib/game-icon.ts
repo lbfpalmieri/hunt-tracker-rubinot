@@ -111,17 +111,42 @@ export function gameIconUrl(name: string, ext: GameIconExt = "gif"): string | nu
   return urlFor(`${base}.${ext}`);
 }
 
+/** Toda palavra com a 1ª letra maiúscula, inclusive "of/the/a" e depois de hífen ("Two-Headed_Turtle"). */
+function allWordsCapitalized(name: string): string {
+  return name
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/(^|[ -])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toUpperCase())
+    .replace(/ /g, "_");
+}
+
 /**
- * Todas as URLs a tentar, em ordem: Title Case (.gif, .png) e depois o nome exatamente como veio
- * (.gif, .png). O segundo par existe porque alguns arquivos da wiki fogem da regra das palavras
- * menores — "Amenef_The_Burning.gif", "Reflection_Of_A_Mage.gif", "Egg_of_The_Many.gif" (17 bosses
- * e ~6 itens na conferência de 2026-09-26). Nome que já vem certo acerta na primeira.
+ * Criaturas que a wiki guarda como "Nome (Criatura)", porque o nome puro é de outra página (NPC,
+ * item, quest...): "Sabretooth.gif" nem existe e "Slime.gif"/"Monk.gif" são outra imagem. Lista
+ * tirada de src/data/monsters-data.ts (nomes com "(Criatura)") e conferida no CDN em 2026-11-09.
+ */
+const CREATURE_PAGE = new Set(
+  [
+    "Armenius", "Avalanche", "Bolfrim", "Chayenne", "Count Tofifti", "Craban", "Denson Larika",
+    "Devourer", "Hacker", "Lyxoph", "Mirade", "Monk", "Owin", "Penciljack", "Pythius the Rotten",
+    "Sabretooth", "Slime", "The First Dragon", "Wrath of the Emperor", "Yalahari",
+  ].map((n) => n.toLowerCase()),
+);
+
+/**
+ * Todas as URLs a tentar, em ordem (.gif e .png de cada): Title Case com "of/the/a" minúsculos;
+ * toda palavra maiúscula; o nome exatamente como veio. A wiki não segue uma regra só — o jogo
+ * escreve "Cloak of Terror", mas o arquivo é "Cloak_Of_Terror.gif" (44 criaturas assim, entre elas
+ * "Memory of a Banshee" e "Amenef the Burning", e as com hífen, "Two-Headed_Turtle.gif", na
+ * conferência de 2026-11-09), enquanto "Wand_of_Starstorm.gif" segue a regra. Criatura de página
+ * "(Criatura)" tenta essa primeiro. Nome que já vem certo acerta na primeira.
  */
 export function gameIconUrls(name: string): string[] {
   const base = wikiFileBase(name);
   if (!base) return [];
   const raw = name.trim().replace(/\s+/g, "_");
   const exact = raw.charAt(0).toUpperCase() + raw.slice(1);
-  const bases = exact === base ? [base] : [base, exact];
-  return bases.flatMap((b) => [urlFor(`${b}.gif`), urlFor(`${b}.png`)]);
+  const bases = [base, allWordsCapitalized(name), exact];
+  if (CREATURE_PAGE.has(name.trim().replace(/\s+/g, " ").toLowerCase())) bases.unshift(`${base}_(Criatura)`);
+  return [...new Set(bases)].flatMap((b) => [urlFor(`${b}.gif`), urlFor(`${b}.png`)]);
 }
