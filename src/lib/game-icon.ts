@@ -6,9 +6,10 @@
  * /images/{hash[0]}/{hash[0:2]}/Nome_Do_Arquivo.ext, onde `hash` é o MD5 do
  * nome do arquivo (com underscore no lugar de espaço). Esse esquema é
  * padrão do MediaWiki e determinístico — dado o nome de um monstro/item,
- * calculamos a URL sem precisar buscar nada na wiki primeiro. Só a extensão
- * (gif ou png) varia; por isso o componente GameIcon tenta .gif e cai pra
- * .png se a primeira falhar.
+ * calculamos a URL sem precisar buscar nada na wiki primeiro. A grafia e a
+ * extensão (gif ou png) variam; por isso gameIconUrls devolve a lista de
+ * tentativas e quem desenha (GameIcon, ícones do gráfico de Monstros mortos)
+ * passa pra próxima quando a imagem não carrega.
  *
  * Verificado manualmente: hotlink funciona (a wiki só bloqueia acesso tipo
  * bot às páginas /wiki/, não aos arquivos estáticos em /images/).
@@ -97,18 +98,9 @@ function wikiFileBase(name: string): string {
   return titled.replace(/ /g, "_");
 }
 
-export type GameIconExt = "gif" | "png";
-
 function urlFor(filename: string): string {
   const hash = md5(filename);
   return `${WIKI_IMAGE_BASE}/${hash[0]}/${hash.slice(0, 2)}/${encodeURIComponent(filename)}`;
-}
-
-/** URL do sprite de um monstro/item pelo nome. `null` se o nome for vazio. */
-export function gameIconUrl(name: string, ext: GameIconExt = "gif"): string | null {
-  const base = wikiFileBase(name);
-  if (!base) return null;
-  return urlFor(`${base}.${ext}`);
 }
 
 /** Toda palavra com a 1ª letra maiúscula, inclusive "of/the/a" e depois de hífen ("Two-Headed_Turtle"). */
