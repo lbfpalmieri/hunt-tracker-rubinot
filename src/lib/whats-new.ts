@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "sprites-monstros-mortos-2026-11-10",
+    date: "2026-11-10",
+    title: "Monstros mortos: sprites sem ícone quebrado",
+    description:
+      "No gráfico de Monstros mortos da sessão, criaturas como o Cloak of Terror apareciam com o ícone de imagem quebrada. Agora o gráfico procura o sprite com as outras grafias da TibiaWiki, como a lista do resto do app já fazia, e se a criatura não tiver sprite fica só o nome, sem ícone quebrado.",
+  },
+  {
     id: "calculadora-linked-task-dias-2026-11-09",
     date: "2026-11-09",
     title: "Calculadora de Linked Task: escolha a task e veja em dias",

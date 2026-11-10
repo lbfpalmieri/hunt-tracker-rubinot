@@ -1,26 +1,46 @@
+import { useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, type YAxisTickContentProps,
 } from "recharts";
 import { fmtNum } from "@/lib/format";
-import { gameIconUrl } from "@/lib/game-icon";
+import { gameIconUrls } from "@/lib/game-icon";
 
 /** `perHour` é opcional — só existe quando o chamador sabe a duração da sessão. */
 export type KillPoint = { name: string; count: number; perHour?: number };
 
 /**
- * Label do eixo Y com o sprite do monstro (puxado da TibiaWiki, ver
- * game-icon.ts) na frente do nome. Só tenta .gif — se a imagem não existir
- * pra esse nome, o <image> do SVG simplesmente não desenha nada (sem ícone
- * quebrado), o texto continua normal.
+ * Sprite do monstro no eixo Y (TibiaWiki, ver game-icon.ts). Tenta as URLs de gameIconUrls em
+ * ordem e passa pra próxima quando a imagem não carrega — a wiki não segue uma grafia só (o jogo
+ * escreve "Cloak of Terror", o arquivo é "Cloak_Of_Terror.gif"). Se nenhuma existir, não desenha
+ * nada: um <image> de SVG com arquivo inexistente vira o ícone de imagem quebrada no Chrome.
+ *
+ * É um componente à parte porque o recharts chama o `tick` como função comum, e hook (useState)
+ * lá dentro quebra. As falhas ficam guardadas junto com o nome: trocou o nome, recomeça do 0.
  */
+export function TickIcon({ name }: { name: string }) {
+  const [failed, setFailed] = useState({ name, count: 0 });
+  const attempt = failed.name === name ? failed.count : 0;
+  const url = gameIconUrls(name)[attempt];
+  if (!url) return null;
+  return (
+    <image
+      href={url}
+      x={-156}
+      y={-14}
+      width={28}
+      height={28}
+      style={{ imageRendering: "pixelated" }}
+      onError={() => setFailed({ name, count: attempt + 1 })}
+    />
+  );
+}
+
+/** Label do eixo Y: sprite do monstro (TickIcon) na frente do nome. */
 function MonsterTick({ x, y, payload }: YAxisTickContentProps) {
   const name = String(payload?.value ?? "");
-  const iconUrl = gameIconUrl(name);
   return (
     <g transform={`translate(${x},${y})`}>
-      {iconUrl && (
-        <image href={iconUrl} x={-156} y={-14} width={28} height={28} style={{ imageRendering: "pixelated" }} />
-      )}
+      <TickIcon name={name} />
       <text x={-122} y={4} textAnchor="start" fontSize={11} fill="var(--muted-foreground)">
         {name}
       </text>

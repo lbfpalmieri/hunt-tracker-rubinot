@@ -1,6 +1,8 @@
 // Testes da lógica pura (src/lib): parser dos analysers, party, cálculos "/h", médias.
 // Config separada do vite.config.ts de propósito — os testes não precisam dos plugins do app
 // (TanStack Start, Tailwind, nitro), só do alias "@".
+// Teste de componente (*.test.tsx) é exceção: roda num DOM simulado, pedido no topo do arquivo
+// com `// @vitest-environment happy-dom`; o resto continua em node.
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
@@ -12,7 +14,7 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     environment: "node",
   },
 });
