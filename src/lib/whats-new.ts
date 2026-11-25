@@ -24,6 +24,20 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Sugestão do Yin Sylvan: quem usa 2 rods, cada uma com o seu imbuement e o seu tempo, agora cadastra as duas. Em Imbuements, toque em Outra arma (ou Outro capacete, Outra bota...) e adicione os imbuements desse item. O mesmo imbuement em itens diferentes não conta mais como renovação, e cada item tem o seu tempo. No jogo o tempo só corre com o item equipado: o item que não está em uso fica Na mochila, não gasta tempo nem entra no custo por hora, e você toca em Equipar quando trocar. O custo/h, o total gasto e o saldo atual passam a somar certo.",
   },
   {
+    id: "loot-por-categoria-e-preco-npc-2026-11-25",
+    date: "2026-11-25",
+    title: "Loot por categoria e preço de cada item editável",
+    description:
+      "Sugestões do Yin Sylvan e do Spankox. Na sessão, os itens lootados agora vêm separados por categoria (imbuement, task, moedas e tokens, equipamentos, produtos de criatura, gemas e outros), cada grupo com o seu subtotal, e a ordenação por valor ou quantidade vale dentro de cada grupo. O preço de cada item pode ser corrigido a qualquer momento: toque no preço, digite (150k, 1,5kk) e dê Enter. Item sem preço seu usa o preço de NPC da TibiaWiki, marcado como NPC; o que você definiu aparece como meu preço, e dá pra voltar ao NPC num toque.",
+  },
+  {
+    id: "painel-de-bounty-2026-11-25",
+    date: "2026-11-25",
+    title: "Painel de Bounty: quais criaturas você fecha mais rápido",
+    description:
+      "Sugestão do Balosin. Em Oficina > Painel de Bounty, o app junta as Bounties que você já registrou e lista cada criatura, das mais rápidas pras mais lentas: quantas tasks, abates por hora (média e melhor), tempo médio pra fechar a task, Raw XP/h e lucro/h. Dá pra filtrar por personagem e dificuldade. Só entram sessões em que você escolheu a criatura da task no passo Bounty.",
+  },
+  {
     id: "sprites-monstros-mortos-2026-11-10",
     date: "2026-11-10",
     title: "Monstros mortos: sprites sem ícone quebrado",
