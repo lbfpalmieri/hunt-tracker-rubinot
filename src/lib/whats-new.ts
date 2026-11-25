@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "loot-por-categoria-e-preco-npc-2026-11-25",
+    date: "2026-11-25",
+    title: "Loot por categoria e preço de cada item editável",
+    description:
+      "Sugestões do Yin Sylvan e do Spankox. Na sessão, os itens lootados agora vêm separados por categoria (imbuement, task, moedas e tokens, equipamentos, produtos de criatura, gemas e outros), cada grupo com o seu subtotal, e a ordenação por valor ou quantidade vale dentro de cada grupo. O preço de cada item pode ser corrigido a qualquer momento: toque no preço, digite (150k, 1,5kk) e dê Enter. Item sem preço seu usa o preço de NPC da TibiaWiki, marcado como NPC; o que você definiu aparece como meu preço, e dá pra voltar ao NPC num toque.",
+  },
+  {
     id: "sprites-monstros-mortos-2026-11-10",
     date: "2026-11-10",
     title: "Monstros mortos: sprites sem ícone quebrado",
