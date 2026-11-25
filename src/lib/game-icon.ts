@@ -11,7 +11,9 @@
  * tentativas e quem desenha (GameIcon, ícones do gráfico de Monstros mortos)
  * passa pra próxima quando a imagem não carrega.
  *
- * Verificado manualmente: hotlink funciona (a wiki só bloqueia acesso tipo
+ * Aviso (25/11/2026): a wiki passou a pedir o desafio do Cloudflare até pras imagens, então o
+ * link direto falha e o GameIcon cai no ícone reserva. Ícones fixos (charms, prey, forge, vocação)
+ * já moram em public/img/wiki. Antes: verificado manualmente que o hotlink funcionava (a wiki só bloqueava acesso tipo
  * bot às páginas /wiki/, não aos arquivos estáticos em /images/).
  */
 
