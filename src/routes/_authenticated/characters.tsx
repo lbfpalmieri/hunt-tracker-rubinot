@@ -13,6 +13,7 @@ import {
   ImageIcon,
   Clipboard,
   ClipboardPaste,
+  ScrollText,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { blobToCompressedImage } from "@/components/PasteImage";
@@ -22,6 +23,8 @@ import { currentLevel } from "@/lib/level";
 import { EmptyState } from "@/components/EmptyState";
 import { LevelBadge } from "@/components/LevelBadge";
 import { EditCharacterDialog } from "@/components/EditCharacterDialog";
+import { CharacterSheetDialog } from "@/components/character/CharacterSheetDialog";
+import { sheetFilled, useCharacterSheets } from "@/lib/character-sheet";
 
 
 export const Route = createFileRoute("/_authenticated/characters")({
@@ -67,6 +70,9 @@ function CharactersPage() {
   const [pasteFlash, setPasteFlash] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = characters.find((c) => c.id === editingId) ?? null;
+  const sheets = useCharacterSheets();
+  const [sheetId, setSheetId] = useState<string | null>(null);
+  const sheetChar = characters.find((c) => c.id === sheetId) ?? null;
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -294,6 +300,15 @@ function CharactersPage() {
                     <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 sm:flex sm:w-auto">
                       <button
                         type="button"
+                        onClick={() => setSheetId(c.id)}
+                        title="Skills, Loyalty, Bounty Talisman e charms"
+                        className="col-span-full inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-rubi-gold/50 px-3 text-xs font-semibold text-rubi-gold transition-transform hover:bg-rubi-gold/10 active:scale-[0.98]"
+                      >
+                        <ScrollText className="h-3.5 w-3.5" />
+                        {sheets.data?.[c.id] && sheetFilled(sheets.data[c.id]) ? "Ficha" : "Preencher ficha"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setPasteTarget(c.id)}
                         title="Selecionar e colar (Ctrl+V) uma imagem para este personagem"
                         className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-medium transition ${
@@ -351,6 +366,14 @@ function CharactersPage() {
           vocations={VOCATIONS}
           open
           onOpenChange={(o) => !o && setEditingId(null)}
+        />
+      )}
+      {sheetChar && (
+        <CharacterSheetDialog
+          characterId={sheetChar.id}
+          characterName={sheetChar.name}
+          open
+          onOpenChange={(o) => !o && setSheetId(null)}
         />
       )}
     </AppShell>
