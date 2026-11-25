@@ -7,11 +7,16 @@ import {
   IMB_TIER_COST,
   IMB_TIER_LABEL,
   IMB_DURATION_HOURS,
+  MAX_ITEMS_PER_SLOT,
   aggregateImbuements,
+  gearItemKey,
+  itemStartsStored,
+  parseGearItem,
+  planEquipItem,
   type ImbuementBreakdown,
 } from "@/lib/imbuements";
 import { fmtGold, fmtDate, fmtHoursMin } from "@/lib/format";
-import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown, RefreshCw } from "lucide-react";
+import { Sparkles, Plus, Trash2, Coins, Timer, ChevronDown, RefreshCw, X, Backpack } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -20,7 +25,7 @@ import {
   getImbuementType,
   type ImbuementCategory,
 } from "@/lib/imbuement-types";
-import { GEAR_SLOTS, MAX_IMBUEMENTS_PER_ITEM, type GearSlotId } from "@/lib/gear-slots";
+import { GEAR_SLOTS, MAX_IMBUEMENTS_PER_ITEM, type GearSlot, type GearSlotId } from "@/lib/gear-slots";
 import {
   Dialog,
   DialogContent,
@@ -64,10 +69,15 @@ function ImbuementsPage() {
   const addImbuement = useAppStore((s) => s.addImbuement);
   const renewImbuement = useAppStore((s) => s.renewImbuement);
   const removeImbuement = useAppStore((s) => s.removeImbuement);
+  const setImbuementStoredPeriods = useAppStore((s) => s.setImbuementStoredPeriods);
 
   const active = characters.find((c) => c.id === activeId) ?? null;
 
-  const [addSlot, setAddSlot] = useState<GearSlotId | null>(null);
+  // Item escolhido no "Slot livre" (n = 1ª, 2ª... arma).
+  const [addSlot, setAddSlot] = useState<{ slot: GearSlotId; n: number } | null>(null);
+  // Itens extras ainda sem imbuement (ex.: tocou em "Outra arma"): maior n aberto por slot.
+  const [extraItems, setExtraItems] = useState<Partial<Record<GearSlotId, number>>>({});
+  const [equipBusy, setEquipBusy] = useState<string | null>(null);
   const [tier, setTier] = useState<ImbuementTier>("powerful");
   const [gold, setGold] = useState<string>("");
   const [hoursRemaining, setHoursRemaining] = useState<string>("20");
@@ -118,14 +128,30 @@ function ImbuementsPage() {
     return aggregateImbuements(imbuements, sessions, active.id);
   }, [imbuements, sessions, active]);
 
+  // Chave = item ("weapon", "weapon#2"...), ver gearItemKey.
   const bySlot = useMemo(() => {
     const map: Record<string, ImbuementBreakdown[]> = {};
     for (const r of agg?.rows ?? []) {
-      const key = r.imb.gearSlot ?? "unassigned";
+      const item = parseGearItem(r.imb.gearSlot);
+      const key = item ? gearItemKey(item.slot, item.n) : "unassigned";
       (map[key] ??= []).push(r);
     }
     return map;
   }, [agg]);
+
+  // Números dos itens de cada slot: a 1ª sempre aparece, as outras quando têm imbuement ou foram abertas.
+  const itemsOf = (slot: GearSlotId): number[] => {
+    const ns = new Set<number>([1]);
+    for (const key of Object.keys(bySlot)) {
+      const item = parseGearItem(key);
+      if (item?.slot === slot) ns.add(item.n);
+    }
+    for (let n = 2; n <= (extraItems[slot] ?? 1); n++) ns.add(n);
+    return [...ns].sort((a, b) => a - b);
+  };
+
+  // "Na mochila / Equipar" só aparece quando o banco já guarda os períodos (coluna stored_periods).
+  const storageReady = imbuements.some((i) => i.storedPeriods !== undefined);
 
   if (!active) {
     return (
@@ -146,8 +172,33 @@ function ImbuementsPage() {
   const hoursNum = Math.max(0, Math.min(IMB_DURATION_HOURS, parseHoursInput(hoursRemaining)));
   const remainingCostPreview = (totalPreview / IMB_DURATION_HOURS) * hoursNum;
 
-  const openAdd = (slot: GearSlotId) => {
-    setAddSlot(slot);
+  const itemName = (slot: GearSlot, n: number) =>
+    itemsOf(slot.id).length > 1 ? `${slot.name} ${n}` : slot.name;
+  const addItemKey = addSlot ? gearItemKey(addSlot.slot, addSlot.n) : null;
+  const addSlotInfo = addSlot ? GEAR_SLOTS.find((s) => s.id === addSlot.slot) ?? null : null;
+  // Cadastrando a 2ª rod enquanto usa a 1ª: o imbuement novo começa na mochila (não gasta tempo).
+  const addStartsStored =
+    storageReady && addItemKey != null && itemStartsStored(agg?.rows ?? [], addItemKey);
+
+  const equipItem = async (slot: GearSlot, n: number) => {
+    const key = gearItemKey(slot.id, n);
+    setEquipBusy(key);
+    try {
+      await setImbuementStoredPeriods(
+        planEquipItem(imbuements, active.id, key, new Date().toISOString()),
+      );
+      toast.success(`${itemName(slot, n)} em uso`, {
+        description: "O tempo dos imbuements deste item volta a correr; os outros do mesmo tipo foram pra mochila.",
+      });
+    } catch (e) {
+      toast.error("Falha ao trocar o item", { description: (e as Error).message });
+    } finally {
+      setEquipBusy(null);
+    }
+  };
+
+  const openAdd = (slot: GearSlotId, n: number) => {
+    setAddSlot({ slot, n });
     setTier("powerful");
     setGold("");
     setTypeId("");
@@ -162,17 +213,20 @@ function ImbuementsPage() {
   };
 
   const handleAdd = async () => {
-    if (!typeId || !addSlot) return;
+    if (!typeId || !addItemKey) return;
     setBusy(true);
     try {
-      await addImbuement({
-        characterId: active.id,
-        tier,
-        goldTokenCost: goldNum,
-        label: typeId,
-        gearSlot: addSlot,
-        hoursRemaining: hoursNum,
-      });
+      await addImbuement(
+        {
+          characterId: active.id,
+          tier,
+          goldTokenCost: goldNum,
+          label: typeId,
+          gearSlot: addItemKey,
+          hoursRemaining: hoursNum,
+        },
+        { stored: addStartsStored },
+      );
       setAddSlot(null);
       setGold("");
       setTypeId("");
@@ -337,34 +391,83 @@ function ImbuementsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {GEAR_SLOTS.map((slot) => {
-          const rows = bySlot[slot.id] ?? [];
-          const activeRows = rows.filter((r) => r.active);
-          const expired = rows.filter((r) => !r.active);
-          const freeSlots = Math.max(0, MAX_IMBUEMENTS_PER_ITEM - activeRows.length);
+        {GEAR_SLOTS.flatMap((slot) => {
+          const items = itemsOf(slot.id);
+          return items.map((n) => ({ slot, n, items }));
+        }).map(({ slot, n, items }) => {
+          const lastN = items[items.length - 1];
+          const key = gearItemKey(slot.id, n);
+          const name = itemName(slot, n);
+          const rows = bySlot[key] ?? [];
+          // Na mochila continua no item (com o tempo parado); só sai pra "Expirados" quando acaba.
+          const liveRows = rows.filter((r) => r.active || r.stored);
+          const expired = rows.filter((r) => !r.active && !r.stored);
+          const freeSlots = Math.max(0, MAX_IMBUEMENTS_PER_ITEM - liveRows.length);
+          const stored = liveRows.some((r) => r.stored);
+          const showUse = storageReady && items.length > 1 && liveRows.length > 0;
+          const canAddAnother = n === lastN && items.length < MAX_ITEMS_PER_SLOT;
+          const removable = n > 1 && n === lastN && rows.length === 0;
           return (
-            <div key={slot.id} className="card-surface flex flex-col p-4">
+            <div key={key} className="card-surface flex flex-col p-4">
               <div className="mb-3 flex items-center gap-3">
                 <div className="rounded-lg border border-border bg-background/60 p-1.5">
-                  <img src={slot.icon} alt={slot.name} loading="lazy" width={512} height={512} className="h-11 w-11 object-contain [image-rendering:pixelated]" />
+                  <img src={slot.icon} alt={name} loading="lazy" width={512} height={512} className="h-11 w-11 object-contain [image-rendering:pixelated]" />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-display text-lg font-bold text-rubi-gold">{slot.name}</div>
+                  <div className="font-display text-lg font-bold text-rubi-gold">{name}</div>
                   <div className="truncate text-2xs text-muted-foreground">{slot.hint}</div>
                 </div>
                 <span className="ml-auto shrink-0 rounded-md bg-accent px-2 py-1 text-2xs font-semibold text-muted-foreground">
-                  {activeRows.length}/{MAX_IMBUEMENTS_PER_ITEM}
+                  {liveRows.length}/{MAX_IMBUEMENTS_PER_ITEM}
                 </span>
+                {removable && (
+                  <button
+                    type="button"
+                    onClick={() => setExtraItems((m) => ({ ...m, [slot.id]: n - 1 }))}
+                    aria-label={`Tirar ${name}`}
+                    title={`Tirar ${name}`}
+                    className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
 
+              {showUse && (
+                <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-background/40 px-3 py-2 text-xs">
+                  {stored ? (
+                    <>
+                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        <Backpack className="h-3.5 w-3.5" aria-hidden />
+                        Na mochila · o tempo não corre
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => equipItem(slot, n)}
+                        disabled={equipBusy != null}
+                        title={`Usar ${name} nas próximas hunts: o tempo volta a correr e o outro item vai pra mochila`}
+                        className="min-h-11 shrink-0 rounded-md border border-rubi-blue/50 bg-rubi-blue-soft px-3 font-semibold text-rubi-blue hover:bg-rubi-blue/20 disabled:opacity-60 lg:min-h-0 lg:py-1.5"
+                      >
+                        {equipBusy === key ? "Equipando..." : "Equipar"}
+                      </button>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-rubi-blue">
+                      <Sparkles className="h-3.5 w-3.5" aria-hidden />
+                      Em uso · entra no custo/h
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
-                {activeRows.map(renderRow)}
+                {liveRows.map(renderRow)}
 
                 {Array.from({ length: freeSlots }).map((_, i) => (
                   <button
                     key={`empty-${i}`}
                     type="button"
-                    onClick={() => openAdd(slot.id)}
+                    onClick={() => openAdd(slot.id, n)}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:border-rubi-blue hover:text-rubi-blue"
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -379,6 +482,18 @@ function ImbuementsPage() {
                     </div>
                     <div className="space-y-2">{expired.map(renderRow)}</div>
                   </div>
+                )}
+
+                {canAddAnother && (
+                  <button
+                    type="button"
+                    onClick={() => setExtraItems((m) => ({ ...m, [slot.id]: n + 1 }))}
+                    title={`Cadastrar mais um item (ex.: 2 rods), cada um com os seus imbuements e o seu tempo`}
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {slot.another}
+                  </button>
                 )}
               </div>
             </div>
@@ -402,12 +517,22 @@ function ImbuementsPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Adicionar imbuement · {GEAR_SLOTS.find((s) => s.id === addSlot)?.name ?? ""}
+              Adicionar imbuement · {addSlot && addSlotInfo ? itemName(addSlotInfo, addSlot.n) : ""}
             </DialogTitle>
             <DialogDescription>
               O custo é diluído nas próximas horas de hunt de {active.name}.
             </DialogDescription>
           </DialogHeader>
+
+          {addStartsStored && (
+            <p className="flex items-start gap-2 rounded-lg border border-border bg-accent/30 p-3 text-xs text-muted-foreground">
+              <Backpack className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>
+                Este item começa <strong className="text-foreground">na mochila</strong>: outro item do mesmo tipo está
+                em uso, e no jogo o tempo só corre com o item equipado. Toque em Equipar quando trocar.
+              </span>
+            </p>
+          )}
 
           <label className="block">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "imbuements-varios-itens-2026-11-25",
+    date: "2026-11-25",
+    title: "Imbuements: 2 armas (ou 2 de qualquer item)",
+    description:
+      "Sugestão do Yin Sylvan: quem usa 2 rods, cada uma com o seu imbuement e o seu tempo, agora cadastra as duas. Em Imbuements, toque em Outra arma (ou Outro capacete, Outra bota...) e adicione os imbuements desse item. O mesmo imbuement em itens diferentes não conta mais como renovação, e cada item tem o seu tempo. No jogo o tempo só corre com o item equipado: o item que não está em uso fica Na mochila, não gasta tempo nem entra no custo por hora, e você toca em Equipar quando trocar. O custo/h, o total gasto e o saldo atual passam a somar certo.",
+  },
+  {
     id: "loot-por-categoria-e-preco-npc-2026-11-25",
     date: "2026-11-25",
     title: "Loot por categoria e preço de cada item editável",

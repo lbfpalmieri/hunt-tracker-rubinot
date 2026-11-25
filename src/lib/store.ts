@@ -15,6 +15,7 @@ import { normalizeSetup, type SessionSetup } from "./session-setup";
 import { currentLevel } from "./level";
 import { normalizeParty, type PartyInfo } from "./party";
 import type { GoldAdjustment } from "./gold-balance";
+import { parseStoredPeriods } from "./imbuements";
 
 /** Tempo (ms) que o "Desfazer" fica disponível depois de excluir uma sessão. */
 const UNDO_DELETE_MS = 8000;
@@ -66,15 +67,24 @@ export interface Hunt {
 
 export type ImbuementTier = "basic" | "intricate" | "powerful";
 
+/** Período em que o item ficou guardado (na mochila): o tempo do imbuement não corre. to null = ainda guardado. */
+export interface ImbuementStoredPeriod {
+  from: string;
+  to: string | null;
+}
+
 export interface Imbuement {
   id: string;
   characterId: string;
   tier: ImbuementTier;
   goldTokenCost: number;
   label: string | null;
+  /** Item: "weapon" (1ª arma), "weapon#2" (2ª arma)... — ver gearItemKey em imbuements.ts. */
   gearSlot: string | null;
   hoursRemaining: number;
   createdAt: string;
+  /** imbuements.stored_periods. undefined = o banco ainda não tem a coluna (trocar de item fica escondido). */
+  storedPeriods?: ImbuementStoredPeriod[];
 }
 
 export interface LevelSnapshot {
@@ -165,8 +175,16 @@ interface State {
   removeSession: (id: string) => Promise<void>;
   /** Esconde a sessão na hora e só apaga de verdade depois de `delayMs`; `undo()` traz de volta. */
   removeSessionWithUndo: (id: string, delayMs?: number) => { undo: () => boolean; flush: () => Promise<void> } | null;
-  addImbuement: (i: Omit<Imbuement, "id" | "createdAt">) => Promise<Imbuement>;
+  /** opts.stored = o item começa guardado (outro item do mesmo slot está em uso). */
+  addImbuement: (
+    i: Omit<Imbuement, "id" | "createdAt" | "storedPeriods">,
+    opts?: { stored?: boolean },
+  ) => Promise<Imbuement>;
   renewImbuement: (id: string, goldTokenCost?: number) => Promise<Imbuement>;
+  /** Grava os períodos guardados (resultado de planEquipItem — "Usar esta arma"). */
+  setImbuementStoredPeriods: (
+    updates: { id: string; storedPeriods: ImbuementStoredPeriod[] }[],
+  ) => Promise<void>;
 
   removeImbuement: (id: string) => Promise<void>;
   addLevelSnapshot: (characterId: string, level: number) => Promise<LevelSnapshot>;
@@ -194,6 +212,22 @@ interface State {
 // Data API types aren't generated yet; cast to a loose client here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowImbuement(i: any): Imbuement {
+  return {
+    id: i.id,
+    characterId: i.character_id,
+    tier: i.tier as ImbuementTier,
+    goldTokenCost: Number(i.gold_token_cost ?? 0),
+    label: i.label ?? null,
+    gearSlot: i.gear_slot ?? null,
+    hoursRemaining: Number(i.hours_remaining ?? 20),
+    createdAt: i.created_at,
+    // Coluna nova (migration 20261125120000): sem ela no banco, fica undefined e o app segue como antes.
+    storedPeriods: "stored_periods" in i ? parseStoredPeriods(i.stored_periods) : undefined,
+  };
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowBounty(row: any): BountyInfo | null {
@@ -348,16 +382,7 @@ export const useAppStore = create<State>()((set, get) => ({
         name: h.name,
         createdAt: h.created_at,
       }));
-      const imbuements: Imbuement[] = (imbRes.data ?? []).map((i: any) => ({
-        id: i.id,
-        characterId: i.character_id,
-        tier: i.tier as ImbuementTier,
-        goldTokenCost: Number(i.gold_token_cost ?? 0),
-        label: i.label ?? null,
-        gearSlot: i.gear_slot ?? null,
-        hoursRemaining: Number(i.hours_remaining ?? 20),
-        createdAt: i.created_at,
-      }));
+      const imbuements: Imbuement[] = (imbRes.data ?? []).map(rowImbuement);
       const levelSnapshots: LevelSnapshot[] = (levelRes.data ?? []).map((l: any) => ({
         id: l.id,
         characterId: l.character_id,
@@ -691,10 +716,12 @@ export const useAppStore = create<State>()((set, get) => ({
 
 
 
-  addImbuement: async (input) => {
+  addImbuement: async (input, opts) => {
     const { data: userData } = await supabase.auth.getSession();
     const uid = userData.session?.user?.id;
     if (!uid) throw new Error("Not signed in");
+    // Só manda stored_periods quando o banco já tem a coluna (alguma linha veio com ela).
+    const storageReady = get().imbuements.some((i) => i.storedPeriods !== undefined);
     const { data, error } = await db
       .from("imbuements")
       .insert({
@@ -705,20 +732,14 @@ export const useAppStore = create<State>()((set, get) => ({
         label: input.label,
         gear_slot: input.gearSlot ?? null,
         hours_remaining: input.hoursRemaining,
+        ...(opts?.stored && storageReady
+          ? { stored_periods: [{ from: new Date().toISOString(), to: null }] }
+          : {}),
       })
       .select()
       .single();
     if (error) throw error;
-    const created: Imbuement = {
-      id: data.id,
-      characterId: data.character_id,
-      tier: data.tier as ImbuementTier,
-      goldTokenCost: Number(data.gold_token_cost ?? 0),
-      label: data.label ?? null,
-      gearSlot: data.gear_slot ?? null,
-      hoursRemaining: Number(data.hours_remaining ?? 20),
-      createdAt: data.created_at,
-    };
+    const created = rowImbuement(data);
     set((s) => ({ imbuements: [created, ...s.imbuements] }));
     return created;
   },
@@ -726,14 +747,37 @@ export const useAppStore = create<State>()((set, get) => ({
   renewImbuement: async (id, goldTokenCost) => {
     const current = get().imbuements.find((i) => i.id === id);
     if (!current) throw new Error("Imbuement not found");
-    return await get().addImbuement({
-      characterId: current.characterId,
-      tier: current.tier,
-      goldTokenCost: goldTokenCost ?? current.goldTokenCost,
-      label: current.label,
-      gearSlot: current.gearSlot,
-      hoursRemaining: 20,
-    });
+    return await get().addImbuement(
+      {
+        characterId: current.characterId,
+        tier: current.tier,
+        goldTokenCost: goldTokenCost ?? current.goldTokenCost,
+        label: current.label,
+        gearSlot: current.gearSlot,
+        hoursRemaining: 20,
+      },
+      // Renovou o imbuement de um item guardado: o novo também fica guardado.
+      { stored: (current.storedPeriods ?? []).some((p) => p.to == null) },
+    );
+  },
+
+  setImbuementStoredPeriods: async (updates) => {
+    const results = await Promise.all(
+      updates.map((u) =>
+        db.from("imbuements").update({ stored_periods: u.storedPeriods }).eq("id", u.id),
+      ),
+    );
+    const failed = results.find((r: { error: unknown }) => r.error);
+    // Mesmo com falha parcial, mantém na tela só o que o banco gravou.
+    const saved = new Map(
+      updates.filter((_, idx) => !results[idx].error).map((u) => [u.id, u.storedPeriods]),
+    );
+    set((s) => ({
+      imbuements: s.imbuements.map((i) =>
+        saved.has(i.id) ? { ...i, storedPeriods: saved.get(i.id) } : i,
+      ),
+    }));
+    if (failed) throw failed.error;
   },
 
   removeImbuement: async (id) => {
