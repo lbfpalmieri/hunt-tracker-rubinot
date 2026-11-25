@@ -77,6 +77,10 @@ export const TUTORIALS: Tutorial[] = [
   T("ranking", "Ranking", [
     ["Compare resultados", "Veja as melhores hunts por lucro/h e XP/h entre as sessões do modo atual."],
   ]),
+  T("bounty", "Painel de Bounty", [
+    ["Quais criaturas rendem", "Veja as Bounties que você já fez, das mais rápidas pras mais lentas, com abates/h, tempo da task, XP/h e lucro/h."],
+    ["Alimente pelas sessões", "Cada sessão salva com Bounty e criatura entra aqui sozinha. Filtre por personagem e dificuldade."],
+  ]),
   T("comparisons", "Comparações salvas", [
     ["Reveja comparativos", "Aqui ficam as comparações de hunts que você salvou. Elas são privadas."],
   ]),
@@ -102,6 +106,7 @@ export function tutorialFor(pathname: string): Tutorial | null {
     : p === "/equipamentos" ? "equipamentos"
     : p === "/rodas" ? "rodas"
     : p === "/tools/ranking" ? "ranking"
+    : p === "/tools/bounty" ? "bounty"
     : p === "/tools/comparisons" ? "comparisons"
     : p === "/feedback" ? "feedback"
     : null;
