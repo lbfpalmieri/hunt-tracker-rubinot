@@ -185,6 +185,8 @@ function PriceCell({
         aria-label={`Preço de ${r.name} (cada)`}
         placeholder="ex: 150k"
         value={draft}
+        // Já vem selecionado: digitar troca o preço em vez de grudar no fim do antigo.
+        onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => onDraft(e.target.value)}
         onBlur={onCommit}
         onKeyDown={(e) => {
