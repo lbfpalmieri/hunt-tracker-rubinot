@@ -24,6 +24,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Em Personagens, cada personagem ganhou uma Ficha: anote as skills base (magic level e skills de combate), os pontos de Loyalty (o app mostra o bônus e o título), os níveis do Bounty Talisman (Dano, Life Leech e Loot, com a %) e os charms e minor charms que você tem, com o nível de cada um. E na Oficina tem o Otimizador de charms: escolha uma criatura ou uma hunt sua e veja quais dos seus charms rendem mais, cada um com o porquê numa linha (fraqueza a elemento, vida da criatura, quanto ela bate), e quais valem desbloquear. Regras e números da TibiaWiki BR. Ideias do Balosin e do Yin Sylvan, valeu!",
   },
   {
+    id: "imbuements-varios-itens-2026-11-25",
+    date: "2026-11-25",
+    title: "Imbuements: 2 armas (ou 2 de qualquer item)",
+    description:
+      "Sugestão do Yin Sylvan: quem usa 2 rods, cada uma com o seu imbuement e o seu tempo, agora cadastra as duas. Em Imbuements, toque em Outra arma (ou Outro capacete, Outra bota...) e adicione os imbuements desse item. O mesmo imbuement em itens diferentes não conta mais como renovação, e cada item tem o seu tempo. No jogo o tempo só corre com o item equipado: o item que não está em uso fica Na mochila, não gasta tempo nem entra no custo por hora, e você toca em Equipar quando trocar. O custo/h, o total gasto e o saldo atual passam a somar certo.",
+  },
+  {
     id: "loot-por-categoria-e-preco-npc-2026-11-25",
     date: "2026-11-25",
     title: "Loot por categoria e preço de cada item editável",

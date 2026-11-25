@@ -32,7 +32,11 @@ Cálculos: todo "/h" de sessão = total ÷ duração da própria sessão; nunca 
 Nova sessão e no registro de bosses troca a duração colada (totais iguais, /h e endedAt recalculados; em grupo
 também party.sessionSec). Média da hunt = média das sessões
 (aggregateByHunt em compare.ts). Imbuements: keyOf = `${gearSlot}::${label}` — tipos
-diferentes coexistem no item; mesmo tipo = renovação. Prey (prey.ts): 3 slots (2 liberados +
+diferentes coexistem no item; mesmo tipo = renovação. gear_slot = o ITEM: "weapon" = 1ª arma (todo dado antigo),
+"weapon#2" = 2ª... (gearItemKey/parseGearItem, até 4 por slot; pedido do jogador com 2 rods). imbuements.stored_periods
+(jsonb [{from,to|null}]) = períodos em que o item ficou na mochila: no jogo o tempo só corre com o item equipado, então hunt
+nesse período não gasta tempo nem custo e o item guardado não entra no custo/h. "Equipar" (planEquipItem) guarda os outros
+itens do mesmo slot. Sem a coluna no banco (storedPeriods undefined) o app segue como antes e o Equipar fica escondido. Prey (prey.ts): 3 slots (2 liberados +
 1 "Permanent Prey Slot" da Store), 1 criatura por slot, 1 bônus por criatura, 10 estrelas:
 Dano 7–25% (+2), Redução 12–30% (+2), XP/Loot 13–40% (+3). Seletor = PreyPicker (layout da janela do jogo).
 
