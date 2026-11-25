@@ -45,10 +45,10 @@ export function preyStarsForPct(bonus: PreyBonus, pct: number | null | undefined
 
 /** Bandeiras dos bônus, as mesmas do jogo (arquivos da TibiaWiki BR, 44x92). */
 export const PREY_BONUS_IMAGE: Record<PreyBonus, string> = {
-  damage: "https://www.tibiawiki.com.br/images/3/3b/Prey_damage.png",
-  defense: "https://www.tibiawiki.com.br/images/b/be/Prey_reduction.png",
-  xp: "https://www.tibiawiki.com.br/images/7/7e/Prey_xp.png",
-  loot: "https://www.tibiawiki.com.br/images/b/bb/Improved_loot.png",
+  damage: "/img/wiki/Prey_damage.png",
+  defense: "/img/wiki/Prey_reduction.png",
+  xp: "/img/wiki/Prey_xp.png",
+  loot: "/img/wiki/Improved_loot.png",
 };
 
 /** Percentual padrão (10 estrelas) de cada bônus. */

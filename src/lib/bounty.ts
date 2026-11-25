@@ -33,7 +33,7 @@ export const BOUNTY_DIFFICULTY_POOL: Record<BountyDifficulty, string> = {
   master: "difíceis e desafiadoras",
 };
 
-export const BOUNTY_TALISMAN_IMAGE = "https://www.tibiawiki.com.br/images/d/de/Bounty_Talisman.gif";
+export const BOUNTY_TALISMAN_IMAGE = "/img/wiki/Bounty_Talisman.gif";
 
 export const BOUNTY_DIFFICULTIES: { value: BountyDifficulty; label: string; hint: string }[] = [
   { value: "beginner", label: "Beginner", hint: "50–110 abates · 3 BP" },

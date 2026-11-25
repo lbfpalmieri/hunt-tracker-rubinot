@@ -24,21 +24,23 @@ export interface ForgeSkill {
   pct: number[];
 }
 
-const WIKI = "https://www.tibiawiki.com.br/images";
+// Ícones da TibiaWiki BR guardados no próprio site (public/img/wiki): desde 25/11/2026 a wiki
+// pede o desafio do Cloudflare até pras imagens, e o link direto parou de carregar.
+const WIKI = "/img/wiki";
 
 export const FORGE_SKILLS: Record<ForgeSlot, ForgeSkill> = {
   weapon: {
     name: "Onslaught",
     item: "Arma",
     effect: "Chance de causar 60% de dano extra no ataque (soma com o crítico).",
-    icon: `${WIKI}/4/4a/Onslaught.gif`,
+    icon: `${WIKI}/Onslaught.gif`,
     pct: [0.5, 1.05, 1.7, 2.45, 3.3, 4.25, 5.3, 6.45, 7.7, 9.05],
   },
   armor: {
     name: "Ruse",
     item: "Armadura",
     effect: "Chance de esquivar do ataque (dodge), de qualquer criatura ou jogador.",
-    icon: `${WIKI}/5/59/Ruse.gif`,
+    icon: `${WIKI}/Ruse.gif`,
     pct: [0.5, 1.03, 1.62, 2.28, 3.0, 3.78, 4.62, 5.52, 6.48, 7.51],
   },
   head: {
@@ -46,14 +48,14 @@ export const FORGE_SKILLS: Record<ForgeSlot, ForgeSkill> = {
     item: "Capacete",
     effect:
       "Com logout block ativo, chance de reduzir em 2s o cooldown das magias do grupo secundário.",
-    icon: `${WIKI}/2/28/Momentum.gif`,
+    icon: `${WIKI}/Momentum.gif`,
     pct: [2.0, 4.05, 6.2, 8.45, 10.8, 13.25, 15.8, 18.45, 21.2, 24.05],
   },
   legs: {
     name: "Transcendence",
     item: "Calça",
     effect: "Chance de ativar o avatar da vocação (nível 3) por um período curto.",
-    icon: `${WIKI}/a/a1/Transcendence.gif`,
+    icon: `${WIKI}/Transcendence.gif`,
     pct: [0.13, 0.27, 0.44, 0.64, 0.86, 1.11, 1.38, 1.68, 2.0, 2.35],
   },
   feet: {
