@@ -77,37 +77,39 @@ export const EMPTY_SETUP: SessionSetup = {
   charms: [],
 };
 
-const WIKI = "https://www.tibiawiki.com.br/images";
+// Ícones da TibiaWiki BR guardados no próprio site (public/img/wiki): desde 25/11/2026 a wiki
+// pede o desafio do Cloudflare até pras imagens, e o link direto parou de carregar.
+const WIKI = "/img/wiki";
 
-export const WHEEL_ICON = `${WIKI}/f/fb/Wheel_of_Destiny_Icon.gif`;
+export const WHEEL_ICON = `${WIKI}/Wheel_of_Destiny_Icon.gif`;
 
 /** Runas de Charm (Major: Charm Points; Minor: Charm Echoes) com os ícones da wiki. */
 export const CHARMS: { name: string; kind: "major" | "minor"; icon: string }[] = [
-  { name: "Carnage", kind: "major", icon: `${WIKI}/3/30/Carnage_Icon.gif` },
-  { name: "Curse", kind: "major", icon: `${WIKI}/e/e3/Curse_Icon.gif` },
-  { name: "Divine Wrath", kind: "major", icon: `${WIKI}/c/cc/Divine_Wrath_Icon.gif` },
-  { name: "Dodge", kind: "major", icon: `${WIKI}/2/25/Dodge_Icon.gif` },
-  { name: "Enflame", kind: "major", icon: `${WIKI}/7/74/Enflame_Icon.gif` },
-  { name: "Freeze", kind: "major", icon: `${WIKI}/7/72/Freeze_Icon.gif` },
-  { name: "Low Blow", kind: "major", icon: `${WIKI}/8/8c/Low_Blow_Icon.gif` },
-  { name: "Overpower", kind: "major", icon: `${WIKI}/2/2b/Overpower_Icon.gif` },
-  { name: "Overflux", kind: "major", icon: `${WIKI}/2/20/Overflux_Icon.gif` },
-  { name: "Parry", kind: "major", icon: `${WIKI}/a/a8/Parry_Icon.gif` },
-  { name: "Poison", kind: "major", icon: `${WIKI}/5/59/Poison_Icon.gif` },
-  { name: "Savage Blow", kind: "major", icon: `${WIKI}/e/e6/Savage_Blow_Icon.gif` },
-  { name: "Wound", kind: "major", icon: `${WIKI}/d/d9/Wound_Icon.gif` },
-  { name: "Zap", kind: "major", icon: `${WIKI}/2/2f/Zap_Icon.gif` },
-  { name: "Adrenaline Burst", kind: "minor", icon: `${WIKI}/1/1d/Adrenaline_Burst_Icon.gif` },
-  { name: "Bless", kind: "minor", icon: `${WIKI}/6/6c/Bless_Icon.gif` },
-  { name: "Cleanse", kind: "minor", icon: `${WIKI}/9/92/Cleanse_Icon.gif` },
-  { name: "Cripple", kind: "minor", icon: `${WIKI}/9/9c/Cripple_Icon.gif` },
-  { name: "Gut", kind: "minor", icon: `${WIKI}/f/f0/Gut_Icon.gif` },
-  { name: "Numb", kind: "minor", icon: `${WIKI}/0/03/Numb_Icon.gif` },
-  { name: "Scavenge", kind: "minor", icon: `${WIKI}/5/5f/Scavenge_Icon.gif` },
-  { name: "Fatal Hold", kind: "minor", icon: `${WIKI}/b/b8/Fatal_Hold_Icon.gif` },
-  { name: "Vampiric Embrace", kind: "minor", icon: `${WIKI}/4/41/Vampiric_Embrace_Icon.gif` },
-  { name: "Void Inversion", kind: "minor", icon: `${WIKI}/7/79/Void_Inversion_Icon.gif` },
-  { name: "Void's Call", kind: "minor", icon: `${WIKI}/c/c6/Void%27s_Call_Icon.gif` },
+  { name: "Carnage", kind: "major", icon: `${WIKI}/Carnage_Icon.gif` },
+  { name: "Curse", kind: "major", icon: `${WIKI}/Curse_Icon.gif` },
+  { name: "Divine Wrath", kind: "major", icon: `${WIKI}/Divine_Wrath_Icon.gif` },
+  { name: "Dodge", kind: "major", icon: `${WIKI}/Dodge_Icon.gif` },
+  { name: "Enflame", kind: "major", icon: `${WIKI}/Enflame_Icon.gif` },
+  { name: "Freeze", kind: "major", icon: `${WIKI}/Freeze_Icon.gif` },
+  { name: "Low Blow", kind: "major", icon: `${WIKI}/Low_Blow_Icon.gif` },
+  { name: "Overpower", kind: "major", icon: `${WIKI}/Overpower_Icon.gif` },
+  { name: "Overflux", kind: "major", icon: `${WIKI}/Overflux_Icon.gif` },
+  { name: "Parry", kind: "major", icon: `${WIKI}/Parry_Icon.gif` },
+  { name: "Poison", kind: "major", icon: `${WIKI}/Poison_Icon.gif` },
+  { name: "Savage Blow", kind: "major", icon: `${WIKI}/Savage_Blow_Icon.gif` },
+  { name: "Wound", kind: "major", icon: `${WIKI}/Wound_Icon.gif` },
+  { name: "Zap", kind: "major", icon: `${WIKI}/Zap_Icon.gif` },
+  { name: "Adrenaline Burst", kind: "minor", icon: `${WIKI}/Adrenaline_Burst_Icon.gif` },
+  { name: "Bless", kind: "minor", icon: `${WIKI}/Bless_Icon.gif` },
+  { name: "Cleanse", kind: "minor", icon: `${WIKI}/Cleanse_Icon.gif` },
+  { name: "Cripple", kind: "minor", icon: `${WIKI}/Cripple_Icon.gif` },
+  { name: "Gut", kind: "minor", icon: `${WIKI}/Gut_Icon.gif` },
+  { name: "Numb", kind: "minor", icon: `${WIKI}/Numb_Icon.gif` },
+  { name: "Scavenge", kind: "minor", icon: `${WIKI}/Scavenge_Icon.gif` },
+  { name: "Fatal Hold", kind: "minor", icon: `${WIKI}/Fatal_Hold_Icon.gif` },
+  { name: "Vampiric Embrace", kind: "minor", icon: `${WIKI}/Vampiric_Embrace_Icon.gif` },
+  { name: "Void Inversion", kind: "minor", icon: `${WIKI}/Void_Inversion_Icon.gif` },
+  { name: "Void's Call", kind: "minor", icon: `${WIKI}/Voids_Call_Icon.gif` },
 ];
 
 export const CHARM_LEVEL_LABEL: Record<1 | 2 | 3, string> = { 1: "Nv1", 2: "Nv2", 3: "Nv3" };
