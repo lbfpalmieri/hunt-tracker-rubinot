@@ -17,6 +17,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "imagens-de-itens-e-monstros-2026-11-25",
+    date: "2026-11-25",
+    title: "Imagens de itens e monstros de volta",
+    description:
+      "A TibiaWiki BR passou a bloquear as imagens usadas por outros sites, e o loot, os monstros mortos, o Bounty e os bosses ficaram com o ícone genérico. Agora os itens vêm do site oficial do Tibia e os monstros com o visual do próprio servidor: mais de 9 em cada 10 voltaram, inclusive as armas Moonsilver e as magias dos Avatares. Ainda sem imagem: alguns bosses e itens de evento e os perks da Wheel.",
+  },
+  {
     id: "ficha-e-otimizador-de-charms-2026-11-25",
     date: "2026-11-25",
     title: "Ficha do personagem e Otimizador de charms",

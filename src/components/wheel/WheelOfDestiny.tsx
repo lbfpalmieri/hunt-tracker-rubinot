@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   WHEEL_DOMAINS,
   WHEEL_REVELATION_BY_DOMAIN,
@@ -8,7 +8,7 @@ import {
   type DedicationKind,
   type WheelDomain,
 } from "@/data/wheel-data";
-import { gameIconUrls } from "@/lib/game-icon";
+import { useGameIconUrls } from "@/hooks/use-game-icon-urls";
 import { availableSlices, gemName, summarizeWheel, type WheelBuild } from "@/lib/wheel";
 
 /** Cor de cada domínio (mesma ideia da roda do jogo: verde, vermelho, verde-água e roxo). */
@@ -88,9 +88,10 @@ function SvgIcon({
   size: number;
   dim?: boolean;
 }) {
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => setAttempt(0), [name]);
-  const url = gameIconUrls(name)[attempt];
+  const urls = useGameIconUrls(name);
+  const [failed, setFailed] = useState<{ urls: string[] | null; count: number }>({ urls, count: 0 });
+  const attempt = failed.urls === urls ? failed.count : 0;
+  const url = urls?.[attempt];
   if (!url) return null;
   return (
     <image
@@ -105,7 +106,7 @@ function SvgIcon({
         filter: dim ? "grayscale(0.85) brightness(0.9)" : undefined,
         opacity: dim ? 0.6 : 1,
       }}
-      onError={() => setAttempt((a) => a + 1)}
+      onError={() => setFailed({ urls, count: attempt + 1 })}
       pointerEvents="none"
     />
   );

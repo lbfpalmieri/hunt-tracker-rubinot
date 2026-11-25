@@ -3,24 +3,24 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, type YAxisTickContentProps,
 } from "recharts";
 import { fmtNum } from "@/lib/format";
-import { gameIconUrls } from "@/lib/game-icon";
+import { useGameIconUrls } from "@/hooks/use-game-icon-urls";
 
 /** `perHour` é opcional — só existe quando o chamador sabe a duração da sessão. */
 export type KillPoint = { name: string; count: number; perHour?: number };
 
 /**
- * Sprite do monstro no eixo Y (TibiaWiki, ver game-icon.ts). Tenta as URLs de gameIconUrls em
- * ordem e passa pra próxima quando a imagem não carrega — a wiki não segue uma grafia só (o jogo
- * escreve "Cloak of Terror", o arquivo é "Cloak_Of_Terror.gif"). Se nenhuma existir, não desenha
- * nada: um <image> de SVG com arquivo inexistente vira o ícone de imagem quebrada no Chrome.
+ * Sprite do monstro no eixo Y (ver game-icon.ts). Tenta as URLs de gameIconUrls em ordem e passa
+ * pra próxima quando a imagem não carrega. Se nenhuma existir, não desenha nada: um <image> de SVG
+ * com arquivo inexistente vira o ícone de imagem quebrada no Chrome.
  *
  * É um componente à parte porque o recharts chama o `tick` como função comum, e hook (useState)
  * lá dentro quebra. As falhas ficam guardadas junto com o nome: trocou o nome, recomeça do 0.
  */
 export function TickIcon({ name }: { name: string }) {
-  const [failed, setFailed] = useState({ name, count: 0 });
-  const attempt = failed.name === name ? failed.count : 0;
-  const url = gameIconUrls(name)[attempt];
+  const urls = useGameIconUrls(name);
+  const [failed, setFailed] = useState<{ urls: string[] | null; count: number }>({ urls, count: 0 });
+  const attempt = failed.urls === urls ? failed.count : 0;
+  const url = urls?.[attempt];
   if (!url) return null;
   return (
     <image
@@ -30,7 +30,7 @@ export function TickIcon({ name }: { name: string }) {
       width={28}
       height={28}
       style={{ imageRendering: "pixelated" }}
-      onError={() => setFailed({ name, count: attempt + 1 })}
+      onError={() => setFailed({ urls, count: attempt + 1 })}
     />
   );
 }
