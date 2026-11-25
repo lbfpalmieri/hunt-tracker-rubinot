@@ -59,6 +59,7 @@ export const TUTORIALS: Tutorial[] = [
   ]),
   T("imbuements", "Imbuements", [
     ["Controle o tempo", "Registre cada imbuement com horas e minutos restantes (duram 20h de jogo)."],
+    ["Dois itens do mesmo tipo", "Usa 2 rods? Toque em Outra arma e cadastre os imbuements de cada uma. Só o item em uso gasta tempo: toque em Equipar quando trocar."],
     ["Renove a tempo", "O app avisa quando falta pouco, pra você não perder o efeito no meio da hunt."],
   ]),
   T("bosses", "Rotação de Bosses", [
