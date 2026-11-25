@@ -1,20 +1,30 @@
 /**
- * Resolve a URL do sprite de um monstro/item direto no CDN da TibiaWiki
- * brasileira (tibiawiki.com.br), sem precisar consultar nada antes.
+ * Resolve as URLs do sprite de um monstro, item, magia ou perk a partir do nome, sem consultar
+ * nada antes. gameIconUrls devolve a lista de tentativas em ordem e quem desenha (GameIcon, ícones
+ * do gráfico de Monstros mortos, roda da Wheel) passa pra próxima quando a imagem não carrega.
+ *
+ * Ordem (desde 25/11/2026, quando a TibiaWiki BR passou a pedir o desafio do Cloudflare até pras
+ * imagens e o link direto parou de carregar):
+ * 1. Arquivo guardado no próprio site (public/img/wiki, LOCAL_FILES): charms, prey, perks, magias.
+ * 2. Item: sprite oficial do Tibia pelo id do item (static.tibia.com/images/charactertrade/objects).
+ * 3. Monstro: o visual (outfit) do monstro nos servidores abertos Canary (base do RubinOT) e
+ *    Crystal Server, desenhado pelo outfit-images.ots.me; depois a imagem da biblioteca oficial
+ *    do tibia.com (que também tem as magias, em .png).
+ * 4. TibiaWiki BR, como era antes, pro dia em que ela voltar a aceitar.
+ *
+ * Cobertura conferida em 25/11/2026: ~94% dos monstros de monsters-data e ~95% dos itens de
+ * item-info-data. Sem imagem ficam alguns bosses e itens de evento, e os perks da Wheel
+ * ("Augmented ...", "The Avenger"): só a wiki tem, e ela bloqueia.
+ *
+ * Os ids de item e os outfits vêm de src/data/sprite-ids-data.ts (gerado por
+ * scripts/gerar-sprites.mjs). O arquivo é grande (~200 KB, 67 KB comprimido), então só carrega
+ * quando a primeira imagem aparece na tela: chame loadSpriteIds() antes (o hook useGameIconUrls
+ * faz isso).
  *
  * A wiki roda em MediaWiki puro, que guarda cada arquivo em
- * /images/{hash[0]}/{hash[0:2]}/Nome_Do_Arquivo.ext, onde `hash` é o MD5 do
- * nome do arquivo (com underscore no lugar de espaço). Esse esquema é
- * padrão do MediaWiki e determinístico — dado o nome de um monstro/item,
- * calculamos a URL sem precisar buscar nada na wiki primeiro. A grafia e a
- * extensão (gif ou png) variam; por isso gameIconUrls devolve a lista de
- * tentativas e quem desenha (GameIcon, ícones do gráfico de Monstros mortos)
- * passa pra próxima quando a imagem não carrega.
- *
- * Aviso (25/11/2026): a wiki passou a pedir o desafio do Cloudflare até pras imagens, então o
- * link direto falha e o GameIcon cai no ícone reserva. Ícones fixos (charms, prey, forge, vocação)
- * já moram em public/img/wiki. Antes: verificado manualmente que o hotlink funcionava (a wiki só bloqueava acesso tipo
- * bot às páginas /wiki/, não aos arquivos estáticos em /images/).
+ * /images/{hash[0]}/{hash[0:2]}/Nome_Do_Arquivo.ext, onde `hash` é o MD5 do nome do arquivo (com
+ * underscore no lugar de espaço): dado o nome, a URL sai sem buscar nada. A grafia e a extensão
+ * (gif ou png) variam; por isso há várias tentativas na wiki.
  */
 
 const WIKI_IMAGE_BASE = "https://www.tibiawiki.com.br/images";
@@ -135,7 +145,7 @@ const CREATURE_PAGE = new Set(
  * conferência de 2026-11-09), enquanto "Wand_of_Starstorm.gif" segue a regra. Criatura de página
  * "(Criatura)" tenta essa primeiro. Nome que já vem certo acerta na primeira.
  */
-export function gameIconUrls(name: string): string[] {
+export function wikiIconUrls(name: string): string[] {
   const base = wikiFileBase(name);
   if (!base) return [];
   const raw = name.trim().replace(/\s+/g, "_");
@@ -143,4 +153,113 @@ export function gameIconUrls(name: string): string[] {
   const bases = [base, allWordsCapitalized(name), exact];
   if (CREATURE_PAGE.has(name.trim().replace(/\s+/g, " ").toLowerCase())) bases.unshift(`${base}_(Criatura)`);
   return [...new Set(bases)].flatMap((b) => [urlFor(`${b}.gif`), urlFor(`${b}.png`)]);
+}
+
+/**
+ * Arquivos em public/img/wiki (copiados da TibiaWiki BR). O nome do arquivo sem extensão, com
+ * espaço no lugar de "_", é o nome que acha ele ("Carnage_Icon.gif" ← "Carnage Icon").
+ */
+const LOCAL_FILES = [
+  "Adrenaline_Burst_Icon.gif", "Bless_Icon.gif", "Bounty_Talisman.gif", "Carnage_Icon.gif",
+  "Cleanse_Icon.gif", "Cripple_Icon.gif", "Curse_Icon.gif", "Divine_Wrath_Icon.gif", "Dodge_Icon.gif",
+  "Enflame_Icon.gif", "Fatal_Hold_Icon.gif", "Freeze_Icon.gif", "Gut_Icon.gif", "Improved_loot.png",
+  "Low_Blow_Icon.gif", "Momentum.gif", "Numb_Icon.gif", "Onslaught.gif", "Outfit_Druid_Male.gif",
+  "Outfit_Hunter_Male.gif", "Outfit_Knight_Male.gif", "Outfit_Mage_Male.gif", "Outfit_Monk_Male.gif",
+  "Overflux_Icon.gif", "Overpower_Icon.gif", "Parry_Icon.gif", "Poison_Icon.gif", "Prey_damage.png",
+  "Prey_reduction.png", "Prey_xp.png", "Ruse.gif", "Savage_Blow_Icon.gif", "Scavenge_Icon.gif",
+  "Transcendence.gif", "Vampiric_Embrace_Icon.gif", "Void_Inversion_Icon.gif", "Voids_Call_Icon.gif",
+  "Wheel_of_Destiny_Icon.gif", "Wound_Icon.gif", "Zap_Icon.gif",
+];
+
+/** Chave de busca: minúsculo, espaços simples, sem "(Item)"/"(Criatura)" no fim e sem apóstrofo. */
+function lookupKey(name: string): string {
+  return name
+    .trim()
+    .replace(/\s*\([^)]*\)$/, "")
+    .replace(/['’]/g, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+const LOCAL_ICONS = new Map(
+  LOCAL_FILES.map((f) => [lookupKey(f.replace(/\.[a-z]+$/, "").replace(/_/g, " ")), `/img/wiki/${f}`]),
+);
+
+type SpriteIds = { items: Map<string, number>; monsters: Map<string, string> };
+let spriteIds: SpriteIds | null = null;
+let loading: Promise<void> | null = null;
+
+function parseTsv(tsv: string): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const line of tsv.split("\n")) {
+    const bar = line.indexOf("|");
+    if (bar > 0) map.set(line.slice(0, bar), line.slice(bar + 1));
+  }
+  return map;
+}
+
+/** Já carregou os ids de item e os outfits de monstro? */
+export function spriteIdsLoaded(): boolean {
+  return spriteIds !== null;
+}
+
+/** Carrega (uma vez só) src/data/sprite-ids-data.ts. Se falhar, tenta de novo na próxima chamada. */
+export function loadSpriteIds(): Promise<void> {
+  loading ??= import("@/data/sprite-ids-data")
+    .then((m) => {
+      const items = new Map<string, number>();
+      for (const [k, v] of parseTsv(m.ITEM_SPRITE_IDS)) items.set(k, Number(v));
+      spriteIds = { items, monsters: parseTsv(m.MONSTER_OUTFITS) };
+    })
+    .catch((err: unknown) => {
+      loading = null;
+      throw err;
+    });
+  return loading;
+}
+
+const itemObjectUrl = (id: number) => `https://static.tibia.com/images/charactertrade/objects/${id}.gif`;
+
+/** "lookType,head,body,legs,feet,addons" (ou "#id" pra monstro que é um item) → URL da imagem. */
+function monsterUrl(outfit: string): string {
+  if (outfit.startsWith("#")) return itemObjectUrl(Number(outfit.slice(1)));
+  const [type, head, body, legs, feet, addons] = outfit.split(",");
+  return (
+    `https://outfit-images.ots.me/latest_walk/animoutfit.php?id=${type}&addons=${addons}` +
+    `&head=${head}&body=${body}&legs=${legs}&feet=${feet}&mount=0&direction=3`
+  );
+}
+
+/**
+ * Biblioteca do tibia.com: nome sem espaço nem sinal ("Two-Headed Turtle" → twoheadedturtle).
+ * Criatura em .gif; magia (Avatar of Steel, Divine Grenade...) em .png.
+ */
+const libraryUrl = (key: string, ext: "gif" | "png" = "gif") =>
+  `https://static.tibia.com/images/library/${key.replace(/[^a-z0-9]/g, "")}.${ext}`;
+
+/**
+ * Todas as URLs a tentar, em ordem (ver o topo do arquivo). Sem loadSpriteIds() antes, pula o
+ * item e o outfit do monstro. Nome que é item e monstro ao mesmo tempo ("Bat", "Scorpion",
+ * "Fiery Heart"): em minúsculo (loot do Hunting Analyser) o item vem primeiro; com maiúscula
+ * (Killed Monsters, listas do app), o monstro.
+ */
+export function gameIconUrls(name: string): string[] {
+  const key = lookupKey(name);
+  if (!key) return [];
+  const urls: string[] = [];
+  const local = LOCAL_ICONS.get(key);
+  if (local) urls.push(local);
+  const item = spriteIds?.items.get(key);
+  const outfit = spriteIds?.monsters.get(key);
+  const itemUrl = item ? itemObjectUrl(item) : null;
+  const creatureUrls = outfit
+    ? [monsterUrl(outfit), libraryUrl(key)]
+    : item
+      ? []
+      : [libraryUrl(key), libraryUrl(key, "png")];
+  const lowercase = name.trim() === name.trim().toLowerCase();
+  if (itemUrl && (lowercase || !outfit)) urls.push(itemUrl, ...creatureUrls);
+  else urls.push(...creatureUrls, ...(itemUrl ? [itemUrl] : []));
+  urls.push(...wikiIconUrls(name));
+  return [...new Set(urls)];
 }
