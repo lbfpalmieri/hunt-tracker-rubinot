@@ -24,6 +24,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Em Personagens, cada personagem ganhou uma Ficha: anote as skills base (magic level e skills de combate), os pontos de Loyalty (o app mostra o bônus e o título), os níveis do Bounty Talisman (Dano, Life Leech e Loot, com a %) e os charms e minor charms que você tem, com o nível de cada um. E na Oficina tem o Otimizador de charms: escolha uma criatura ou uma hunt sua e veja quais dos seus charms rendem mais, cada um com o porquê numa linha (fraqueza a elemento, vida da criatura, quanto ela bate), e quais valem desbloquear. Regras e números da TibiaWiki BR. Ideias do Balosin e do Yin Sylvan, valeu!",
   },
   {
+    id: "loot-por-categoria-e-preco-npc-2026-11-25",
+    date: "2026-11-25",
+    title: "Loot por categoria e preço de cada item editável",
+    description:
+      "Sugestões do Yin Sylvan e do Spankox. Na sessão, os itens lootados agora vêm separados por categoria (imbuement, task, moedas e tokens, equipamentos, produtos de criatura, gemas e outros), cada grupo com o seu subtotal, e a ordenação por valor ou quantidade vale dentro de cada grupo. O preço de cada item pode ser corrigido a qualquer momento: toque no preço, digite (150k, 1,5kk) e dê Enter. Item sem preço seu usa o preço de NPC da TibiaWiki, marcado como NPC; o que você definiu aparece como meu preço, e dá pra voltar ao NPC num toque.",
+  },
+  {
     id: "painel-de-bounty-2026-11-25",
     date: "2026-11-25",
     title: "Painel de Bounty: quais criaturas você fecha mais rápido",

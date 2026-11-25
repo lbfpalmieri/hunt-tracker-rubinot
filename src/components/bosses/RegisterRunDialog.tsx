@@ -16,6 +16,7 @@ import { fmtGold } from "@/lib/format";
 import { parseHunting, parseSessionStamp, withDuration } from "@/lib/parser";
 import { DurationAdjust } from "@/components/DurationAdjust";
 import { parseGoldInput } from "@/lib/rc-calc";
+import { npcPriceOf } from "@/lib/item-info";
 import { priceMap, useItemPrices, useSaveItemPrices } from "@/lib/item-prices";
 import { SetAndWheelPicker } from "@/components/setup/SetAndWheelPicker";
 import { EMPTY_SETUP, normalizeSetup, type SessionSetup } from "@/lib/session-setup";
@@ -144,7 +145,7 @@ export function RegisterRunDialog({
   ];
   const ignored = ignoredAll.filter((i) => !included.has(i.name));
 
-  const npcOf = (name: string) => catalog.items.get(name)?.npc ?? 0;
+  const npcOf = (name: string) => catalog.items.get(name)?.npc || npcPriceOf(name) || 0;
   /** Preço unitário: digitado > (Meus preços: meu preço > último usado > NPC) | (NPC). */
   const unitOf = (name: string): number => {
     const typed = prices[name];
