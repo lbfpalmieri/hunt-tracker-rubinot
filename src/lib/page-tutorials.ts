@@ -42,6 +42,7 @@ export const TUTORIALS: Tutorial[] = [
     ["Cadastre seus chars", "Preencha nome, vocação e mundo. Cole um print do outfit com Ctrl+V se quiser."],
     ["Edite quando mudar", "O lápis corrige nome, vocação ou mundo sem perder o histórico de sessões."],
     ["Personagem ativo", "Ative o char que você está jogando; as telas passam a mostrar os dados dele."],
+    ["Ficha", "Anote skills, Loyalty, Bounty Talisman e os charms com o nível; o Otimizador de charms usa os charms daqui."],
   ]),
   T("rendimento", "Rendimento", [
     ["Duas abas", "Meu rendimento mostra o personagem ativo; Todos os personagens compara a conta inteira."],
@@ -56,6 +57,10 @@ export const TUTORIALS: Tutorial[] = [
     ["Escolha a sala e a task", "A página abre na sala que você está fazendo (ou na próxima, se completou a anterior). Toque numa task pra abrir o conselho dela."],
     ["Conselho da task", "Abas de Combate (elemento, dano, onde você já caçou), Set, Imbuements e Recompensas. Criatura fraca não pede set caro."],
     ["Acompanhe o progresso", "Marque as tasks concluídas; o progresso geral e por sala aparece no topo."],
+  ]),
+  T("charms", "Otimizador de charms", [
+    ["Marque seus charms", "Em Editar charms do personagem, diga quais charms e minor charms você tem e o nível de cada um."],
+    ["Criatura ou hunt", "Escolha uma criatura ou uma hunt sua. Cada charm vem com o porquê numa linha, e os que você não tem aparecem em Vale desbloquear."],
   ]),
   T("imbuements", "Imbuements", [
     ["Controle o tempo", "Registre cada imbuement com horas e minutos restantes (duram 20h de jogo)."],
@@ -97,6 +102,7 @@ export function tutorialFor(pathname: string): Tutorial | null {
     : p === "/rendimento" || p === "/overview" ? "rendimento"
     : p === "/tools/monster-calculator" || p === "/tools/rubini-coins" ? "calculadoras"
     : p === "/tools/linked-tasks" ? "linked-tasks"
+    : p === "/tools/charms" ? "charms"
     : p === "/imbuements" ? "imbuements"
     : p === "/bosses" ? "bosses"
     : p === "/equipamentos" ? "equipamentos"

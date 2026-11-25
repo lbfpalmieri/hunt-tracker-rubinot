@@ -15,6 +15,7 @@ import {
   ShieldUser,
   Shirt,
   Skull,
+  Sparkles,
   Swords,
   Target,
   Trophy,
@@ -146,6 +147,15 @@ export const NAV_ITEMS = [
     short: "Imbuements",
     icon: Gem,
     sprite: "Blank Imbuement Scroll",
+    group: "oficina",
+  },
+  {
+    id: "charms",
+    to: "/tools/charms",
+    label: "Otimizador de charms",
+    short: "Charms",
+    icon: Sparkles,
+    sprite: "Carnage Icon",
     group: "oficina",
   },
 
