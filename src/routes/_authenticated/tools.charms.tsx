@@ -219,7 +219,7 @@ function CharmsPage() {
                   <option value="">Escolha uma hunt</option>
                   {hunts.map((h) => (
                     <option key={h.huntName} value={h.huntName}>
-                      {h.huntName} ({h.sessionCount} sessão{h.sessionCount === 1 ? "" : "ões"})
+                      {h.huntName} ({h.sessionCount} {h.sessionCount === 1 ? "sessão" : "sessões"})
                     </option>
                   ))}
                 </select>
