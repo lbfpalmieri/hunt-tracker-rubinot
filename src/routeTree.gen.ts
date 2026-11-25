@@ -34,6 +34,7 @@ import { Route as AuthenticatedBossesIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedBossesIdRouteImport } from './routes/_authenticated/bosses.$id'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 import { Route as AuthenticatedSessionsCompareRouteImport } from './routes/_authenticated/sessions.compare'
+import { Route as AuthenticatedToolsBountyRouteImport } from './routes/_authenticated/tools.bounty'
 import { Route as AuthenticatedToolsCharmsRouteImport } from './routes/_authenticated/tools.charms'
 import { Route as AuthenticatedToolsComparisonsRouteImport } from './routes/_authenticated/tools.comparisons'
 import { Route as AuthenticatedToolsLinkedTasksRouteImport } from './routes/_authenticated/tools.linked-tasks'
@@ -168,6 +169,12 @@ const AuthenticatedSessionsCompareRoute =
     path: '/compare',
     getParentRoute: () => AuthenticatedSessionsRoute,
   } as any)
+const AuthenticatedToolsBountyRoute =
+  AuthenticatedToolsBountyRouteImport.update({
+    id: '/tools/bounty',
+    path: '/tools/bounty',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedToolsCharmsRoute =
   AuthenticatedToolsCharmsRouteImport.update({
     id: '/tools/charms',
@@ -229,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
+  '/tools/bounty': typeof AuthenticatedToolsBountyRoute
   '/tools/charms': typeof AuthenticatedToolsCharmsRoute
   '/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/tools/linked-tasks': typeof AuthenticatedToolsLinkedTasksRoute
@@ -261,6 +269,7 @@ export interface FileRoutesByTo {
   '/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/sessions/compare': typeof AuthenticatedSessionsCompareRoute
+  '/tools/bounty': typeof AuthenticatedToolsBountyRoute
   '/tools/charms': typeof AuthenticatedToolsCharmsRoute
   '/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/tools/linked-tasks': typeof AuthenticatedToolsLinkedTasksRoute
@@ -295,6 +304,7 @@ export interface FileRoutesById {
   '/_authenticated/bosses/$id': typeof AuthenticatedBossesIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/sessions/compare': typeof AuthenticatedSessionsCompareRoute
+  '/_authenticated/tools/bounty': typeof AuthenticatedToolsBountyRoute
   '/_authenticated/tools/charms': typeof AuthenticatedToolsCharmsRoute
   '/_authenticated/tools/comparisons': typeof AuthenticatedToolsComparisonsRoute
   '/_authenticated/tools/linked-tasks': typeof AuthenticatedToolsLinkedTasksRoute
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/bosses/$id'
     | '/sessions/$id'
     | '/sessions/compare'
+    | '/tools/bounty'
     | '/tools/charms'
     | '/tools/comparisons'
     | '/tools/linked-tasks'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/bosses/$id'
     | '/sessions/$id'
     | '/sessions/compare'
+    | '/tools/bounty'
     | '/tools/charms'
     | '/tools/comparisons'
     | '/tools/linked-tasks'
@@ -394,6 +406,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bosses/$id'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/sessions/compare'
+    | '/_authenticated/tools/bounty'
     | '/_authenticated/tools/charms'
     | '/_authenticated/tools/comparisons'
     | '/_authenticated/tools/linked-tasks'
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSessionsCompareRouteImport
       parentRoute: typeof AuthenticatedSessionsRoute
     }
+    '/_authenticated/tools/bounty': {
+      id: '/_authenticated/tools/bounty'
+      path: '/tools/bounty'
+      fullPath: '/tools/bounty'
+      preLoaderRoute: typeof AuthenticatedToolsBountyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tools/charms': {
       id: '/_authenticated/tools/charms'
       path: '/tools/charms'
@@ -666,6 +686,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminHuntsRoute: typeof AuthenticatedAdminHuntsRoute
   AuthenticatedAdminNotesRoute: typeof AuthenticatedAdminNotesRoute
   AuthenticatedBossesIdRoute: typeof AuthenticatedBossesIdRoute
+  AuthenticatedToolsBountyRoute: typeof AuthenticatedToolsBountyRoute
   AuthenticatedToolsCharmsRoute: typeof AuthenticatedToolsCharmsRoute
   AuthenticatedToolsComparisonsRoute: typeof AuthenticatedToolsComparisonsRoute
   AuthenticatedToolsLinkedTasksRoute: typeof AuthenticatedToolsLinkedTasksRoute
@@ -690,6 +711,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminHuntsRoute: AuthenticatedAdminHuntsRoute,
   AuthenticatedAdminNotesRoute: AuthenticatedAdminNotesRoute,
   AuthenticatedBossesIdRoute: AuthenticatedBossesIdRoute,
+  AuthenticatedToolsBountyRoute: AuthenticatedToolsBountyRoute,
   AuthenticatedToolsCharmsRoute: AuthenticatedToolsCharmsRoute,
   AuthenticatedToolsComparisonsRoute: AuthenticatedToolsComparisonsRoute,
   AuthenticatedToolsLinkedTasksRoute: AuthenticatedToolsLinkedTasksRoute,

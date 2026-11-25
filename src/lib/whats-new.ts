@@ -24,6 +24,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       "Em Personagens, cada personagem ganhou uma Ficha: anote as skills base (magic level e skills de combate), os pontos de Loyalty (o app mostra o bônus e o título), os níveis do Bounty Talisman (Dano, Life Leech e Loot, com a %) e os charms e minor charms que você tem, com o nível de cada um. E na Oficina tem o Otimizador de charms: escolha uma criatura ou uma hunt sua e veja quais dos seus charms rendem mais, cada um com o porquê numa linha (fraqueza a elemento, vida da criatura, quanto ela bate), e quais valem desbloquear. Regras e números da TibiaWiki BR. Ideias do Balosin e do Yin Sylvan, valeu!",
   },
   {
+    id: "painel-de-bounty-2026-11-25",
+    date: "2026-11-25",
+    title: "Painel de Bounty: quais criaturas você fecha mais rápido",
+    description:
+      "Sugestão do Balosin. Em Oficina > Painel de Bounty, o app junta as Bounties que você já registrou e lista cada criatura, das mais rápidas pras mais lentas: quantas tasks, abates por hora (média e melhor), tempo médio pra fechar a task, Raw XP/h e lucro/h. Dá pra filtrar por personagem e dificuldade. Só entram sessões em que você escolheu a criatura da task no passo Bounty.",
+  },
+  {
     id: "sprites-monstros-mortos-2026-11-10",
     date: "2026-11-10",
     title: "Monstros mortos: sprites sem ícone quebrado",

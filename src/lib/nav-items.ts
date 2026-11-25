@@ -4,6 +4,7 @@ import {
   BookmarkCheck,
   Castle,
   Coins,
+  Crosshair,
   Crown,
   Disc3,
   Gauge,
@@ -129,6 +130,15 @@ export const NAV_ITEMS = [
     ],
     icon: Skull,
     sprite: "Hourglass",
+    group: "oficina",
+  },
+  {
+    id: "bounty-panel",
+    to: "/tools/bounty",
+    label: "Painel de Bounty",
+    short: "Bounty",
+    icon: Crosshair,
+    sprite: "Bounty Talisman",
     group: "oficina",
   },
   {
